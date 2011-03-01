@@ -1,0 +1,37 @@
+TODO
+----
+
+-1. BUG: Crash in:
+    yapp_viewdata -b 20480 -S 60 -P 10 ../ort/0833b45.spec
+0.  BUG: For block size < 1024, bytes to skip not happening at multiple of
+    block size.
+1.  BUG: *.tim files created by yapp_dedisp for *.fil does not result in pulsar
+    detection using seek+best.
+2.  BUG: *.tim files created by yapp_dedisp for 0833b45.spec not working with
+    seek+best.
+3.  sps_dedisperse -N 2 -X 2 -n 3 -x 4 -p 10 -o a14aa899.spec
+    For small processing percentages, crash at fclose(pFSpec) and at
+    free(g_pfDedispData) when doing ^C.
+4.  plotraw -b 62334 a14aa899.spec
+    Anything above 62334 (out of 62385) is nan (problem maybe with
+    das_spectro_lin).
+5.  i. BUG: data skip: --data-skip-percent and --data-skip-time doesn't behave
+    in the same way, for low amounts of data.
+    ii. Block 2 for sps -n <min> -x <max> -p 20 -b <x> <file> and block 1 for
+    sps -n <min> -x <max> -s 10 -p 20 -b <x> <file> does not seem to be the
+    same. this is true for time mode too.
+6.  First block's shifted data to be written to the file.
+7.  BUG: the first ~160 bytes in each of DM channels in the first block don't
+    match, across different block sizes
+8.  Compare max snrs between laws and write only max to file.
+9.  Program to update the old-format field name (NXXXX) with the new
+    format (JXXXX+YY)
+10. Linear delays don't match that calculated by 'other law'. Work around in
+    place.
+11. BUG: Program crashes when one of the law limits is 0 or too large for a
+    double to contain the factor.
+12. BUG: Delays calculated for laws < 1.0 are not correct.
+13. BUG: dedisp: Negative DM dedispersion not correct.
+14. Handle the headerless/header-separated filterbank format input.
+
+EOF
