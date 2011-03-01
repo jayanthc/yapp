@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
     int iNumBadTimes = 0;
     int iTimeSamps = 0;
     struct stat stFileStats = {0};
-    int iDataSizeTotal = 0;
+    long lDataSizeTotal = 0;
     int iRet = YAPP_RET_SUCCESS;
     int i = 0;
     int j = 0;
@@ -341,11 +341,11 @@ int main(int argc, char *argv[])
             CleanUp();
             return YAPP_RET_ERROR;
         }
-        iDataSizeTotal = (int) stFileStats.st_size;
+        lDataSizeTotal = (long) stFileStats.st_size;
         (void) printf("Duration of data in\n");
-        (void) printf("    Bytes                         : %d\n",
-                      (iDataSizeTotal / iNumChans));
-        iTimeSamps = (int) (iDataSizeTotal / (iNumChans * fSampSize));
+        (void) printf("    Bytes                         : %ld\n",
+                      (lDataSizeTotal / iNumChans));
+        iTimeSamps = (int) (lDataSizeTotal / (iNumChans * fSampSize));
         (void) printf("    Time samples                  : %d\n", iTimeSamps);
         (void) printf("    Time                          : %g s\n",
                       (iTimeSamps * dTSampInSec));
@@ -708,11 +708,11 @@ int main(int argc, char *argv[])
             CleanUp();
             return YAPP_RET_ERROR;
         }
-        iDataSizeTotal = (int) stFileStats.st_size - iHeaderLen;
+        lDataSizeTotal = (long) stFileStats.st_size - iHeaderLen;
         (void) printf("Duration of data in\n");
-        (void) printf("    Bytes                         : %d\n",
-                      (iDataSizeTotal / iNumChans));
-        iTimeSamps = (int) (iDataSizeTotal / (iNumChans * fSampSize));
+        (void) printf("    Bytes                         : %ld\n",
+                      (lDataSizeTotal / iNumChans));
+        iTimeSamps = (int) (lDataSizeTotal / (iNumChans * fSampSize));
         (void) printf("    Time samples                  : %d\n", iTimeSamps);
         (void) printf("    Time                          : %g s\n",
                       (iTimeSamps * dTSampInSec));
