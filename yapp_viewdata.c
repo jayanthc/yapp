@@ -126,8 +126,8 @@ int main(int argc, char *argv[])
     int iBadTimeSect = 0;
     char cIsInBadTimeRange = YAPP_FALSE;
     float *pfSpectrum = NULL;
-    int iBytesToSkip = 0;
-    int iBytesToProc = 0;
+    long lBytesToSkip = 0;
+    long lBytesToProc = 0;
     int iTimeSamps = 0;
     int iTimeSampsSkip = 0;
     int iTimeSampsToProc = 0;
@@ -138,7 +138,7 @@ int main(int argc, char *argv[])
     int iSecBufReadSampCount = 0;   /* iReadBlockCount * iBlockSize */
     char cIsLastBlock = YAPP_FALSE;
     struct stat stFileStats = {0};
-    int iDataSizeTotal = 0;
+    long lDataSizeTotal = 0;
     int iRet = YAPP_RET_SUCCESS;
     int iFlagBW = 0;
     float afTM[6] = {0.0};
@@ -539,11 +539,11 @@ int main(int argc, char *argv[])
             CleanUp();
             return YAPP_RET_ERROR;
         }
-        iDataSizeTotal = (int) stFileStats.st_size;
+        lDataSizeTotal = (long) stFileStats.st_size;
         (void) printf("Duration of data in\n");
-        (void) printf("    Bytes                         : %d\n",
-                      (iDataSizeTotal / iNumChans));
-        iTimeSamps = (int) (iDataSizeTotal / (iNumChans * fSampSize));
+        (void) printf("    Bytes                         : %ld\n",
+                      (lDataSizeTotal / iNumChans));
+        iTimeSamps = (int) (lDataSizeTotal / (iNumChans * fSampSize));
         (void) printf("    Time samples                  : %d\n", iTimeSamps);
         (void) printf("    Time                          : %g s\n",
                       (iTimeSamps * dTSampInSec));
@@ -907,11 +907,11 @@ int main(int argc, char *argv[])
             CleanUp();
             return YAPP_RET_ERROR;
         }
-        iDataSizeTotal = (int) stFileStats.st_size - iHeaderLen;
+        lDataSizeTotal = (long) stFileStats.st_size - iHeaderLen;
         (void) printf("Duration of data in\n");
-        (void) printf("    Bytes                         : %d\n",
-                      (iDataSizeTotal / iNumChans));
-        iTimeSamps = (int) (iDataSizeTotal / (iNumChans * fSampSize));
+        (void) printf("    Bytes                         : %ld\n",
+                      (lDataSizeTotal / iNumChans));
+        iTimeSamps = (int) (lDataSizeTotal / (iNumChans * fSampSize));
         (void) printf("    Time samples                  : %d\n", iTimeSamps);
         (void) printf("    Time                          : %g s\n",
                       (iTimeSamps * dTSampInSec));
@@ -942,42 +942,42 @@ int main(int argc, char *argv[])
             return YAPP_RET_ERROR;
         }
 
-        iBytesToSkip = (int) ((iDataSkipTime * 1000.0 / dTSamp)
+        lBytesToSkip = (long) ((iDataSkipTime * 1000.0 / dTSamp)
                                                         /* number of samples */
-                              * iNumChans
-                              * fSampSize);
-        iBytesToProc = (int) ((iDataProcTime * 1000.0 / dTSamp)
+                               * iNumChans
+                               * fSampSize);
+        lBytesToProc = (long) ((iDataProcTime * 1000.0 / dTSamp)
                                                         /* number of samples */
-                              * iNumChans
-                              * fSampSize);
+                               * iNumChans
+                               * fSampSize);
     }
     else    /* if it is not selected, or percentage is selected, use percentage
                mode */
     {
-        iBytesToSkip = (int) (floorf(iTimeSamps
+        lBytesToSkip = (long) (floorf(iTimeSamps
                                      * (((float) iDataSkipPercent) / 100))
                                                         /* number of samples */
-                              * iNumChans
-                              * fSampSize);
-        iBytesToProc = (int) (ceilf(iTimeSamps
+                               * iNumChans
+                               * fSampSize);
+        lBytesToProc = (long) (ceilf(iTimeSamps
                                     * (((float) iDataProcPercent) / 100))
                                                         /* number of samples */
-                              * iNumChans
-                              * fSampSize);
+                               * iNumChans
+                               * fSampSize);
     }
 
-    /* if iBytesToSkip is not a multiple of the block size, make it one */
-    if (((float) iBytesToSkip / iBlockSize) - (iBytesToSkip / iBlockSize) != 0)
+    /* if lBytesToSkip is not a multiple of the block size, make it one */
+    if (((float) lBytesToSkip / iBlockSize) - (lBytesToSkip / iBlockSize) != 0)
     {
         (void) printf("WARNING: Bytes to skip not a multiple of block size! ");
-        iBytesToSkip -= (((float) iBytesToSkip / iBlockSize)
-                         - (iBytesToSkip / iBlockSize)) * iBlockSize;
-        (void) printf("Newly calculated size of data to be skipped: %d "
+        lBytesToSkip -= (((float) lBytesToSkip / iBlockSize)
+                         - (lBytesToSkip / iBlockSize)) * iBlockSize;
+        (void) printf("Newly calculated size of data to be skipped: %ld "
                       "bytes\n",
-                      iBytesToSkip);
+                      lBytesToSkip);
     }
 
-    if (iBytesToSkip >= iDataSizeTotal)
+    if (lBytesToSkip >= lDataSizeTotal)
     {
         (void) printf("WARNING: Data to be skipped is greater than or equal to "
                       "the size of the file! Terminating.\n");
@@ -985,29 +985,29 @@ int main(int argc, char *argv[])
         return YAPP_RET_SUCCESS;
     }
 
-    if (((long) iBytesToSkip + iBytesToProc) > (long) iDataSizeTotal)
+    if ((lBytesToSkip + lBytesToProc) > lDataSizeTotal)
     {
         (void) printf("WARNING: Total data to be read (skipped and processed) "
                       "is more than the size of the file! ");
-        iBytesToProc = iDataSizeTotal - iBytesToSkip;
-        (void) printf("Newly calculated size of data to be processed: %d "
+        lBytesToProc = lDataSizeTotal - lBytesToSkip;
+        (void) printf("Newly calculated size of data to be processed: %ld "
                       "bytes\n",
-                      iBytesToProc);
+                      lBytesToProc);
     }
 
-    iTimeSampsSkip = (int) (iBytesToSkip / (iNumChans * fSampSize));
+    iTimeSampsSkip = (int) (lBytesToSkip / (iNumChans * fSampSize));
     (void) printf("Skipping\n"
-                  "    %d of %d bytes\n"
+                  "    %ld of %ld bytes\n"
                   "    %d of %d time samples\n"
                   "    %.10g of %.10g seconds\n",
-                  iBytesToSkip,
-                  iDataSizeTotal,
+                  lBytesToSkip,
+                  lDataSizeTotal,
                   iTimeSampsSkip,
                   iTimeSamps,
                   (iTimeSampsSkip * dTSampInSec),
                   (iTimeSamps * dTSampInSec));
 
-    iTimeSampsToProc = (int) (iBytesToProc / (iNumChans * fSampSize));
+    iTimeSampsToProc = (int) (lBytesToProc / (iNumChans * fSampSize));
     iNumReads = (int) ceilf(((float) iTimeSampsToProc) / iBlockSize);
     iTotNumReads = iNumReads;
 
@@ -1016,12 +1016,12 @@ int main(int argc, char *argv[])
     iDataSizePerBlock = (int) (fSampSize * iTotSampsPerBlock);
 
     (void) printf("Processing\n"
-                  "    %d of %d bytes\n"
+                  "    %ld of %ld bytes\n"
                   "    %d of %d time samples\n"
                   "    %.10g of %.10g seconds\n"
                   "in %d reads with block size %d time samples...\n",
-                  iBytesToProc,
-                  iDataSizeTotal,
+                  lBytesToProc,
+                  lDataSizeTotal,
                   iTimeSampsToProc,
                   iTimeSamps,
                   (iTimeSampsToProc * dTSampInSec),
@@ -1091,12 +1091,12 @@ int main(int argc, char *argv[])
         /* skip the header */
         (void) fseek(pFSpec, (long) iHeaderLen, SEEK_SET);
         /* skip data, if any are to be skipped */
-        (void) fseek(pFSpec, (long) iBytesToSkip, SEEK_CUR);
+        (void) fseek(pFSpec, lBytesToSkip, SEEK_CUR);
     }
     else
     {
         /* skip data, if any are to be skipped */
-        (void) fseek(pFSpec, (long) iBytesToSkip, SEEK_SET);
+        (void) fseek(pFSpec, lBytesToSkip, SEEK_SET);
     }
 
     /* open the PGPLOT graphics device */
