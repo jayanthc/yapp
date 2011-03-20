@@ -135,7 +135,6 @@ int main(int argc, char *argv[])
     int iNumReads = 0;
     int iTotNumReads = 0;
     int iReadBlockCount = 0;
-    int iSecBufReadSampCount = 0;   /* iReadBlockCount * iBlockSize */
     char cIsLastBlock = YAPP_FALSE;
     struct stat stFileStats = {0};
     long lDataSizeTotal = 0;
@@ -1210,10 +1209,6 @@ int main(int argc, char *argv[])
            be iBlockSize for the last block, and should be iBlockSize for
            all other blocks */
         iNumSamps = iReadItems / iNumChans;
-
-        /* get the actual count of read samples, inclusive of those in the
-           first buffer */
-        iSecBufReadSampCount = iReadBlockCount * iBlockSize;
 
         if (YAPP_FORMAT_SPEC == iFormat)
         {

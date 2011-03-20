@@ -235,7 +235,9 @@ int YAPP_ReadData(FILE *pFSpec,
     {
         /* 32-bit/4-byte data */
         /* copy data from the byte buffer to the float buffer */
+        /* TODO: check which of these two is right: */
         (void) memcpy(pfBuf, pcBuf, (int) (iTotSampsPerBlock * fSampSize));
+        /*(void) memcpy(pfBuf, pcBuf, (int) (iReadItems * fSampSize));*/
     }
     else if (YAPP_SAMPSIZE_16 == (fSampSize * YAPP_BYTE2BIT_FACTOR))
     {
