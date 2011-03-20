@@ -177,7 +177,7 @@ int main(int argc, char *argv[])
         }
 
         /* read the first few parameters from the 'cfg' file */
-        (void) fscanf(pFCfg,
+        iRet = fscanf(pFCfg,
                       " %lf %d %f %f %d %d %s %d %d %d %d %d %f %s %lf %lf",
                       &dTSamp,          /* in ms */
                       &iBytesPerFrame,  /* iNumChans * fSampSize */
@@ -262,7 +262,7 @@ int main(int argc, char *argv[])
         /* read the channel goodness flags */
         for (i = 0; i < iNumChans; ++i)
         {
-            (void) fscanf(pFCfg, " %d", &iChanGoodness);
+            iRet = fscanf(pFCfg, " %d", &iChanGoodness);
             g_pcIsChanGood[i] = (char) iChanGoodness;
             if (g_pcIsChanGood[i])
             {
@@ -276,7 +276,7 @@ int main(int argc, char *argv[])
                       dTNextBF);
         (void) printf("Band flip interval                : %.10g s\n", dTBFInt);
 
-        (void) fscanf(pFCfg, " %d", &iBFTimeSects);
+        iRet = fscanf(pFCfg, " %d", &iBFTimeSects);
 
         (void) printf("Number of band flip time sections : %d\n", iBFTimeSects);
 
@@ -291,7 +291,7 @@ int main(int argc, char *argv[])
 
         for (i = 0; i < iBFTimeSects; ++i)
         {
-            (void) fscanf(pFCfg, " %f", &g_pfBFTimeSectMean[i]);
+            iRet = fscanf(pFCfg, " %f", &g_pfBFTimeSectMean[i]);
         }
 
         g_pfBFGain = (float *) malloc(sizeof(float) * iNumChans * iBFTimeSects);
@@ -305,11 +305,11 @@ int main(int argc, char *argv[])
 
         for (i = 0; i < (iNumChans * iBFTimeSects); ++i)
         {
-            (void) fscanf(pFCfg, " %f", &g_pfBFGain[i]);
+            iRet = fscanf(pFCfg, " %f", &g_pfBFGain[i]);
         }
         pfTimeSectGain = g_pfBFGain;
 
-        (void) fscanf(pFCfg, " %d", &iNumBadTimes);
+        iRet = fscanf(pFCfg, " %d", &iNumBadTimes);
         (void) printf("Number of bad time sections       : %d\n", iNumBadTimes);
         g_padBadTimes = (double(*) [][NUM_BAD_BOUNDS]) malloc(sizeof(double)
                                                               * iNumBadTimes
@@ -325,7 +325,7 @@ int main(int argc, char *argv[])
         {
             for (j = 0; j < NUM_BAD_BOUNDS; ++j)
             {
-                (void) fscanf(pFCfg, " %lf", &((*g_padBadTimes)[i][j]));
+                iRet = fscanf(pFCfg, " %lf", &((*g_padBadTimes)[i][j]));
             }
         }
 
@@ -366,8 +366,8 @@ int main(int argc, char *argv[])
 
         /* read the parameters from the header section of the file */
         /* start with the 'HEADER_START' label */
-        (void) fread(&iLen, sizeof(iLen), 1, pFSpec);
-        (void) fread(acLabel, sizeof(char), iLen, pFSpec);
+        iRet = fread(&iLen, sizeof(iLen), 1, pFSpec);
+        iRet = fread(acLabel, sizeof(char), iLen, pFSpec);
         acLabel[iLen] = '\0';
         if (strcmp(acLabel, "HEADER_START") != 0)
         {
@@ -382,22 +382,22 @@ int main(int argc, char *argv[])
         while (strcmp(acLabel, "HEADER_END") != 0)
         {
             /* read field label length */
-            (void) fread(&iLen, sizeof(iLen), 1, pFSpec);
+            iRet = fread(&iLen, sizeof(iLen), 1, pFSpec);
             /* read field label */
-            (void) fread(acLabel, sizeof(char), iLen, pFSpec);
+            iRet = fread(acLabel, sizeof(char), iLen, pFSpec);
             acLabel[iLen] = '\0';
             iHeaderLen += (sizeof(iLen) + iLen);
             if (0 == strcmp(acLabel, "source_name"))
             {
-                (void) fread(&iLen, sizeof(iLen), 1, pFSpec);
-                (void) fread(stHeader.acPulsar, sizeof(char), iLen, pFSpec);
+                iRet = fread(&iLen, sizeof(iLen), 1, pFSpec);
+                iRet = fread(stHeader.acPulsar, sizeof(char), iLen, pFSpec);
                 stHeader.acPulsar[iLen] = '\0';
                 (void) strcpy(acPulsar, stHeader.acPulsar);
                 iHeaderLen += (sizeof(iLen) + iLen);
             }
             else if (0 == strcmp(acLabel, "data_type"))
             {
-                (void) fread(&stHeader.iDataTypeID,
+                iRet = fread(&stHeader.iDataTypeID,
                              sizeof(stHeader.iDataTypeID),
                              1,
                              pFSpec);
@@ -406,7 +406,7 @@ int main(int argc, char *argv[])
             else if (0 == strcmp(acLabel, "nchans"))
             {
                 /* read number of channels */
-                (void) fread(&stHeader.iNumChans,
+                iRet = fread(&stHeader.iNumChans,
                              sizeof(stHeader.iNumChans),
                              1,
                              pFSpec);
@@ -416,7 +416,7 @@ int main(int argc, char *argv[])
             else if (0 == strcmp(acLabel, "fch1"))
             {
                 /* read frequency of first channel */
-                (void) fread(&stHeader.dFChan1,
+                iRet = fread(&stHeader.dFChan1,
                              sizeof(stHeader.dFChan1),
                              1,
                              pFSpec);
@@ -426,7 +426,7 @@ int main(int argc, char *argv[])
             else if (0 == strcmp(acLabel, "foff"))
             {
                 /* read channel bandwidth (labelled frequency offset) */
-                (void) fread(&stHeader.dChanBW,
+                iRet = fread(&stHeader.dChanBW,
                              sizeof(stHeader.dChanBW),
                              1,
                              pFSpec);
@@ -436,7 +436,7 @@ int main(int argc, char *argv[])
             else if (0 == strcmp(acLabel, "nbits"))
             {
                 /* read number of bits per sample */
-                (void) fread(&stHeader.iNumBits,
+                iRet = fread(&stHeader.iNumBits,
                              sizeof(stHeader.iNumBits),
                              1,
                              pFSpec);
@@ -445,7 +445,7 @@ int main(int argc, char *argv[])
             else if (0 == strcmp(acLabel, "nifs"))
             {
                 /* read number of IFs */
-                (void) fread(&stHeader.iNumIFs,
+                iRet = fread(&stHeader.iNumIFs,
                              sizeof(stHeader.iNumIFs),
                              1,
                              pFSpec);
@@ -454,7 +454,7 @@ int main(int argc, char *argv[])
             else if (0 == strcmp(acLabel, "tsamp"))
             {
                 /* read sampling time in seconds */
-                (void) fread(&stHeader.dTSamp,
+                iRet = fread(&stHeader.dTSamp,
                              sizeof(stHeader.dTSamp),
                              1,
                              pFSpec);
@@ -465,7 +465,7 @@ int main(int argc, char *argv[])
             else if (0 == strcmp(acLabel, "tstart"))
             {
                 /* read timestamp of first sample (MJD) */
-                (void) fread(&stHeader.dTStart,
+                iRet = fread(&stHeader.dTStart,
                              sizeof(stHeader.dTStart),
                              1,
                              pFSpec);
@@ -474,7 +474,7 @@ int main(int argc, char *argv[])
             else if (0 == strcmp(acLabel, "telescope_id"))
             {
                 /* read telescope ID */
-                (void) fread(&stHeader.iObsID,
+                iRet = fread(&stHeader.iObsID,
                              sizeof(stHeader.iObsID),
                              1,
                              pFSpec);
@@ -484,7 +484,7 @@ int main(int argc, char *argv[])
             else if (0 == strcmp(acLabel, "machine_id"))
             {
                 /* read backend ID */
-                (void) fread(&stHeader.iBackendID,
+                iRet = fread(&stHeader.iBackendID,
                              sizeof(stHeader.iBackendID),
                              1,
                              pFSpec);
@@ -493,7 +493,7 @@ int main(int argc, char *argv[])
             else if (0 == strcmp(acLabel, "src_raj"))
             {
                 /* read source RA (J2000) */
-                (void) fread(&stHeader.dSourceRA,
+                iRet = fread(&stHeader.dSourceRA,
                              sizeof(stHeader.dSourceRA),
                              1,
                              pFSpec);
@@ -502,7 +502,7 @@ int main(int argc, char *argv[])
             else if (0 == strcmp(acLabel, "src_dej"))
             {
                 /* read source declination (J2000) */
-                (void) fread(&stHeader.dSourceDec,
+                iRet = fread(&stHeader.dSourceDec,
                              sizeof(stHeader.dSourceDec),
                              1,
                              pFSpec);
@@ -511,7 +511,7 @@ int main(int argc, char *argv[])
             else if (0 == strcmp(acLabel, "az_start"))
             {
                 /* read azimuth start */
-                (void) fread(&stHeader.dAzStart,
+                iRet = fread(&stHeader.dAzStart,
                              sizeof(stHeader.dAzStart),
                              1,
                              pFSpec);
@@ -520,7 +520,7 @@ int main(int argc, char *argv[])
             else if (0 == strcmp(acLabel, "za_start"))
             {
                 /* read ZA start */
-                (void) fread(&stHeader.dZAStart,
+                iRet = fread(&stHeader.dZAStart,
                              sizeof(stHeader.dZAStart),
                              1,
                              pFSpec);
@@ -530,13 +530,13 @@ int main(int argc, char *argv[])
             else if (0 == strcmp(acLabel, "refdm"))
             {
                 /* read reference DM */
-                (void) fread(&stHeader.dDM, sizeof(stHeader.dDM), 1, pFSpec);
+                iRet = fread(&stHeader.dDM, sizeof(stHeader.dDM), 1, pFSpec);
                 iHeaderLen += sizeof(stHeader.dDM);
             }
             else if (0 == strcmp(acLabel, "barycentric"))
             {
                 /* read barycentric flag */
-                (void) fread(&stHeader.iFlagBary,
+                iRet = fread(&stHeader.iFlagBary,
                              sizeof(stHeader.iFlagBary),
                              1,
                              pFSpec);
@@ -547,15 +547,15 @@ int main(int argc, char *argv[])
                 iFlagSplicedData = YAPP_TRUE;
 
                 /* read field label length */
-                (void) fread(&iLen, sizeof(iLen), 1, pFSpec);
+                iRet = fread(&iLen, sizeof(iLen), 1, pFSpec);
                 /* read field label */
-                (void) fread(acLabel, sizeof(char), iLen, pFSpec);
+                iRet = fread(acLabel, sizeof(char), iLen, pFSpec);
                 acLabel[iLen] = '\0';
                 iHeaderLen += (sizeof(iLen) + iLen);
                 if (0 == strcmp(acLabel, "nchans"))
                 {
                     /* read number of channels */
-                    (void) fread(&stHeader.iNumChans,
+                    iRet = fread(&stHeader.iNumChans,
                                  sizeof(stHeader.iNumChans),
                                  1,
                                  pFSpec);
@@ -589,14 +589,14 @@ int main(int argc, char *argv[])
                 while (strcmp(acLabel, "FREQUENCY_END") != 0)
                 {
                     /* read field label length */
-                    (void) fread(&iLen, sizeof(iLen), 1, pFSpec);
+                    iRet = fread(&iLen, sizeof(iLen), 1, pFSpec);
                     /* read field label */
-                    (void) fread(acLabel, sizeof(char), iLen, pFSpec);
+                    iRet = fread(acLabel, sizeof(char), iLen, pFSpec);
                     acLabel[iLen] = '\0';
                     iHeaderLen += (sizeof(iLen) + iLen);
                     if (0 == strcmp(acLabel, "fchannel"))
                     {
-                        (void) fread(&dFChan, sizeof(dFChan), 1, pFSpec);
+                        iRet = fread(&dFChan, sizeof(dFChan), 1, pFSpec);
                         g_pfFreq[i] = (float) dFChan;
                         iHeaderLen += sizeof(dFChan);
                     }
@@ -676,7 +676,7 @@ int main(int argc, char *argv[])
                     }
                 }
             }
-            (void) printf("Number of bands                   : %d\n",
+            (void) printf("Estimated number of bands         : %d\n",
                           iNumBands);
         }
 

@@ -90,7 +90,6 @@ char* YAPP_GetFilenameFromPath(char *pcPath, char *pcExt)
  */
 double YAPP_CalcThresholdInSigmas(int iTimeSamps)
 {
-    FILE *pFErfLookup = NULL;
     int iNumOutliers = 0;
     double dPOutlier = 0.0;
     double dErf = 0.0;
@@ -100,7 +99,6 @@ double YAPP_CalcThresholdInSigmas(int iTimeSamps)
     double dNumSigmasRef = 0.0;
     double dErfDiff = 0.0;
     double dErfDiffMin = 0.0;
-    int iRet = YAPP_RET_SUCCESS;
     int i = 0;
 
     /* calculate the threshold */

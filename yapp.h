@@ -12,13 +12,12 @@
 /**
  * @brief This code conforms to the ISO C99 standard, and uses functions such as
  * roundf().
+ *      #define _ISOC99_SOURCE
+ * 
+ * This code uses glibc feature test macros, such as usleep().
+ *      #define _BSD_SOURCE || _XOPEN_SOURCE >= 500
  * */
-#define _ISOC99_SOURCE
-
-/**
- * @brief This code uses glibc feature test macros, such as usleep().
- * */
-#define _BSD_SOURCE || _XOPEN_SOURCE >= 500
+#define _GNU_SOURCE
 
 #include <stdio.h>
 #include <getopt.h>
