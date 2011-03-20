@@ -187,6 +187,8 @@ enum tagDedispTimeSeriesFormat
 #define PATH_ERF_LOOKUP     "./ERF_LOOKUP_TABLE"    /**< @brief Path to the
                                                          error function lookup
                                                          table file. */
+#define YAPP_ERF_ENTRIES    1000    /* number of entries in the erf()
+                                       lookup table */
 
 #define DM_TOL_PERCENT      10
 

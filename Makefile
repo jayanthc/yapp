@@ -40,6 +40,7 @@ DELCMD = rm
 
 all: yapp_makever \
 	 yapp_version.o \
+	 yapp_erflookup.o \
 	 yapp_common.o \
 	 yapp_dedisperse.o \
 	 set_colours.o \
@@ -84,6 +85,9 @@ yapp_makever: $(SRCDIR)/yapp_makever.c
 yapp_version.o: $(SRCDIR)/yapp_version.c
 	$(CC) -c $(CFLAGS_C) $(SRCDIR)/yapp_version.c -o $(IDIR)/$@
 
+yapp_erflookup.o: $(SRCDIR)/yapp_erflookup.c
+	$(CC) -c $(CFLAGS_C) $(SRCDIR)/yapp_erflookup.c -o $(IDIR)/$@
+
 ifeq ($(FC), g77)
 DFC = -D_FC_F77_
 set_colours.o: $(SRCDIR)/set_colours.f
@@ -101,14 +105,14 @@ yapp_dedisperse.o: $(SRCDIR)/yapp_dedisperse.c
 	$(CC) $(CFLAGS_C) $(DFC) $(DDEBUG) $(SRCDIR)/yapp_dedisperse.c -o $(IDIR)/$@
 
 yapp_dedisperse: $(IDIR)/yapp_dedisperse.o
-	$(FC) $(IDIR)/yapp_dedisperse.o $(IDIR)/yapp_version.o $(IDIR)/yapp_common.o \
+	$(FC) $(IDIR)/yapp_dedisperse.o $(IDIR)/yapp_version.o $(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o \
 		$(IDIR)/set_colours.o $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -o $(BINDIR)/$@
 
 #killrfi.o: $(SRCDIR)/killrfi.c
 #	$(CC) $(CFLAGS_C) $(DDEBUG) $(SRCDIR)/killrfi.c -o $(IDIR)/$@
 #
 #killrfi: $(IDIR)/killrfi.o
-#	$(FC) $(IDIR)/killrfi.o $(IDIR)/yapp_version.o $(IDIR)/yapp_common.o \
+#	$(FC) $(IDIR)/killrfi.o $(IDIR)/yapp_version.o $(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o \
 #		#$(IDIR)/set_colours.o
 #		$(LFLAGS_PGPLOT) $(LFLAGS_MATH) -o $(BINDIR)/$@
 
@@ -116,42 +120,42 @@ yapp_viewdata.o: $(SRCDIR)/yapp_viewdata.c
 	$(CC) $(CFLAGS_C) $(DDEBUG) $(DFC) $(SRCDIR)/yapp_viewdata.c -o $(IDIR)/$@
 
 yapp_viewdata: $(IDIR)/yapp_viewdata.o
-	$(FC) $(IDIR)/yapp_viewdata.o $(IDIR)/yapp_version.o $(IDIR)/yapp_common.o \
+	$(FC) $(IDIR)/yapp_viewdata.o $(IDIR)/yapp_version.o $(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o \
         $(IDIR)/set_colours.o $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -o $(BINDIR)/$@
 
 reorderdds.o: $(SRCDIR)/reorderdds.c
 	$(CC) $(CFLAGS_C) $(DFC) $(SRCDIR)/reorderdds.c -o $(IDIR)/$@
 
 reorderdds: $(IDIR)/reorderdds.o
-	$(FC) $(IDIR)/reorderdds.o $(IDIR)/yapp_version.o $(IDIR)/yapp_common.o \
+	$(FC) $(IDIR)/reorderdds.o $(IDIR)/yapp_version.o $(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o \
         $(IDIR)/set_colours.o $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -o $(BINDIR)/$@
 
 yapp_dedisp.o: $(SRCDIR)/yapp_dedisp.c
 	$(CC) $(CFLAGS_C) $(DDEBUG) $(DFC) $(SRCDIR)/yapp_dedisp.c -o $(IDIR)/$@
 
 yapp_dedisp: $(IDIR)/yapp_dedisp.o
-	$(FC) $(IDIR)/yapp_dedisp.o $(IDIR)/yapp_version.o $(IDIR)/yapp_common.o \
+	$(FC) $(IDIR)/yapp_dedisp.o $(IDIR)/yapp_version.o $(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o \
 		$(IDIR)/set_colours.o $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -o $(BINDIR)/$@
 
 yapp_viewmetadata.o: $(SRCDIR)/yapp_viewmetadata.c
 	$(CC) $(CFLAGS_C) $(SRCDIR)/yapp_viewmetadata.c -o $(IDIR)/$@
 
 yapp_viewmetadata: $(IDIR)/yapp_viewmetadata.o
-	$(CC) $(SRCDIR)/yapp_viewmetadata.o $(IDIR)/yapp_version.o $(IDIR)/yapp_common.o \
+	$(CC) $(SRCDIR)/yapp_viewmetadata.o $(IDIR)/yapp_version.o $(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o \
 		$(LFLAGS_MATH) -o $(BINDIR)/$@
 
 yapp_pulsarsnd.o: $(SRCDIR)/yapp_pulsarsnd.c
 	$(CC) $(CFLAGS_C) $(SRCDIR)/yapp_pulsarsnd.c -o $(IDIR)/$@
 
 yapp_pulsarsnd: $(IDIR)/yapp_pulsarsnd.o
-	$(CC) $(SRCDIR)/yapp_pulsarsnd.o $(IDIR)/yapp_version.o $(IDIR)/yapp_common.o \
+	$(CC) $(SRCDIR)/yapp_pulsarsnd.o $(IDIR)/yapp_version.o $(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o \
 		$(LFLAGS_MATH) $(LFLAGS_SNDFILE) -o $(BINDIR)/$@
 
 #gendispdata.o: $(SRCDIR)/gendispdata.c
 #	$(CC) $(CFLAGS_C) $(SRCDIR)/gendispdata.c -o $(IDIR)/$@
 #
 #gendispdata: $(IDIR)/gendispdata.o
-#	$(CC) $(SRCDIR)/gendispdata.c $(IDIR)/yapp_version.o $(IDIR)/yapp_common.o \
+#	$(CC) $(SRCDIR)/gendispdata.c $(IDIR)/yapp_version.o $(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o \
 #		-o $(BINDIR)/$@
 
 # create the tags file
@@ -167,6 +171,7 @@ install:
 clean:
 	$(DELCMD) $(IDIR)/yapp_version.c
 	$(DELCMD) $(IDIR)/yapp_version.o
+	$(DELCMD) $(IDIR)/yapp_erflookup.o
 	$(DELCMD) $(IDIR)/yapp_common.o
 	$(DELCMD) $(IDIR)/set_colours.o
 	$(DELCMD) $(IDIR)/yapp_dedisperse.o

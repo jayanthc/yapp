@@ -9,6 +9,8 @@
 #include "yapp.h"
 #include "yapp_sigproc.h"
 
+extern const double g_aadErfLookup[YAPP_ERF_ENTRIES][3];
+
 /*
  * Determine the file type
  */
@@ -99,6 +101,7 @@ double YAPP_CalcThresholdInSigmas(int iTimeSamps)
     double dErfDiff = 0.0;
     double dErfDiffMin = 0.0;
     int iRet = YAPP_RET_SUCCESS;
+    int i = 0;
 
     /* calculate the threshold */
     /* number of points expected above the threshold, per DM channel */
@@ -108,42 +111,20 @@ double YAPP_CalcThresholdInSigmas(int iTimeSamps)
     /* calculate the error function */
     dErf = 1 - 2 * dPOutlier;
 
-    /* open the file containing the error function lookup table */
-    pFErfLookup = fopen(PATH_ERF_LOOKUP, "r");
-    if (NULL == pFErfLookup)
-    {
-        (void) fprintf(stderr,
-                       "ERROR: Opening file %s failed! %s.\n",
-                       PATH_ERF_LOOKUP,
-                       strerror(errno));
-        return YAPP_RET_ERROR;
-    }
-
-    (void) fscanf(pFErfLookup,
-                  " %lf %lf %lf\n",
-                  &dErfRef,
-                  &dErfArgRef,
-                  &dNumSigmasRef);
+    dErfRef = g_aadErfLookup[0][0];
+    dErfArgRef = g_aadErfLookup[0][1];
+    dNumSigmasRef = g_aadErfLookup[0][2];
     dErfDiff = fabs(dErfRef - dErf);
     dErfDiffMin = dErfDiff;
     dNumSigmas = dNumSigmasRef;
 
     /* get the threshold in terms of standard deviation for the matching error
        function from the error function lookup table */
-    while (YAPP_TRUE)
+    for (i = 0; i < YAPP_ERF_ENTRIES; ++i)
     {
-        iRet = fscanf(pFErfLookup,
-                      " %lf %lf %lf\n",
-                      &dErfRef,
-                      &dErfArgRef,
-                      &dNumSigmasRef);
-        if (0 == iRet)
-        {
-            /* the last line of the error function lookup file contains a
-               description of the columns, which would not be read as doubles,
-               hence returning 0 */
-            break;
-        }
+        dErfRef = g_aadErfLookup[i][0];
+        dErfArgRef = g_aadErfLookup[i][1];
+        dNumSigmasRef = g_aadErfLookup[i][2];
 
         dErfDiff = fabs(dErfRef - dErf);
         if (dErfDiff < dErfDiffMin)
@@ -152,8 +133,6 @@ double YAPP_CalcThresholdInSigmas(int iTimeSamps)
             dNumSigmas = dNumSigmasRef;
         }
     }
-
-    (void) fclose(pFErfLookup);
 
     if (dNumSigmas < MIN_THRES_IN_SIGMA)
     {

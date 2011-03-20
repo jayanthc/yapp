@@ -15,17 +15,17 @@ CleanUp	./yapp_pulsarsnd.c	/^void CleanUp()$/;"	f
 CleanUp	./yapp_viewdata.c	/^void CleanUp()$/;"	f
 CleanUp	./yapp_viewmetadata.c	/^void CleanUp()$/;"	f
 DEF_FORMAT	./yapp.h	122;"	d
-DEF_LAW_MAX	./yapp.h	218;"	d
-DEF_LAW_MIN	./yapp.h	217;"	d
-DEF_LAW_STEP	./yapp.h	215;"	d
+DEF_LAW_MAX	./yapp.h	220;"	d
+DEF_LAW_MIN	./yapp.h	219;"	d
+DEF_LAW_STEP	./yapp.h	217;"	d
 DEF_OUT_FORMAT	./yapp.h	123;"	d
 DEF_PROC_PERCENT	./yapp.h	129;"	d
-DEF_PROC_SPEC	./yapp.h	210;"	d
+DEF_PROC_SPEC	./yapp.h	212;"	d
 DEF_PROC_TIME	./yapp.h	131;"	d
 DEF_SIZE_BLOCK	./yapp.h	124;"	d
 DEF_SKIP_PERCENT	./yapp.h	126;"	d
 DEF_SKIP_TIME	./yapp.h	127;"	d
-DM_TOL_PERCENT	./yapp.h	191;"	d
+DM_TOL_PERCENT	./yapp.h	193;"	d
 EXT_DEDISPSPEC	./yapp.h	87;"	d
 EXT_DEDISPSPECCFG	./yapp.h	88;"	d
 EXT_DYNSPEC	./yapp.h	86;"	d
@@ -41,7 +41,7 @@ MAX_LEN_PSRNAME	./yapp.h	115;"	d
 MAX_PNUM_BINS	./yapp.h	113;"	d
 MAX_SIZE_BLOCK	./yapp.h	110;"	d
 MAX_SNR_BINS	./yapp.h	112;"	d
-MIN_THRES_IN_SIGMA	./yapp.h	193;"	d
+MIN_THRES_IN_SIGMA	./yapp.h	195;"	d
 NUM_BAD_BOUNDS	./yapp.h	101;"	d
 PATH_ERF_LOOKUP	./yapp.h	187;"	d
 PATH_VER	./yapp_makever.c	24;"	d	file:
@@ -71,9 +71,9 @@ PG_VP_MR	./yapp.h	159;"	d
 PG_VP_MT	./yapp.h	161;"	d
 PG_VP_MW	./yapp.h	162;"	d
 PLOT_DDS_SUFFIX	./yapp.h	152;"	d
-PROC_SPEC_NOTSEL	./yapp.h	199;"	d
-PROC_SPEC_PERCENT	./yapp.h	201;"	d
-PROC_SPEC_TIME	./yapp.h	203;"	d
+PROC_SPEC_NOTSEL	./yapp.h	201;"	d
+PROC_SPEC_PERCENT	./yapp.h	203;"	d
+PROC_SPEC_TIME	./yapp.h	205;"	d
 PrintUsage	./yapp_dedisp.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	./yapp_dedisperse.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	./yapp_pulsarsnd.c	/^void PrintUsage(const char *pcProgName)$/;"	f
@@ -88,10 +88,11 @@ VER_BUILD_DELIM	./yapp_makever.c	28;"	d	file:
 VER_BUILD_PREFIX	./yapp_makever.c	27;"	d	file:
 YAPP_BYTE2BIT_FACTOR	./yapp.h	84;"	d
 YAPP_CalcThresholdInSigmas	./yapp_common.c	/^double YAPP_CalcThresholdInSigmas(int iTimeSamps)$/;"	f
+YAPP_ERF_ENTRIES	./yapp.h	190;"	d
 YAPP_FALSE	./yapp.h	49;"	d
-YAPP_FILE_DELAYS_LIN	./yapp.h	223;"	d
-YAPP_FILE_DELAYS_OTHER	./yapp.h	224;"	d
-YAPP_FILE_DELAYS_QUAD	./yapp.h	222;"	d
+YAPP_FILE_DELAYS_LIN	./yapp.h	225;"	d
+YAPP_FILE_DELAYS_OTHER	./yapp.h	226;"	d
+YAPP_FILE_DELAYS_QUAD	./yapp.h	224;"	d
 YAPP_FORMATSTR_DTS_DDD	./yapp.h	59;"	d
 YAPP_FORMATSTR_DTS_TIM	./yapp.h	60;"	d
 YAPP_FORMATSTR_FIL	./yapp.h	58;"	d
@@ -169,6 +170,7 @@ dSourceRA	./yapp_sigproc.h	/^    double dSourceRA;$/;"	m	struct:tagSIGPROCHeader
 dTSamp	./yapp_sigproc.h	/^    double dTSamp;      \/* in seconds *\/$/;"	m	struct:tagSIGPROCHeader
 dTStart	./yapp_sigproc.h	/^    double dTStart;     \/* in MJD *\/$/;"	m	struct:tagSIGPROCHeader
 dZAStart	./yapp_sigproc.h	/^    double dZAStart;$/;"	m	struct:tagSIGPROCHeader
+g_aadErfLookup	./yapp_erflookup.c	/^const double g_aadErfLookup[YAPP_ERF_ENTRIES][3] = {$/;"	v
 g_iDispPlots	./yapp_dedisp.c	/^int g_iDispPlots = YAPP_TRUE;$/;"	v
 g_iDispPlots	./yapp_dedisperse.c	/^int g_iDispPlots = YAPP_TRUE;$/;"	v
 g_padBadTimes	./yapp_dedisp.c	/^double (*g_padBadTimes)[][NUM_BAD_BOUNDS] = NULL;$/;"	v
@@ -182,7 +184,7 @@ g_pcIsChanGood	./yapp_viewmetadata.c	/^char *g_pcIsChanGood = NULL;$/;"	v
 g_pcIsTimeGood	./yapp_dedisp.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	./yapp_dedisperse.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	./yapp_viewdata.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
-g_pcVersion	./yapp_version.c	/^const char *g_pcVersion = "YAPP-DEV-20110301-161844";$/;"	v
+g_pcVersion	./yapp_version.c	/^const char *g_pcVersion = "YAPP-DEV-20110320-013854";$/;"	v
 g_pdDM	./yapp_dedisperse.c	/^double *g_pdDM = NULL;$/;"	v
 g_pdDelayTab	./yapp_dedisp.c	/^double *g_pdDelayTab = NULL;$/;"	v
 g_pdDelayTab	./yapp_dedisperse.c	/^double *g_pdDelayTab = NULL;$/;"	v
