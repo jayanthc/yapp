@@ -1,0 +1,231 @@
+
+/* default.css */
+
+body
+{
+    font-family: "Tahoma", "Verdana", sans-serif;
+    font-size: 10pt;
+    color: #000000;
+    background-color: #FFFFFF;
+    margin-top: 0%;
+    text-align: center;
+    /*background-image: url('http://www.wvu.edu/images/tree_background.gif');*/
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-position: center 0px;
+}
+
+div
+{
+}
+div#fmap
+{
+    width: 650px;
+    height: 325px;
+}
+div.main
+{
+    width: 800px;
+    border-left-width: 2px;
+    border-right-width: 2px;
+    border-top-width: 0px;
+    border-bottom-width: 0px;
+    border-style: solid;
+    border-color: #333333;
+    padding: 10pt;
+    color: #FFFFFF;
+    background-color: #000000;
+    text-align: center;
+    margin: auto;
+}
+div.caption
+{
+    position: relative;
+    /*float: right;*/
+    color: #FFFFFF;
+    height: auto;
+    background-color: inherit;
+    /*
+    background-color: #000000;
+    opacity: 0.5;
+    */
+    font-size: 7pt;
+    /*text-align: right;*/
+    top: 90px;
+    left: 0px;
+}
+div.mainTitle
+{
+    color: #FFFFFF;
+    height: auto;
+    background-color: inherit;
+    /*
+    background-color: #000000;
+    opacity: 0.5;
+    */
+    font-weight: bold;
+    font-size: 12pt;
+    letter-spacing: 1pt;
+}
+div.mainSubTitle
+{
+    color: #FFFFFF;
+    height: auto;
+    background-color: inherit;
+    /*
+    background-color: #000000;
+    opacity: 0.4;
+    */
+    font-weight: normal;
+    font-size: 10pt;
+    letter-spacing: 2.5pt;
+}
+
+span
+{
+}
+span.warningJs
+{
+    font-style: italic;
+}
+span.pubSubTitle
+{
+    color: #FFFFFF;
+    background-color: inherit;
+    font-weight: bold;
+    font-size: 12pt;
+}
+
+dt
+{
+}
+dt.title
+{
+    font-weight: bold;
+}
+
+dd
+{
+}
+dd.download
+{
+    font-style: italic;
+}
+
+a
+{
+    color: #FFCC00;
+    background-color: inherit;
+    text-decoration: none;
+}
+a:hover
+{
+    text-decoration: underline;
+}
+a:active
+{
+    color: #0000FF;
+    background-color: inherit;
+    text-decoration: underline;
+}
+a.button
+{
+    display: block;
+    font-weight: bold;
+    text-decoration: none;
+    color: #FFFFFF;
+    background-color: #333333;
+    border-bottom: none;
+}
+a.button:hover
+{
+    color: #003366;
+    background-color: #FFCC00;
+}
+a.button:active
+{
+    color: #FFCC00;
+    background-color: #003366;
+    text-decoration: none;
+    border-bottom: none;
+}
+
+table
+{
+    width: 100%;
+    height: inherit;
+    border-width: 0px;
+    padding: 0pt;
+    border-spacing: 0;
+    font-size: 10pt;
+    border-collapse: collapse;
+    border-style: solid;
+}
+table.main
+{
+    width: 100%;
+    height: inherit;
+    text-align: center;
+    background-color: #000000;
+    color: #FFFFFF;
+    padding: 5pt;
+}
+table.buttonBar
+{
+    padding: 2pt;
+    letter-spacing: 1pt;
+    text-align: right;
+}
+table.mainIn
+{
+    padding: 10pt;
+}
+table.mainOut
+{
+    color: #FFFFFF;
+    background-color: #000000;
+    padding: 10pt;
+}
+
+td
+{
+    border-width: 0px;
+    vertical-align: top;
+}
+td.mainLeft
+{
+    text-align: left;
+}
+td.mainRight
+{
+    width: 150px;
+    text-align: right;
+}
+td.title
+{
+    text-align: center;
+    font-weight: bold;
+    font-size: 12pt;
+}
+td.mainBanner
+{
+    background-image: url('../images/banner.png');
+    background-repeat: no-repeat;
+    background-position: center;
+    width: 650px;
+    height: 235px;
+    padding: 10pt;
+    text-align: left;
+    vertical-align: middle;
+}
+td.footer
+{
+    font-size: 8pt;
+    text-align: right;
+}
+
+img
+{
+    border: 0px none;
+}
+
