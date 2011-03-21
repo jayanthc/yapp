@@ -46,6 +46,9 @@ number of samples read in one block (default is 4096 samples)
 \-c
 number of sigmas above threshold; will clip anything above this level
 .TP
+\-m
+MATLAB colour map for plotting (default is 'jet')
+.TP
 \-i
 invert background and foreground colours in plots
 .TP
@@ -58,7 +61,7 @@ display the version
 
 .SH EXAMPLE
 .TP
-yapp_viewdata data.fil
+yapp_viewdata -b 8192 -m hsv data.fil
 
 
 .SH SEE ALSO

@@ -18,6 +18,8 @@
  *                                          (default is 4096 samples)
  *     -c  --clip-level <level>             Number of sigmas above threshold;
  *                                          will clip anything above this level
+ *     -m  --colour-map <name>              MATLAB colour map for plotting
+ *                                          (default is 'jet')
  *     -i  --invert                         Invert the background and foreground
  *                                          colours in plots
  *     -n  --non-interactive                Run in non-interactive mode
@@ -34,14 +36,9 @@
 
 #include "yapp.h"
 #include "yapp_sigproc.h"   /* for SIGPROC filterbank file format support */
+#include "colourmap.h"
 
 /* TODO: Handle the headerless/header-separated filterbank format file */
-
-/* DEV:
-int SetColourMap(int iIsMonochrome,
-                 int iIsColInv,
-                 float fColMin,
-                 float fColMax); */
 
 /**
  * The build version string, maintained in the file version.c, which is
@@ -139,7 +136,6 @@ int main(int argc, char *argv[])
     struct stat stFileStats = {0};
     long lDataSizeTotal = 0;
     int iRet = YAPP_RET_SUCCESS;
-    int iFlagBW = 0;
     float afTM[6] = {0.0};
     float fDataMin = 0.0;
     float fDataMax = 0.0;
@@ -158,12 +154,13 @@ int main(int argc, char *argv[])
     int k = 0;
     int l = 0;
     int m = 0;
+    int iColourMap = DEF_CMAP;
     int iInvCols = YAPP_FALSE;
     char cIsNonInteractive = YAPP_FALSE;
     const char *pcProgName = NULL;
     int iNextOpt = 0;
     /* valid short options */
-    const char* const pcOptsShort = "hs:S:p:P:b:c:inv";
+    const char* const pcOptsShort = "hs:S:p:P:b:c:m:inv";
     /* valid long options */
     const struct option stOptsLong[] = {
         { "help",                   0, NULL, 'h' },
@@ -173,6 +170,7 @@ int main(int argc, char *argv[])
         { "data-proc-time",         1, NULL, 'P' },
         { "block-size",             1, NULL, 'b' },
         { "clip-level",             1, NULL, 'c' },
+        { "colour-map",             1, NULL, 'm' },
         { "invert",                 0, NULL, 'i' },
         { "non-interactive",        0, NULL, 'n' },
         { "version",                0, NULL, 'v' },
@@ -295,6 +293,11 @@ int main(int argc, char *argv[])
             case 'c':   /* -c or --clip-level */
                 /* set option */
                 fClipLevel = (float) atof(optarg);
+                break;
+
+            case 'm':   /* -m or --colour-map */
+                /* set option */
+                iColourMap = GetColourMapFromName(optarg);
                 break;
 
             case 'i':  /* -i or --invert */
@@ -1354,15 +1357,8 @@ int main(int argc, char *argv[])
             fColMax = fDataMax;
         }
 
-        iFlagBW = YAPP_FALSE;
-
-        #ifdef _FC_F77_    /* if using Fortran 77 compiler */
-        set_colours__(&iFlagBW, &fColMin, &fColMax);
-        #else           /* for Fortran 95 */
-        set_colours_(&iFlagBW, &fColMin, &fColMax);
-        #endif
-        /* DEV:
-        SetColourMap(iFlagBW, fColMin, fColMax); */
+        /* set the colour map */
+        SetColourMap(iColourMap, 0, fColMin, fColMax);
 
         /* get the transpose of the two-dimensional array */
         i = 0;
@@ -1499,41 +1495,6 @@ int main(int argc, char *argv[])
 }
 
 /*
- * Sets the colour map
- */
-int SetColourMap(int iIsMonochrome, int iIsColInv, float fColMin, float fColMax)
-{
-    int iColMin = 0;
-    int iColMax = 0;
-    char acQItem[LEN_GENSTRING] = {0};
-    int iLenQVal = 0;
-
-    /* query colour capability */
-    cpgqcol(&iColMin, &iColMax);
-    if (!(iIsMonochrome))   /* request for colour */
-    {
-        if (1 == iColMax)   /* device has no colour capability */
-        {
-            (void) printf("WARNING: Device has no colour capability\n!");
-            return YAPP_RET_SUCCESS;
-        }
-    }
-
-    /* invert colours for hardcopy device, if it is not inverted already */
-    if (!(iIsColInv))
-    {
-        /* query hardcopy status */
-        cpgqinf("HARDCOPY", acQItem, &iLenQVal);
-        if (0 == strcmp(acQItem, "YES"))
-        {
-            /* this is a harcopy device, so invert colours */
-        }
-    }
-
-    return YAPP_RET_SUCCESS;
-}
-
-/*
  * Cleans up all allocated memory
  */
 void CleanUp()
@@ -1625,6 +1586,10 @@ void PrintUsage(const char *pcProgName)
     (void) printf("Number of sigmas above threshold; will\n");
     (void) printf("                                         ");
     (void) printf("clip anything above this level\n");
+    (void) printf("    -m  --colour-map <name>              ");
+    (void) printf("MATLAB colour map for plotting\n");
+    (void) printf("                                         ");
+    (void) printf("(default is 'jet')\n");
     (void) printf("    -i  --invert                         ");
     (void) printf("Invert background and foreground\n");
     (void) printf("                                         ");

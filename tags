@@ -82,7 +82,6 @@ PrintUsage	./yapp_viewmetadata.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 RET_ERROR	./yapp_makever.c	20;"	d	file:
 RET_SUCCESS	./yapp_makever.c	19;"	d	file:
 SUFFIX_CFG	./yapp.h	92;"	d
-SetColourMap	./yapp_viewdata.c	/^int SetColourMap(int iIsMonochrome, int iIsColInv, float fColMin, float fColMax)$/;"	f
 VAR_VER	./yapp_makever.c	26;"	d	file:
 VER_BUILD_DELIM	./yapp_makever.c	28;"	d	file:
 VER_BUILD_PREFIX	./yapp_makever.c	27;"	d	file:
@@ -183,7 +182,7 @@ g_pcIsChanGood	./yapp_viewmetadata.c	/^char *g_pcIsChanGood = NULL;$/;"	v
 g_pcIsTimeGood	./yapp_dedisp.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	./yapp_dedisperse.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	./yapp_viewdata.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
-g_pcVersion	./yapp_version.c	/^const char *g_pcVersion = "YAPP-DEV-20110320-032216";$/;"	v
+g_pcVersion	./yapp_version.c	/^const char *g_pcVersion = "YAPP-DEV-20110321-175520";$/;"	v
 g_pdDM	./yapp_dedisperse.c	/^double *g_pdDM = NULL;$/;"	v
 g_pdDelayTab	./yapp_dedisp.c	/^double *g_pdDelayTab = NULL;$/;"	v
 g_pdDelayTab	./yapp_dedisperse.c	/^double *g_pdDelayTab = NULL;$/;"	v

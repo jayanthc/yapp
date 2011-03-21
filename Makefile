@@ -43,6 +43,7 @@ all: yapp_makever \
 	 yapp_erflookup.o \
 	 yapp_common.o \
 	 yapp_dedisperse.o \
+	 colourmap.o \
 	 set_colours.o \
 	 yapp_dedisperse \
 	 yapp_viewdata.o \
@@ -88,6 +89,9 @@ yapp_version.o: $(SRCDIR)/yapp_version.c
 yapp_erflookup.o: $(SRCDIR)/yapp_erflookup.c
 	$(CC) -c $(CFLAGS_C) $(SRCDIR)/yapp_erflookup.c -o $(IDIR)/$@
 
+colourmap.o: colourmap.c
+	gcc -std=gnu99 -pedantic -Wall -c colourmap.c -o $@
+
 ifeq ($(FC), g77)
 DFC = -D_FC_F77_
 set_colours.o: $(SRCDIR)/set_colours.f
@@ -121,7 +125,7 @@ yapp_viewdata.o: $(SRCDIR)/yapp_viewdata.c
 
 yapp_viewdata: $(IDIR)/yapp_viewdata.o
 	$(FC) $(IDIR)/yapp_viewdata.o $(IDIR)/yapp_version.o $(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o \
-        $(IDIR)/set_colours.o $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -o $(BINDIR)/$@
+        $(IDIR)/colourmap.o $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -o $(BINDIR)/$@
 
 reorderdds.o: $(SRCDIR)/reorderdds.c
 	$(CC) $(CFLAGS_C) $(DFC) $(SRCDIR)/reorderdds.c -o $(IDIR)/$@
@@ -173,6 +177,7 @@ clean:
 	$(DELCMD) $(IDIR)/yapp_version.o
 	$(DELCMD) $(IDIR)/yapp_erflookup.o
 	$(DELCMD) $(IDIR)/yapp_common.o
+	$(DELCMD) $(IDIR)/colourmap.o
 	$(DELCMD) $(IDIR)/set_colours.o
 	$(DELCMD) $(IDIR)/yapp_dedisperse.o
 #	$(DELCMD) $(IDIR)/killrfi.o
