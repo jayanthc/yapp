@@ -181,7 +181,7 @@ int main(int argc, char *argv[])
                        "ERROR: Failed to stat %s: %s!\n",
                        pcFileDDS,
                        strerror(errno));
-        CleanUp();
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
 
@@ -191,7 +191,7 @@ int main(int argc, char *argv[])
     {
         (void) fprintf(stderr,
                        "ERROR: Incongruency in number of time samples!\n");
-        CleanUp();
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
     (void) printf("Time samples containing data      : %d\n", iTimeSamps);
@@ -204,7 +204,7 @@ int main(int argc, char *argv[])
                        "ERROR: Opening file %s failed! %s.\n",
                        pcFileDDS,
                        strerror(errno));
-        CleanUp();
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
 
@@ -215,7 +215,7 @@ int main(int argc, char *argv[])
     {
         perror("malloc - g_pfBuf");
         (void) fclose(pFDDS);
-        CleanUp();
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
 
@@ -224,7 +224,7 @@ int main(int argc, char *argv[])
     {
         perror("malloc - g_pfDedispSpec");
         (void) fclose(pFDDS);
-        CleanUp();
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
     pfDSWritePointer = g_pfDedispSpec;
@@ -240,7 +240,7 @@ int main(int argc, char *argv[])
                 (void) fprintf(stderr,
                                "ERROR: Insufficient number of data items read!\n");
                 (void) fclose(pFDDS);
-                CleanUp();
+                YAPP_CleanUp();
                 return YAPP_RET_ERROR;
             }
             if (ferror(pFDDS))
@@ -248,7 +248,7 @@ int main(int argc, char *argv[])
                 (void) fprintf(stderr,
                                "ERROR: Data read failed!\n");
                 (void) fclose(pFDDS);
-                CleanUp();
+                YAPP_CleanUp();
                 return YAPP_RET_ERROR;
             }
             ++iReadBlockCount;
@@ -295,7 +295,7 @@ int main(int argc, char *argv[])
                            "ERROR: Opening graphics device %s failed!\n",
                            acDev);
             (void) fclose(pFDDS);
-            CleanUp();
+            YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
         cpgask(YAPP_FALSE);
@@ -309,7 +309,7 @@ int main(int argc, char *argv[])
                            "ERROR: Opening graphics device %s failed!\n",
                            PG_DEV);
             (void) fclose(pFDDS);
-            CleanUp();
+            YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
         cpgask(YAPP_TRUE);
@@ -327,7 +327,7 @@ int main(int argc, char *argv[])
         perror("malloc - g_pfXAxis");
         cpgclos();
         (void) fclose(pFDDS);
-        CleanUp();
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
 
@@ -343,7 +343,7 @@ int main(int argc, char *argv[])
         perror("malloc - g_pdDM");
         cpgclos();
         (void) fclose(pFDDS);
-        CleanUp();
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
 
@@ -455,7 +455,7 @@ int main(int argc, char *argv[])
         (void) fprintf(stderr,
                        "ERROR: Insufficient number of data items read!\n");
         (void) fclose(pFDDS);
-        CleanUp();
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
     if (ferror(pFDDS))
@@ -463,13 +463,13 @@ int main(int argc, char *argv[])
         (void) fprintf(stderr,
                        "ERROR: Data read failed!\n");
         (void) fclose(pFDDS);
-        CleanUp();
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
 
     (void) printf("DONE!\n");
 
-    CleanUp();
+    YAPP_CleanUp();
 
     return YAPP_RET_SUCCESS;
 }
@@ -477,7 +477,7 @@ int main(int argc, char *argv[])
 /*
  * Cleans up all allocated memory
  */
-void CleanUp()
+void YAPP_CleanUp()
 {
     if (g_pfBuf != NULL)
     {

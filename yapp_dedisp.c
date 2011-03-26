@@ -39,14 +39,9 @@
 
 #include "yapp.h"
 #include "yapp_sigproc.h"   /* for SIGPROC filterbank file format support */
+#include "colourmap.h"
 
 /* TODO: Handle the headerless/header-separated filterbank format file */
-
-/* DEV:
-int SetColourMap(int iIsMonochrome,
-                 int iIsColInv,
-                 float fColMin,
-                 float fColMax); */
 
 /**
  * The build version string, maintained in the file version.c, which is
@@ -162,7 +157,6 @@ int main(int argc, char *argv[])
     struct stat stFileStats = {0};
     int iDataSizeTotal = 0;
     int iRet = YAPP_RET_SUCCESS;
-    int iFlagBW = 0;
     float afTM[6] = {0.0};
     float fDataMin = 0.0;
     float fDataMax = 0.0;
@@ -566,7 +560,7 @@ int main(int argc, char *argv[])
         {
             perror("malloc - g_pfBFTimeSectMean");
             (void) fclose(pFCfg);
-            CleanUp();
+            YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
 
@@ -580,7 +574,7 @@ int main(int argc, char *argv[])
         {
             perror("malloc - g_pfBFGain");
             (void) fclose(pFCfg);
-            CleanUp();
+            YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
 
@@ -599,7 +593,7 @@ int main(int argc, char *argv[])
         {
             perror("malloc - g_padBadTimes");
             (void) fclose(pFCfg);
-            CleanUp();
+            YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
         for (i = 0; i < iNumBadTimes; ++i)
@@ -619,7 +613,7 @@ int main(int argc, char *argv[])
                            "ERROR: Failed to stat %s: %s!\n",
                            pcFileSpec,
                            strerror(errno));
-            CleanUp();
+            YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
         iDataSizeTotal = (int) stFileStats.st_size;
@@ -641,7 +635,7 @@ int main(int argc, char *argv[])
                            "ERROR: Opening file %s failed! %s.\n",
                            pcFileSpec,
                            strerror(errno));
-            CleanUp();
+            YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
 
@@ -654,7 +648,7 @@ int main(int argc, char *argv[])
         {
             (void) fprintf(stderr,
                            "ERROR: Reading header failed!\n");
-            CleanUp();
+            YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
         iHeaderLen += (sizeof(iLen) + iLen);
@@ -878,7 +872,7 @@ int main(int argc, char *argv[])
                            "ERROR: Failed to stat %s: %s!\n",
                            pcFileSpec,
                            strerror(errno));
-            CleanUp();
+            YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
         iDataSizeTotal = (int) stFileStats.st_size - iHeaderLen;
@@ -910,7 +904,7 @@ int main(int argc, char *argv[])
     if (NULL == g_pdDelayTab)
     {
         perror("malloc - g_pdDelayTab");
-        CleanUp();
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
 
@@ -928,7 +922,7 @@ int main(int argc, char *argv[])
                     "ERROR: Opening file %s failed! %s.\n",
                     YAPP_FILE_DELAYS_QUAD,
                     strerror(errno));
-            CleanUp();
+            YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
 #endif
@@ -1052,7 +1046,7 @@ int main(int argc, char *argv[])
             (void) fprintf(stderr,
                            "ERROR: Input time is longer than length of "
                            "data!\n");
-            CleanUp();
+            YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
 
@@ -1084,7 +1078,7 @@ int main(int argc, char *argv[])
     {
         (void) printf("WARNING: Data to be skipped is greater than or equal to "
                       "the size of the file! Terminating.\n");
-        CleanUp();
+        YAPP_CleanUp();
         return YAPP_RET_SUCCESS;
     }
 
@@ -1191,7 +1185,7 @@ int main(int argc, char *argv[])
     if ((double) YAPP_RET_ERROR == dNumSigmas)
     {
         (void) fprintf(stderr, "ERROR: Threshold calculation failed!\n");
-        CleanUp();
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
     fStatBW = iNumGoodChans * fChanBW;  /* in MHz */
@@ -1208,7 +1202,7 @@ int main(int argc, char *argv[])
     if (NULL == g_pcIsTimeGood)
     {
         perror("malloc - g_pcIsTimeGood");
-        CleanUp();
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
     /* set all elements to 'YAPP_TRUE' */
@@ -1222,7 +1216,7 @@ int main(int argc, char *argv[])
                        "ERROR: Opening file %s failed! %s.\n",
                        pcFileSpec,
                        strerror(errno));
-        CleanUp();
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
 
@@ -1233,7 +1227,7 @@ int main(int argc, char *argv[])
     {
         perror("malloc - g_pfBuf0");
         (void) fclose(pFSpec);
-        CleanUp();
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
     g_pfBuf1 = (float *) malloc(sizeof(float) * iNumChans * iBlockSize);
@@ -1241,7 +1235,7 @@ int main(int argc, char *argv[])
     {
         perror("malloc - g_pfBuf1");
         (void) fclose(pFSpec);
-        CleanUp();
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
 
@@ -1256,7 +1250,7 @@ int main(int argc, char *argv[])
     {
         perror("malloc - g_pfDedispData");
         (void) fclose(pFSpec);
-        CleanUp();
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
 
@@ -1315,7 +1309,7 @@ int main(int argc, char *argv[])
                                    "ERROR: Beam flip time section anomaly "
                                    "detected!\n");
                     (void) fclose(pFSpec);
-                    CleanUp();
+                    YAPP_CleanUp();
                     return YAPP_RET_ERROR;
                 }
                 ++iTimeSect;
@@ -1373,7 +1367,7 @@ int main(int argc, char *argv[])
                                "ERROR: Opening graphics device %s failed!\n",
                                acDev);
                 (void) fclose(pFSpec);
-                CleanUp();
+                YAPP_CleanUp();
                 return YAPP_RET_ERROR;
             }
             cpgask(YAPP_FALSE);
@@ -1387,7 +1381,7 @@ int main(int argc, char *argv[])
                                "ERROR: Opening graphics device %s failed!\n",
                                PG_DEV);
                 (void) fclose(pFSpec);
-                CleanUp();
+                YAPP_CleanUp();
                 return YAPP_RET_ERROR;
             }
             cpgask(YAPP_TRUE);
@@ -1408,7 +1402,7 @@ int main(int argc, char *argv[])
             perror("malloc - g_pfXAxis");
             cpgclos();
             (void) fclose(pFSpec);
-            CleanUp();
+            YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
 
@@ -1419,7 +1413,7 @@ int main(int argc, char *argv[])
             perror("malloc - g_pfYAxis");
             cpgclos();
             (void) fclose(pFSpec);
-            CleanUp();
+            YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
 
@@ -1440,7 +1434,7 @@ int main(int argc, char *argv[])
             perror("malloc - g_pfPlotBuf");
             cpgclos();
             (void) fclose(pFSpec);
-            CleanUp();
+            YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
     }
@@ -1714,6 +1708,7 @@ int main(int argc, char *argv[])
                 fColMax = fDataMax;
             }
 
+#if 0
             iFlagBW = YAPP_FALSE;
 
             #ifdef _FC_F77_    /* if using Fortran 77 compiler */
@@ -1721,8 +1716,8 @@ int main(int argc, char *argv[])
             #else           /* for Fortran 95 */
             set_colours_(&iFlagBW, &fColMin, &fColMax);
             #endif
-            /* DEV:
-            SetColourMap(iFlagBW, fColMin, fColMax); */
+#endif
+            SetColourMap(CMAP_JET, 0, fColMin, fColMax);
 
             /* get the transpose of the two-dimensional array */
             k = 0;
@@ -1810,7 +1805,7 @@ int main(int argc, char *argv[])
                 }
                 (void) fclose(pFDedispData);
                 (void) fclose(pFSpec);
-                CleanUp();
+                YAPP_CleanUp();
                 return YAPP_RET_ERROR;
             }
             if (iReadItems < iTotSampsPerBlock)
@@ -1881,7 +1876,7 @@ int main(int argc, char *argv[])
                             }
                             (void) fclose(pFDedispData);
                             (void) fclose(pFSpec);
-                            CleanUp();
+                            YAPP_CleanUp();
                             return YAPP_RET_ERROR;
                         }
                         ++iTimeSect;
@@ -2028,11 +2023,14 @@ int main(int argc, char *argv[])
                 fColMax = fDataMax;
             }
 
+#if 0
             iFlagBW = YAPP_FALSE;
 
             /* for nitro
             set_colours__(&iFlagBW, &fColMin, &fColMax);
             */
+#endif
+            SetColourMap(CMAP_JET, 0, fColMin, fColMax);
 
             /* get the transpose of the two-dimensional array */
             k = 0;
@@ -2157,7 +2155,7 @@ int main(int argc, char *argv[])
 
     (void) fclose(pFDedispData);
     (void) fclose(pFSpec);
-    CleanUp();
+    YAPP_CleanUp();
 
     return YAPP_RET_SUCCESS;
 }
@@ -2165,7 +2163,7 @@ int main(int argc, char *argv[])
 /*
  * Cleans up all allocated memory
  */
-void CleanUp()
+void YAPP_CleanUp()
 {
     if (g_pfDedispData != NULL)
     {

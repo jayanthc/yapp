@@ -154,7 +154,7 @@ int main(int argc, char *argv[])
                        "ERROR: Opening file %s failed! %s.\n",
                        pcFileSpec,
                        strerror(errno));
-        CleanUp();
+        YAPP_CleanUp();
         return SPS_RET_ERROR;
     }
 
@@ -163,7 +163,7 @@ int main(int argc, char *argv[])
     {
         perror("malloc - g_pfBuf0");
         (void) fclose(pFDispData);
-        CleanUp();
+        YAPP_CleanUp();
         return SPS_RET_ERROR;
     }
 
@@ -274,7 +274,7 @@ int main(int argc, char *argv[])
 /*
  * Cleans up all allocated memory
  */
-void CleanUp()
+void YAPP_CleanUp()
 {
     return;
 }

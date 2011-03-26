@@ -538,7 +538,7 @@ int main(int argc, char *argv[])
     {
         perror("malloc - g_pfBFTimeSectMean");
         (void) fclose(pFCfg);
-        CleanUp();
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
 
@@ -552,7 +552,7 @@ int main(int argc, char *argv[])
     {
         perror("malloc - g_pfBFGain");
         (void) fclose(pFCfg);
-        CleanUp();
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
 
@@ -573,7 +573,7 @@ int main(int argc, char *argv[])
     {
         perror("malloc - g_padBadTimes");
         (void) fclose(pFCfg);
-        CleanUp();
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
 
@@ -613,7 +613,7 @@ int main(int argc, char *argv[])
     if (NULL == g_pdDM)
     {
         perror("malloc - g_pdDM");
-        CleanUp();
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
 
@@ -677,7 +677,7 @@ int main(int argc, char *argv[])
     if (NULL == g_pdDelayTab)
     {
         perror("calloc - g_pdDelayTab");
-        CleanUp();
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
 
@@ -685,7 +685,7 @@ int main(int argc, char *argv[])
     if (NULL == g_pdDelayTab)
     {
         perror("malloc - g_pdMaxDelayTab");
-        CleanUp();
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
 
@@ -706,7 +706,7 @@ int main(int argc, char *argv[])
                     "ERROR: Opening file %s failed! %s.\n",
                     YAPP_FILE_DELAYS_QUAD,
                     strerror(errno));
-            CleanUp();
+            YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
 #endif
@@ -861,7 +861,7 @@ int main(int argc, char *argv[])
     if (NULL == pdFactor)
     {
         perror("malloc - pdFactor");
-        CleanUp();
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
 
@@ -902,7 +902,7 @@ int main(int argc, char *argv[])
                     "ERROR: Opening file %s failed! %s.\n",
                     YAPP_FILE_DELAYS_OTHER,
                     strerror(errno));
-            CleanUp();
+            YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
 #endif
@@ -1053,7 +1053,7 @@ int main(int argc, char *argv[])
         if (NULL == pdSlope)
         {
             perror("malloc - pdSlope");
-            CleanUp();
+            YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
 
@@ -1108,7 +1108,7 @@ int main(int argc, char *argv[])
                     "ERROR: Opening file %s failed! %s.\n",
                     YAPP_FILE_DELAYS_LIN,
                     strerror(errno));
-            CleanUp();
+            YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
 #endif
@@ -1237,7 +1237,7 @@ int main(int argc, char *argv[])
                        "ERROR: Failed to stat %s: %s!\n",
                        pcFileSpec,
                        strerror(errno));
-        CleanUp();
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
 
@@ -1262,7 +1262,7 @@ int main(int argc, char *argv[])
             (void) fprintf(stderr,
                            "ERROR: Input time is longer than length of "
                            "data!\n");
-            CleanUp();
+            YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
 
@@ -1293,7 +1293,7 @@ int main(int argc, char *argv[])
     {
         (void) printf("WARNING: Data to be skipped is greater than or equal to "
                       "the size of the file! Terminating.\n");
-        CleanUp();
+        YAPP_CleanUp();
         return YAPP_RET_SUCCESS;
     }
 
@@ -1401,7 +1401,7 @@ int main(int argc, char *argv[])
     if ((double) YAPP_RET_ERROR == dNumSigmas)
     {
         (void) fprintf(stderr, "ERROR: Threshold calculation failed!\n");
-        CleanUp();
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
     fStatBW = iNumGoodChans * fChanBW;  /* in MHz */
@@ -1418,7 +1418,7 @@ int main(int argc, char *argv[])
     if (NULL == g_pcIsTimeGood)
     {
         perror("malloc - g_pcIsTimeGood");
-        CleanUp();
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
     /* set all elements to 'YAPP_TRUE' */
@@ -1432,7 +1432,7 @@ int main(int argc, char *argv[])
                        "ERROR: Opening file %s failed! %s.\n",
                        pcFileSpec,
                        strerror(errno));
-        CleanUp();
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
 
@@ -1443,7 +1443,7 @@ int main(int argc, char *argv[])
     {
         perror("malloc - g_pfBuf0");
         (void) fclose(pFSpec);
-        CleanUp();
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
     g_pfBuf1 = (float *) malloc(iDataSizePerBlock);
@@ -1451,7 +1451,7 @@ int main(int argc, char *argv[])
     {
         perror("malloc - g_pfBuf1");
         (void) fclose(pFSpec);
-        CleanUp();
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
 
@@ -1466,7 +1466,7 @@ int main(int argc, char *argv[])
     {
         perror("malloc - g_pfDedispData");
         (void) fclose(pFSpec);
-        CleanUp();
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
 
@@ -1488,7 +1488,7 @@ int main(int argc, char *argv[])
     {
         perror("malloc - g_pfPriBufBk");
         (void) fclose(pFSpec);
-        CleanUp();
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
 
@@ -1523,7 +1523,7 @@ int main(int argc, char *argv[])
                                "ERROR: Beam flip time section anomaly "
                                "detected!\n");
                 (void) fclose(pFSpec);
-                CleanUp();
+                YAPP_CleanUp();
                 return YAPP_RET_ERROR;
             }
             ++iTimeSect;
@@ -1567,7 +1567,7 @@ int main(int argc, char *argv[])
                                "ERROR: Opening graphics device %s failed!\n",
                                acDev);
                 (void) fclose(pFSpec);
-                CleanUp();
+                YAPP_CleanUp();
                 return YAPP_RET_ERROR;
             }
             cpgask(YAPP_FALSE);
@@ -1581,7 +1581,7 @@ int main(int argc, char *argv[])
                                "ERROR: Opening graphics device %s failed!\n",
                                PG_DEV);
                 (void) fclose(pFSpec);
-                CleanUp();
+                YAPP_CleanUp();
                 return YAPP_RET_ERROR;
             }
             cpgask(YAPP_TRUE);
@@ -1599,7 +1599,7 @@ int main(int argc, char *argv[])
             perror("malloc - g_pfXAxis");
             cpgclos();
             (void) fclose(pFSpec);
-            CleanUp();
+            YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
 
@@ -1615,7 +1615,7 @@ int main(int argc, char *argv[])
     {
         perror("calloc - g_pfDedispDMChans");
         (void) fclose(pFSpec);
-        CleanUp();
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
 
@@ -1628,7 +1628,7 @@ int main(int argc, char *argv[])
     {
         perror("malloc - g_ppFDedispData");
         (void) fclose(pFSpec);
-        CleanUp();
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
     g_ppFDedispCfg = (FILE **) malloc(sizeof(FILE) * (iNumLaws - 1));
@@ -1636,7 +1636,7 @@ int main(int argc, char *argv[])
     {
         perror("malloc - g_ppFDedispCfg");
         (void) fclose(pFSpec);
-        CleanUp();
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
 
@@ -1800,7 +1800,7 @@ int main(int argc, char *argv[])
                     (void) fclose(g_ppFDedispData[i-1]);
                 }
                 (void) fclose(pFSpec);
-                CleanUp();
+                YAPP_CleanUp();
                 return YAPP_RET_ERROR;
             }
             if (iReadItems < iTotSampsPerBlock)
@@ -1868,7 +1868,7 @@ int main(int argc, char *argv[])
                             (void) fclose(g_ppFDedispData[j-1]);
                         }
                         (void) fclose(pFSpec);
-                        CleanUp();
+                        YAPP_CleanUp();
                         return YAPP_RET_ERROR;
                     }
                     ++iTimeSect;
@@ -2170,7 +2170,7 @@ int main(int argc, char *argv[])
         (void) fclose(g_ppFDedispData[i-1]);
     }
     (void) fclose(pFSpec);
-    CleanUp();
+    YAPP_CleanUp();
 
     return YAPP_RET_SUCCESS;
 }
@@ -2178,7 +2178,7 @@ int main(int argc, char *argv[])
 /*
  * Cleans up all allocated memory
  */
-void CleanUp()
+void YAPP_CleanUp()
 {
     if (g_ppFDedispCfg != NULL)
     {

@@ -48,16 +48,16 @@ extern const char *g_pcVersion;
 
 /* the following are global only to enable cleaning up in case of abnormal
    termination, such as those triggered by SIGINT or SIGTERM */
-double *g_pdDelayTab = NULL;
 char *g_pcIsChanGood = NULL;
 char *g_pcIsTimeGood = NULL;
 float *g_pfBFTimeSectMean = NULL;
 float *g_pfBFGain = NULL;
 double (*g_padBadTimes)[][NUM_BAD_BOUNDS] = NULL;
+float *g_pfFreq = NULL;
+
 float *g_pfBuf = NULL;
 float *g_pfPlotBuf = NULL;
 float *g_pfXAxis = NULL;
-float *g_pfFreq = NULL;
 
 int main(int argc, char *argv[])
 {
@@ -485,7 +485,7 @@ int main(int argc, char *argv[])
         {
             perror("malloc - g_pfBFTimeSectMean");
             (void) fclose(pFCfg);
-            CleanUp();
+            YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
 
@@ -499,7 +499,7 @@ int main(int argc, char *argv[])
         {
             perror("malloc - g_pfBFGain");
             (void) fclose(pFCfg);
-            CleanUp();
+            YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
 
@@ -518,7 +518,7 @@ int main(int argc, char *argv[])
         {
             perror("malloc - g_padBadTimes");
             (void) fclose(pFCfg);
-            CleanUp();
+            YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
         for (i = 0; i < iNumBadTimes; ++i)
@@ -538,7 +538,7 @@ int main(int argc, char *argv[])
                            "ERROR: Failed to stat %s: %s!\n",
                            pcFileSpec,
                            strerror(errno));
-            CleanUp();
+            YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
         lDataSizeTotal = (long) stFileStats.st_size;
@@ -560,7 +560,7 @@ int main(int argc, char *argv[])
                            "ERROR: Opening file %s failed! %s.\n",
                            pcFileSpec,
                            strerror(errno));
-            CleanUp();
+            YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
 
@@ -573,7 +573,7 @@ int main(int argc, char *argv[])
         {
             (void) fprintf(stderr,
                            "ERROR: Reading header failed!\n");
-            CleanUp();
+            YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
         iHeaderLen += (sizeof(iLen) + iLen);
@@ -768,7 +768,7 @@ int main(int argc, char *argv[])
                                    "ERROR: Unexpected label %s found!",
                                    acLabel);
                     (void) fclose(pFSpec);
-                    CleanUp();
+                    YAPP_CleanUp();
                     return YAPP_RET_ERROR;
                 }
 
@@ -779,7 +779,7 @@ int main(int argc, char *argv[])
                 {
                     perror("malloc - g_pfFreq");
                     (void) fclose(pFSpec);
-                    CleanUp();
+                    YAPP_CleanUp();
                     return YAPP_RET_ERROR;
                 }
 
@@ -809,7 +809,7 @@ int main(int argc, char *argv[])
                                            "WARNING: Unknown field label %s "
                                            "encountered!\n", acLabel);
                             (void) fclose(pFSpec);
-                            CleanUp();
+                            YAPP_CleanUp();
                             return YAPP_RET_ERROR;
                         }
                     }
@@ -906,7 +906,7 @@ int main(int argc, char *argv[])
                            "ERROR: Failed to stat %s: %s!\n",
                            pcFileSpec,
                            strerror(errno));
-            CleanUp();
+            YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
         lDataSizeTotal = (long) stFileStats.st_size - iHeaderLen;
@@ -940,7 +940,7 @@ int main(int argc, char *argv[])
             (void) fprintf(stderr,
                            "ERROR: Input time is longer than length of "
                            "data!\n");
-            CleanUp();
+            YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
 
@@ -983,7 +983,7 @@ int main(int argc, char *argv[])
     {
         (void) printf("WARNING: Data to be skipped is greater than or equal to "
                       "the size of the file! Terminating.\n");
-        CleanUp();
+        YAPP_CleanUp();
         return YAPP_RET_SUCCESS;
     }
 
@@ -1036,7 +1036,7 @@ int main(int argc, char *argv[])
     if ((double) YAPP_RET_ERROR == dNumSigmas)
     {
         (void) fprintf(stderr, "ERROR: Threshold calculation failed!\n");
-        CleanUp();
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
     fStatBW = iNumGoodChans * fChanBW;  /* in MHz */
@@ -1053,7 +1053,7 @@ int main(int argc, char *argv[])
     if (NULL == g_pcIsTimeGood)
     {
         perror("malloc - g_pcIsTimeGood");
-        CleanUp();
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
     /* set all elements to 'YAPP_TRUE' */
@@ -1067,7 +1067,7 @@ int main(int argc, char *argv[])
                        "ERROR: Opening file %s failed! %s.\n",
                        pcFileSpec,
                        strerror(errno));
-        CleanUp();
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
 
@@ -1078,7 +1078,7 @@ int main(int argc, char *argv[])
     {
         perror("malloc - g_pfBuf");
         (void) fclose(pFSpec);
-        CleanUp();
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
 
@@ -1109,7 +1109,7 @@ int main(int argc, char *argv[])
                        "ERROR: Opening graphics device %s failed!\n",
                        PG_DEV);
         (void) fclose(pFSpec);
-        CleanUp();
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
 
@@ -1128,7 +1128,7 @@ int main(int argc, char *argv[])
         perror("malloc - g_pfXAxis");
         cpgclos();
         (void) fclose(pFSpec);
-        CleanUp();
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
 
@@ -1141,7 +1141,7 @@ int main(int argc, char *argv[])
             perror("malloc - g_pfFreq");
             cpgclos();
             (void) fclose(pFSpec);
-            CleanUp();
+            YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
         for (i = 0; i < iNumChans; ++i)
@@ -1166,7 +1166,7 @@ int main(int argc, char *argv[])
         perror("malloc - g_pfPlotBuf");
         cpgclos();
         (void) fclose(pFSpec);
-        CleanUp();
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
 
@@ -1191,7 +1191,7 @@ int main(int argc, char *argv[])
             (void) fprintf(stderr, "ERROR: Reading data failed!\n");
             cpgclos();
             (void) fclose(pFSpec);
-            CleanUp();
+            YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
         pfSpectrum = g_pfBuf;
@@ -1249,7 +1249,7 @@ int main(int argc, char *argv[])
                                        "detected!\n");
                         cpgclos();
                         (void) fclose(pFSpec);
-                        CleanUp();
+                        YAPP_CleanUp();
                         return YAPP_RET_ERROR;
                     }
                     ++iTimeSect;
@@ -1489,7 +1489,7 @@ int main(int argc, char *argv[])
     cpgclos();
 
     (void) fclose(pFSpec);
-    CleanUp();
+    YAPP_CleanUp();
 
     return YAPP_RET_SUCCESS;
 }
@@ -1497,17 +1497,12 @@ int main(int argc, char *argv[])
 /*
  * Cleans up all allocated memory
  */
-void CleanUp()
+void YAPP_CleanUp()
 {
     if (g_pfBuf != NULL)
     {
         free(g_pfBuf);
         g_pfBuf = NULL;
-    }
-    if (g_pdDelayTab != NULL)
-    {
-        free(g_pdDelayTab);
-        g_pdDelayTab = NULL;
     }
     if (g_padBadTimes != NULL)
     {

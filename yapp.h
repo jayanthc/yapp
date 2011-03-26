@@ -225,6 +225,8 @@ enum tagDedispTimeSeriesFormat
 #define YAPP_FILE_DELAYS_OTHER   "./del_other"
 #endif
 
+#define YAPP_MAX_MEMTABLE       1024
+
 #if 0
 /**
  * The candidate information structure.
@@ -274,6 +276,13 @@ char* YAPP_GetFilenameFromPath(char *pcPath, char *pcExt);
 int YAPP_GetObsNameFromID(int iObsID, char *pcObs);
 
 /**
+ * Read metadata from file
+ *
+ * @param[in]       pcFileSpec          Data filename
+ */
+int YAPP_ReadMetadata(char *pcFileSpec);
+
+/**
  * Read one block of data from disk
  *
  * @param[in]       pFSpec              Data file pointer
@@ -293,10 +302,15 @@ int YAPP_ReadData(FILE *pFSpec,
  */
 double YAPP_CalcThresholdInSigmas(int iTimeSamps);
 
-/**
- * Cleans up all allocated memory.
+/*
+ * The memory allocator
  */
-void CleanUp(void);
+void* YAPP_Malloc(size_t iNumItems, size_t iSize, int iZero);
+
+/**
+ * The garbage collector - frees all pointers in the memory allocation table
+ */
+void YAPP_CleanUp(void);
 
 /**
  * Registers handlers for SIGTERM and CTRL+C

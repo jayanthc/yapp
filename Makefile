@@ -42,41 +42,21 @@ all: yapp_makever \
 	 yapp_version.o \
 	 yapp_erflookup.o \
 	 yapp_common.o \
-	 yapp_dedisperse.o \
-	 colourmap.o \
-	 set_colours.o \
-	 yapp_dedisperse \
-	 yapp_viewdata.o \
-	 yapp_viewdata \
-	 reorderdds.o \
-	 reorderdds \
-	 yapp_dedisp.o \
-	 yapp_dedisp \
 	 yapp_viewmetadata.o \
 	 yapp_viewmetadata \
+	 tags
+#	 yapp_dedisperse.o \
+	 set_colours.o \
+	 colourmap.o \
+	 yapp_viewdata.o \
+	 yapp_viewdata \
+	 yapp_dedisp.o \
+	 yapp_dedisp \
+	 yapp_dedisperse \
+	 reorderdds.o \
+	 reorderdds \
 	 yapp_pulsarsnd.o \
 	 yapp_pulsarsnd \
-	 tags
-
-#all: makever \
-#	 version.o \
-#	 yapp_common.o \
-#	 yapp_dedisperse.o \
-#	 set_colours.o \
-#	 yapp_dedisperse \
-#	 killrfi.o \
-#	 killrfi \
-#	 viewdata.o \
-#	 viewdata \
-#	 reorderdds.o \
-#	 reorderdds \
-#	 dedisp.o \
-#	 dedisp \
-#	 viewmetadata.o \
-#	 viewmetadata \
-#	 gendispdata.o \
-#	 gendispdata \
-#	 tags
 
 yapp_makever: $(SRCDIR)/yapp_makever.c
 	$(CC) $(CFLAGS_L) $(SRCDIR)/yapp_makever.c -o $(IDIR)/$@
@@ -139,7 +119,7 @@ yapp_dedisp.o: $(SRCDIR)/yapp_dedisp.c
 
 yapp_dedisp: $(IDIR)/yapp_dedisp.o
 	$(FC) $(IDIR)/yapp_dedisp.o $(IDIR)/yapp_version.o $(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o \
-		$(IDIR)/set_colours.o $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -o $(BINDIR)/$@
+		$(IDIR)/colourmap.o $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -o $(BINDIR)/$@
 
 yapp_viewmetadata.o: $(SRCDIR)/yapp_viewmetadata.c
 	$(CC) $(CFLAGS_C) $(SRCDIR)/yapp_viewmetadata.c -o $(IDIR)/$@
@@ -177,14 +157,14 @@ clean:
 	$(DELCMD) $(IDIR)/yapp_version.o
 	$(DELCMD) $(IDIR)/yapp_erflookup.o
 	$(DELCMD) $(IDIR)/yapp_common.o
-	$(DELCMD) $(IDIR)/colourmap.o
-	$(DELCMD) $(IDIR)/set_colours.o
-	$(DELCMD) $(IDIR)/yapp_dedisperse.o
-#	$(DELCMD) $(IDIR)/killrfi.o
-	$(DELCMD) $(IDIR)/yapp_viewdata.o
-	$(DELCMD) $(IDIR)/reorderdds.o
-	$(DELCMD) $(IDIR)/yapp_dedisp.o
 	$(DELCMD) $(IDIR)/yapp_viewmetadata.o
+#	$(DELCMD) $(IDIR)/set_colours.o
+	$(DELCMD) $(IDIR)/colourmap.o
+	$(DELCMD) $(IDIR)/yapp_viewdata.o
+	$(DELCMD) $(IDIR)/yapp_dedisp.o
+	$(DELCMD) $(IDIR)/yapp_dedisperse.o
+	$(DELCMD) $(IDIR)/reorderdds.o
 	$(DELCMD) $(IDIR)/yapp_pulsarsnd.o
+#	$(DELCMD) $(IDIR)/killrfi.o
 #	$(DELCMD) $(IDIR)/gendispdata.o
 

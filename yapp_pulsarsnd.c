@@ -169,7 +169,7 @@ int main(int argc, char *argv[])
                        "ERROR: Failed to stat %s: %s!\n",
                        pcFileDedispData,
                        strerror(errno));
-        CleanUp();
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
     iFileSize = stFileStats.st_size;
@@ -184,7 +184,7 @@ int main(int argc, char *argv[])
     if (NULL == pcHeader)
     {
         perror("malloc - pcHeader");
-        CleanUp();
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
 
@@ -193,7 +193,7 @@ int main(int argc, char *argv[])
     if (NULL == pfData)
     {
         perror("malloc - pfData");
-        CleanUp();
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
 
@@ -214,7 +214,7 @@ int main(int argc, char *argv[])
     if (NULL == iRet)
     {
         perror("fgets");
-        CleanUp();
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
 #endif
@@ -340,7 +340,7 @@ int main(int argc, char *argv[])
 /*
  * Cleans up all allocated memory
  */
-void CleanUp()
+void YAPP_CleanUp()
 {
 #if 0
     if (g_padBadTimes != NULL)
