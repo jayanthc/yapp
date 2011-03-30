@@ -208,7 +208,7 @@ int YAPP_GetObsNameFromID(int iObsID, char *pcObs)
 /*
  * Reads metadata from file
  */
-int YAPP_ReadMetadata(char *pcFileSpec)
+int YAPP_ReadMetadata(char *pcFileSpec, YUM_t *pstYUM)
 {
     FILE *pFSpec = NULL;
     FILE *pFCfg = NULL;

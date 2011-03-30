@@ -6,13 +6,13 @@
 
 # C compiler and flags
 CC = gcc
-CFLAGS = -Wall -pedantic
-CFLAGS_C_DEBUG = -g -c $(CFLAGS)
-CFLAGS_C_RELEASE = -O3 -c $(CFLAGS)
+CFLAGS = -std=gnu99 -pedantic -Wall
+CFLAGS_C_DEBUG = $(CFLAGS) -g -c
+CFLAGS_C_RELEASE = $(CFLAGS) -O3 -c
 #CFLAGS_C = $(CFLAGS_C_DEBUG)
 CFLAGS_C = $(CFLAGS_C_RELEASE)
-CFLAGS_L_DEBUG = -g $(CFLAGS)
-CFLAGS_L_RELEASE = -O3 $(CFLAGS)
+CFLAGS_L_DEBUG = $(CFLAGS) -g
+CFLAGS_L_RELEASE = $(CFLAGS) -O3
 #CFLAGS_L = $(CFLAGS_L_DEBUG)
 CFLAGS_L = $(CFLAGS_L_RELEASE)
 
@@ -44,10 +44,10 @@ all: yapp_makever \
 	 yapp_common.o \
 	 yapp_viewmetadata.o \
 	 yapp_viewmetadata \
+	 colourmap.o \
 	 tags
 #	 yapp_dedisperse.o \
 	 set_colours.o \
-	 colourmap.o \
 	 yapp_viewdata.o \
 	 yapp_viewdata \
 	 yapp_dedisp.o \
@@ -64,13 +64,13 @@ yapp_makever: $(SRCDIR)/yapp_makever.c
 	$(DELCMD) $(IDIR)/yapp_makever
 
 yapp_version.o: $(SRCDIR)/yapp_version.c
-	$(CC) -c $(CFLAGS_C) $(SRCDIR)/yapp_version.c -o $(IDIR)/$@
+	$(CC) $(CFLAGS_C) $(SRCDIR)/yapp_version.c -o $(IDIR)/$@
 
 yapp_erflookup.o: $(SRCDIR)/yapp_erflookup.c
-	$(CC) -c $(CFLAGS_C) $(SRCDIR)/yapp_erflookup.c -o $(IDIR)/$@
+	$(CC) $(CFLAGS_C) $(SRCDIR)/yapp_erflookup.c -o $(IDIR)/$@
 
 colourmap.o: colourmap.c
-	gcc -std=gnu99 -pedantic -Wall -c colourmap.c -o $@
+	$(CC) $(CFLAGS_C) colourmap.c -o $@
 
 ifeq ($(FC), g77)
 DFC = -D_FC_F77_

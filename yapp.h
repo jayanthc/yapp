@@ -111,7 +111,7 @@ enum tagDedispTimeSeriesFormat
 #define MAX_SNR_BINS        50      /**< @brief Number of SNR bins */
 #define MAX_PNUM_BINS       50
 
-#define MAX_LEN_PSRNAME     10      /* Example: J1741+1851 */
+#define MAX_LEN_PSRNAME     12      /* Example: J1748-2446AI*/
 #define YAPP_MAX_NUM_BANDS  16
 
 /**
@@ -227,6 +227,124 @@ enum tagDedispTimeSeriesFormat
 
 #define YAPP_MAX_MEMTABLE       1024
 
+/**
+ * YAPP Unified Metadata (YUM) definition
+ */
+typedef struct YUM_s
+{
+    /* YUM */
+    double dTSamp;          /* in ? */
+    float fFCentre;         /* in MHz */
+    float fBW;              /* in MHz */
+    int iNumChans;
+    float fChanBW;          /* in MHz */
+    char acPulsar[MAX_LEN_PSRNAME];
+    char acSite[LEN_GENSTRING];
+    long int lDataSizeTotal;
+    int iTimeSamps;
+    int iNumGoodChans;
+    double dTNextBF;        /* in s */
+    double dTBFInt;         /* in s */
+    char *pcIsChanGood;
+    int iBFTimeSects;
+    float *pfBFTimeSectMean;
+    float *pfBFGain;
+    double (*padBadTimes)[][NUM_BAD_BOUNDS];
+    int iNumBits;
+    int iNumIFs;
+    int iBackendID;
+    double dSourceRA;
+    double dSourceDec;
+    double dAzStart;
+    double dZAStart;
+    double dDM;
+    int iFlagBary;
+    int iNumBands;
+    float *pfFreq;      /* in MHz? */
+    /* --- some form of timestamp of obs --- MJD/Otherwise*/
+    /**/
+    double dNumSigmas;
+    float fStatBW;      /* in MHz */
+    float fNoiseRMS;
+    float fThreshold;
+    float fSampSize;
+
+#if 0
+    /*************************************************************************/
+    /* DAS */
+    double dTSamp;          /* in ms */
+    int iBytesPerFrame;     /* iNumChans * fSampSize */
+    float fFCentre;         /* in MHz */
+    float fBW;              /* in kHz */
+    int iChanBeg;
+    int iChanEnd;
+    char acPulsar[MAX_LEN_PSRNAME];
+    int iDay;
+    int iMonth;
+    int iYear;
+    int iHour;
+    int iMin;
+    float fSec;
+    char acSite[LEN_GENSTRING];
+    double dTNextBF;        /* in s */
+    double dTBFInt;         /* in s */
+    char *pcIsChanGood;
+    int iBFTimeSects;
+    float *pfBFTimeSectMean;
+    float *pfBFGain;
+    int iNumBadTimes;
+    double (*padBadTimes)[][NUM_BAD_BOUNDS];
+    /* DAS derived: */
+    float fBW;              /* in MHz */
+    char cIsBandFlipped;
+    double dTSampInSec;     /* in s */
+    int iNumChans;
+    int iNumGoodChans;
+    float fChanBW;          /* in MHz */
+    float fFMin;            /* in MHz */
+    float fFMax;            /* in MHz */
+    long int lDataSizeTotal;
+    int iTimeSamps;
+
+    /* SIGPROC */
+    char acPulsar[MAX_LEN_PSRNAME];
+    int iDataTypeID;
+    int iNumChans;
+    double dFChan1;     /* in MHz */
+    double dChanBW;     /* in MHz */
+    int iNumBits;
+    int iNumIFs;
+    double dTSamp;      /* in seconds */
+    double dTStart;     /* in MJD */
+    int iObsID;
+    int iBackendID;
+    double dSourceRA;
+    double dSourceDec;
+    double dAzStart;
+    double dZAStart;
+    double dDM;
+    int iFlagBary;
+    /* SIGPROC derived: */
+    float fFCh1;        /* in MHz */
+    float fChanBW;      /* in MHz */
+    float fFMin;        /* in MHz */
+    float fFMax;        /* in MHz */
+    double dTSamp;      /* in ms */
+    char acSite[LEN_GENSTRING];
+    float *pfFreq;      /* in MHz? */
+    int iNumBands;
+    long int lDataSizeTotal;
+    int iTimeSamps;
+    int iNumGoodChans;
+
+    /* common derived: */
+    double dNumSigmas;
+    float fStatBW;      /* in MHz */
+    float fNoiseRMS;
+    float fThreshold;
+#endif
+} YUM_t;
+
 #if 0
 /**
  * The candidate information structure.
@@ -279,8 +397,9 @@ int YAPP_GetObsNameFromID(int iObsID, char *pcObs);
  * Read metadata from file
  *
  * @param[in]       pcFileSpec          Data filename
+ * @param[out]      pstYUM              YUM structure
  */
-int YAPP_ReadMetadata(char *pcFileSpec);
+int YAPP_ReadMetadata(char *pcFileSpec, YUM_t *pstYUM);
 
 /**
  * Read one block of data from disk

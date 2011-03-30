@@ -27,6 +27,7 @@ int main(int argc, char *argv[])
 {
     char *pcFileSpec = NULL;
     int iRet = YAPP_RET_SUCCESS;
+    YUM_t stYUM = {0};
     const char *pcProgName = NULL;
     int iNextOpt = 0;
     /* valid short options */
@@ -88,7 +89,7 @@ int main(int argc, char *argv[])
 
         (void) printf("File: %s\n", pcFileSpec);
 
-        iRet = YAPP_ReadMetadata(pcFileSpec);
+        iRet = YAPP_ReadMetadata(pcFileSpec, &stYUM);
         if (iRet != YAPP_RET_SUCCESS)
         {
             (void) fprintf(stderr,
@@ -96,6 +97,8 @@ int main(int argc, char *argv[])
                            "Moving to next file.\n",
                            pcFileSpec);
         }
+
+        /* TODO: print metadata here, not inside readmetadata() */
 
         if ((argc - iNextOpt) != 1)
         {

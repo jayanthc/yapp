@@ -1162,7 +1162,8 @@ int SetColourMap(int iCMap, int iIsColInv, float fColMin, float fColMax)
     int iLenQVal = 0;
     int iColIndex = 0;
     int i = 0;
-    float (*paafCMap)[CMAP_LEVELS][3] = (float (*) [][3]) g_aaafCMap[iCMap];
+    float (*paafCMap)[CMAP_LEVELS][3] = (float (*) [CMAP_LEVELS][3])
+                                            g_aaafCMap[iCMap];
 
     /* query colour capability */
     cpgqcol(&iColMin, &iColMax);

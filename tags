@@ -110,7 +110,7 @@ YAPP_Malloc	./yapp_common.c	/^void* YAPP_Malloc(size_t iNumItems, size_t iSize, 
 YAPP_RET_ERROR	./yapp.h	41;"	d
 YAPP_RET_SUCCESS	./yapp.h	40;"	d
 YAPP_ReadData	./yapp_common.c	/^int YAPP_ReadData(FILE *pFSpec,$/;"	f
-YAPP_ReadMetadata	./yapp_common.c	/^int YAPP_ReadMetadata(char *pcFileSpec)$/;"	f
+YAPP_ReadMetadata	./yapp_common.c	/^int YAPP_ReadMetadata(char *pcFileSpec, YUM_t *pstYUM)$/;"	f
 YAPP_RegisterSignalHandlers	./yapp_common.c	/^int YAPP_RegisterSignalHandlers()$/;"	f
 YAPP_SAMPSIZE_1	./yapp.h	75;"	d
 YAPP_SAMPSIZE_16	./yapp.h	79;"	d
@@ -157,20 +157,40 @@ YAPP_SP_OBS_NANCAY	./yapp_sigproc.h	69;"	d
 YAPP_SP_OBS_ORT	./yapp_sigproc.h	68;"	d
 YAPP_SP_OBS_PARKES	./yapp_sigproc.h	70;"	d
 YAPP_TRUE	./yapp.h	49;"	d
+YUM_s	./yapp.h	/^typedef struct YUM_s$/;"	s
+YUM_t	./yapp.h	/^} YUM_t;$/;"	t	typeref:struct:YUM_s
 _GNU_SOURCE	./yapp.h	20;"	d
 _GNU_SOURCE	./yapp_makever.c	8;"	d	file:
 __YAPP_H__	./yapp.h	10;"	d
 __YAPP_SIGPROC_H__	./yapp_sigproc.h	10;"	d
+acPulsar	./yapp.h	/^    char acPulsar[MAX_LEN_PSRNAME];$/;"	m	struct:YUM_s
 acPulsar	./yapp_sigproc.h	/^    char acPulsar[MAX_LEN_PSRNAME];$/;"	m	struct:tagSIGPROCHeader
+acSite	./yapp.h	/^    char acSite[LEN_GENSTRING];$/;"	m	struct:YUM_s
+dAzStart	./yapp.h	/^    double dAzStart;$/;"	m	struct:YUM_s
 dAzStart	./yapp_sigproc.h	/^    double dAzStart;$/;"	m	struct:tagSIGPROCHeader
 dChanBW	./yapp_sigproc.h	/^    double dChanBW;     \/* in MHz *\/$/;"	m	struct:tagSIGPROCHeader
+dDM	./yapp.h	/^    double dDM;$/;"	m	struct:YUM_s
 dDM	./yapp_sigproc.h	/^    double dDM;$/;"	m	struct:tagSIGPROCHeader
 dFChan1	./yapp_sigproc.h	/^    double dFChan1;     \/* in MHz *\/$/;"	m	struct:tagSIGPROCHeader
+dNumSigmas	./yapp.h	/^    double dNumSigmas;$/;"	m	struct:YUM_s
+dSourceDec	./yapp.h	/^    double dSourceDec;$/;"	m	struct:YUM_s
 dSourceDec	./yapp_sigproc.h	/^    double dSourceDec;$/;"	m	struct:tagSIGPROCHeader
+dSourceRA	./yapp.h	/^    double dSourceRA;$/;"	m	struct:YUM_s
 dSourceRA	./yapp_sigproc.h	/^    double dSourceRA;$/;"	m	struct:tagSIGPROCHeader
+dTBFInt	./yapp.h	/^    double dTBFInt;         \/* in s *\/$/;"	m	struct:YUM_s
+dTNextBF	./yapp.h	/^    double dTNextBF;        \/* in s *\/$/;"	m	struct:YUM_s
+dTSamp	./yapp.h	/^    double dTSamp;          \/* in ? *\/$/;"	m	struct:YUM_s
 dTSamp	./yapp_sigproc.h	/^    double dTSamp;      \/* in seconds *\/$/;"	m	struct:tagSIGPROCHeader
 dTStart	./yapp_sigproc.h	/^    double dTStart;     \/* in MJD *\/$/;"	m	struct:tagSIGPROCHeader
+dZAStart	./yapp.h	/^    double dZAStart;$/;"	m	struct:YUM_s
 dZAStart	./yapp_sigproc.h	/^    double dZAStart;$/;"	m	struct:tagSIGPROCHeader
+fBW	./yapp.h	/^    float fBW;              \/* in MHz *\/$/;"	m	struct:YUM_s
+fChanBW	./yapp.h	/^    float fChanBW;          \/* in MHz *\/$/;"	m	struct:YUM_s
+fFCentre	./yapp.h	/^    float fFCentre;         \/* in MHz *\/$/;"	m	struct:YUM_s
+fNoiseRMS	./yapp.h	/^    float fNoiseRMS;$/;"	m	struct:YUM_s
+fSampSize	./yapp.h	/^    float fSampSize;$/;"	m	struct:YUM_s
+fStatBW	./yapp.h	/^    float fStatBW;      \/* in MHz *\/$/;"	m	struct:YUM_s
+fThreshold	./yapp.h	/^    float fThreshold;$/;"	m	struct:YUM_s
 g_aadErfLookup	./yapp_erflookup.c	/^const double g_aadErfLookup[YAPP_ERF_ENTRIES][3] = {$/;"	v
 g_apvMemTable	./yapp_common.c	/^void* g_apvMemTable[YAPP_MAX_MEMTABLE] = {0};$/;"	v
 g_iDispPlots	./yapp_dedisp.c	/^int g_iDispPlots = YAPP_TRUE;$/;"	v
@@ -185,7 +205,7 @@ g_pcIsChanGood	./yapp_viewdata.c	/^char *g_pcIsChanGood = NULL;$/;"	v
 g_pcIsTimeGood	./yapp_dedisp.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	./yapp_dedisperse.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	./yapp_viewdata.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
-g_pcVersion	./yapp_version.c	/^const char *g_pcVersion = "YAPP-DEV-20110326-184126";$/;"	v
+g_pcVersion	./yapp_version.c	/^const char *g_pcVersion = "YAPP-DEV-20110330-005949";$/;"	v
 g_pdDM	./yapp_dedisperse.c	/^double *g_pdDM = NULL;$/;"	v
 g_pdDelayTab	./yapp_dedisp.c	/^double *g_pdDelayTab = NULL;$/;"	v
 g_pdDelayTab	./yapp_dedisperse.c	/^double *g_pdDelayTab = NULL;$/;"	v
@@ -215,19 +235,34 @@ g_pfXAxis	./yapp_viewdata.c	/^float *g_pfXAxis = NULL;$/;"	v
 g_pfYAxis	./yapp_dedisp.c	/^float *g_pfYAxis = NULL;$/;"	v
 g_ppFDedispCfg	./yapp_dedisperse.c	/^FILE **g_ppFDedispCfg = NULL;$/;"	v
 g_ppFDedispData	./yapp_dedisperse.c	/^FILE **g_ppFDedispData = NULL;$/;"	v
+iBFTimeSects	./yapp.h	/^    int iBFTimeSects;$/;"	m	struct:YUM_s
+iBackendID	./yapp.h	/^    int iBackendID;$/;"	m	struct:YUM_s
 iBackendID	./yapp_sigproc.h	/^    int iBackendID;$/;"	m	struct:tagSIGPROCHeader
 iDataTypeID	./yapp_sigproc.h	/^    int iDataTypeID;$/;"	m	struct:tagSIGPROCHeader
+iFlagBary	./yapp.h	/^    int iFlagBary;$/;"	m	struct:YUM_s
 iFlagBary	./yapp_sigproc.h	/^    int iFlagBary;$/;"	m	struct:tagSIGPROCHeader
+iNumBands	./yapp.h	/^    int iNumBands;$/;"	m	struct:YUM_s
+iNumBits	./yapp.h	/^    int iNumBits;$/;"	m	struct:YUM_s
 iNumBits	./yapp_sigproc.h	/^    int iNumBits;$/;"	m	struct:tagSIGPROCHeader
+iNumChans	./yapp.h	/^    int iNumChans;$/;"	m	struct:YUM_s
 iNumChans	./yapp_sigproc.h	/^    int iNumChans;$/;"	m	struct:tagSIGPROCHeader
+iNumGoodChans	./yapp.h	/^    int iNumGoodChans;$/;"	m	struct:YUM_s
+iNumIFs	./yapp.h	/^    int iNumIFs;$/;"	m	struct:YUM_s
 iNumIFs	./yapp_sigproc.h	/^    int iNumIFs;$/;"	m	struct:tagSIGPROCHeader
 iObsID	./yapp_sigproc.h	/^    int iObsID;$/;"	m	struct:tagSIGPROCHeader
+iTimeSamps	./yapp.h	/^    int iTimeSamps;$/;"	m	struct:YUM_s
+lDataSizeTotal	./yapp.h	/^    long int lDataSizeTotal;$/;"	m	struct:YUM_s
 main	./yapp_dedisp.c	/^int main(int argc, char *argv[])$/;"	f
 main	./yapp_dedisperse.c	/^int main(int argc, char *argv[])$/;"	f
 main	./yapp_makever.c	/^int main(int argc, char *argv[])$/;"	f
 main	./yapp_pulsarsnd.c	/^int main(int argc, char *argv[])$/;"	f
 main	./yapp_viewdata.c	/^int main(int argc, char *argv[])$/;"	f
 main	./yapp_viewmetadata.c	/^int main(int argc, char *argv[])$/;"	f
+padBadTimes	./yapp.h	/^    double (*padBadTimes)[][NUM_BAD_BOUNDS];$/;"	m	struct:YUM_s
+pcIsChanGood	./yapp.h	/^    char *pcIsChanGood;$/;"	m	struct:YUM_s
+pfBFGain	./yapp.h	/^    float *pfBFGain;$/;"	m	struct:YUM_s
+pfBFTimeSectMean	./yapp.h	/^    float *pfBFTimeSectMean;$/;"	m	struct:YUM_s
+pfFreq	./yapp.h	/^    float *pfFreq;      \/* in MHz? *\/$/;"	m	struct:YUM_s
 tagDedispTimeSeriesFormat	./yapp.h	/^enum tagDedispTimeSeriesFormat$/;"	g
 tagDynSpecFormat	./yapp.h	/^enum tagDynSpecFormat$/;"	g
 tagObservatory	./yapp_sigproc.h	/^enum tagObservatory$/;"	g
