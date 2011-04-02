@@ -34,5 +34,8 @@ TODO
 15. BUG: Delays calculated for laws < 1.0 are not correct.
 16. BUG: dedisp: Negative DM dedispersion not correct.
 17. Handle the headerless/header-separated filterbank format input.
+18. Support user-defined colourmaps.
+19. Exit button.
+20. Eliminte flickering in noninteractive mode plots by redrawing only axes.
 
 EOF

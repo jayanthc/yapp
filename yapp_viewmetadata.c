@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
 {
     char *pcFileSpec = NULL;
     int iRet = YAPP_RET_SUCCESS;
-    YUM_t stYUM = {0};
+    YUM_t stYUM = {{0}};
     const char *pcProgName = NULL;
     int iNextOpt = 0;
     /* valid short options */
@@ -82,12 +82,15 @@ int main(int argc, char *argv[])
 
     /* handle expanded wildcards */
     iNextOpt = optind;
-    while ((argc - iNextOpt) != 0)
+    while ((argc - iNextOpt) != 0)  /* handle expanded wildcards */
     {
         /* get the input filename */
         pcFileSpec = argv[iNextOpt];
 
-        (void) printf("File: %s\n", pcFileSpec);
+        if (argc != 2)  /* more than one input file */
+        {
+            (void) printf("File: %s\n", pcFileSpec);
+        }
 
         iRet = YAPP_ReadMetadata(pcFileSpec, &stYUM);
         if (iRet != YAPP_RET_SUCCESS)
@@ -98,7 +101,62 @@ int main(int argc, char *argv[])
                            pcFileSpec);
         }
 
-        /* TODO: print metadata here, not inside readmetadata() */
+        (void) printf("Observing site                    : %s\n",
+                      stYUM.acSite);
+        (void) printf("Field name                        : %s\n",
+                      stYUM.acPulsar);
+        /* TODO: print observation timestamp */
+        if (stYUM.iFlagSplicedData != YAPP_TRUE)
+        {
+            (void) printf("Centre frequency                  : %g MHz\n",
+                          stYUM.fFCentre);
+            (void) printf("Bandwidth                         : %g MHz\n",
+                          stYUM.fBW);
+        }
+        (void) printf("Sampling interval                 : %.10g ms\n",
+                      stYUM.dTSamp);
+        (void) printf("Number of channels                : %d\n",
+                      stYUM.iNumChans);
+        (void) printf("Number of good channels           : %d\n",
+                      stYUM.iNumGoodChans);
+        (void) printf("Channel bandwidth                 : %.10g MHz\n",
+                      stYUM.fChanBW);
+        (void) printf("Lowest frequency                  : %.10g MHz\n",
+                      stYUM.fFMin);
+        (void) printf("Highest frequency                 : %.10g MHz\n",
+                      stYUM.fFMax);
+        if (YAPP_TRUE == stYUM.cIsBandFlipped)
+        {
+            (void) printf("                                  "
+                          " Band-flipped\n");
+        }
+        (void) printf("Estimated number of bands         : %d\n",
+                      stYUM.iNumBands);
+        if (stYUM.iBFTimeSects != 0)    /* no beam-flip information */
+        {
+            (void) printf("First beam-flip time              : %.10g s\n",
+                          stYUM.dTNextBF);
+            (void) printf("Beam-flip interval                : %.10g s\n",
+                          stYUM.dTBFInt);
+            (void) printf("Number of beam-flip time sections : %d\n",
+                          stYUM.iBFTimeSects);
+        }
+        (void) printf("Number of bad time sections       : %d\n",
+                      stYUM.iNumBadTimes);
+        (void) printf("Number of bits per sample         : %d\n",
+                      stYUM.iNumBits);
+        if (stYUM.iNumIFs != 0)
+        {
+            (void) printf("Number of IFs                     : %d\n",
+                          stYUM.iNumIFs);
+        }
+        (void) printf("Duration of data in\n");
+        (void) printf("    Bytes                         : %ld\n",
+                      (stYUM.lDataSizeTotal / stYUM.iNumChans));
+        (void) printf("    Time samples                  : %d\n",
+                      stYUM.iTimeSamps);
+        (void) printf("    Time                          : %g s\n",
+                      (stYUM.iTimeSamps * (stYUM.dTSamp / 1e3)));
 
         if ((argc - iNextOpt) != 1)
         {
@@ -106,7 +164,7 @@ int main(int argc, char *argv[])
             (void) printf("----------------------------------------\n");
         }
         ++iNextOpt;
-    }   /* handle expanded wildcards */
+    }
 
     /* clean up */
     YAPP_CleanUp();

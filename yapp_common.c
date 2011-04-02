@@ -78,8 +78,9 @@ char* YAPP_GetFilenameFromPath(char *pcPath, char *pcExt)
     }
 
     /* allocate memory for the filename */
-    pcFilename = (char *) calloc((strlen(pcPos) - strlen(pcExt) + 1),
-                                 sizeof(char));
+    pcFilename = (char *) YAPP_Malloc((strlen(pcPos) - strlen(pcExt) + 1),
+                                      sizeof(char),
+                                      YAPP_TRUE);
     if (NULL == pcFilename)
     {
         (void) fprintf(stderr,
@@ -215,56 +216,29 @@ int YAPP_ReadMetadata(char *pcFileSpec, YUM_t *pstYUM)
     char acFileCfg[LEN_GENSTRING] = {0};
     int iFormat = DEF_FORMAT;
     int iChanGoodness = (int) YAPP_TRUE;
-    float fFMin = 0.0;
-    float fFMax = 0.0;
-    float fChanBW = 0.0;
-    int iNumChans = 0;
-    float fSampSize = 0.0;      /* number of bits that make a sample */
-    int iNumGoodChans = 0;
-    char cIsBandFlipped = YAPP_FALSE;
-    float fStatBW = 0.0;
-    float fNoiseRMS = 0.0;
-    float fThreshold = 0.0;
-    double dNumSigmas = 0.0;
-    double dTSamp = 0.0;        /* holds sampling time in ms */
     double dTSampInSec = 0.0;   /* holds sampling time in s */
-    YAPP_SIGPROC_HEADER stHeader = {{0}};
     char acLabel[LEN_GENSTRING] = {0};
-    int iHeaderLen = 0;
-    int iFlagSplicedData = YAPP_FALSE;
-    int iNumBands = 0;
     int iLen = 0;
     double dFChan = 0.0;
-    float fFCh1 = 0.0;          /* frequency of the first channel */
     int iBytesPerFrame = 0;
-    float fFCentre = 0.0;
-    float fBW = 0.0;
     int iChanBeg = 0;
     int iChanEnd = 0;
-    char acPulsar[LEN_GENSTRING] = {0};
     int iDay = 0;
     int iMonth = 0;
     int iYear = 0;
     int iHour = 0;
     int iMin = 0;
     float fSec = 0.0;
-    char acSite[LEN_GENSTRING] = {0};
-    double dTNextBF = 0.0;
-    double dTBFInt = 0.0;
-    int iBFTimeSects = 0;
-    float *pfTimeSectGain = NULL;
-    int iNumBadTimes = 0;
-    int iTimeSamps = 0;
     struct stat stFileStats = {0};
-    long lDataSizeTotal = 0;
     int iRet = YAPP_RET_SUCCESS;
     int i = 0;
     int j = 0;
-    char *pcIsChanGood = NULL;
-    float *pfBFTimeSectMean = NULL;
-    float *pfBFGain = NULL;
-    double (*padBadTimes)[][NUM_BAD_BOUNDS] = NULL;
-    float *pfFreq = NULL;
+    int iDataTypeID = 0;
+    double dFChan1 = 0.0;
+    float fFCh1 = 0.0;
+    double dChanBW = 0.0;
+    double dTStart = 0.0;
+    int iObsID = 0;
 
     /* determine the file type */
     iFormat = YAPP_GetFileType(pcFileSpec);
@@ -278,7 +252,8 @@ int YAPP_ReadMetadata(char *pcFileSpec, YUM_t *pstYUM)
     {
         /* NOTE: reading data in Desh's 'spec' file format + associated
            'spec_cfg' file format */
-        fSampSize = (float) sizeof(float);  /* spec files are 32-bit floats */
+        pstYUM->fSampSize = (float) sizeof(float);  /* spec files are 32-bit floats */
+        pstYUM->iNumBits = pstYUM->fSampSize * YAPP_BYTE2BIT_FACTOR;
 
         /* build the 'cfg' file name from the 'spec' file name, and open it */
         (void) strcpy(acFileCfg, pcFileSpec);
@@ -296,82 +271,50 @@ int YAPP_ReadMetadata(char *pcFileSpec, YUM_t *pstYUM)
         /* read the first few parameters from the 'cfg' file */
         iRet = fscanf(pFCfg,
                       " %lf %d %f %f %d %d %s %d %d %d %d %d %f %s %lf %lf",
-                      &dTSamp,          /* in ms */
-                      &iBytesPerFrame,  /* iNumChans * fSampSize */
-                      &fFCentre,        /* in MHz */
-                      &fBW,             /* in kHz */
+                      &pstYUM->dTSamp,    /* in ms */
+                      &iBytesPerFrame,  /* iNumChans * pstYUM->fSampSize */
+                      &pstYUM->fFCentre,  /* in MHz */
+                      &pstYUM->fBW,       /* in kHz */
                       &iChanBeg,
                       &iChanEnd,
-                      acPulsar,
+                      pstYUM->acPulsar,
                       &iDay,
                       &iMonth,
                       &iYear,
                       &iHour,
                       &iMin,
                       &fSec,
-                      acSite,
-                      &dTNextBF,        /* in s */
-                      &dTBFInt);        /* in s */
+                      pstYUM->acSite,
+                      &pstYUM->dTNextBF,  /* in s */
+                      &pstYUM->dTBFInt);  /* in s */
 
         /* handle negative bandwidths */
-        if (fBW < 0)
+        if (pstYUM->fBW < 0)
         {
-            fBW = -fBW;
-            cIsBandFlipped = YAPP_TRUE;  /* NOTE: not used, as of now */
+            pstYUM->fBW = -pstYUM->fBW;
+            pstYUM->cIsBandFlipped = YAPP_TRUE;  /* NOTE: not used, as of now */
         }
 
         /* convert the bandwidth to MHz */
-        fBW /= 1000.0;
+        pstYUM->fBW /= 1000.0;
 
         /* store a copy of the sampling interval in s */
-        dTSampInSec = dTSamp / 1000.0;
-
-        (void) printf("Field name                        : %s\n", acPulsar);
-        (void) printf("Observing site                    : %s\n", acSite);
-        (void) printf("Date of observation               : %d.%d.%d\n",
-                      iYear,
-                      iMonth,
-                      iDay);
-        (void) printf("Time of observation               : %d:%d:%g\n",
-                      iHour,
-                      iMin,
-                      fSec);
-        (void) printf("Bytes per frame                   : %d\n",
-                      iBytesPerFrame);
-        (void) printf("Centre frequency                  : %g MHz\n", fFCentre);
-        (void) printf("Bandwidth                         : %g MHz\n", fBW);
-        if (cIsBandFlipped)
-        {
-            (void) printf("                                    Band flip.\n");
-        }
-        else
-        {
-            (void) printf("                                    "
-                          "No band flip.\n");
-        }
-        (void) printf("Sampling interval                 : %.10g ms\n", dTSamp);
-        (void) printf("First channel index               : %d\n", iChanBeg);
-        (void) printf("Last channel index                : %d\n", iChanEnd);
+        dTSampInSec = pstYUM->dTSamp / 1000.0;
 
         /* calculate the number of channels */
-        iNumChans = iChanEnd - iChanBeg + 1;
-        (void) printf("Number of channels                : %d\n", iNumChans);
+        pstYUM->iNumChans = iChanEnd - iChanBeg + 1;
 
         /* calculate the channel bandwidth */
-        fChanBW = fBW / iNumChans;  /* in MHz */
-        (void) printf("Channel bandwidth                 : %.10g MHz\n",
-                      fChanBW);
+        pstYUM->fChanBW = pstYUM->fBW / pstYUM->iNumChans;  /* in MHz */
 
         /* calculate the absolute min and max frequencies */
-        fFMin = fFCentre - (fBW / 2) + (fChanBW / 2);
-        (void) printf("Lowest frequency                  : %.10g MHz\n", fFMin);
-        fFMax = fFCentre + (fBW / 2) - (fChanBW / 2);
-        (void) printf("Highest frequency                 : %.10g MHz\n", fFMax);
+        pstYUM->fFMin = pstYUM->fFCentre - (pstYUM->fBW / 2) + (pstYUM->fChanBW / 2);
+        pstYUM->fFMax = pstYUM->fFCentre + (pstYUM->fBW / 2) - (pstYUM->fChanBW / 2);
 
-        pcIsChanGood = (char *) YAPP_Malloc(iNumChans,
+        pstYUM->pcIsChanGood = (char *) YAPP_Malloc(pstYUM->iNumChans,
                                             sizeof(char),
                                             YAPP_FALSE);
-        if (NULL == pcIsChanGood)
+        if (NULL == pstYUM->pcIsChanGood)
         {
             perror("malloc - pcIsChanGood");
             (void) fclose(pFCfg);
@@ -379,30 +322,22 @@ int YAPP_ReadMetadata(char *pcFileSpec, YUM_t *pstYUM)
         }
 
         /* read the channel goodness flags */
-        for (i = 0; i < iNumChans; ++i)
+        for (i = 0; i < pstYUM->iNumChans; ++i)
         {
             iRet = fscanf(pFCfg, " %d", &iChanGoodness);
-            pcIsChanGood[i] = (char) iChanGoodness;
-            if (pcIsChanGood[i])
+            pstYUM->pcIsChanGood[i] = (char) iChanGoodness;
+            if (pstYUM->pcIsChanGood[i])
             {
-                ++iNumGoodChans;
+                ++pstYUM->iNumGoodChans;
             }
         }
-        (void) printf("Number of good channels           : %d\n",
-                      iNumGoodChans);
 
-        (void) printf("First band flip time              : %.10g s\n",
-                      dTNextBF);
-        (void) printf("Band flip interval                : %.10g s\n", dTBFInt);
+        iRet = fscanf(pFCfg, " %d", &pstYUM->iBFTimeSects);
 
-        iRet = fscanf(pFCfg, " %d", &iBFTimeSects);
-
-        (void) printf("Number of band flip time sections : %d\n", iBFTimeSects);
-
-        pfBFTimeSectMean = (float *) YAPP_Malloc(iBFTimeSects,
+        pstYUM->pfBFTimeSectMean = (float *) YAPP_Malloc(pstYUM->iBFTimeSects,
                                                  sizeof(float),
                                                  YAPP_FALSE);
-        if (NULL == pfBFTimeSectMean)
+        if (NULL == pstYUM->pfBFTimeSectMean)
         {
             perror("malloc - pfBFTimeSectMean");
             (void) fclose(pFCfg);
@@ -410,15 +345,15 @@ int YAPP_ReadMetadata(char *pcFileSpec, YUM_t *pstYUM)
             return YAPP_RET_ERROR;
         }
 
-        for (i = 0; i < iBFTimeSects; ++i)
+        for (i = 0; i < pstYUM->iBFTimeSects; ++i)
         {
-            iRet = fscanf(pFCfg, " %f", &pfBFTimeSectMean[i]);
+            iRet = fscanf(pFCfg, " %f", &pstYUM->pfBFTimeSectMean[i]);
         }
 
-        pfBFGain = (float *) YAPP_Malloc((iNumChans * iBFTimeSects),
+        pstYUM->pfBFGain = (float *) YAPP_Malloc((pstYUM->iNumChans * pstYUM->iBFTimeSects),
                                          sizeof(float),
                                          YAPP_FALSE);
-        if (NULL == pfBFGain)
+        if (NULL == pstYUM->pfBFGain)
         {
             perror("malloc - pfBFGain");
             (void) fclose(pFCfg);
@@ -426,30 +361,29 @@ int YAPP_ReadMetadata(char *pcFileSpec, YUM_t *pstYUM)
             return YAPP_RET_ERROR;
         }
 
-        for (i = 0; i < (iNumChans * iBFTimeSects); ++i)
+        for (i = 0; i < (pstYUM->iNumChans * pstYUM->iBFTimeSects); ++i)
         {
-            iRet = fscanf(pFCfg, " %f", &pfBFGain[i]);
+            iRet = fscanf(pFCfg, " %f", &pstYUM->pfBFGain[i]);
         }
-        pfTimeSectGain = pfBFGain;
 
-        iRet = fscanf(pFCfg, " %d", &iNumBadTimes);
-        (void) printf("Number of bad time sections       : %d\n", iNumBadTimes);
-        padBadTimes = (double(*) [][NUM_BAD_BOUNDS]) YAPP_Malloc(
-                                            (iNumBadTimes * NUM_BAD_BOUNDS),
+        iRet = fscanf(pFCfg, " %d", &pstYUM->iNumBadTimes);
+
+        pstYUM->padBadTimes = (double(*) [][NUM_BAD_BOUNDS]) YAPP_Malloc(
+                                            (pstYUM->iNumBadTimes * NUM_BAD_BOUNDS),
                                             sizeof(double),
                                             YAPP_FALSE);
-        if (NULL == padBadTimes)
+        if (NULL == pstYUM->padBadTimes)
         {
             perror("malloc - padBadTimes");
             (void) fclose(pFCfg);
             YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
-        for (i = 0; i < iNumBadTimes; ++i)
+        for (i = 0; i < pstYUM->iNumBadTimes; ++i)
         {
             for (j = 0; j < NUM_BAD_BOUNDS; ++j)
             {
-                iRet = fscanf(pFCfg, " %lf", &((*padBadTimes)[i][j]));
+                iRet = fscanf(pFCfg, " %lf", &((*pstYUM->padBadTimes)[i][j]));
             }
         }
 
@@ -465,14 +399,10 @@ int YAPP_ReadMetadata(char *pcFileSpec, YUM_t *pstYUM)
             YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
-        lDataSizeTotal = (long) stFileStats.st_size;
-        (void) printf("Duration of data in\n");
-        (void) printf("    Bytes                         : %ld\n",
-                      (lDataSizeTotal / iNumChans));
-        iTimeSamps = (int) (lDataSizeTotal / (iNumChans * fSampSize));
-        (void) printf("    Time samples                  : %d\n", iTimeSamps);
-        (void) printf("    Time                          : %g s\n",
-                      (iTimeSamps * dTSampInSec));
+        pstYUM->lDataSizeTotal = (long) stFileStats.st_size;
+        pstYUM->iTimeSamps = (int) (pstYUM->lDataSizeTotal / (pstYUM->iNumChans * pstYUM->fSampSize));
+
+        pstYUM->iNumBands = 1;
     }
     else    /* 'fil' format */
     {
@@ -500,7 +430,7 @@ int YAPP_ReadMetadata(char *pcFileSpec, YUM_t *pstYUM)
             YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
-        iHeaderLen += (sizeof(iLen) + iLen);
+        pstYUM->iHeaderLen += (sizeof(iLen) + iLen);
 
         /* parse the rest of the header */
         while (strcmp(acLabel, "HEADER_END") != 0)
@@ -510,181 +440,178 @@ int YAPP_ReadMetadata(char *pcFileSpec, YUM_t *pstYUM)
             /* read field label */
             iRet = fread(acLabel, sizeof(char), iLen, pFSpec);
             acLabel[iLen] = '\0';
-            iHeaderLen += (sizeof(iLen) + iLen);
+            pstYUM->iHeaderLen += (sizeof(iLen) + iLen);
             if (0 == strcmp(acLabel, "source_name"))
             {
                 iRet = fread(&iLen, sizeof(iLen), 1, pFSpec);
-                iRet = fread(stHeader.acPulsar, sizeof(char), iLen, pFSpec);
-                stHeader.acPulsar[iLen] = '\0';
-                (void) strcpy(acPulsar, stHeader.acPulsar);
-                iHeaderLen += (sizeof(iLen) + iLen);
+                iRet = fread(pstYUM->acPulsar, sizeof(char), iLen, pFSpec);
+                pstYUM->acPulsar[iLen] = '\0';
+                pstYUM->iHeaderLen += (sizeof(iLen) + iLen);
             }
             else if (0 == strcmp(acLabel, "data_type"))
             {
-                iRet = fread(&stHeader.iDataTypeID,
-                             sizeof(stHeader.iDataTypeID),
+                iRet = fread(&iDataTypeID,
+                             sizeof(iDataTypeID),
                              1,
                              pFSpec);
-                iHeaderLen += sizeof(stHeader.iDataTypeID);
+                pstYUM->iHeaderLen += sizeof(iDataTypeID);
             }
             else if (0 == strcmp(acLabel, "nchans"))
             {
                 /* read number of channels */
-                iRet = fread(&stHeader.iNumChans,
-                             sizeof(stHeader.iNumChans),
+                iRet = fread(&pstYUM->iNumChans,
+                             sizeof(pstYUM->iNumChans),
                              1,
                              pFSpec);
-                iNumChans = stHeader.iNumChans;
-                iHeaderLen += sizeof(stHeader.iNumChans);
+                pstYUM->iHeaderLen += sizeof(pstYUM->iNumChans);
             }
             else if (0 == strcmp(acLabel, "fch1"))
             {
                 /* read frequency of first channel */
-                iRet = fread(&stHeader.dFChan1,
-                             sizeof(stHeader.dFChan1),
+                iRet = fread(&dFChan1,
+                             sizeof(dFChan1),
                              1,
                              pFSpec);
-                fFCh1 = (float) stHeader.dFChan1;
-                iHeaderLen += sizeof(stHeader.dFChan1);
+                fFCh1 = (float) dFChan1;
+                pstYUM->iHeaderLen += sizeof(dFChan1);
             }
             else if (0 == strcmp(acLabel, "foff"))
             {
                 /* read channel bandwidth (labelled frequency offset) */
-                iRet = fread(&stHeader.dChanBW,
-                             sizeof(stHeader.dChanBW),
+                iRet = fread(&dChanBW,
+                             sizeof(dChanBW),
                              1,
                              pFSpec);
-                fChanBW = (float) stHeader.dChanBW;
-                iHeaderLen += sizeof(stHeader.dChanBW);
+                pstYUM->fChanBW = (float) dChanBW;
+                pstYUM->iHeaderLen += sizeof(dChanBW);
             }
             else if (0 == strcmp(acLabel, "nbits"))
             {
                 /* read number of bits per sample */
-                iRet = fread(&stHeader.iNumBits,
-                             sizeof(stHeader.iNumBits),
+                iRet = fread(&pstYUM->iNumBits,
+                             sizeof(pstYUM->iNumBits),
                              1,
                              pFSpec);
-                iHeaderLen += sizeof(stHeader.iNumBits);
+                pstYUM->iHeaderLen += sizeof(pstYUM->iNumBits);
             }
             else if (0 == strcmp(acLabel, "nifs"))
             {
                 /* read number of IFs */
-                iRet = fread(&stHeader.iNumIFs,
-                             sizeof(stHeader.iNumIFs),
+                iRet = fread(&pstYUM->iNumIFs,
+                             sizeof(pstYUM->iNumIFs),
                              1,
                              pFSpec);
-                iHeaderLen += sizeof(stHeader.iNumIFs);
+                pstYUM->iHeaderLen += sizeof(pstYUM->iNumIFs);
             }
             else if (0 == strcmp(acLabel, "tsamp"))
             {
                 /* read sampling time in seconds */
-                iRet = fread(&stHeader.dTSamp,
-                             sizeof(stHeader.dTSamp),
+                iRet = fread(&pstYUM->dTSamp,
+                             sizeof(pstYUM->dTSamp),
                              1,
                              pFSpec);
-                dTSampInSec = stHeader.dTSamp;
-                dTSamp = dTSampInSec * 1e3;     /* in ms */
-                iHeaderLen += sizeof(stHeader.dTSamp);
+                dTSampInSec = pstYUM->dTSamp;
+                pstYUM->dTSamp = dTSampInSec * 1e3;     /* in ms */
+                pstYUM->iHeaderLen += sizeof(pstYUM->dTSamp);
             }
             else if (0 == strcmp(acLabel, "tstart"))
             {
                 /* read timestamp of first sample (MJD) */
-                iRet = fread(&stHeader.dTStart,
-                             sizeof(stHeader.dTStart),
+                iRet = fread(&dTStart,
+                             sizeof(dTStart),
                              1,
                              pFSpec);
-                iHeaderLen += sizeof(stHeader.dTStart);
+                pstYUM->iHeaderLen += sizeof(dTStart);
             }
             else if (0 == strcmp(acLabel, "telescope_id"))
             {
                 /* read telescope ID */
-                iRet = fread(&stHeader.iObsID,
-                             sizeof(stHeader.iObsID),
+                iRet = fread(&iObsID,
+                             sizeof(iObsID),
                              1,
                              pFSpec);
-                (void) YAPP_GetObsNameFromID(stHeader.iObsID, acSite);
-                iHeaderLen += sizeof(stHeader.iObsID);
+                (void) YAPP_GetObsNameFromID(iObsID, pstYUM->acSite);
+                pstYUM->iHeaderLen += sizeof(iObsID);
             }
             else if (0 == strcmp(acLabel, "machine_id"))
             {
                 /* read backend ID */
-                iRet = fread(&stHeader.iBackendID,
-                             sizeof(stHeader.iBackendID),
+                iRet = fread(&pstYUM->iBackendID,
+                             sizeof(pstYUM->iBackendID),
                              1,
                              pFSpec);
-                iHeaderLen += sizeof(stHeader.iBackendID);
+                pstYUM->iHeaderLen += sizeof(pstYUM->iBackendID);
             }
             else if (0 == strcmp(acLabel, "src_raj"))
             {
                 /* read source RA (J2000) */
-                iRet = fread(&stHeader.dSourceRA,
-                             sizeof(stHeader.dSourceRA),
+                iRet = fread(&pstYUM->dSourceRA,
+                             sizeof(pstYUM->dSourceRA),
                              1,
                              pFSpec);
-                iHeaderLen += sizeof(stHeader.dSourceRA);
+                pstYUM->iHeaderLen += sizeof(pstYUM->dSourceRA);
             }
             else if (0 == strcmp(acLabel, "src_dej"))
             {
                 /* read source declination (J2000) */
-                iRet = fread(&stHeader.dSourceDec,
-                             sizeof(stHeader.dSourceDec),
+                iRet = fread(&pstYUM->dSourceDec,
+                             sizeof(pstYUM->dSourceDec),
                              1,
                              pFSpec);
-                iHeaderLen += sizeof(stHeader.dSourceDec);
+                pstYUM->iHeaderLen += sizeof(pstYUM->dSourceDec);
             }
             else if (0 == strcmp(acLabel, "az_start"))
             {
                 /* read azimuth start */
-                iRet = fread(&stHeader.dAzStart,
-                             sizeof(stHeader.dAzStart),
+                iRet = fread(&pstYUM->dAzStart,
+                             sizeof(pstYUM->dAzStart),
                              1,
                              pFSpec);
-                iHeaderLen += sizeof(stHeader.dAzStart);
+                pstYUM->iHeaderLen += sizeof(pstYUM->dAzStart);
             }
             else if (0 == strcmp(acLabel, "za_start"))
             {
                 /* read ZA start */
-                iRet = fread(&stHeader.dZAStart,
-                             sizeof(stHeader.dZAStart),
+                iRet = fread(&pstYUM->dZAStart,
+                             sizeof(pstYUM->dZAStart),
                              1,
                              pFSpec);
-                iHeaderLen += sizeof(stHeader.dZAStart);
+                pstYUM->iHeaderLen += sizeof(pstYUM->dZAStart);
             }
             /* DTS-specific field */
             else if (0 == strcmp(acLabel, "refdm"))
             {
                 /* read reference DM */
-                iRet = fread(&stHeader.dDM, sizeof(stHeader.dDM), 1, pFSpec);
-                iHeaderLen += sizeof(stHeader.dDM);
+                iRet = fread(&pstYUM->dDM, sizeof(pstYUM->dDM), 1, pFSpec);
+                pstYUM->iHeaderLen += sizeof(pstYUM->dDM);
             }
             else if (0 == strcmp(acLabel, "barycentric"))
             {
                 /* read barycentric flag */
-                iRet = fread(&stHeader.iFlagBary,
-                             sizeof(stHeader.iFlagBary),
+                iRet = fread(&pstYUM->iFlagBary,
+                             sizeof(pstYUM->iFlagBary),
                              1,
                              pFSpec);
-                iHeaderLen += sizeof(stHeader.iFlagBary);
+                pstYUM->iHeaderLen += sizeof(pstYUM->iFlagBary);
             }
             else if (0 == strcmp(acLabel, "FREQUENCY_START"))
             {
-                iFlagSplicedData = YAPP_TRUE;
+                pstYUM->iFlagSplicedData = YAPP_TRUE;
 
                 /* read field label length */
                 iRet = fread(&iLen, sizeof(iLen), 1, pFSpec);
                 /* read field label */
                 iRet = fread(acLabel, sizeof(char), iLen, pFSpec);
                 acLabel[iLen] = '\0';
-                iHeaderLen += (sizeof(iLen) + iLen);
+                pstYUM->iHeaderLen += (sizeof(iLen) + iLen);
                 if (0 == strcmp(acLabel, "nchans"))
                 {
                     /* read number of channels */
-                    iRet = fread(&stHeader.iNumChans,
-                                 sizeof(stHeader.iNumChans),
+                    iRet = fread(&pstYUM->iNumChans,
+                                 sizeof(pstYUM->iNumChans),
                                  1,
                                  pFSpec);
-                    iNumChans = stHeader.iNumChans;
-                    iHeaderLen += sizeof(stHeader.iNumChans);
+                    pstYUM->iHeaderLen += sizeof(pstYUM->iNumChans);
                 }
                 else
                 {
@@ -698,10 +625,10 @@ int YAPP_ReadMetadata(char *pcFileSpec, YUM_t *pstYUM)
 
                 /* allocate memory for the frequency channel array read from
                    the header */
-                pfFreq = (float *) YAPP_Malloc(iNumChans,
+                pstYUM->pfFreq = (float *) YAPP_Malloc(pstYUM->iNumChans,
                                                sizeof(float),
                                                YAPP_FALSE);
-                if (NULL == pfFreq)
+                if (NULL == pstYUM->pfFreq)
                 {
                     perror("malloc - pfFreq");
                     (void) fclose(pFSpec);
@@ -710,7 +637,7 @@ int YAPP_ReadMetadata(char *pcFileSpec, YUM_t *pstYUM)
                 }
 
                 /* store in the reverse order */
-                i = iNumChans - 1;
+                i = pstYUM->iNumChans - 1;
                 /* parse frequency channels for spliced data */
                 while (strcmp(acLabel, "FREQUENCY_END") != 0)
                 {
@@ -719,12 +646,12 @@ int YAPP_ReadMetadata(char *pcFileSpec, YUM_t *pstYUM)
                     /* read field label */
                     iRet = fread(acLabel, sizeof(char), iLen, pFSpec);
                     acLabel[iLen] = '\0';
-                    iHeaderLen += (sizeof(iLen) + iLen);
+                    pstYUM->iHeaderLen += (sizeof(iLen) + iLen);
                     if (0 == strcmp(acLabel, "fchannel"))
                     {
                         iRet = fread(&dFChan, sizeof(dFChan), 1, pFSpec);
-                        pfFreq[i] = (float) dFChan;
-                        iHeaderLen += sizeof(dFChan);
+                        pstYUM->pfFreq[i] = (float) dFChan;
+                        pstYUM->iHeaderLen += sizeof(dFChan);
                     }
                     else
                     {
@@ -757,44 +684,43 @@ int YAPP_ReadMetadata(char *pcFileSpec, YUM_t *pstYUM)
         /* close the file, it will be opened later for reading data */
         (void) fclose(pFSpec);
 
-        (void) printf("Header length                     : %d\n", iHeaderLen);
-        (void) printf("Field name                        : %s\n", acPulsar);
-        (void) printf("Observing site                    : %s\n", acSite);
-        (void) printf("Number of channels                : %d\n", iNumChans);
-
-        if (fChanBW < 0.0)
+        if (pstYUM->fChanBW < 0.0)
         {
             /* make the channel bandwidth positive */
-            fChanBW = fabs(fChanBW);
-            fFMax = fFCh1;
-            fFMin = fFMax - (iNumChans * fChanBW);
+            pstYUM->fChanBW = fabs(pstYUM->fChanBW);
+            pstYUM->fFMax = fFCh1;
+            pstYUM->fFMin = pstYUM->fFMax - (pstYUM->iNumChans * pstYUM->fChanBW);
         }
         else
         {
-            fFMin = fFCh1;
-            fFMax = fFMin + (iNumChans * fChanBW);
+            pstYUM->fFMin = fFCh1;
+            pstYUM->fFMax = pstYUM->fFMin + (pstYUM->iNumChans * pstYUM->fChanBW);
         }
+        /* calculate bandwidth and centre frequency */
+        pstYUM->fBW = pstYUM->fFMax - pstYUM->fFMin;
+        pstYUM->fFCentre = pstYUM->fFMin + (pstYUM->fBW / 2);
 
-        if (YAPP_TRUE == iFlagSplicedData)
+
+        if (YAPP_TRUE == pstYUM->iFlagSplicedData)
         {
             /* in spliced data files, the first frequency is always the
                highest - since we have inverted the array, it is the last
                frequency */
-            fFMax = pfFreq[iNumChans-1];
+            pstYUM->fFMax = pstYUM->pfFreq[pstYUM->iNumChans-1];
             /* get the lowest frequency */
-            fFMin = pfFreq[0];
+            pstYUM->fFMin = pstYUM->pfFreq[0];
             /* calculate the channel bandwidth */
-            fChanBW = pfFreq[1] - pfFreq[0];
+            pstYUM->fChanBW = pstYUM->pfFreq[1] - pstYUM->pfFreq[0];
 
 			/* TODO: Number-of-bands calculation not accurate */
-            for (i = 1; i < iNumChans; ++i)
+            for (i = 1; i < pstYUM->iNumChans; ++i)
             {
                 /*if (fabsf(pfFreq[i] - pfFreq[i-1]) > fChanBW)*/
                 /* kludge: */
-                if (fabsf(pfFreq[i] - pfFreq[i-1]) > (2 * fChanBW))
+                if (fabsf(pstYUM->pfFreq[i] - pstYUM->pfFreq[i-1]) > (2 * pstYUM->fChanBW))
                 {
-                    ++iNumBands;
-                    if (YAPP_MAX_NUM_BANDS == iNumBands)
+                    ++pstYUM->iNumBands;
+                    if (YAPP_MAX_NUM_BANDS == pstYUM->iNumBands)
                     {
                         (void) printf("WARNING: "
                                       "Maximum number of bands reached!\n");
@@ -802,27 +728,16 @@ int YAPP_ReadMetadata(char *pcFileSpec, YUM_t *pstYUM)
                     }
                 }
             }
-            (void) printf("Estimated number of bands         : %d\n",
-                          iNumBands);
+        }
+        else
+        {
+            pstYUM->iNumBands = 1;
         }
 
         /* TODO: find out the discontinuities and print them as well, also
                  number of spliced bands */
 
-        (void) printf("Channel bandwidth                 : %.10g MHz\n",
-                      fChanBW);
-        (void) printf("Lowest frequency                  : %.10g MHz\n", fFMin);
-        (void) printf("Highest frequency                 : %.10g MHz\n", fFMax);
-
-        (void) printf("Sampling interval                 : %.10g ms\n", dTSamp);
-        (void) printf("Timestamp of first sample         : %.16g MJD\n",
-                      stHeader.dTStart);
-        (void) printf("Number of bits per sample         : %d\n",
-                      stHeader.iNumBits);
-        (void) printf("Number of IFs                     : %d\n",
-                      stHeader.iNumIFs);
-
-        fSampSize = ((float) stHeader.iNumBits) / 8;
+        pstYUM->fSampSize = ((float) pstYUM->iNumBits) / YAPP_BYTE2BIT_FACTOR;
 
         iRet = stat(pcFileSpec, &stFileStats);
         if (iRet != YAPP_RET_SUCCESS)
@@ -834,34 +749,13 @@ int YAPP_ReadMetadata(char *pcFileSpec, YUM_t *pstYUM)
             YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
-        lDataSizeTotal = (long) stFileStats.st_size - iHeaderLen;
-        (void) printf("Duration of data in\n");
-        (void) printf("    Bytes                         : %ld\n",
-                      (lDataSizeTotal / iNumChans));
-        iTimeSamps = (int) (lDataSizeTotal / (iNumChans * fSampSize));
-        (void) printf("    Time samples                  : %d\n", iTimeSamps);
-        (void) printf("    Time                          : %g s\n",
-                      (iTimeSamps * dTSampInSec));
+        pstYUM->lDataSizeTotal = (long) stFileStats.st_size - pstYUM->iHeaderLen;
+        pstYUM->iTimeSamps = (int) (pstYUM->lDataSizeTotal / (pstYUM->iNumChans * pstYUM->fSampSize));
 
         /* set number of good channels to number of channels - no support for
            SIGPROC ignore files yet */
-        iNumGoodChans = iNumChans;
+        pstYUM->iNumGoodChans = pstYUM->iNumChans;
     }
-
-    /* calculate the threshold */
-    dNumSigmas = YAPP_CalcThresholdInSigmas(iTimeSamps);
-    if ((double) YAPP_RET_ERROR == dNumSigmas)
-    {
-        (void) fprintf(stderr, "ERROR: Threshold calculation failed!\n");
-        YAPP_CleanUp();
-        return YAPP_RET_ERROR;
-    }
-    fStatBW = iNumGoodChans * fChanBW;  /* in MHz */
-    (void) printf("Usable bandwidth                  : %g MHz\n", fStatBW);
-    fNoiseRMS = 1.0 / sqrt(fStatBW * dTSamp * 1e3);
-    (void) printf("Expected noise RMS                : %g\n", fNoiseRMS);
-    fThreshold = (float) (dNumSigmas * fNoiseRMS);
-    (void) printf("Threshold                         : %g\n", fThreshold);
 
     return YAPP_RET_SUCCESS;
 }

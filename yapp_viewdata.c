@@ -48,23 +48,16 @@ extern const char *g_pcVersion;
 
 /* the following are global only to enable cleaning up in case of abnormal
    termination, such as those triggered by SIGINT or SIGTERM */
-char *g_pcIsChanGood = NULL;
 char *g_pcIsTimeGood = NULL;
-float *g_pfBFTimeSectMean = NULL;
-float *g_pfBFGain = NULL;
-double (*g_padBadTimes)[][NUM_BAD_BOUNDS] = NULL;
-float *g_pfFreq = NULL;
-
 float *g_pfBuf = NULL;
 float *g_pfPlotBuf = NULL;
 float *g_pfXAxis = NULL;
+float *g_pfYAxis = NULL;
 
 int main(int argc, char *argv[])
 {
     FILE *pFSpec = NULL;
-    FILE *pFCfg = NULL;
     char *pcFileSpec = NULL;
-    char acFileCfg[LEN_GENSTRING] = {0};
     int iFormat = DEF_FORMAT;
     int iDataSkipPercent = DEF_SKIP_PERCENT;
     int iDataSkipTime = DEF_SKIP_TIME;
@@ -72,52 +65,19 @@ int main(int argc, char *argv[])
     int iDataProcTime = DEF_PROC_TIME;
     int iProcSpec = PROC_SPEC_NOTSEL;   /* by default, the processing
                                            specification is not selected */
-    int iChanGoodness = (int) YAPP_TRUE;
-    float fFMin = 0.0;
-    float fFMax = 0.0;
-    float fChanBW = 0.0;
-    int iNumChans = 0;
-    float fSampSize = 0.0;      /* number of bits that make a sample */
+    YUM_t stYUM = {{0}};
+    double dTNextBF = 0.0;
+    float *pfTimeSectGain = NULL;
     int iTotSampsPerBlock = 0;  /* iNumChans * iBlockSize */
     int iDataSizePerBlock = 0;  /* fSampSize * iNumChans * iBlockSize */
-    int iNumGoodChans = 0;
-    char cIsBandFlipped = YAPP_FALSE;
     float fStatBW = 0.0;
     float fNoiseRMS = 0.0;
     float fThreshold = 0.0;
     float fSNRMin = 0.0;
     float fClipLevel = 0.0;
     double dNumSigmas = 0.0;
-    double dTSamp = 0.0;        /* holds sampling time in ms */
     double dTSampInSec = 0.0;   /* holds sampling time in s */
-    YAPP_SIGPROC_HEADER stHeader = {{0}};
-    char acLabel[LEN_GENSTRING] = {0};
-    int iHeaderLen = 0;
-    int iFlagSplicedData = YAPP_FALSE;
-    int iNumBands = 0;
     int iNumTicksY = PG_TICK_STEPS_Y;
-    float afTicks[YAPP_MAX_NUM_BANDS] = {0};
-    int iLen = 0;
-    double dFChan = 0.0;
-    float fFCh1 = 0.0;          /* frequency of the first channel */
-    int iBytesPerFrame = 0;
-    float fFCentre = 0.0;
-    float fBW = 0.0;
-    int iChanBeg = 0;
-    int iChanEnd = 0;
-    char acPulsar[LEN_GENSTRING] = {0};
-    int iDay = 0;
-    int iMonth = 0;
-    int iYear = 0;
-    int iHour = 0;
-    int iMin = 0;
-    float fSec = 0.0;
-    char acSite[LEN_GENSTRING] = {0};
-    double dTNextBF = 0.0;
-    double dTBFInt = 0.0;
-    int iBFTimeSects = 0;
-    float *pfTimeSectGain = NULL;
-    int iNumBadTimes = 0;
     double dTNow = 0.0;
     int iTimeSect = 0;
     int iBadTimeSect = 0;
@@ -125,7 +85,6 @@ int main(int argc, char *argv[])
     float *pfSpectrum = NULL;
     long lBytesToSkip = 0;
     long lBytesToProc = 0;
-    int iTimeSamps = 0;
     int iTimeSampsSkip = 0;
     int iTimeSampsToProc = 0;
     int iBlockSize = DEF_SIZE_BLOCK;
@@ -133,8 +92,6 @@ int main(int argc, char *argv[])
     int iTotNumReads = 0;
     int iReadBlockCount = 0;
     char cIsLastBlock = YAPP_FALSE;
-    struct stat stFileStats = {0};
-    long lDataSizeTotal = 0;
     int iRet = YAPP_RET_SUCCESS;
     float afTM[6] = {0.0};
     float fDataMin = 0.0;
@@ -357,571 +314,22 @@ int main(int argc, char *argv[])
                        "ERROR: File type determination failed!\n");
         return YAPP_RET_ERROR;
     }
-    else if (YAPP_FORMAT_SPEC == iFormat) /* 'spec' format */
+
+    /* read metadata */
+    iRet = YAPP_ReadMetadata(pcFileSpec, &stYUM);
+    if (iRet != YAPP_RET_SUCCESS)
     {
-        /* NOTE: reading data in Desh's 'spec' file format + associated
-           'spec_cfg' file format */
-        fSampSize = (float) sizeof(float);  /* spec files are 32-bit floats */
-
-        /* build the 'cfg' file name from the 'spec' file name, and open it */
-        (void) strcpy(acFileCfg, pcFileSpec);
-        (void) strcat(acFileCfg, SUFFIX_CFG);
-        pFCfg = fopen(acFileCfg, "r");
-        if (NULL == pFCfg)
-        {
-            (void) fprintf(stderr,
-                           "ERROR: Opening file %s failed! %s.\n",
-                           acFileCfg,
-                           strerror(errno));
-            return YAPP_RET_ERROR;
-        }
-
-        /* read the first few parameters from the 'cfg' file */
-        iRet = fscanf(pFCfg,
-                      " %lf %d %f %f %d %d %s %d %d %d %d %d %f %s %lf %lf",
-                      &dTSamp,          /* in ms */
-                      &iBytesPerFrame,  /* iNumChans * fSampSize */
-                      &fFCentre,        /* in MHz */
-                      &fBW,             /* in kHz */
-                      &iChanBeg,
-                      &iChanEnd,
-                      acPulsar,
-                      &iDay,
-                      &iMonth,
-                      &iYear,
-                      &iHour,
-                      &iMin,
-                      &fSec,
-                      acSite,
-                      &dTNextBF,        /* in s */
-                      &dTBFInt);        /* in s */
-
-        /* handle negative bandwidths */
-        if (fBW < 0)
-        {
-            fBW = -fBW;
-            cIsBandFlipped = YAPP_TRUE;  /* NOTE: not used, as of now */
-        }
-
-        /* convert the bandwidth to MHz */
-        fBW /= 1000.0;
-
-        /* store a copy of the sampling interval in s */
-        dTSampInSec = dTSamp / 1000.0;
-
-        (void) printf("Field name                        : %s\n", acPulsar);
-        (void) printf("Observing site                    : %s\n", acSite);
-        (void) printf("Date of observation               : %d.%d.%d\n",
-                      iYear,
-                      iMonth,
-                      iDay);
-        (void) printf("Time of observation               : %d:%d:%g\n",
-                      iHour,
-                      iMin,
-                      fSec);
-        (void) printf("Bytes per frame                   : %d\n",
-                      iBytesPerFrame);
-        (void) printf("Centre frequency                  : %g MHz\n", fFCentre);
-        (void) printf("Bandwidth                         : %g MHz\n", fBW);
-        if (cIsBandFlipped)
-        {
-            (void) printf("                                    Band flip.\n");
-        }
-        else
-        {
-            (void) printf("                                    "
-                          "No band flip.\n");
-        }
-        (void) printf("Sampling interval                 : %.10g ms\n", dTSamp);
-        (void) printf("First channel index               : %d\n", iChanBeg);
-        (void) printf("Last channel index                : %d\n", iChanEnd);
-
-        /* calculate the number of channels */
-        iNumChans = iChanEnd - iChanBeg + 1;
-        (void) printf("Number of channels                : %d\n", iNumChans);
-
-        /* calculate the channel bandwidth */
-        fChanBW = fBW / iNumChans;  /* in MHz */
-        (void) printf("Channel bandwidth                 : %.10g MHz\n",
-                      fChanBW);
-
-        /* calculate the absolute min and max frequencies */
-        fFMin = fFCentre - (fBW / 2) + (fChanBW / 2);
-        (void) printf("Lowest frequency                  : %.10g MHz\n", fFMin);
-        fFMax = fFCentre + (fBW / 2) - (fChanBW / 2);
-        (void) printf("Highest frequency                 : %.10g MHz\n", fFMax);
-
-        g_pcIsChanGood = (char *) malloc(sizeof(char) * iNumChans);
-        if (NULL == g_pcIsChanGood)
-        {
-            perror("malloc - g_pcIsChanGood");
-            (void) fclose(pFCfg);
-            return YAPP_RET_ERROR;
-        }
-
-        /* read the channel goodness flags */
-        for (i = 0; i < iNumChans; ++i)
-        {
-            iRet = fscanf(pFCfg, " %d", &iChanGoodness);
-            g_pcIsChanGood[i] = (char) iChanGoodness;
-            if (g_pcIsChanGood[i])
-            {
-                ++iNumGoodChans;
-            }
-        }
-        (void) printf("Number of good channels           : %d\n",
-                      iNumGoodChans);
-
-        (void) printf("First band flip time              : %.10g s\n",
-                      dTNextBF);
-        (void) printf("Band flip interval                : %.10g s\n", dTBFInt);
-
-        iRet = fscanf(pFCfg, " %d", &iBFTimeSects);
-
-        (void) printf("Number of band flip time sections : %d\n", iBFTimeSects);
-
-        g_pfBFTimeSectMean = (float *) malloc(sizeof(float) * iBFTimeSects);
-        if (NULL == g_pfBFTimeSectMean)
-        {
-            perror("malloc - g_pfBFTimeSectMean");
-            (void) fclose(pFCfg);
-            YAPP_CleanUp();
-            return YAPP_RET_ERROR;
-        }
-
-        for (i = 0; i < iBFTimeSects; ++i)
-        {
-            iRet = fscanf(pFCfg, " %f", &g_pfBFTimeSectMean[i]);
-        }
-
-        g_pfBFGain = (float *) malloc(sizeof(float) * iNumChans * iBFTimeSects);
-        if (NULL == g_pfBFGain)
-        {
-            perror("malloc - g_pfBFGain");
-            (void) fclose(pFCfg);
-            YAPP_CleanUp();
-            return YAPP_RET_ERROR;
-        }
-
-        for (i = 0; i < (iNumChans * iBFTimeSects); ++i)
-        {
-            iRet = fscanf(pFCfg, " %f", &g_pfBFGain[i]);
-        }
-        pfTimeSectGain = g_pfBFGain;
-
-        iRet = fscanf(pFCfg, " %d", &iNumBadTimes);
-        (void) printf("Number of bad time sections       : %d\n", iNumBadTimes);
-        g_padBadTimes = (double(*) [][NUM_BAD_BOUNDS]) malloc(sizeof(double)
-                                                              * iNumBadTimes
-                                                              * NUM_BAD_BOUNDS);
-        if (NULL == g_padBadTimes)
-        {
-            perror("malloc - g_padBadTimes");
-            (void) fclose(pFCfg);
-            YAPP_CleanUp();
-            return YAPP_RET_ERROR;
-        }
-        for (i = 0; i < iNumBadTimes; ++i)
-        {
-            for (j = 0; j < NUM_BAD_BOUNDS; ++j)
-            {
-                iRet = fscanf(pFCfg, " %lf", &((*g_padBadTimes)[i][j]));
-            }
-        }
-
-        (void) fclose(pFCfg);
-
-        iRet = stat(pcFileSpec, &stFileStats);
-        if (iRet != YAPP_RET_SUCCESS)
-        {
-            (void) fprintf(stderr,
-                           "ERROR: Failed to stat %s: %s!\n",
-                           pcFileSpec,
-                           strerror(errno));
-            YAPP_CleanUp();
-            return YAPP_RET_ERROR;
-        }
-        lDataSizeTotal = (long) stFileStats.st_size;
-        (void) printf("Duration of data in\n");
-        (void) printf("    Bytes                         : %ld\n",
-                      (lDataSizeTotal / iNumChans));
-        iTimeSamps = (int) (lDataSizeTotal / (iNumChans * fSampSize));
-        (void) printf("    Time samples                  : %d\n", iTimeSamps);
-        (void) printf("    Time                          : %g s\n",
-                      (iTimeSamps * dTSampInSec));
+        (void) fprintf(stderr,
+                       "ERROR: Reading metadata failed for file %s!\n",
+                       pcFileSpec);
+        return YAPP_RET_ERROR;
     }
-    else    /* 'fil' format */
-    {
-        /* open the dynamic spectrum data file for reading */
-        pFSpec = fopen(pcFileSpec, "r");
-        if (NULL == pFSpec)
-        {
-            (void) fprintf(stderr,
-                           "ERROR: Opening file %s failed! %s.\n",
-                           pcFileSpec,
-                           strerror(errno));
-            YAPP_CleanUp();
-            return YAPP_RET_ERROR;
-        }
 
-        /* read the parameters from the header section of the file */
-        /* start with the 'HEADER_START' label */
-        iRet = fread(&iLen, sizeof(iLen), 1, pFSpec);
-        iRet = fread(acLabel, sizeof(char), iLen, pFSpec);
-        acLabel[iLen] = '\0';
-        if (strcmp(acLabel, "HEADER_START") != 0)
-        {
-            (void) fprintf(stderr,
-                           "ERROR: Reading header failed!\n");
-            YAPP_CleanUp();
-            return YAPP_RET_ERROR;
-        }
-        iHeaderLen += (sizeof(iLen) + iLen);
+    /* convert sampling interval to seconds */
+    dTSampInSec = stYUM.dTSamp / 1e3;
 
-        /* parse the rest of the header */
-        while (strcmp(acLabel, "HEADER_END") != 0)
-        {
-            /* read field label length */
-            iRet = fread(&iLen, sizeof(iLen), 1, pFSpec);
-            /* read field label */
-            iRet = fread(acLabel, sizeof(char), iLen, pFSpec);
-            acLabel[iLen] = '\0';
-            iHeaderLen += (sizeof(iLen) + iLen);
-            if (0 == strcmp(acLabel, "source_name"))
-            {
-                iRet = fread(&iLen, sizeof(iLen), 1, pFSpec);
-                iRet = fread(stHeader.acPulsar, sizeof(char), iLen, pFSpec);
-                stHeader.acPulsar[iLen] = '\0';
-                (void) strcpy(acPulsar, stHeader.acPulsar);
-                iHeaderLen += (sizeof(iLen) + iLen);
-            }
-            else if (0 == strcmp(acLabel, "data_type"))
-            {
-                iRet = fread(&stHeader.iDataTypeID,
-                             sizeof(stHeader.iDataTypeID),
-                             1,
-                             pFSpec);
-                iHeaderLen += sizeof(stHeader.iDataTypeID);
-            }
-            else if (0 == strcmp(acLabel, "nchans"))
-            {
-                /* read number of channels */
-                iRet = fread(&stHeader.iNumChans,
-                             sizeof(stHeader.iNumChans),
-                             1,
-                             pFSpec);
-                iNumChans = stHeader.iNumChans;
-                iHeaderLen += sizeof(stHeader.iNumChans);
-            }
-            else if (0 == strcmp(acLabel, "fch1"))
-            {
-                /* read frequency of first channel */
-                iRet = fread(&stHeader.dFChan1,
-                             sizeof(stHeader.dFChan1),
-                             1,
-                             pFSpec);
-                fFCh1 = (float) stHeader.dFChan1;
-                iHeaderLen += sizeof(stHeader.dFChan1);
-            }
-            else if (0 == strcmp(acLabel, "foff"))
-            {
-                /* read channel bandwidth (labelled frequency offset) */
-                iRet = fread(&stHeader.dChanBW,
-                             sizeof(stHeader.dChanBW),
-                             1,
-                             pFSpec);
-                fChanBW = (float) stHeader.dChanBW;
-                iHeaderLen += sizeof(stHeader.dChanBW);
-            }
-            else if (0 == strcmp(acLabel, "nbits"))
-            {
-                /* read number of bits per sample */
-                iRet = fread(&stHeader.iNumBits,
-                             sizeof(stHeader.iNumBits),
-                             1,
-                             pFSpec);
-                iHeaderLen += sizeof(stHeader.iNumBits);
-            }
-            else if (0 == strcmp(acLabel, "nifs"))
-            {
-                /* read number of IFs */
-                iRet = fread(&stHeader.iNumIFs,
-                             sizeof(stHeader.iNumIFs),
-                             1,
-                             pFSpec);
-                iHeaderLen += sizeof(stHeader.iNumIFs);
-            }
-            else if (0 == strcmp(acLabel, "tsamp"))
-            {
-                /* read sampling time in seconds */
-                iRet = fread(&stHeader.dTSamp,
-                             sizeof(stHeader.dTSamp),
-                             1,
-                             pFSpec);
-                dTSampInSec = stHeader.dTSamp;
-                dTSamp = dTSampInSec * 1e3;     /* in ms */
-                iHeaderLen += sizeof(stHeader.dTSamp);
-            }
-            else if (0 == strcmp(acLabel, "tstart"))
-            {
-                /* read timestamp of first sample (MJD) */
-                iRet = fread(&stHeader.dTStart,
-                             sizeof(stHeader.dTStart),
-                             1,
-                             pFSpec);
-                iHeaderLen += sizeof(stHeader.dTStart);
-            }
-            else if (0 == strcmp(acLabel, "telescope_id"))
-            {
-                /* read telescope ID */
-                iRet = fread(&stHeader.iObsID,
-                             sizeof(stHeader.iObsID),
-                             1,
-                             pFSpec);
-                (void) YAPP_GetObsNameFromID(stHeader.iObsID, acSite);
-                iHeaderLen += sizeof(stHeader.iObsID);
-            }
-            else if (0 == strcmp(acLabel, "machine_id"))
-            {
-                /* read backend ID */
-                iRet = fread(&stHeader.iBackendID,
-                             sizeof(stHeader.iBackendID),
-                             1,
-                             pFSpec);
-                iHeaderLen += sizeof(stHeader.iBackendID);
-            }
-            else if (0 == strcmp(acLabel, "src_raj"))
-            {
-                /* read source RA (J2000) */
-                iRet = fread(&stHeader.dSourceRA,
-                             sizeof(stHeader.dSourceRA),
-                             1,
-                             pFSpec);
-                iHeaderLen += sizeof(stHeader.dSourceRA);
-            }
-            else if (0 == strcmp(acLabel, "src_dej"))
-            {
-                /* read source declination (J2000) */
-                iRet = fread(&stHeader.dSourceDec,
-                             sizeof(stHeader.dSourceDec),
-                             1,
-                             pFSpec);
-                iHeaderLen += sizeof(stHeader.dSourceDec);
-            }
-            else if (0 == strcmp(acLabel, "az_start"))
-            {
-                /* read azimuth start */
-                iRet = fread(&stHeader.dAzStart,
-                             sizeof(stHeader.dAzStart),
-                             1,
-                             pFSpec);
-                iHeaderLen += sizeof(stHeader.dAzStart);
-            }
-            else if (0 == strcmp(acLabel, "za_start"))
-            {
-                /* read ZA start */
-                iRet = fread(&stHeader.dZAStart,
-                             sizeof(stHeader.dZAStart),
-                             1,
-                             pFSpec);
-                iHeaderLen += sizeof(stHeader.dZAStart);
-            }
-            /* DTS-specific field */
-            else if (0 == strcmp(acLabel, "refdm"))
-            {
-                /* read reference DM */
-                iRet = fread(&stHeader.dDM, sizeof(stHeader.dDM), 1, pFSpec);
-                iHeaderLen += sizeof(stHeader.dDM);
-            }
-            else if (0 == strcmp(acLabel, "barycentric"))
-            {
-                /* read barycentric flag */
-                iRet = fread(&stHeader.iFlagBary,
-                             sizeof(stHeader.iFlagBary),
-                             1,
-                             pFSpec);
-                iHeaderLen += sizeof(stHeader.iFlagBary);
-            }
-            else if (0 == strcmp(acLabel, "FREQUENCY_START"))
-            {
-                iFlagSplicedData = YAPP_TRUE;
-
-                /* read field label length */
-                iRet = fread(&iLen, sizeof(iLen), 1, pFSpec);
-                /* read field label */
-                iRet = fread(acLabel, sizeof(char), iLen, pFSpec);
-                acLabel[iLen] = '\0';
-                iHeaderLen += (sizeof(iLen) + iLen);
-                if (0 == strcmp(acLabel, "nchans"))
-                {
-                    /* read number of channels */
-                    iRet = fread(&stHeader.iNumChans,
-                                 sizeof(stHeader.iNumChans),
-                                 1,
-                                 pFSpec);
-                    iNumChans = stHeader.iNumChans;
-                    iHeaderLen += sizeof(stHeader.iNumChans);
-                }
-                else
-                {
-                    (void) fprintf(stderr,
-                                   "ERROR: Unexpected label %s found!",
-                                   acLabel);
-                    (void) fclose(pFSpec);
-                    YAPP_CleanUp();
-                    return YAPP_RET_ERROR;
-                }
-
-                /* allocate memory for the frequency channel array read from
-                   the header */
-                g_pfFreq = (float *) malloc(sizeof(float) * iNumChans);
-                if (NULL == g_pfFreq)
-                {
-                    perror("malloc - g_pfFreq");
-                    (void) fclose(pFSpec);
-                    YAPP_CleanUp();
-                    return YAPP_RET_ERROR;
-                }
-
-                /* store in the reverse order for plotting later */
-                i = iNumChans - 1;
-                /* parse frequency channels for spliced data */
-                while (strcmp(acLabel, "FREQUENCY_END") != 0)
-                {
-                    /* read field label length */
-                    iRet = fread(&iLen, sizeof(iLen), 1, pFSpec);
-                    /* read field label */
-                    iRet = fread(acLabel, sizeof(char), iLen, pFSpec);
-                    acLabel[iLen] = '\0';
-                    iHeaderLen += (sizeof(iLen) + iLen);
-                    if (0 == strcmp(acLabel, "fchannel"))
-                    {
-                        iRet = fread(&dFChan, sizeof(dFChan), 1, pFSpec);
-                        g_pfFreq[i] = (float) dFChan;
-                        iHeaderLen += sizeof(dFChan);
-                    }
-                    else
-                    {
-                        /* print a warning about encountering unknown field label */
-                        if (strcmp(acLabel, "FREQUENCY_END") != 0)
-                        {
-                            (void) fprintf(stderr,
-                                           "WARNING: Unknown field label %s "
-                                           "encountered!\n", acLabel);
-                            (void) fclose(pFSpec);
-                            YAPP_CleanUp();
-                            return YAPP_RET_ERROR;
-                        }
-                    }
-                    --i;
-                }
-            }
-            else
-            {
-                /* print a warning about encountering unknown field label */
-                if (strcmp(acLabel, "HEADER_END") != 0)
-                {
-                    (void) fprintf(stderr,
-                                   "WARNING: Unknown field label %s "
-                                   "encountered!\n", acLabel);
-                }
-            }
-        }
-
-        /* close the file, it will be opened later for reading data */
-        (void) fclose(pFSpec);
-
-        (void) printf("Header length                     : %d\n", iHeaderLen);
-        (void) printf("Field name                        : %s\n", acPulsar);
-        (void) printf("Observing site                    : %s\n", acSite);
-        (void) printf("Number of channels                : %d\n", iNumChans);
-
-        if (fChanBW < 0.0)
-        {
-            /* make the channel bandwidth positive */
-            fChanBW = fabs(fChanBW);
-            fFMax = fFCh1;
-            fFMin = fFMax - (iNumChans * fChanBW);
-        }
-        else
-        {
-            fFMin = fFCh1;
-            fFMax = fFMin + (iNumChans * fChanBW);
-        }
-
-        if (YAPP_TRUE == iFlagSplicedData)
-        {
-            /* in spliced data files, the first frequency is always the
-               highest - since we have inverted the array, it is the last
-               frequency */
-            fFMax = g_pfFreq[iNumChans-1];
-            /* get the lowest frequency */
-            fFMin = g_pfFreq[0];
-            /* calculate the channel bandwidth */
-            fChanBW = g_pfFreq[1] - g_pfFreq[0];
-
-			/* TODO: Number-of-bands calculation not accurate */
-            for (i = 1; i < iNumChans; ++i)
-            {
-                /*if (fabsf(g_pfFreq[i] - g_pfFreq[i-1]) > fChanBW)*/
-                /* kludge: */
-                if (fabsf(g_pfFreq[i] - g_pfFreq[i-1]) > (2 * fChanBW))
-                {
-                    afTicks[iNumBands] = g_pfFreq[i];
-                    ++iNumBands;
-                    if (YAPP_MAX_NUM_BANDS == iNumBands)
-                    {
-                        (void) printf("WARNING: "
-                                      "Maximum number of bands reached!\n");
-                        break;
-                    }
-                }
-            }
-            (void) printf("Estimated number of bands         : %d\n",
-                          iNumBands);
-        }
-
-        /* TODO: find out the discontinuities and print them as well, also
-                 number of spliced bands */
-
-        (void) printf("Channel bandwidth                 : %.10g MHz\n",
-                      fChanBW);
-        (void) printf("Lowest frequency                  : %.10g MHz\n", fFMin);
-        (void) printf("Highest frequency                 : %.10g MHz\n", fFMax);
-
-        (void) printf("Sampling interval                 : %.10g ms\n", dTSamp);
-        (void) printf("Timestamp of first sample         : %.16g MJD\n",
-                      stHeader.dTStart);
-        (void) printf("Number of bits per sample         : %d\n",
-                      stHeader.iNumBits);
-        (void) printf("Number of IFs                     : %d\n",
-                      stHeader.iNumIFs);
-
-        fSampSize = ((float) stHeader.iNumBits) / 8;
-
-        iRet = stat(pcFileSpec, &stFileStats);
-        if (iRet != YAPP_RET_SUCCESS)
-        {
-            (void) fprintf(stderr,
-                           "ERROR: Failed to stat %s: %s!\n",
-                           pcFileSpec,
-                           strerror(errno));
-            YAPP_CleanUp();
-            return YAPP_RET_ERROR;
-        }
-        lDataSizeTotal = (long) stFileStats.st_size - iHeaderLen;
-        (void) printf("Duration of data in\n");
-        (void) printf("    Bytes                         : %ld\n",
-                      (lDataSizeTotal / iNumChans));
-        iTimeSamps = (int) (lDataSizeTotal / (iNumChans * fSampSize));
-        (void) printf("    Time samples                  : %d\n", iTimeSamps);
-        (void) printf("    Time                          : %g s\n",
-                      (iTimeSamps * dTSampInSec));
-
-        /* set number of good channels to number of channels - no support for
-           SIGPROC ignore files yet */
-        iNumGoodChans = iNumChans;
-    }
+    /* copy next beam-flip time */
+    dTNextBF = stYUM.dTNextBF;
 
     /* check which of the data processing specification modes - percentage or
        time - has been selected by the user, and calculate bytes to skip and
@@ -930,12 +338,12 @@ int main(int argc, char *argv[])
     {
         if (0 == iDataProcTime)
         {
-            iDataProcTime = iTimeSamps * dTSampInSec;
+            iDataProcTime = stYUM.iTimeSamps * dTSampInSec;
         }
 
         /* ensure that the input time duration is less than the length of the
            data */
-        if (((double) iDataProcTime) > (iTimeSamps * dTSampInSec))
+        if (((double) iDataProcTime) > (stYUM.iTimeSamps * dTSampInSec))
         {
             (void) fprintf(stderr,
                            "ERROR: Input time is longer than length of "
@@ -944,28 +352,28 @@ int main(int argc, char *argv[])
             return YAPP_RET_ERROR;
         }
 
-        lBytesToSkip = (long) ((iDataSkipTime * 1000.0 / dTSamp)
+        lBytesToSkip = (long) ((iDataSkipTime * 1000.0 / stYUM.dTSamp)
                                                         /* number of samples */
-                               * iNumChans
-                               * fSampSize);
-        lBytesToProc = (long) ((iDataProcTime * 1000.0 / dTSamp)
+                               * stYUM.iNumChans
+                               * stYUM.fSampSize);
+        lBytesToProc = (long) ((iDataProcTime * 1000.0 / stYUM.dTSamp)
                                                         /* number of samples */
-                               * iNumChans
-                               * fSampSize);
+                               * stYUM.iNumChans
+                               * stYUM.fSampSize);
     }
     else    /* if it is not selected, or percentage is selected, use percentage
                mode */
     {
-        lBytesToSkip = (long) (floorf(iTimeSamps
+        lBytesToSkip = (long) (floorf(stYUM.iTimeSamps
                                      * (((float) iDataSkipPercent) / 100))
                                                         /* number of samples */
-                               * iNumChans
-                               * fSampSize);
-        lBytesToProc = (long) (ceilf(iTimeSamps
+                               * stYUM.iNumChans
+                               * stYUM.fSampSize);
+        lBytesToProc = (long) (ceilf(stYUM.iTimeSamps
                                     * (((float) iDataProcPercent) / 100))
                                                         /* number of samples */
-                               * iNumChans
-                               * fSampSize);
+                               * stYUM.iNumChans
+                               * stYUM.fSampSize);
     }
 
     /* if lBytesToSkip is not a multiple of the block size, make it one */
@@ -979,7 +387,7 @@ int main(int argc, char *argv[])
                       lBytesToSkip);
     }
 
-    if (lBytesToSkip >= lDataSizeTotal)
+    if (lBytesToSkip >= stYUM.lDataSizeTotal)
     {
         (void) printf("WARNING: Data to be skipped is greater than or equal to "
                       "the size of the file! Terminating.\n");
@@ -987,35 +395,35 @@ int main(int argc, char *argv[])
         return YAPP_RET_SUCCESS;
     }
 
-    if ((lBytesToSkip + lBytesToProc) > lDataSizeTotal)
+    if ((lBytesToSkip + lBytesToProc) > stYUM.lDataSizeTotal)
     {
         (void) printf("WARNING: Total data to be read (skipped and processed) "
                       "is more than the size of the file! ");
-        lBytesToProc = lDataSizeTotal - lBytesToSkip;
+        lBytesToProc = stYUM.lDataSizeTotal - lBytesToSkip;
         (void) printf("Newly calculated size of data to be processed: %ld "
                       "bytes\n",
                       lBytesToProc);
     }
 
-    iTimeSampsSkip = (int) (lBytesToSkip / (iNumChans * fSampSize));
+    iTimeSampsSkip = (int) (lBytesToSkip / (stYUM.iNumChans * stYUM.fSampSize));
     (void) printf("Skipping\n"
                   "    %ld of %ld bytes\n"
                   "    %d of %d time samples\n"
                   "    %.10g of %.10g seconds\n",
                   lBytesToSkip,
-                  lDataSizeTotal,
+                  stYUM.lDataSizeTotal,
                   iTimeSampsSkip,
-                  iTimeSamps,
+                  stYUM.iTimeSamps,
                   (iTimeSampsSkip * dTSampInSec),
-                  (iTimeSamps * dTSampInSec));
+                  (stYUM.iTimeSamps * dTSampInSec));
 
-    iTimeSampsToProc = (int) (lBytesToProc / (iNumChans * fSampSize));
+    iTimeSampsToProc = (int) (lBytesToProc / (stYUM.iNumChans * stYUM.fSampSize));
     iNumReads = (int) ceilf(((float) iTimeSampsToProc) / iBlockSize);
     iTotNumReads = iNumReads;
 
     /* optimisation - store some commonly used values in variables */
-    iTotSampsPerBlock = iNumChans * iBlockSize;
-    iDataSizePerBlock = (int) (fSampSize * iTotSampsPerBlock);
+    iTotSampsPerBlock = stYUM.iNumChans * iBlockSize;
+    iDataSizePerBlock = (int) (stYUM.fSampSize * iTotSampsPerBlock);
 
     (void) printf("Processing\n"
                   "    %ld of %ld bytes\n"
@@ -1023,11 +431,11 @@ int main(int argc, char *argv[])
                   "    %.10g of %.10g seconds\n"
                   "in %d reads with block size %d time samples...\n",
                   lBytesToProc,
-                  lDataSizeTotal,
+                  stYUM.lDataSizeTotal,
                   iTimeSampsToProc,
-                  iTimeSamps,
+                  stYUM.iTimeSamps,
                   (iTimeSampsToProc * dTSampInSec),
-                  (iTimeSamps * dTSampInSec),
+                  (stYUM.iTimeSamps * dTSampInSec),
                   iNumReads,
                   iBlockSize);
 
@@ -1039,9 +447,9 @@ int main(int argc, char *argv[])
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
-    fStatBW = iNumGoodChans * fChanBW;  /* in MHz */
+    fStatBW = stYUM.iNumGoodChans * stYUM.fChanBW;  /* in MHz */
     (void) printf("Usable bandwidth                  : %g MHz\n", fStatBW);
-    fNoiseRMS = 1.0 / sqrt(fStatBW * dTSamp * 1e3);
+    fNoiseRMS = 1.0 / sqrt(fStatBW * stYUM.dTSamp * 1e3);
     (void) printf("Expected noise RMS                : %g\n", fNoiseRMS);
     fThreshold = (float) (dNumSigmas * fNoiseRMS);
     (void) printf("Threshold                         : %g\n", fThreshold);
@@ -1049,10 +457,15 @@ int main(int argc, char *argv[])
     fSNRMin = fThreshold / fNoiseRMS;
 
     /* allocate memory for the time sample goodness flag array */
-    g_pcIsTimeGood = (char *) malloc(sizeof(char) * iTimeSampsToProc);
+    g_pcIsTimeGood = (char *) YAPP_Malloc(iTimeSampsToProc,
+                                          sizeof(char),
+                                          YAPP_FALSE);
     if (NULL == g_pcIsTimeGood)
     {
-        perror("malloc - g_pcIsTimeGood");
+        (void) fprintf(stderr,
+                       "ERROR: Memory allocation for time sample goodness "
+                       "flag array failed! %s!\n",
+                       strerror(errno));
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
@@ -1073,10 +486,14 @@ int main(int argc, char *argv[])
 
     /* allocate memory for the buffer, based on the number of channels and time
        samples */
-    g_pfBuf = (float *) malloc(sizeof(float) * iNumChans * iBlockSize);
+    g_pfBuf = (float *) YAPP_Malloc((stYUM.iNumChans * iBlockSize),
+                                    sizeof(float),
+                                    YAPP_FALSE);
     if (NULL == g_pfBuf)
     {
-        perror("malloc - g_pfBuf");
+        (void) fprintf(stderr,
+                       "ERROR: Memory allocation for buffer failed! %s!\n",
+                       strerror(errno));
         (void) fclose(pFSpec);
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
@@ -1091,7 +508,7 @@ int main(int argc, char *argv[])
     {
         /* TODO: Need to do this only if the file contains the header */
         /* skip the header */
-        (void) fseek(pFSpec, (long) iHeaderLen, SEEK_SET);
+        (void) fseek(pFSpec, (long) stYUM.iHeaderLen, SEEK_SET);
         /* skip data, if any are to be skipped */
         (void) fseek(pFSpec, lBytesToSkip, SEEK_CUR);
     }
@@ -1122,48 +539,61 @@ int main(int argc, char *argv[])
     }
 
     /* set up the plot's X-axis */
-    g_pfXAxis = (float *) malloc(sizeof(float) * iBlockSize);
+    g_pfXAxis = (float *) YAPP_Malloc(iBlockSize,
+                                      sizeof(float),
+                                      YAPP_FALSE);
     if (NULL == g_pfXAxis)
     {
-        perror("malloc - g_pfXAxis");
+        (void) fprintf(stderr,
+                       "ERROR: Memory allocation for X-axis failed! %s!\n",
+                       strerror(errno));
         cpgclos();
         (void) fclose(pFSpec);
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
 
-    if (YAPP_FALSE == iFlagSplicedData)
+    if (YAPP_FALSE == stYUM.iFlagSplicedData)
     {
         /* set up the image plot's Y-axis (frequency) */
-        g_pfFreq = (float *) malloc(sizeof(float) * iNumChans);
-        if (NULL == g_pfFreq)
+        g_pfYAxis = (float *) YAPP_Malloc(stYUM.iNumChans,
+                                         sizeof(float),
+                                         YAPP_FALSE);
+        if (NULL == g_pfYAxis)
         {
-            perror("malloc - g_pfFreq");
+            (void) fprintf(stderr,
+                           "ERROR: Memory allocation for Y-axis failed! %s!\n",
+                           strerror(errno));
             cpgclos();
             (void) fclose(pFSpec);
             YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
-        for (i = 0; i < iNumChans; ++i)
+        for (i = 0; i < stYUM.iNumChans; ++i)
         {
-            g_pfFreq[i] = fFMin + i * fChanBW;
+            g_pfYAxis[i] = stYUM.fFMin + i * stYUM.fChanBW;
         }
     }
 
     /* calculate the tick step sizes */
     fXStep = (int) ((((iBlockSize - 1) * dTSampInSec) - 0)
                     / PG_TICK_STEPS_X);
-    if (YAPP_TRUE == iFlagSplicedData)
+    if (YAPP_TRUE == stYUM.iFlagSplicedData)
     {
-        iNumTicksY = iNumBands + 1;
+        iNumTicksY = stYUM.iNumBands + 1;
     }
-    fYStep = (int) ((fFMax - fFMin) / iNumTicksY);
+    fYStep = (int) ((stYUM.fFMax - stYUM.fFMin) / iNumTicksY);
 
     /* allocate memory for the cpgimag() plotting buffer */
-    g_pfPlotBuf = (float *) malloc(sizeof(float) * iNumChans * iBlockSize);
+    g_pfPlotBuf = (float *) YAPP_Malloc((stYUM.iNumChans * iBlockSize),
+                                        sizeof(float),
+                                        YAPP_FALSE);
     if (NULL == g_pfPlotBuf)
     {
-        perror("malloc - g_pfPlotBuf");
+        (void) fprintf(stderr,
+                       "ERROR: Memory allocation for plot buffer failed! "
+                       "%s!\n",
+                       strerror(errno));
         cpgclos();
         (void) fclose(pFSpec);
         YAPP_CleanUp();
@@ -1184,7 +614,7 @@ int main(int argc, char *argv[])
         (void) fflush(stdout);
         iReadItems = YAPP_ReadData(pFSpec,
                                    g_pfBuf,
-                                   fSampSize,
+                                   stYUM.fSampSize,
                                    iTotSampsPerBlock);
         if (YAPP_RET_ERROR == iReadItems)
         {
@@ -1200,7 +630,7 @@ int main(int argc, char *argv[])
 
         if (iReadItems < iTotSampsPerBlock)
         {
-            iDiff = (iNumChans * iBlockSize) - iReadItems;
+            iDiff = (stYUM.iNumChans * iBlockSize) - iReadItems;
 
             /* reset remaining elements to '\0' */
             (void) memset((g_pfBuf + iReadItems),
@@ -1211,7 +641,7 @@ int main(int argc, char *argv[])
         /* calculate the number of time samples in the block - this may not
            be iBlockSize for the last block, and should be iBlockSize for
            all other blocks */
-        iNumSamps = iReadItems / iNumChans;
+        iNumSamps = iReadItems / stYUM.iNumChans;
 
         if (YAPP_FORMAT_SPEC == iFormat)
         {
@@ -1221,8 +651,8 @@ int main(int argc, char *argv[])
             {
                 dTNow += dTSampInSec;   /* in s */
 
-                if ((dTNow >= (*g_padBadTimes)[iBadTimeSect][BADTIME_BEG])
-                    && (dTNow <= (*g_padBadTimes)[iBadTimeSect][BADTIME_END]))
+                if ((dTNow >= (*stYUM.padBadTimes)[iBadTimeSect][BADTIME_BEG])
+                    && (dTNow <= (*stYUM.padBadTimes)[iBadTimeSect][BADTIME_END]))
                 {
                     cIsInBadTimeRange = YAPP_TRUE;
                     g_pcIsTimeGood[(iReadBlockCount-1)*iBlockSize+i]
@@ -1230,7 +660,7 @@ int main(int argc, char *argv[])
                 }
 
                 if ((YAPP_TRUE == cIsInBadTimeRange)
-                    && (dTNow > (*g_padBadTimes)[iBadTimeSect][BADTIME_END]))
+                    && (dTNow > (*stYUM.padBadTimes)[iBadTimeSect][BADTIME_END]))
                 {
                     cIsInBadTimeRange = YAPP_FALSE;
                     ++iBadTimeSect;
@@ -1240,9 +670,9 @@ int main(int argc, char *argv[])
                    sample */
                 if (dTNow > dTNextBF)
                 {
-                    dTNextBF += dTBFInt;
+                    dTNextBF += stYUM.dTBFInt;
 
-                    if (iTimeSect >= iBFTimeSects)
+                    if (iTimeSect >= stYUM.iBFTimeSects)
                     {
                         (void) fprintf(stderr,
                                        "ERROR: Beam flip time section anomaly "
@@ -1255,11 +685,11 @@ int main(int argc, char *argv[])
                     ++iTimeSect;
                 }
 
-                pfTimeSectGain = g_pfBFGain + iTimeSect * iNumChans;
-                pfSpectrum = g_pfBuf + i * iNumChans;
-                for (j = 0; j < iNumChans; ++j)
+                pfTimeSectGain = stYUM.pfBFGain + iTimeSect * stYUM.iNumChans;
+                pfSpectrum = g_pfBuf + i * stYUM.iNumChans;
+                for (j = 0; j < stYUM.iNumChans; ++j)
                 {
-                    if (g_pcIsChanGood[j])
+                    if (stYUM.pcIsChanGood[j])
                     {
                         if (fClipLevel != 0.0)
                         {
@@ -1278,7 +708,7 @@ int main(int argc, char *argv[])
                         }
 
                         pfSpectrum[j] = (pfSpectrum[j]
-                                         / g_pfBFTimeSectMean[iTimeSect])
+                                         / stYUM.pfBFTimeSectMean[iTimeSect])
                                         - pfTimeSectGain[j];
                     }
                     else    /* remove bad channels */
@@ -1293,8 +723,8 @@ int main(int argc, char *argv[])
             /* perform clipping, if required */
             for (i = 0; i < iNumSamps; ++i)
             {
-                pfSpectrum = g_pfBuf + i * iNumChans;
-                for (j = 0; j < iNumChans; ++j)
+                pfSpectrum = g_pfBuf + i * stYUM.iNumChans;
+                for (j = 0; j < stYUM.iNumChans; ++j)
                 {
                     if (fClipLevel != 0.0)
                     {
@@ -1319,8 +749,8 @@ int main(int argc, char *argv[])
         fDataMax = pfSpectrum[0];
         for (j = 0; j < iBlockSize; ++j)
         {
-            pfSpectrum = g_pfBuf + j * iNumChans;
-            for (k = 0; k < iNumChans; ++k)
+            pfSpectrum = g_pfBuf + j * stYUM.iNumChans;
+            for (k = 0; k < stYUM.iNumChans; ++k)
             {
                 if (pfSpectrum[k] < fDataMin)
                 {
@@ -1366,8 +796,8 @@ int main(int argc, char *argv[])
         k = 0;
         for (l = 0; l < iBlockSize; ++l)
         {
-            pfSpectrum = g_pfBuf + l * iNumChans;
-            for (m = 0; m < iNumChans; ++m)
+            pfSpectrum = g_pfBuf + l * stYUM.iNumChans;
+            for (m = 0; m < stYUM.iNumChans; ++m)
             {
                 g_pfPlotBuf[j] = pfSpectrum[m];
                 j = k + i * iBlockSize;
@@ -1377,8 +807,13 @@ int main(int argc, char *argv[])
             j = ++k;
         }
 
+        if (!(cIsLastBlock))
+        {
+            /* erase just before plotting, to reduce flicker */
+            cpgeras();
+        }
         cpgsvp(PG_VP_ML, PG_VP_MR, PG_VP_MB, PG_VP_MT);
-        cpgswin(1, (iBlockSize - 2), 1, (iNumChans - 2));
+        cpgswin(1, (iBlockSize - 2), 1, (stYUM.iNumChans - 2));
         cpgbox("C", 0.0, 0, "C", 0.0, 0);
         for (i = 0; i < iBlockSize; ++i)
         {
@@ -1400,8 +835,8 @@ int main(int argc, char *argv[])
                 0);
         cpgaxis("N",
                 1, 1,
-                1, (iNumChans - 2),
-                g_pfFreq[1], g_pfFreq[iNumChans-2],
+                1, (stYUM.iNumChans - 2),
+                g_pfYAxis[1], g_pfYAxis[stYUM.iNumChans-2],
                 fYStep,
                 0,
                 0.4,
@@ -1412,11 +847,11 @@ int main(int argc, char *argv[])
         cpglab("Time (s)", "Frequency (MHz)", "Dynamic Spectrum");
         cpgimag(g_pfPlotBuf,
                 iBlockSize,
-                iNumChans,
+                stYUM.iNumChans,
                 1,
                 (iBlockSize - 2),
                 1,
-                (iNumChans - 2),
+                (stYUM.iNumChans - 2),
                 fDataMin,
                 fDataMax,
                 afTM);
@@ -1472,10 +907,8 @@ int main(int argc, char *argv[])
             else
             {
                 /* pause before erasing */
-                (void) sleep(PG_PLOT_SLEEP);
+                (void) usleep(PG_PLOT_SLEEP);
             }
-            /* TODO: make the transition smoother by erasing only the axes */
-            cpgeras();
         }
 
         if (1 == iNumReads)
@@ -1492,60 +925,6 @@ int main(int argc, char *argv[])
     YAPP_CleanUp();
 
     return YAPP_RET_SUCCESS;
-}
-
-/*
- * Cleans up all allocated memory
- */
-void YAPP_CleanUp()
-{
-    if (g_pfBuf != NULL)
-    {
-        free(g_pfBuf);
-        g_pfBuf = NULL;
-    }
-    if (g_padBadTimes != NULL)
-    {
-        free(g_padBadTimes);
-        g_padBadTimes = NULL;
-    }
-    if (g_pfBFGain != NULL)
-    {
-        free(g_pfBFGain);
-        g_pfBFGain = NULL;
-    }
-    if (g_pfBFTimeSectMean != NULL)
-    {
-        free(g_pfBFTimeSectMean);
-        g_pfBFTimeSectMean = NULL;
-    }
-    if (g_pcIsChanGood != NULL)
-    {
-        free(g_pcIsChanGood);
-        g_pcIsChanGood = NULL;
-    }
-    if (g_pcIsTimeGood != NULL)
-    {
-        free(g_pcIsTimeGood);
-        g_pcIsTimeGood = NULL;
-    }
-    if (g_pfPlotBuf != NULL)
-    {
-        free(g_pfPlotBuf);
-        g_pfPlotBuf = NULL;
-    }
-    if (g_pfXAxis != NULL)
-    {
-        free(g_pfXAxis);
-        g_pfXAxis = NULL;
-    }
-    if (g_pfFreq != NULL)
-    {
-        free(g_pfFreq);
-        g_pfFreq = NULL;
-    }
-
-    return;
 }
 
 /*

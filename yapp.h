@@ -179,9 +179,9 @@ enum tagDedispTimeSeriesFormat
 #define PG_BUT_CL_TEXT_L    0.10
 #define PG_BUT_CL_TEXT_B    0.26
 #define PG_BUT_FILLCOL      1
-#define PG_BUT_CL_SLEEP     100000    /* in microseconds, 100 ms */
+#define PG_BUT_CL_SLEEP     100000  /* in microseconds, 100 ms */
 
-#define PG_PLOT_SLEEP       1         /* in seconds, 1 s */
+#define PG_PLOT_SLEEP       500000  /* in microseconds, 500 ms */
 
 #define PATH_ERF_LOOKUP     "./ERF_LOOKUP_TABLE"    /**< @brief Path to the
                                                          error function lookup
@@ -232,14 +232,13 @@ enum tagDedispTimeSeriesFormat
  */
 typedef struct YUM_s
 {
-    /* YUM */
-    double dTSamp;          /* in ? */
+    char acSite[LEN_GENSTRING];
+    char acPulsar[MAX_LEN_PSRNAME];
+    double dTSamp;          /* in ms */
     float fFCentre;         /* in MHz */
     float fBW;              /* in MHz */
     int iNumChans;
     float fChanBW;          /* in MHz */
-    char acPulsar[MAX_LEN_PSRNAME];
-    char acSite[LEN_GENSTRING];
     long int lDataSizeTotal;
     int iTimeSamps;
     int iNumGoodChans;
@@ -249,6 +248,7 @@ typedef struct YUM_s
     int iBFTimeSects;
     float *pfBFTimeSectMean;
     float *pfBFGain;
+    int iNumBadTimes;
     double (*padBadTimes)[][NUM_BAD_BOUNDS];
     int iNumBits;
     int iNumIFs;
@@ -260,18 +260,17 @@ typedef struct YUM_s
     double dDM;
     int iFlagBary;
     int iNumBands;
-    float *pfFreq;      /* in MHz? */
-    /* --- some form of timestamp of obs --- MJD/Otherwise*/
-    /**/
-    double dNumSigmas;
-    float fStatBW;      /* in MHz */
-    float fNoiseRMS;
-    float fThreshold;
+    float *pfFreq;      /* in MHz */
+    float fFMin;        /* in MHz */
+    float fFMax;        /* in MHz */
+    char cIsBandFlipped;
+    int iFlagSplicedData;
+    int iHeaderLen;
+    /* TODO: add timestamp of obs - MJD/otherwise */
     float fSampSize;
 
 #if 0
-    /*************************************************************************/
-    /* DAS */
+    /* DAS configuration information */
     double dTSamp;          /* in ms */
     int iBytesPerFrame;     /* iNumChans * fSampSize */
     float fFCentre;         /* in MHz */
@@ -294,7 +293,7 @@ typedef struct YUM_s
     float *pfBFGain;
     int iNumBadTimes;
     double (*padBadTimes)[][NUM_BAD_BOUNDS];
-    /* DAS derived: */
+    /* DAS derived */
     float fBW;              /* in MHz */
     char cIsBandFlipped;
     double dTSampInSec;     /* in s */
@@ -306,7 +305,7 @@ typedef struct YUM_s
     long int lDataSizeTotal;
     int iTimeSamps;
 
-    /* SIGPROC */
+    /* SIGPROC header fields */
     char acPulsar[MAX_LEN_PSRNAME];
     int iDataTypeID;
     int iNumChans;
@@ -324,7 +323,7 @@ typedef struct YUM_s
     double dZAStart;
     double dDM;
     int iFlagBary;
-    /* SIGPROC derived: */
+    /* SIGPROC derived */
     float fFCh1;        /* in MHz */
     float fChanBW;      /* in MHz */
     float fFMin;        /* in MHz */
@@ -337,7 +336,7 @@ typedef struct YUM_s
     int iTimeSamps;
     int iNumGoodChans;
 
-    /* common derived: */
+    /* derived, common to both DAS and SIGPROC */
     double dNumSigmas;
     float fStatBW;      /* in MHz */
     float fNoiseRMS;
