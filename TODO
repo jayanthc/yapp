@@ -37,5 +37,7 @@ TODO
 18. Support user-defined colourmaps.
 19. Exit button.
 20. Eliminte flickering in noninteractive mode plots by redrawing only axes.
+21. Add file-closing and PGPLOT-device-closing in signal handler.
+22. PGPLOT leaks 26 bytes just be cpgopen() and cpgclos().
 
 EOF

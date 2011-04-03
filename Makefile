@@ -9,23 +9,31 @@ CC = gcc
 CFLAGS = -std=gnu99 -pedantic -Wall
 CFLAGS_C_DEBUG = $(CFLAGS) -g -c
 CFLAGS_C_RELEASE = $(CFLAGS) -O3 -c
-#CFLAGS_C = $(CFLAGS_C_DEBUG)
+ifeq ($(OPT_DEBUG), yes)
+CFLAGS_C = $(CFLAGS_C_DEBUG)
+else
 CFLAGS_C = $(CFLAGS_C_RELEASE)
+endif
 CFLAGS_L_DEBUG = $(CFLAGS) -g
 CFLAGS_L_RELEASE = $(CFLAGS) -O3
-#CFLAGS_L = $(CFLAGS_L_DEBUG)
+ifeq ($(OPT_DEBUG), yes)
+CFLAGS_L = $(CFLAGS_L_DEBUG)
+else
 CFLAGS_L = $(CFLAGS_L_RELEASE)
+endif
 
 # Fortran compiler and flags
 FC = gfortran       # change to 'g77' to use the Fortran 77 compiler 
 FFLAGS = -c
 
 # enable/disable the debug flag
-#DDEBUG = -DDEBUG
+ifeq ($(OPT_DEBUG), yes)
+DDEBUG = -DDEBUG
+endif
 
 # linker flags
-LFLAGS_PGPLOT_DIR = # define if different from default /usr/local/pgplot
-LFLAGS_PGPLOT = $(LFLAGS_PGPLOT_DIR) -lpgplot -lcpgplot #-lX11
+LFLAGS_PGPLOT_DIR = # define if not in $PATH
+LFLAGS_PGPLOT = $(LFLAGS_PGPLOT_DIR) -lpgplot -lcpgplot
 LFLAGS_MATH = -lm
 LFLAGS_SNDFILE = -lsndfile
 

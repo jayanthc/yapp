@@ -1,9 +1,9 @@
 /**
  * @file yapp_pulsarsnd.c
- * Makes music out of a pulsar (converts dedispersed data to WAVE data)
+ * Creates an audio file from dedispersed data
  *
  * @verbatim
- * Usage: pulsarsnd [options] <dedispersed-data-file>
+ * Usage: yapp_pulsarsnd [options] <dedispersed-data-file>
  *     -s  --samples <samples-per-sec>      Samples per second
  *     -a  --ampfactor <amp-scale-factor>   Amplitude scale factor
  *     -b  --header <header-bytes-to-skip>  Header bytes to skip
@@ -16,15 +16,8 @@
  * @date 2007.*.*
 */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-#include <float.h>
-#include <string.h>
-#include <sys/stat.h>
-#include <sndfile.h>
-
 #include "yapp.h"
+#include <sndfile.h>
 
 #define CHANNEL_COUNT       1
 #define FILE_EXT            ".wav"
@@ -162,7 +155,7 @@ int main(int argc, char *argv[])
     }
 
     /* get the size of the file */
-    iRet = stat(pcFileDedispData,&stFileStats);
+    iRet = stat(pcFileDedispData, &stFileStats);
     if (iRet != YAPP_RET_SUCCESS)
     {
         (void) fprintf(stderr,
@@ -183,16 +176,19 @@ int main(int argc, char *argv[])
     pcHeader = (char *) malloc(sizeof(char) * iSkip);
     if (NULL == pcHeader)
     {
-        perror("malloc - pcHeader");
+        (void) fprintf(stderr,
+                       "Memory allocation for header failed! %s.\n",
+                       strerror(errno));
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
 
-//  s = (char *) malloc(iFileSize * sizeof(float));
     pfData = (float *) malloc(sizeof(float) * iTimeSamps);
     if (NULL == pfData)
     {
-        perror("malloc - pfData");
+        (void) fprintf(stderr,
+                       "Memory allocation for data failed! %s.\n",
+                       strerror(errno));
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
@@ -210,22 +206,11 @@ int main(int argc, char *argv[])
     (void) fgets(pcHeader, (sizeof(char) * iSkip), pFDedispData);
 #endif
 
-#if 0
-    if (NULL == iRet)
-    {
-        perror("fgets");
-        YAPP_CleanUp();
-        return YAPP_RET_ERROR;
-    }
-#endif
-
     /* read the dedispersed data */
-        //iRet = (int)fgets((char *) pfData, (iFileSize*sizeof(float)), pFDedispData);
-//        if ((iRet = read(pFDedispData,s,(iFileSize*sizeof(float)))) != (iFileSize*sizeof(float)))
     iRet = fread(pfData, sizeof(float), iTimeSamps, pFDedispData);
-    if (YAPP_RET_ERROR == iRet)  //TODO: ferror()
+    if (ferror(pFDedispData))
     {
-        printf("ERROR: Cannot get data from the file!\n");
+        (void) fprintf(stderr, "ERROR: Reading data failed!\n");
         return YAPP_RET_ERROR;
     }
 
@@ -316,6 +301,7 @@ int main(int argc, char *argv[])
                        "ERROR: Failed to open WAVE file: %s!\n",
                        sf_strerror(pFSndFile));
         free(pfData);
+        free(pcHeader);
         return YAPP_RET_ERROR;
     }
 //  if (sf_write_int(pFSndFile, pfData, iFileSize) != iFileSize)
@@ -325,6 +311,7 @@ int main(int argc, char *argv[])
                        "ERROR: Failed to write to WAVE file: %s!\n",
                        sf_strerror(pFSndFile));
         free(pfData);
+        free(pcHeader);
         sf_close(pFSndFile);
         return YAPP_RET_ERROR;
     }
@@ -332,23 +319,10 @@ int main(int argc, char *argv[])
     /* clean up */
     sf_close(pFSndFile);
     free(pfData);
+    free(pcHeader);
     fclose(pFDedispData);
 
     return YAPP_RET_SUCCESS;
-}
-
-/*
- * Cleans up all allocated memory
- */
-void YAPP_CleanUp()
-{
-#if 0
-    if (g_padBadTimes != NULL)
-    {
-        free(g_padBadTimes);
-        g_padBadTimes = NULL;
-    }
-#endif
 }
 
 /*

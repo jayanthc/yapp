@@ -316,7 +316,10 @@ int YAPP_ReadMetadata(char *pcFileSpec, YUM_t *pstYUM)
                                             YAPP_FALSE);
         if (NULL == pstYUM->pcIsChanGood)
         {
-            perror("malloc - pcIsChanGood");
+            (void) fprintf(stderr,
+                           "ERROR: Memory allocation for channel goodness "
+                           "flag failed! %s!\n",
+                           strerror(errno));
             (void) fclose(pFCfg);
             return YAPP_RET_ERROR;
         }
@@ -339,7 +342,10 @@ int YAPP_ReadMetadata(char *pcFileSpec, YUM_t *pstYUM)
                                                  YAPP_FALSE);
         if (NULL == pstYUM->pfBFTimeSectMean)
         {
-            perror("malloc - pfBFTimeSectMean");
+            (void) fprintf(stderr,
+                           "ERROR: Memory allocation for time sectioin mean "
+                           "failed! %s!\n",
+                           strerror(errno));
             (void) fclose(pFCfg);
             YAPP_CleanUp();
             return YAPP_RET_ERROR;
@@ -355,7 +361,10 @@ int YAPP_ReadMetadata(char *pcFileSpec, YUM_t *pstYUM)
                                          YAPP_FALSE);
         if (NULL == pstYUM->pfBFGain)
         {
-            perror("malloc - pfBFGain");
+            (void) fprintf(stderr,
+                           "ERROR: Memory allocation for beam flip gain "
+                           "failed! %s!\n",
+                           strerror(errno));
             (void) fclose(pFCfg);
             YAPP_CleanUp();
             return YAPP_RET_ERROR;
@@ -374,7 +383,10 @@ int YAPP_ReadMetadata(char *pcFileSpec, YUM_t *pstYUM)
                                             YAPP_FALSE);
         if (NULL == pstYUM->padBadTimes)
         {
-            perror("malloc - padBadTimes");
+            (void) fprintf(stderr,
+                           "ERROR: Memory allocation for bad times failed! "
+                           "%s!\n",
+                           strerror(errno));
             (void) fclose(pFCfg);
             YAPP_CleanUp();
             return YAPP_RET_ERROR;
@@ -630,7 +642,10 @@ int YAPP_ReadMetadata(char *pcFileSpec, YUM_t *pstYUM)
                                                YAPP_FALSE);
                 if (NULL == pstYUM->pfFreq)
                 {
-                    perror("malloc - pfFreq");
+                    (void) fprintf(stderr,
+                                   "ERROR: Memory allocation for frequency "
+                                   " channel array failed! %s!\n",
+                                   strerror(errno));
                     (void) fclose(pFSpec);
                     YAPP_CleanUp();
                     return YAPP_RET_ERROR;
@@ -936,8 +951,10 @@ int YAPP_RegisterSignalHandlers()
  */
 void YAPP_HandleStopSignals(int iSigNo)
 {
-    /* clean up */
+    /* free memory */
     YAPP_CleanUp();
+
+    /* TODO: add file-closing and PGPLOT-device-closing */
 
     /* exit */
     exit(YAPP_RET_SUCCESS);

@@ -8,7 +8,7 @@ BADTIME_BEG	./yapp.h	102;"	d
 BADTIME_END	./yapp.h	104;"	d
 BUF_0	./yapp.h	138;"	d
 BUF_1	./yapp.h	139;"	d
-CHANNEL_COUNT	./yapp_pulsarsnd.c	29;"	d	file:
+CHANNEL_COUNT	./yapp_pulsarsnd.c	22;"	d	file:
 DEF_FORMAT	./yapp.h	121;"	d
 DEF_LAW_MAX	./yapp.h	219;"	d
 DEF_LAW_MIN	./yapp.h	218;"	d
@@ -27,7 +27,7 @@ EXT_DYNSPEC	./yapp.h	85;"	d
 EXT_FIL	./yapp.h	89;"	d
 EXT_PS	./yapp.h	88;"	d
 EXT_TIM	./yapp.h	90;"	d
-FILE_EXT	./yapp_pulsarsnd.c	30;"	d	file:
+FILE_EXT	./yapp_pulsarsnd.c	23;"	d	file:
 FILE_VERSRC	./yapp_makever.c	25;"	d	file:
 GetLatestTimestamp	./yapp_makever.c	/^time_t GetLatestTimestamp()$/;"	f
 LEN_GENSTRING	./yapp.h	94;"	d
@@ -85,7 +85,6 @@ YAPP_CalcThresholdInSigmas	./yapp_common.c	/^double YAPP_CalcThresholdInSigmas(i
 YAPP_CleanUp	./yapp_common.c	/^void YAPP_CleanUp()$/;"	f
 YAPP_CleanUp	./yapp_dedisp.c	/^void YAPP_CleanUp()$/;"	f
 YAPP_CleanUp	./yapp_dedisperse.c	/^void YAPP_CleanUp()$/;"	f
-YAPP_CleanUp	./yapp_pulsarsnd.c	/^void YAPP_CleanUp()$/;"	f
 YAPP_ERF_ENTRIES	./yapp.h	189;"	d
 YAPP_FALSE	./yapp.h	48;"	d
 YAPP_FILE_DELAYS_LIN	./yapp.h	224;"	d
@@ -201,7 +200,7 @@ g_pcIsChanGood	./yapp_dedisperse.c	/^char *g_pcIsChanGood = NULL;$/;"	v
 g_pcIsTimeGood	./yapp_dedisp.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	./yapp_dedisperse.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	./yapp_viewdata.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
-g_pcVersion	./yapp_version.c	/^const char *g_pcVersion = "YAPP-DEV-20110401-222240";$/;"	v
+g_pcVersion	./yapp_version.c	/^const char *g_pcVersion = "YAPP-DEV-20110402-153939";$/;"	v
 g_pdDM	./yapp_dedisperse.c	/^double *g_pdDM = NULL;$/;"	v
 g_pdDelayTab	./yapp_dedisp.c	/^double *g_pdDelayTab = NULL;$/;"	v
 g_pdDelayTab	./yapp_dedisperse.c	/^double *g_pdDelayTab = NULL;$/;"	v
