@@ -26,6 +26,7 @@ extern const char *g_pcVersion;
 int main(int argc, char *argv[])
 {
     char *pcFileSpec = NULL;
+    int iFormat = DEF_FORMAT;
     int iRet = YAPP_RET_SUCCESS;
     YUM_t stYUM = {{0}};
     const char *pcProgName = NULL;
@@ -92,7 +93,16 @@ int main(int argc, char *argv[])
             (void) printf("File: %s\n", pcFileSpec);
         }
 
-        iRet = YAPP_ReadMetadata(pcFileSpec, &stYUM);
+        /* determine the file type */
+        iFormat = YAPP_GetFileType(pcFileSpec);
+        if (YAPP_RET_ERROR == iFormat)
+        {
+            (void) fprintf(stderr,
+                           "ERROR: File type determination failed!\n");
+            return YAPP_RET_ERROR;
+        }
+
+        iRet = YAPP_ReadMetadata(pcFileSpec, iFormat, &stYUM);
         if (iRet != YAPP_RET_SUCCESS)
         {
             (void) fprintf(stderr,

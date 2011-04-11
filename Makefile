@@ -83,9 +83,10 @@ yapp_common.o: $(SRCDIR)/yapp_common.c
 yapp_viewmetadata.o: $(SRCDIR)/yapp_viewmetadata.c
 	$(CC) $(CFLAGS_C) $(SRCDIR)/yapp_viewmetadata.c -o $(IDIR)/$@
 
+# even though yapp_viewmetadata does not use PGPLOT, yapp_common does
 yapp_viewmetadata: $(IDIR)/yapp_viewmetadata.o
 	$(CC) $(SRCDIR)/yapp_viewmetadata.o $(IDIR)/yapp_version.o $(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o \
-		$(LFLAGS_MATH) -o $(BINDIR)/$@
+		$(LFLAGS_PGPLOT) $(LFLAGS_MATH) -o $(BINDIR)/$@
 
 colourmap.o: colourmap.c
 	$(CC) $(CFLAGS_C) colourmap.c -o $@

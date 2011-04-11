@@ -1180,7 +1180,7 @@ int SetColourMap(int iCMap, int iIsColInv, float fColMin, float fColMax)
         cpgqinf("HARDCOPY", acQItem, &iLenQVal);
         if (0 == strcmp(acQItem, "YES"))
         {
-            /* this is a harcopy device, so invert colours */
+            /* TODO: this is a harcopy device, so invert colours */
         }
     }
 

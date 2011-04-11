@@ -46,6 +46,12 @@
  */
 extern const char *g_pcVersion;
 
+/* PGPLOT device ID */
+extern int g_iPGDev;
+
+/* data file */
+extern FILE *g_pFSpec;
+
 /* the following are global only to enable cleaning up in case of abnormal
    termination, such as those triggered by SIGINT or SIGTERM */
 char *g_pcIsTimeGood = NULL;
@@ -56,7 +62,6 @@ float *g_pfYAxis = NULL;
 
 int main(int argc, char *argv[])
 {
-    FILE *pFSpec = NULL;
     char *pcFileSpec = NULL;
     int iFormat = DEF_FORMAT;
     int iDataSkipPercent = DEF_SKIP_PERCENT;
@@ -316,7 +321,7 @@ int main(int argc, char *argv[])
     }
 
     /* read metadata */
-    iRet = YAPP_ReadMetadata(pcFileSpec, &stYUM);
+    iRet = YAPP_ReadMetadata(pcFileSpec, iFormat, &stYUM);
     if (iRet != YAPP_RET_SUCCESS)
     {
         (void) fprintf(stderr,
@@ -473,8 +478,8 @@ int main(int argc, char *argv[])
     (void) memset(g_pcIsTimeGood, YAPP_TRUE, iTimeSampsToProc);
 
     /* open the dynamic spectrum data file for reading */
-    pFSpec = fopen(pcFileSpec, "r");
-    if (NULL == pFSpec)
+    g_pFSpec = fopen(pcFileSpec, "r");
+    if (NULL == g_pFSpec)
     {
         (void) fprintf(stderr,
                        "ERROR: Opening file %s failed! %s.\n",
@@ -494,7 +499,6 @@ int main(int argc, char *argv[])
         (void) fprintf(stderr,
                        "ERROR: Memory allocation for buffer failed! %s!\n",
                        strerror(errno));
-        (void) fclose(pFSpec);
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
@@ -508,24 +512,23 @@ int main(int argc, char *argv[])
     {
         /* TODO: Need to do this only if the file contains the header */
         /* skip the header */
-        (void) fseek(pFSpec, (long) stYUM.iHeaderLen, SEEK_SET);
+        (void) fseek(g_pFSpec, (long) stYUM.iHeaderLen, SEEK_SET);
         /* skip data, if any are to be skipped */
-        (void) fseek(pFSpec, lBytesToSkip, SEEK_CUR);
+        (void) fseek(g_pFSpec, lBytesToSkip, SEEK_CUR);
     }
     else
     {
         /* skip data, if any are to be skipped */
-        (void) fseek(pFSpec, lBytesToSkip, SEEK_SET);
+        (void) fseek(g_pFSpec, lBytesToSkip, SEEK_SET);
     }
 
     /* open the PGPLOT graphics device */
-    iRet = cpgopen(PG_DEV);
-    if (iRet <= 0)
+    g_iPGDev = cpgopen(PG_DEV);
+    if (g_iPGDev <= 0)
     {
         (void) fprintf(stderr,
                        "ERROR: Opening graphics device %s failed!\n",
                        PG_DEV);
-        (void) fclose(pFSpec);
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
@@ -547,8 +550,6 @@ int main(int argc, char *argv[])
         (void) fprintf(stderr,
                        "ERROR: Memory allocation for X-axis failed! %s!\n",
                        strerror(errno));
-        cpgclos();
-        (void) fclose(pFSpec);
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
@@ -564,8 +565,6 @@ int main(int argc, char *argv[])
             (void) fprintf(stderr,
                            "ERROR: Memory allocation for Y-axis failed! %s!\n",
                            strerror(errno));
-            cpgclos();
-            (void) fclose(pFSpec);
             YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
@@ -594,8 +593,6 @@ int main(int argc, char *argv[])
                        "ERROR: Memory allocation for plot buffer failed! "
                        "%s!\n",
                        strerror(errno));
-        cpgclos();
-        (void) fclose(pFSpec);
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
@@ -612,15 +609,12 @@ int main(int argc, char *argv[])
         /* read data */
         (void) printf("\rReading data block %d.", iReadBlockCount);
         (void) fflush(stdout);
-        iReadItems = YAPP_ReadData(pFSpec,
-                                   g_pfBuf,
+        iReadItems = YAPP_ReadData(g_pfBuf,
                                    stYUM.fSampSize,
                                    iTotSampsPerBlock);
         if (YAPP_RET_ERROR == iReadItems)
         {
             (void) fprintf(stderr, "ERROR: Reading data failed!\n");
-            cpgclos();
-            (void) fclose(pFSpec);
             YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
@@ -677,8 +671,6 @@ int main(int argc, char *argv[])
                         (void) fprintf(stderr,
                                        "ERROR: Beam flip time section anomaly "
                                        "detected!\n");
-                        cpgclos();
-                        (void) fclose(pFSpec);
                         YAPP_CleanUp();
                         return YAPP_RET_ERROR;
                     }
@@ -919,9 +911,6 @@ int main(int argc, char *argv[])
 
     (void) printf("DONE!\n");
 
-    cpgclos();
-
-    (void) fclose(pFSpec);
     YAPP_CleanUp();
 
     return YAPP_RET_SUCCESS;

@@ -396,20 +396,35 @@ int YAPP_GetObsNameFromID(int iObsID, char *pcObs);
  * Read metadata from file
  *
  * @param[in]       pcFileSpec          Data filename
+ * @param[in]       iFormat             Data file format
  * @param[out]      pstYUM              YUM structure
  */
-int YAPP_ReadMetadata(char *pcFileSpec, YUM_t *pstYUM);
+int YAPP_ReadMetadata(char *pcFileSpec, int iFormta, YUM_t *pstYUM);
+
+/**
+ * Read configuration information corresponding to a DAS '.spec' file
+ *
+ * @param[in]       pcFileSpec          Data filename
+ * @param[out]      pstYUM              YUM structure
+ */
+int YAPP_ReadDASCfg(char *pcFileSpec, YUM_t *pstYUM);
+
+/**
+ * Read configuration information corresponding to a SIGPROC '.fil' file
+ *
+ * @param[in]       pcFileSpec          Data filename
+ * @param[out]      pstYUM              YUM structure
+ */
+int YAPP_ReadSIGPROCHeader(char *pcFileSpec, YUM_t *pstYUM);
 
 /**
  * Read one block of data from disk
  *
- * @param[in]       pFSpec              Data file pointer
  * @param[inout]    pfBuf               Output data buffer
  * @param[in]       fSampSize           Size of a sample, in bytes
  * @param[in]       iTotSampsPerBlock   Number of samples per block
  */
-int YAPP_ReadData(FILE *pFSpec,
-                  float *pfBuf,
+int YAPP_ReadData(float *pfBuf,
                   float fSampSize,
                   int iTotSampsPerBlock);
 
