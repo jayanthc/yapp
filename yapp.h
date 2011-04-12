@@ -229,6 +229,8 @@ enum tagDedispTimeSeriesFormat
 
 /**
  * YAPP Unified Metadata (YUM) definition
+ * YUM abstracts the metadata storage schemes employed by different file
+ * formats
  */
 typedef struct YUM_s
 {
@@ -343,6 +345,7 @@ typedef struct YUM_s
     float fThreshold;
 #endif
 } YUM_t;
+/* TODO: call this YAPP_YUM */
 
 #if 0
 /**

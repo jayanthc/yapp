@@ -1,6 +1,8 @@
 TODO
 ----
 
+NEW: CRASH on gpubox
+
 yapp_viewmetadata:
 1.  FEATURE: Handle the headerless/header-separated filterbank format input.
 
