@@ -5,7 +5,6 @@
 #
 
 CC=gcc
-FC=gfortran
 PGPLOT_DIR=/usr/lib
 INSTALL_DIR=/usr/bin
 
@@ -27,12 +26,6 @@ if [ -n "$INPUT" ]
 then
     CC=$INPUT
 fi
-echo -n "Fortran compiler [gfortran]: "
-read INPUT
-if [ -n "$INPUT" ]
-then
-    FC=$INPUT
-fi
 echo -n "Path to PGPLOT libraries [/usr/lib]: "
 read INPUT
 if [ -n "$INPUT" ]
@@ -48,7 +41,6 @@ fi
 
 # create Makefile
 echo $CC
-echo $FC
 echo $PGPLOT_DIR
 echo $INSTALL_DIR
 
