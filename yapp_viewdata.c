@@ -853,16 +853,18 @@ int main(int argc, char *argv[])
         {
             if (!(cIsNonInteractive))
             {
-                /* draw the 'next' button */
+                /* draw the 'next' and 'exit' buttons */
                 cpgsvp(PG_VP_BUT_ML, PG_VP_BUT_MR, PG_VP_BUT_MB, PG_VP_BUT_MT);
                 cpgswin(PG_BUT_L, PG_BUT_R, PG_BUT_B, PG_BUT_T);
                 cpgsci(PG_BUT_FILLCOL); /* set the fill colour */
-                cpgrect(PG_BUT_L, PG_BUT_R, PG_BUT_B, PG_BUT_T);
+                cpgrect(PG_BUTNEXT_L, PG_BUTNEXT_R, PG_BUTNEXT_B, PG_BUTNEXT_T);
+                cpgrect(PG_BUTEXIT_L, PG_BUTEXIT_R, PG_BUTEXIT_B, PG_BUTEXIT_T);
                 cpgsci(0);  /* set colour index to white */
-                cpgtext(PG_BUT_TEXT_L, PG_BUT_TEXT_B, "Next");
+                cpgtext(PG_BUTNEXT_TEXT_L, PG_BUTNEXT_TEXT_B, "Next");
+                cpgtext(PG_BUTEXIT_TEXT_L, PG_BUTEXIT_TEXT_B, "Exit");
 
-                fButX = (PG_BUT_R - PG_BUT_L) / 2;
-                fButY = (PG_BUT_T - PG_BUT_B) / 2;
+                fButX = (PG_BUTNEXT_R - PG_BUTNEXT_L) / 2;
+                fButY = (PG_BUTNEXT_T - PG_BUTNEXT_B) / 2;
 
                 while (YAPP_TRUE)
                 {
@@ -875,25 +877,47 @@ int main(int argc, char *argv[])
                         break;
                     }
 
-                    if (((fButX >= PG_BUT_L) && (fButX <= PG_BUT_R))
-                        && ((fButY >= PG_BUT_B) && (fButY <= PG_BUT_T)))
+                    if (((fButX >= PG_BUTNEXT_L) && (fButX <= PG_BUTNEXT_R))
+                        && ((fButY >= PG_BUTNEXT_B) && (fButY <= PG_BUTNEXT_T)))
                     {
                         /* animate button click */
                         cpgsci(PG_BUT_FILLCOL);
-                        cpgtext(PG_BUT_TEXT_L, PG_BUT_TEXT_B, "Next");
+                        cpgtext(PG_BUTNEXT_TEXT_L, PG_BUTNEXT_TEXT_B, "Next");
                         cpgsci(0);  /* set colour index to white */
-                        cpgtext(PG_BUT_CL_TEXT_L, PG_BUT_CL_TEXT_B, "Next");
+                        cpgtext(PG_BUTNEXT_CL_TEXT_L, PG_BUTNEXT_CL_TEXT_B, "Next");
                         (void) usleep(PG_BUT_CL_SLEEP);
                         cpgsci(PG_BUT_FILLCOL); /* set colour index to fill
                                                    colour */
-                        cpgtext(PG_BUT_CL_TEXT_L, PG_BUT_CL_TEXT_B, "Next");
+                        cpgtext(PG_BUTNEXT_CL_TEXT_L, PG_BUTNEXT_CL_TEXT_B, "Next");
                         cpgsci(0);  /* set colour index to white */
-                        cpgtext(PG_BUT_TEXT_L, PG_BUT_TEXT_B, "Next");
+                        cpgtext(PG_BUTNEXT_TEXT_L, PG_BUTNEXT_TEXT_B, "Next");
                         cpgsci(1);  /* reset colour index to black */
                         (void) usleep(PG_BUT_CL_SLEEP);
 
                         break;
                     }
+                    #if 1
+                    else if (((fButX >= PG_BUTEXIT_L) && (fButX <= PG_BUTEXIT_R))
+                        && ((fButY >= PG_BUTEXIT_B) && (fButY <= PG_BUTEXIT_T)))
+                    {
+                        /* animate button click */
+                        cpgsci(PG_BUT_FILLCOL);
+                        cpgtext(PG_BUTEXIT_TEXT_L, PG_BUTEXIT_TEXT_B, "Exit");
+                        cpgsci(0);  /* set colour index to white */
+                        cpgtext(PG_BUTEXIT_CL_TEXT_L, PG_BUTEXIT_CL_TEXT_B, "Exit");
+                        (void) usleep(PG_BUT_CL_SLEEP);
+                        cpgsci(PG_BUT_FILLCOL); /* set colour index to fill
+                                                   colour */
+                        cpgtext(PG_BUTEXIT_CL_TEXT_L, PG_BUTEXIT_CL_TEXT_B, "Exit");
+                        cpgsci(0);  /* set colour index to white */
+                        cpgtext(PG_BUTEXIT_TEXT_L, PG_BUTEXIT_TEXT_B, "Exit");
+                        cpgsci(1);  /* reset colour index to black */
+                        (void) usleep(PG_BUT_CL_SLEEP);
+
+                        YAPP_CleanUp();
+                        return YAPP_RET_SUCCESS;
+                    }
+                    #endif
                 }
             }
             else

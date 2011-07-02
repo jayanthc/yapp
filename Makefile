@@ -74,13 +74,13 @@ yapp_makever: $(SRCDIR)/yapp_makever.c
 yapp_version.o: $(SRCDIR)/yapp_version.c
 	$(CC) $(CFLAGS_C) $(SRCDIR)/yapp_version.c -o $(IDIR)/$@
 
-yapp_erflookup.o: $(SRCDIR)/yapp_erflookup.c
+yapp_erflookup.o: $(SRCDIR)/yapp_erflookup.c $(SRCDIR)/yapp.h
 	$(CC) $(CFLAGS_C) $(SRCDIR)/yapp_erflookup.c -o $(IDIR)/$@
 
-yapp_common.o: $(SRCDIR)/yapp_common.c
+yapp_common.o: $(SRCDIR)/yapp_common.c $(SRCDIR)/yapp.h
 	$(CC) $(CFLAGS_C) $(DDEBUG) $(SRCDIR)/yapp_common.c -o $(IDIR)/$@
 
-yapp_viewmetadata.o: $(SRCDIR)/yapp_viewmetadata.c
+yapp_viewmetadata.o: $(SRCDIR)/yapp_viewmetadata.c $(SRCDIR)/yapp.h
 	$(CC) $(CFLAGS_C) $(SRCDIR)/yapp_viewmetadata.c -o $(IDIR)/$@
 
 # even though yapp_viewmetadata does not use PGPLOT, yapp_common does
@@ -88,10 +88,10 @@ yapp_viewmetadata: $(IDIR)/yapp_viewmetadata.o
 	$(CC) $(SRCDIR)/yapp_viewmetadata.o $(IDIR)/yapp_version.o $(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o \
 		$(LFLAGS_PGPLOT) $(LFLAGS_MATH) -o $(BINDIR)/$@
 
-colourmap.o: colourmap.c
+colourmap.o: colourmap.c $(SRCDIR)/colourmap.h
 	$(CC) $(CFLAGS_C) colourmap.c -o $@
 
-yapp_viewdata.o: $(SRCDIR)/yapp_viewdata.c
+yapp_viewdata.o: $(SRCDIR)/yapp_viewdata.c $(SRCDIR)/yapp.h
 	$(CC) $(CFLAGS_C) $(DDEBUG) $(DFC) $(SRCDIR)/yapp_viewdata.c -o $(IDIR)/$@
 
 yapp_viewdata: $(IDIR)/yapp_viewdata.o
@@ -108,7 +108,7 @@ set_colours.o: $(SRCDIR)/set_colours_f95.f
 	$(FC) $(FFLAGS) $(SRCDIR)/set_colours_f95.f -o $(IDIR)/$@
 endif
 
-yapp_dedisperse.o: $(SRCDIR)/yapp_dedisperse.c
+yapp_dedisperse.o: $(SRCDIR)/yapp_dedisperse.c $(SRCDIR)/yapp.h
 	$(CC) $(CFLAGS_C) $(DFC) $(DDEBUG) $(SRCDIR)/yapp_dedisperse.c -o $(IDIR)/$@
 
 yapp_dedisperse: $(IDIR)/yapp_dedisperse.o
@@ -130,14 +130,14 @@ reorderdds: $(IDIR)/reorderdds.o
 	$(FC) $(IDIR)/reorderdds.o $(IDIR)/yapp_version.o $(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o \
         $(IDIR)/set_colours.o $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -o $(BINDIR)/$@
 
-yapp_dedisp.o: $(SRCDIR)/yapp_dedisp.c
+yapp_dedisp.o: $(SRCDIR)/yapp_dedisp.c $(SRCDIR)/yapp.h
 	$(CC) $(CFLAGS_C) $(DDEBUG) $(DFC) $(SRCDIR)/yapp_dedisp.c -o $(IDIR)/$@
 
 yapp_dedisp: $(IDIR)/yapp_dedisp.o
 	$(FC) $(IDIR)/yapp_dedisp.o $(IDIR)/yapp_version.o $(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o \
 		$(IDIR)/colourmap.o $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -o $(BINDIR)/$@
 
-yapp_pulsarsnd.o: $(SRCDIR)/yapp_pulsarsnd.c
+yapp_pulsarsnd.o: $(SRCDIR)/yapp_pulsarsnd.c $(SRCDIR)/yapp.h
 	$(CC) $(CFLAGS_C) $(SRCDIR)/yapp_pulsarsnd.c -o $(IDIR)/$@
 
 yapp_pulsarsnd: $(IDIR)/yapp_pulsarsnd.o

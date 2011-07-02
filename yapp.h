@@ -159,10 +159,6 @@ enum tagDedispTimeSeriesFormat
 #define PG_VP_MB            0.12    /**< @brief Bottom margin */
 #define PG_VP_MT            0.88    /**< @brief Top margin */
 #define PG_VP_MW            0.12    /**< @brief Margin width */
-#define PG_VP_BUT_ML        0.92    /**< @brief Button left margin */
-#define PG_VP_BUT_MR        0.98    /**< @brief Button right margin */
-#define PG_VP_BUT_MB        0.02    /**< @brief Button bottom margin */
-#define PG_VP_BUT_MT        0.06    /**< @brief Button top margin */
 /* @} */
 
 #define PG_CH_SCALEFACTOR   1.4
@@ -170,16 +166,36 @@ enum tagDedispTimeSeriesFormat
 #define PG_TICK_STEPS_X     10      /**< @brief tick marks on the x-axis */
 #define PG_TICK_STEPS_Y     5       /**< @brief tick marks on the y-axis */
 
-#define PG_BUT_L            0.00
-#define PG_BUT_R            0.50
-#define PG_BUT_B            0.00
-#define PG_BUT_T            1.00
-#define PG_BUT_TEXT_L       0.08
-#define PG_BUT_TEXT_B       0.30
-#define PG_BUT_CL_TEXT_L    0.10
-#define PG_BUT_CL_TEXT_B    0.26
-#define PG_BUT_FILLCOL      1
-#define PG_BUT_CL_SLEEP     100000  /* in microseconds, 100 ms */
+#define PG_VP_BUT_ML    0.86    /**< @brief Button left margin */
+#define PG_VP_BUT_MR    0.98    /**< @brief Button right margin */
+#define PG_VP_BUT_MB    0.02    /**< @brief Button bottom margin */
+#define PG_VP_BUT_MT    0.06    /**< @brief Button top margin */
+
+#define PG_BUT_L                0.00
+#define PG_BUT_R                1.00
+#define PG_BUT_B                0.00
+#define PG_BUT_T                1.00
+
+#define PG_BUTNEXT_L            0.00
+#define PG_BUTNEXT_R            0.48
+#define PG_BUTNEXT_B            0.00
+#define PG_BUTNEXT_T            1.00
+#define PG_BUTNEXT_TEXT_L       0.08
+#define PG_BUTNEXT_TEXT_B       0.30
+#define PG_BUTNEXT_CL_TEXT_L    0.10
+#define PG_BUTNEXT_CL_TEXT_B    0.26
+
+#define PG_BUTEXIT_L            0.52
+#define PG_BUTEXIT_R            1.00
+#define PG_BUTEXIT_B            0.00
+#define PG_BUTEXIT_T            1.00
+#define PG_BUTEXIT_TEXT_L       0.58
+#define PG_BUTEXIT_TEXT_B       0.30
+#define PG_BUTEXIT_CL_TEXT_L    0.60
+#define PG_BUTEXIT_CL_TEXT_B    0.26
+
+#define PG_BUT_FILLCOL          1
+#define PG_BUT_CL_SLEEP         100000  /* in microseconds, 100 ms */
 
 #define PG_PLOT_SLEEP       500000  /* in microseconds, 500 ms */
 

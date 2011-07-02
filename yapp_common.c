@@ -949,12 +949,15 @@ void YAPP_CleanUp()
         free(g_apvMemTable[i]);
     }
 
+    #if 0
+    /* BUG: yapp_viewdata crashes here on ^C */
     /* close PGPLOT device, if open */
     if (g_iPGDev > 0)
     {
         cpgslct(g_iPGDev);
         cpgclos();
     }
+    #endif
 
     /* close data file, if open */
     if (g_pFSpec != NULL)
@@ -1003,6 +1006,8 @@ int YAPP_RegisterSignalHandlers()
  */
 void YAPP_HandleStopSignals(int iSigNo)
 {
+    printf("\n");
+
     /* clean up */
     YAPP_CleanUp();
 

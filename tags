@@ -49,17 +49,17 @@ CMap_t	colourmap.h	/^} CMap_t;$/;"	t	typeref:enum:CMap_e
 DEF_CMAP	colourmap.h	60;"	d
 DEF_CMAP_STR	colourmap.h	61;"	d
 DEF_FORMAT	./yapp.h	121;"	d
-DEF_LAW_MAX	./yapp.h	219;"	d
-DEF_LAW_MIN	./yapp.h	218;"	d
-DEF_LAW_STEP	./yapp.h	216;"	d
+DEF_LAW_MAX	./yapp.h	235;"	d
+DEF_LAW_MIN	./yapp.h	234;"	d
+DEF_LAW_STEP	./yapp.h	232;"	d
 DEF_OUT_FORMAT	./yapp.h	122;"	d
 DEF_PROC_PERCENT	./yapp.h	128;"	d
-DEF_PROC_SPEC	./yapp.h	211;"	d
+DEF_PROC_SPEC	./yapp.h	227;"	d
 DEF_PROC_TIME	./yapp.h	130;"	d
 DEF_SIZE_BLOCK	./yapp.h	123;"	d
 DEF_SKIP_PERCENT	./yapp.h	125;"	d
 DEF_SKIP_TIME	./yapp.h	126;"	d
-DM_TOL_PERCENT	./yapp.h	192;"	d
+DM_TOL_PERCENT	./yapp.h	208;"	d
 EXT_DEDISPSPEC	./yapp.h	86;"	d
 EXT_DEDISPSPECCFG	./yapp.h	87;"	d
 EXT_DYNSPEC	./yapp.h	85;"	d
@@ -77,40 +77,52 @@ MAX_LEN_PSRNAME	./yapp.h	114;"	d
 MAX_PNUM_BINS	./yapp.h	112;"	d
 MAX_SIZE_BLOCK	./yapp.h	109;"	d
 MAX_SNR_BINS	./yapp.h	111;"	d
-MIN_THRES_IN_SIGMA	./yapp.h	194;"	d
+MIN_THRES_IN_SIGMA	./yapp.h	210;"	d
 NUM_BAD_BOUNDS	./yapp.h	100;"	d
 NUM_CMAPS	colourmap.h	19;"	d
-PATH_ERF_LOOKUP	./yapp.h	186;"	d
+PATH_ERF_LOOKUP	./yapp.h	202;"	d
 PATH_VER	./yapp_makever.c	24;"	d	file:
-PG_BUT_B	./yapp.h	175;"	d
-PG_BUT_CL_SLEEP	./yapp.h	182;"	d
-PG_BUT_CL_TEXT_B	./yapp.h	180;"	d
-PG_BUT_CL_TEXT_L	./yapp.h	179;"	d
-PG_BUT_FILLCOL	./yapp.h	181;"	d
-PG_BUT_L	./yapp.h	173;"	d
-PG_BUT_R	./yapp.h	174;"	d
-PG_BUT_T	./yapp.h	176;"	d
-PG_BUT_TEXT_B	./yapp.h	178;"	d
-PG_BUT_TEXT_L	./yapp.h	177;"	d
-PG_CH_SCALEFACTOR	./yapp.h	168;"	d
+PG_BUTEXIT_B	./yapp.h	190;"	d
+PG_BUTEXIT_CL_TEXT_B	./yapp.h	195;"	d
+PG_BUTEXIT_CL_TEXT_L	./yapp.h	194;"	d
+PG_BUTEXIT_L	./yapp.h	188;"	d
+PG_BUTEXIT_R	./yapp.h	189;"	d
+PG_BUTEXIT_T	./yapp.h	191;"	d
+PG_BUTEXIT_TEXT_B	./yapp.h	193;"	d
+PG_BUTEXIT_TEXT_L	./yapp.h	192;"	d
+PG_BUTNEXT_B	./yapp.h	181;"	d
+PG_BUTNEXT_CL_TEXT_B	./yapp.h	186;"	d
+PG_BUTNEXT_CL_TEXT_L	./yapp.h	185;"	d
+PG_BUTNEXT_L	./yapp.h	179;"	d
+PG_BUTNEXT_R	./yapp.h	180;"	d
+PG_BUTNEXT_T	./yapp.h	182;"	d
+PG_BUTNEXT_TEXT_B	./yapp.h	184;"	d
+PG_BUTNEXT_TEXT_L	./yapp.h	183;"	d
+PG_BUT_B	./yapp.h	176;"	d
+PG_BUT_CL_SLEEP	./yapp.h	198;"	d
+PG_BUT_FILLCOL	./yapp.h	197;"	d
+PG_BUT_L	./yapp.h	174;"	d
+PG_BUT_R	./yapp.h	175;"	d
+PG_BUT_T	./yapp.h	177;"	d
+PG_CH_SCALEFACTOR	./yapp.h	164;"	d
 PG_DEV	./yapp.h	146;"	d
 PG_DEV_PS	./yapp.h	147;"	d
-PG_PLOT_SLEEP	./yapp.h	184;"	d
-PG_TICK_STEPS_X	./yapp.h	170;"	d
-PG_TICK_STEPS_Y	./yapp.h	171;"	d
-PG_VP_BUT_MB	./yapp.h	164;"	d
-PG_VP_BUT_ML	./yapp.h	162;"	d
-PG_VP_BUT_MR	./yapp.h	163;"	d
-PG_VP_BUT_MT	./yapp.h	165;"	d
+PG_PLOT_SLEEP	./yapp.h	200;"	d
+PG_TICK_STEPS_X	./yapp.h	166;"	d
+PG_TICK_STEPS_Y	./yapp.h	167;"	d
+PG_VP_BUT_MB	./yapp.h	171;"	d
+PG_VP_BUT_ML	./yapp.h	169;"	d
+PG_VP_BUT_MR	./yapp.h	170;"	d
+PG_VP_BUT_MT	./yapp.h	172;"	d
 PG_VP_MB	./yapp.h	159;"	d
 PG_VP_ML	./yapp.h	157;"	d
 PG_VP_MR	./yapp.h	158;"	d
 PG_VP_MT	./yapp.h	160;"	d
 PG_VP_MW	./yapp.h	161;"	d
 PLOT_DDS_SUFFIX	./yapp.h	151;"	d
-PROC_SPEC_NOTSEL	./yapp.h	200;"	d
-PROC_SPEC_PERCENT	./yapp.h	202;"	d
-PROC_SPEC_TIME	./yapp.h	204;"	d
+PROC_SPEC_NOTSEL	./yapp.h	216;"	d
+PROC_SPEC_PERCENT	./yapp.h	218;"	d
+PROC_SPEC_TIME	./yapp.h	220;"	d
 PrintUsage	./yapp_dedisp.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	./yapp_dedisperse.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	./yapp_fold.c	/^void PrintUsage(const char *pcProgName)$/;"	f
@@ -130,11 +142,11 @@ YAPP_CleanUp	./yapp_common.c	/^void YAPP_CleanUp()$/;"	f
 YAPP_CleanUp	./yapp_dedisp.c	/^void YAPP_CleanUp()$/;"	f
 YAPP_CleanUp	./yapp_dedisperse.c	/^void YAPP_CleanUp()$/;"	f
 YAPP_CleanUp	./yapp_fold.c	/^void YAPP_CleanUp()$/;"	f
-YAPP_ERF_ENTRIES	./yapp.h	189;"	d
+YAPP_ERF_ENTRIES	./yapp.h	205;"	d
 YAPP_FALSE	./yapp.h	48;"	d
-YAPP_FILE_DELAYS_LIN	./yapp.h	224;"	d
-YAPP_FILE_DELAYS_OTHER	./yapp.h	225;"	d
-YAPP_FILE_DELAYS_QUAD	./yapp.h	223;"	d
+YAPP_FILE_DELAYS_LIN	./yapp.h	240;"	d
+YAPP_FILE_DELAYS_OTHER	./yapp.h	241;"	d
+YAPP_FILE_DELAYS_QUAD	./yapp.h	239;"	d
 YAPP_FORMATSTR_DTS_DDD	./yapp.h	58;"	d
 YAPP_FORMATSTR_DTS_TIM	./yapp.h	59;"	d
 YAPP_FORMATSTR_FIL	./yapp.h	57;"	d
@@ -147,7 +159,7 @@ YAPP_GetFileType	./yapp_common.c	/^int YAPP_GetFileType(char *pcFile)$/;"	f
 YAPP_GetFilenameFromPath	./yapp_common.c	/^char* YAPP_GetFilenameFromPath(char *pcPath, char *pcExt)$/;"	f
 YAPP_GetObsNameFromID	./yapp_common.c	/^int YAPP_GetObsNameFromID(int iObsID, char *pcObs)$/;"	f
 YAPP_HandleStopSignals	./yapp_common.c	/^void YAPP_HandleStopSignals(int iSigNo)$/;"	f
-YAPP_MAX_MEMTABLE	./yapp.h	228;"	d
+YAPP_MAX_MEMTABLE	./yapp.h	244;"	d
 YAPP_MAX_NUM_BANDS	./yapp.h	115;"	d
 YAPP_Malloc	./yapp_common.c	/^void* YAPP_Malloc(size_t iNumItems, size_t iSize, int iZero)$/;"	f
 YAPP_RET_ERROR	./yapp.h	41;"	d
@@ -255,7 +267,7 @@ g_pcIsTimeGood	./yapp_dedisp.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	./yapp_dedisperse.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	./yapp_fold.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	./yapp_viewdata.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
-g_pcVersion	./yapp_version.c	/^const char *g_pcVersion = "YAPP-DEV-20110702-105624";$/;"	v
+g_pcVersion	./yapp_version.c	/^const char *g_pcVersion = "YAPP-DEV-20110702-162423";$/;"	v
 g_pdDM	./yapp_dedisperse.c	/^double *g_pdDM = NULL;$/;"	v
 g_pdDelayTab	./yapp_dedisp.c	/^double *g_pdDelayTab = NULL;$/;"	v
 g_pdDelayTab	./yapp_dedisperse.c	/^double *g_pdDelayTab = NULL;$/;"	v
