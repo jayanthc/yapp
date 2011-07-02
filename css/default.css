@@ -49,7 +49,7 @@ div.caption
 }
 div.mainTitle
 {
-    color: #000000;
+    color: #FFFFFF;
     height: auto;
     background-color: inherit;
     font-weight: bold;
@@ -61,7 +61,7 @@ div.mainSubTitle
     color: #000000;
     height: auto;
     background-color: inherit;
-    font-weight: normal;
+    font-weight: bold;
     font-size: 10pt;
     letter-spacing: 2.5pt;
 }
@@ -79,6 +79,11 @@ span.pubSubTitle
     background-color: inherit;
     font-weight: bold;
     font-size: 12pt;
+}
+span.monospace
+{
+    font-family: "Courier New", monospace;
+    font-size: 8pt;
 }
 
 dt
@@ -194,9 +199,15 @@ td.title
 }
 td.mainBanner
 {
+    background-image: url('../images/banner.png');
+    background-repeat: no-repeat;
+    background-position: center;
     width: 650px;
     height: 235px;
-    padding: 10pt;
+    padding-top: 0pt;
+    padding-bottom: 0pt;
+    padding-left: 10pt;
+    padding-right: 10pt;
     text-align: left;
     vertical-align: middle;
 }
