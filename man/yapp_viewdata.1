@@ -5,7 +5,7 @@
 .\# Created by Jayanth Chennamangalam on 2011.03.20
 .\#
 
-.TH YAPP_VIEWDATA 1 "2011-04-01" "YAPP 1.0.0" \
+.TH YAPP_VIEWDATA 1 "2011-07-02" "YAPP 1.0.0" \
 "Yet Another Pulsar Processor"
 
 
@@ -25,43 +25,45 @@ Plots raw dynamic spectrum data to PGPLOT device.
 
 .SH OPTIONS
 .TP
-\-h
-display a short help text
+.B \-h, --help
+Display a short help text.
 .TP
-\-s
-percentage of data to be skipped
+.B \-s, --skip-percent \fIpercentage
+Percentage of data to be skipped (default is 0).
 .TP
-\-S
-length of data in seconds, to be skipped
+.B \-S, --skip-time \fItime
+Length of data to be skipped, in seconds (default is 0).
 .TP
-\-p
-percentage of data to be processed (default is 100)
+.B \-p, --proc-percent \fIpercentage
+Percentage of data to be processed (default is 100%).
 .TP
-\-P
-length of data in seconds, to be processed (default is all)
+.B \-P, --proc-time \fItime
+Length of data to be processed, in seconds (default is all data).
 .TP
-\-b
-number of samples read in one block (default is 4096 samples)
+.B \-b, --block-size \fIsamples
+Number of time samples read in one block (default is 4096 samples).
 .TP
-\-c
-number of sigmas above threshold; will clip anything above this level
+.B \-c, --clip-level \fIlevel
+Number of sigmas above threshold; will clip anything above this level.
 .TP
-\-m
-MATLAB colour map for plotting (default is 'jet')
+.B \-m, --colour-map \fIname
+MATLAB colour map for plotting. Valid names are 'autumn', 'bone', \
+'colorcube', 'cool', 'copper', 'flag', 'gray', 'hot', 'hsv', 'jet', 'lines', \
+'pink', 'prism', 'spring', 'summer', 'white', and 'winter' (default is 'jet').
 .TP
-\-i
-invert background and foreground colours in plots
+.B \-i, --invert
+Invert background and foreground colours in plots.
 .TP
-\-n
-run in non-interactive mode
+.B \-n, --non-interactive
+Run in non-interactive mode.
 .TP
-\-v
-display the version
+.B \-v, --version
+Display the version.
 
 
 .SH EXAMPLE
 .TP
-yapp_viewdata -b 8192 -m hsv data.fil
+yapp_viewdata -b 8192 -m copper data.fil
 
 
 .SH SEE ALSO
@@ -70,7 +72,5 @@ yapp_viewdata -b 8192 -m hsv data.fil
 
 .SH AUTHOR
 .TP 
-Written by Jayanth Chennamangalam with guidance from Avinash Deshpande. \
-Acknowledgements: Avinash Deshpande, Yogesh Maan, Isaac Backus, and     \
-Duncan Lorimer.
+Written by Jayanth Chennamangalam. http://jayanthc.github.com/yapp/
 

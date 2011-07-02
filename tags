@@ -9,6 +9,45 @@ BADTIME_END	./yapp.h	104;"	d
 BUF_0	./yapp.h	138;"	d
 BUF_1	./yapp.h	139;"	d
 CHANNEL_COUNT	./yapp_pulsarsnd.c	22;"	d	file:
+CMAP_AUTUMN	colourmap.h	/^    CMAP_AUTUMN = 0,$/;"	e	enum:CMap_e
+CMAP_BONE	colourmap.h	/^    CMAP_BONE,$/;"	e	enum:CMap_e
+CMAP_COLORCUBE	colourmap.h	/^    CMAP_COLORCUBE,$/;"	e	enum:CMap_e
+CMAP_COOL	colourmap.h	/^    CMAP_COOL,$/;"	e	enum:CMap_e
+CMAP_COPPER	colourmap.h	/^    CMAP_COPPER,$/;"	e	enum:CMap_e
+CMAP_FLAG	colourmap.h	/^    CMAP_FLAG,$/;"	e	enum:CMap_e
+CMAP_GRAY	colourmap.h	/^    CMAP_GRAY,$/;"	e	enum:CMap_e
+CMAP_HOT	colourmap.h	/^    CMAP_HOT,$/;"	e	enum:CMap_e
+CMAP_HSV	colourmap.h	/^    CMAP_HSV,$/;"	e	enum:CMap_e
+CMAP_JET	colourmap.h	/^    CMAP_JET,$/;"	e	enum:CMap_e
+CMAP_LEVELS	colourmap.h	18;"	d
+CMAP_LINES	colourmap.h	/^    CMAP_LINES,$/;"	e	enum:CMap_e
+CMAP_PINK	colourmap.h	/^    CMAP_PINK,$/;"	e	enum:CMap_e
+CMAP_PRISM	colourmap.h	/^    CMAP_PRISM,$/;"	e	enum:CMap_e
+CMAP_SPRING	colourmap.h	/^    CMAP_SPRING,$/;"	e	enum:CMap_e
+CMAP_STR_AUTUMN	colourmap.h	42;"	d
+CMAP_STR_BONE	colourmap.h	43;"	d
+CMAP_STR_COLORCUBE	colourmap.h	44;"	d
+CMAP_STR_COOL	colourmap.h	45;"	d
+CMAP_STR_COPPER	colourmap.h	46;"	d
+CMAP_STR_FLAG	colourmap.h	47;"	d
+CMAP_STR_GRAY	colourmap.h	48;"	d
+CMAP_STR_HOT	colourmap.h	49;"	d
+CMAP_STR_HSV	colourmap.h	50;"	d
+CMAP_STR_JET	colourmap.h	51;"	d
+CMAP_STR_LINES	colourmap.h	52;"	d
+CMAP_STR_PINK	colourmap.h	53;"	d
+CMAP_STR_PRISM	colourmap.h	54;"	d
+CMAP_STR_SPRING	colourmap.h	55;"	d
+CMAP_STR_SUMMER	colourmap.h	56;"	d
+CMAP_STR_WHITE	colourmap.h	57;"	d
+CMAP_STR_WINTER	colourmap.h	58;"	d
+CMAP_SUMMER	colourmap.h	/^    CMAP_SUMMER,$/;"	e	enum:CMap_e
+CMAP_WHITE	colourmap.h	/^    CMAP_WHITE,$/;"	e	enum:CMap_e
+CMAP_WINTER	colourmap.h	/^    CMAP_WINTER$/;"	e	enum:CMap_e
+CMap_e	colourmap.h	/^typedef enum CMap_e$/;"	g
+CMap_t	colourmap.h	/^} CMap_t;$/;"	t	typeref:enum:CMap_e
+DEF_CMAP	colourmap.h	60;"	d
+DEF_CMAP_STR	colourmap.h	61;"	d
 DEF_FORMAT	./yapp.h	121;"	d
 DEF_LAW_MAX	./yapp.h	219;"	d
 DEF_LAW_MIN	./yapp.h	218;"	d
@@ -29,8 +68,10 @@ EXT_PS	./yapp.h	88;"	d
 EXT_TIM	./yapp.h	90;"	d
 FILE_EXT	./yapp_pulsarsnd.c	23;"	d	file:
 FILE_VERSRC	./yapp_makever.c	25;"	d	file:
+GetColourMapFromName	colourmap.c	/^int GetColourMapFromName(char *pcCMapName)$/;"	f
 GetLatestTimestamp	./yapp_makever.c	/^time_t GetLatestTimestamp()$/;"	f
 LEN_GENSTRING	./yapp.h	94;"	d
+LEN_GENSTRING	colourmap.h	17;"	d
 MAX_LEN_GENSTRING	./yapp_makever.c	22;"	d	file:
 MAX_LEN_PSRNAME	./yapp.h	114;"	d
 MAX_PNUM_BINS	./yapp.h	112;"	d
@@ -38,6 +79,7 @@ MAX_SIZE_BLOCK	./yapp.h	109;"	d
 MAX_SNR_BINS	./yapp.h	111;"	d
 MIN_THRES_IN_SIGMA	./yapp.h	194;"	d
 NUM_BAD_BOUNDS	./yapp.h	100;"	d
+NUM_CMAPS	colourmap.h	19;"	d
 PATH_ERF_LOOKUP	./yapp.h	186;"	d
 PATH_VER	./yapp_makever.c	24;"	d	file:
 PG_BUT_B	./yapp.h	175;"	d
@@ -71,12 +113,14 @@ PROC_SPEC_PERCENT	./yapp.h	202;"	d
 PROC_SPEC_TIME	./yapp.h	204;"	d
 PrintUsage	./yapp_dedisp.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	./yapp_dedisperse.c	/^void PrintUsage(const char *pcProgName)$/;"	f
+PrintUsage	./yapp_fold.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	./yapp_pulsarsnd.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	./yapp_viewdata.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	./yapp_viewmetadata.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 RET_ERROR	./yapp_makever.c	20;"	d	file:
 RET_SUCCESS	./yapp_makever.c	19;"	d	file:
 SUFFIX_CFG	./yapp.h	92;"	d
+SetColourMap	colourmap.c	/^int SetColourMap(int iCMap, int iIsColInv, float fColMin, float fColMax)$/;"	f
 VAR_VER	./yapp_makever.c	26;"	d	file:
 VER_BUILD_DELIM	./yapp_makever.c	28;"	d	file:
 VER_BUILD_PREFIX	./yapp_makever.c	27;"	d	file:
@@ -85,6 +129,7 @@ YAPP_CalcThresholdInSigmas	./yapp_common.c	/^double YAPP_CalcThresholdInSigmas(i
 YAPP_CleanUp	./yapp_common.c	/^void YAPP_CleanUp()$/;"	f
 YAPP_CleanUp	./yapp_dedisp.c	/^void YAPP_CleanUp()$/;"	f
 YAPP_CleanUp	./yapp_dedisperse.c	/^void YAPP_CleanUp()$/;"	f
+YAPP_CleanUp	./yapp_fold.c	/^void YAPP_CleanUp()$/;"	f
 YAPP_ERF_ENTRIES	./yapp.h	189;"	d
 YAPP_FALSE	./yapp.h	48;"	d
 YAPP_FILE_DELAYS_LIN	./yapp.h	224;"	d
@@ -161,6 +206,7 @@ YUM_s	./yapp.h	/^typedef struct YUM_s$/;"	s
 YUM_t	./yapp.h	/^} YUM_t;$/;"	t	typeref:struct:YUM_s
 _GNU_SOURCE	./yapp.h	20;"	d
 _GNU_SOURCE	./yapp_makever.c	8;"	d	file:
+__COLOURMAP_H__	colourmap.h	10;"	d
 __YAPP_H__	./yapp.h	10;"	d
 __YAPP_SIGPROC_H__	./yapp_sigproc.h	10;"	d
 acPulsar	./yapp.h	/^    char acPulsar[MAX_LEN_PSRNAME];$/;"	m	struct:YUM_s
@@ -190,45 +236,59 @@ fFCentre	./yapp.h	/^    float fFCentre;         \/* in MHz *\/$/;"	m	struct:YUM_
 fFMax	./yapp.h	/^    float fFMax;        \/* in MHz *\/$/;"	m	struct:YUM_s
 fFMin	./yapp.h	/^    float fFMin;        \/* in MHz *\/$/;"	m	struct:YUM_s
 fSampSize	./yapp.h	/^    float fSampSize;$/;"	m	struct:YUM_s
+g_aaafCMap	colourmap.c	/^const float g_aaafCMap[NUM_CMAPS][CMAP_LEVELS][3] = {$/;"	v
 g_aadErfLookup	./yapp_erflookup.c	/^const double g_aadErfLookup[YAPP_ERF_ENTRIES][3] = {$/;"	v
 g_apvMemTable	./yapp_common.c	/^void* g_apvMemTable[YAPP_MAX_MEMTABLE] = {0};$/;"	v
 g_iDispPlots	./yapp_dedisp.c	/^int g_iDispPlots = YAPP_TRUE;$/;"	v
 g_iDispPlots	./yapp_dedisperse.c	/^int g_iDispPlots = YAPP_TRUE;$/;"	v
+g_iDispPlots	./yapp_fold.c	/^int g_iDispPlots = YAPP_TRUE;$/;"	v
 g_iMemTableSize	./yapp_common.c	/^int g_iMemTableSize = 0;$/;"	v
 g_iPGDev	./yapp_common.c	/^int g_iPGDev = 0;$/;"	v
 g_pFSpec	./yapp_common.c	/^FILE *g_pFSpec = NULL;$/;"	v
 g_padBadTimes	./yapp_dedisp.c	/^double (*g_padBadTimes)[][NUM_BAD_BOUNDS] = NULL;$/;"	v
 g_padBadTimes	./yapp_dedisperse.c	/^double (*g_padBadTimes)[][NUM_BAD_BOUNDS] = NULL;$/;"	v
+g_padBadTimes	./yapp_fold.c	/^double (*g_padBadTimes)[][NUM_BAD_BOUNDS] = NULL;$/;"	v
 g_pcIsChanGood	./yapp_dedisp.c	/^char *g_pcIsChanGood = NULL;$/;"	v
 g_pcIsChanGood	./yapp_dedisperse.c	/^char *g_pcIsChanGood = NULL;$/;"	v
+g_pcIsChanGood	./yapp_fold.c	/^char *g_pcIsChanGood = NULL;$/;"	v
 g_pcIsTimeGood	./yapp_dedisp.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	./yapp_dedisperse.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
+g_pcIsTimeGood	./yapp_fold.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	./yapp_viewdata.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
-g_pcVersion	./yapp_version.c	/^const char *g_pcVersion = "YAPP-DEV-20110412-004400";$/;"	v
+g_pcVersion	./yapp_version.c	/^const char *g_pcVersion = "YAPP-DEV-20110702-105624";$/;"	v
 g_pdDM	./yapp_dedisperse.c	/^double *g_pdDM = NULL;$/;"	v
 g_pdDelayTab	./yapp_dedisp.c	/^double *g_pdDelayTab = NULL;$/;"	v
 g_pdDelayTab	./yapp_dedisperse.c	/^double *g_pdDelayTab = NULL;$/;"	v
+g_pdDelayTab	./yapp_fold.c	/^double *g_pdDelayTab = NULL;$/;"	v
 g_pdMaxDelayTab	./yapp_dedisperse.c	/^double *g_pdMaxDelayTab = NULL;$/;"	v
 g_pfBFGain	./yapp_dedisp.c	/^float *g_pfBFGain = NULL;$/;"	v
 g_pfBFGain	./yapp_dedisperse.c	/^float *g_pfBFGain = NULL;$/;"	v
+g_pfBFGain	./yapp_fold.c	/^float *g_pfBFGain = NULL;$/;"	v
 g_pfBFTimeSectMean	./yapp_dedisp.c	/^float *g_pfBFTimeSectMean = NULL;$/;"	v
 g_pfBFTimeSectMean	./yapp_dedisperse.c	/^float *g_pfBFTimeSectMean = NULL;$/;"	v
+g_pfBFTimeSectMean	./yapp_fold.c	/^float *g_pfBFTimeSectMean = NULL;$/;"	v
 g_pfBuf	./yapp_viewdata.c	/^float *g_pfBuf = NULL;$/;"	v
 g_pfBuf0	./yapp_dedisp.c	/^float *g_pfBuf0 = NULL;$/;"	v
 g_pfBuf0	./yapp_dedisperse.c	/^float *g_pfBuf0 = NULL;$/;"	v
+g_pfBuf0	./yapp_fold.c	/^float *g_pfBuf0 = NULL;$/;"	v
 g_pfBuf1	./yapp_dedisp.c	/^float *g_pfBuf1 = NULL;$/;"	v
 g_pfBuf1	./yapp_dedisperse.c	/^float *g_pfBuf1 = NULL;$/;"	v
+g_pfBuf1	./yapp_fold.c	/^float *g_pfBuf1 = NULL;$/;"	v
 g_pfDedispDMChans	./yapp_dedisperse.c	/^float *g_pfDedispDMChans = NULL;$/;"	v
 g_pfDedispData	./yapp_dedisp.c	/^float *g_pfDedispData = NULL;$/;"	v
 g_pfDedispData	./yapp_dedisperse.c	/^float *g_pfDedispData = NULL;$/;"	v
+g_pfDedispData	./yapp_fold.c	/^float *g_pfDedispData = NULL;$/;"	v
 g_pfPlotBuf	./yapp_dedisp.c	/^float *g_pfPlotBuf = NULL;$/;"	v
 g_pfPlotBuf	./yapp_dedisperse.c	/^float *g_pfPlotBuf = NULL;$/;"	v
+g_pfPlotBuf	./yapp_fold.c	/^float *g_pfPlotBuf = NULL;$/;"	v
 g_pfPlotBuf	./yapp_viewdata.c	/^float *g_pfPlotBuf = NULL;$/;"	v
 g_pfPriBufBk	./yapp_dedisperse.c	/^float *g_pfPriBufBk = NULL;$/;"	v
 g_pfXAxis	./yapp_dedisp.c	/^float *g_pfXAxis = NULL;$/;"	v
 g_pfXAxis	./yapp_dedisperse.c	/^float *g_pfXAxis = NULL;$/;"	v
+g_pfXAxis	./yapp_fold.c	/^float *g_pfXAxis = NULL;$/;"	v
 g_pfXAxis	./yapp_viewdata.c	/^float *g_pfXAxis = NULL;$/;"	v
 g_pfYAxis	./yapp_dedisp.c	/^float *g_pfYAxis = NULL;$/;"	v
+g_pfYAxis	./yapp_fold.c	/^float *g_pfYAxis = NULL;$/;"	v
 g_pfYAxis	./yapp_viewdata.c	/^float *g_pfYAxis = NULL;$/;"	v
 g_ppFDedispCfg	./yapp_dedisperse.c	/^FILE **g_ppFDedispCfg = NULL;$/;"	v
 g_ppFDedispData	./yapp_dedisperse.c	/^FILE **g_ppFDedispData = NULL;$/;"	v
@@ -254,6 +314,7 @@ iTimeSamps	./yapp.h	/^    int iTimeSamps;$/;"	m	struct:YUM_s
 lDataSizeTotal	./yapp.h	/^    long int lDataSizeTotal;$/;"	m	struct:YUM_s
 main	./yapp_dedisp.c	/^int main(int argc, char *argv[])$/;"	f
 main	./yapp_dedisperse.c	/^int main(int argc, char *argv[])$/;"	f
+main	./yapp_fold.c	/^int main(int argc, char *argv[])$/;"	f
 main	./yapp_makever.c	/^int main(int argc, char *argv[])$/;"	f
 main	./yapp_pulsarsnd.c	/^int main(int argc, char *argv[])$/;"	f
 main	./yapp_viewdata.c	/^int main(int argc, char *argv[])$/;"	f

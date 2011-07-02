@@ -152,8 +152,8 @@ yapp_pulsarsnd: $(IDIR)/yapp_pulsarsnd.o
 #		-o $(BINDIR)/$@
 
 # create the tags file
-tags: $(SRCDIR)/yapp*.*
-	ctags $(SRCDIR)/yapp*.*
+tags: $(SRCDIR)/yapp*.* colourmap*
+	ctags $(SRCDIR)/yapp*.* colourmap*
 
 # install the man pages
 install:
