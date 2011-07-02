@@ -60,32 +60,43 @@
        
        <dl> 
        <dt>-h</dt><dd> 
-       display a short help text</dd>
+Display a short help text.
+	   </dd>
        <dt>-s</dt><dd> 
-       percentage of data to be skipped</dd>
+Percentage of data to be skipped (default is 0).
+	   </dd>
        <dt>-S</dt><dd> 
-       length of data in seconds, to be skipped</dd>
+Length of data to be skipped, in seconds (default is 0).
+	   </dd>
        <dt>-p</dt><dd> 
-       percentage of data to be processed (default is 100)</dd>
+Percentage of data to be processed (default is 100%).
+	   </dd>
        <dt>-P</dt><dd> 
-       length of data in seconds, to be processed (default is all)</dd>
+Length of data to be processed, in seconds (default is all data).
+	   </dd>
        <dt>-b</dt><dd> 
-       number of samples read in one block (default is 4096 samples)</dd>
+Number of time samples read in one block (default is 4096 samples).
+	   </dd>
        <dt>-c</dt><dd> 
-       number of sigmas above threshold; will clip anything above this level</dd>
+Number of sigmas above threshold; will clip anything above this level.
+	   </dd>
        <dt>-m</dt><dd> 
-       MATLAB colour map for plotting (default is 'jet')</dd>
+MATLAB colour map for plotting. Valid names are 'autumn', 'bone', 
+	   </dd>
        <dt>-i</dt><dd> 
-       invert background and foreground colours in plots</dd>
+Invert background and foreground colours in plots.
+	   </dd>
        <dt>-n</dt><dd> 
-       run in non-interactive mode</dd>
+Run in non-interactive mode.
+	   </dd>
        <dt>-v</dt><dd> 
-       display the version</dd>
+Display the version.
+	   </dd>
        </dl> 
        <h3>EXAMPLE</h3> 
         
         <dl> 
-        <dt>yapp_viewdata -b 8192 -m hsv data.fil</dt>
+        <dt>yapp_viewdata -b 8192 -m copper data.fil</dt>
         </dl> 
         <h3>SEE ALSO</h3> 
          
