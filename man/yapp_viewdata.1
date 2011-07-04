@@ -1,0 +1,78 @@
+.\#
+.\# Yet Another Pulsar Processor Commands
+.\# yapp_viewdata Manual Page
+.\#
+.\# Created by Jayanth Chennamangalam on 2011.03.20
+.\#
+
+.TH YAPP_VIEWDATA 1 "2011-07-04" "YAPP 1.0.0-beta" \
+"Yet Another Pulsar Processor"
+
+
+.SH NAME
+yapp_viewdata \- view raw dynamic spectrum data
+
+
+.SH SYNOPSIS
+.B yapp_viewdata
+[options]
+.I dynamic-spectrum-data-file
+
+
+.SH DESCRIPTION
+Plots raw dynamic spectrum data to PGPLOT device. The supported file formats \
+are DAS '.spec' and SIGPROC '.fil'. The headerless '.fil' format is not yet \
+supported.
+
+
+.SH OPTIONS
+.TP
+.B \-h, --help
+Display a short help text.
+.TP
+.B \-s, --skip-percent \fIpercentage
+Percentage of data to be skipped (default is 0).
+.TP
+.B \-S, --skip-time \fItime
+Length of data to be skipped, in seconds (default is 0).
+.TP
+.B \-p, --proc-percent \fIpercentage
+Percentage of data to be processed (default is 100%).
+.TP
+.B \-P, --proc-time \fItime
+Length of data to be processed, in seconds (default is all data).
+.TP
+.B \-b, --block-size \fIsamples
+Number of time samples read in one block (default is 4096 samples).
+.TP
+.B \-c, --clip-level \fIlevel
+Number of sigmas above threshold; will clip anything above this level.
+.TP
+.B \-m, --colour-map \fIname
+MATLAB colour map for plotting. Valid names are 'autumn', 'bone', \
+'colorcube', 'cool', 'copper', 'flag', 'gray', 'hot', 'hsv', 'jet', 'lines', \
+'pink', 'prism', 'spring', 'summer', 'white', and 'winter' (default is 'jet').
+.TP
+.B \-i, --invert
+Invert background and foreground colours in plots.
+.TP
+.B \-n, --non-interactive
+Run in non-interactive mode.
+.TP
+.B \-v, --version
+Display the version.
+
+
+.SH EXAMPLE
+.TP
+yapp_viewdata -b 8192 -m copper data.fil
+
+
+.SH SEE ALSO
+.BR yapp_viewmetadata (1)
+
+
+.SH AUTHOR
+.TP 
+Written by Jayanth Chennamangalam. http://jayanthc.github.com/yapp/
+
