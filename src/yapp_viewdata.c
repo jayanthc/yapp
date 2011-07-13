@@ -5,13 +5,13 @@
  * @verbatim
  * Usage: yapp_viewdata [options] <dynamic-spectrum-data-file>
  *     -h  --help                           Display this usage information
- *     -s  --data-skip-percent <percentage> The percentage of data to be skipped
- *     -S  --data-skip-time <time>          The length of data in seconds, to be
+ *     -s  --skip-percent <percentage>      The percentage of data to be skipped
+ *     -S  --skip-time <time>               The length of data in seconds, to be
  *                                          skipped
- *     -p  --data-proc-percent <percentage> The percentage of data to be
+ *     -p  --proc-percent <percentage>      The percentage of data to be
  *                                          processed
  *                                          (default is 100)
- *     -P  --data-proc-time <time>          The length of data in seconds, to be
+ *     -P  --proc-time <time>               The length of data in seconds, to be
  *                                          processed
  *                                          (default is all)
  *     -b  --block-size <samples>           Number of samples read in one block
@@ -126,10 +126,10 @@ int main(int argc, char *argv[])
     /* valid long options */
     const struct option stOptsLong[] = {
         { "help",                   0, NULL, 'h' },
-        { "data-skip-percent",      1, NULL, 's' },
-        { "data-skip-time",         1, NULL, 'S' },
-        { "data-proc-percent",      1, NULL, 'p' },
-        { "data-proc-time",         1, NULL, 'P' },
+        { "skip-percent",           1, NULL, 's' },
+        { "skip-time",              1, NULL, 'S' },
+        { "proc-percent",           1, NULL, 'p' },
+        { "proc-time",              1, NULL, 'P' },
         { "block-size",             1, NULL, 'b' },
         { "clip-level",             1, NULL, 'c' },
         { "colour-map",             1, NULL, 'm' },
@@ -153,7 +153,7 @@ int main(int argc, char *argv[])
                 PrintUsage(pcProgName);
                 return YAPP_RET_SUCCESS;
 
-            case 's':   /* -s or --data-skip-percent */
+            case 's':   /* -s or --skip-percent */
                 /* set option */
                 if ((PROC_SPEC_NOTSEL == iProcSpec)
                     || (PROC_SPEC_PERCENT == iProcSpec))
@@ -181,7 +181,7 @@ int main(int argc, char *argv[])
                 }
                 break;
 
-            case 'S':   /* -S or --data-skip-time */
+            case 'S':   /* -S or --skip-time */
                 /* set option */
                 if ((PROC_SPEC_NOTSEL == iProcSpec)
                     || (PROC_SPEC_TIME == iProcSpec))
@@ -200,7 +200,7 @@ int main(int argc, char *argv[])
                 }
                 break;
 
-            case 'p':   /* -p or --data-proc-percent */
+            case 'p':   /* -p or --proc-percent */
                 /* set option */
                 if ((PROC_SPEC_NOTSEL == iProcSpec)
                     || (PROC_SPEC_PERCENT == iProcSpec))
@@ -228,7 +228,7 @@ int main(int argc, char *argv[])
                 }
                 break;
 
-            case 'P':   /* -P or --data-proc-time */
+            case 'P':   /* -P or --proc-time */
                 /* set option */
                 if ((PROC_SPEC_NOTSEL == iProcSpec)
                     || (PROC_SPEC_TIME == iProcSpec))
@@ -949,17 +949,17 @@ void PrintUsage(const char *pcProgName)
                   pcProgName);
     (void) printf("    -h  --help                           ");
     (void) printf("Display this usage information\n");
-    (void) printf("    -s  --data-skip-percent <percentage> ");
+    (void) printf("    -s  --skip-percent <percentage>      ");
     (void) printf("The percentage of data to be skipped\n");
-    (void) printf("    -S  --data-skip-time <time>          ");
+    (void) printf("    -S  --skip-time <time>               ");
     (void) printf("The length of data in seconds, to be\n");
     (void) printf("                                         ");
     (void) printf("skipped\n");
-    (void) printf("    -p  --data-proc-percent <percentage> ");
+    (void) printf("    -p  --proc-percent <percentage>      ");
     (void) printf("The percentage of data to be processed\n");
     (void) printf("                                         ");
     (void) printf("(default is 100)\n");
-    (void) printf("    -P  --data-proc-time <time>          ");
+    (void) printf("    -P  --proc-time <time>               ");
     (void) printf("The length of data in seconds, to be\n");
     (void) printf("                                         ");
     (void) printf("processed\n");

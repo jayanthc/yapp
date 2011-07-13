@@ -21,10 +21,10 @@
 
 #define MAX_LEN_GENSTRING   256
 
-#define PATH_VER            "yapp_version"
-#define FILE_VERSRC         "yapp_version.c"
+/* TODO: read the path as argument */
+#define FILE_VERSRC         "src/yapp_version.c"
 #define VAR_VER             "*g_pcVersion"
-#define VER_BUILD_PREFIX    "YAPP-DEV"
+#define VER_BUILD_PREFIX    "YAPP-DEV-1.0.0"
 #define VER_BUILD_DELIM     "-"
 
 time_t GetLatestTimestamp(void);
@@ -61,7 +61,9 @@ int main(int argc, char *argv[])
     pFileVerSrc = fopen(FILE_VERSRC, "w");
     if (NULL == pFileVerSrc)
     {
-        perror("fopen");
+        (void) fprintf(stderr,
+                       "Opening file %s failed!\n",
+                       FILE_VERSRC);
         return RET_ERROR;
     }
 
@@ -97,14 +99,15 @@ time_t GetLatestTimestamp()
     int iRet = RET_SUCCESS;
 
     /* create filters for pattern matching */
-    glob("*.c", 0, NULL, &stGlobBuf);
-    glob("*.h", GLOB_APPEND, NULL, &stGlobBuf);
+    glob("src/*.c", 0, NULL, &stGlobBuf);
+    glob("src/*.h", GLOB_APPEND, NULL, &stGlobBuf);
 
     /* find the latest timestamp */
     for (i = 0; i < stGlobBuf.gl_pathc; ++i)
     {
         /* skip this source file */
-        if (0 == strcmp(stGlobBuf.gl_pathv[i], "yapp_makever.c"))
+        if ((0 == strcmp(stGlobBuf.gl_pathv[i], "src/yapp_makever.c"))
+            || (0 == strcmp(stGlobBuf.gl_pathv[i], "src/yapp_version.c")))
         {
             continue;
         }

@@ -25,7 +25,6 @@ yapp_viewdata:
 6.  BUG: Eliminte flickering in noninteractive mode plots by redrawing only
     axes.
 7.  FEATURE: Support user-defined colourmaps.
-8.  FEATURE: Exit button.
 
 yapp_dedisp:
 1.  BUG: *.tim files created by yapp_dedisp for *.fil does not result in pulsar

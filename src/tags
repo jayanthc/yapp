@@ -1,0 +1,359 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+AMP_FACTOR	pulsarsnd_original.c	21;"	d	file:
+ARG_COUNT	pulsarsnd_original.c	19;"	d	file:
+BADTIME_BEG	yapp.h	102;"	d
+BADTIME_END	yapp.h	104;"	d
+BUF_0	yapp.h	138;"	d
+BUF_1	yapp.h	139;"	d
+CHANNEL_COUNT	pulsarsnd_original.c	20;"	d	file:
+CHANNEL_COUNT	yapp_pulsarsnd.c	22;"	d	file:
+CMAP_AUTUMN	colourmap.h	/^    CMAP_AUTUMN = 0,$/;"	e	enum:CMap_e
+CMAP_BONE	colourmap.h	/^    CMAP_BONE,$/;"	e	enum:CMap_e
+CMAP_COLORCUBE	colourmap.h	/^    CMAP_COLORCUBE,$/;"	e	enum:CMap_e
+CMAP_COOL	colourmap.h	/^    CMAP_COOL,$/;"	e	enum:CMap_e
+CMAP_COPPER	colourmap.h	/^    CMAP_COPPER,$/;"	e	enum:CMap_e
+CMAP_FLAG	colourmap.h	/^    CMAP_FLAG,$/;"	e	enum:CMap_e
+CMAP_GRAY	colourmap.h	/^    CMAP_GRAY,$/;"	e	enum:CMap_e
+CMAP_HOT	colourmap.h	/^    CMAP_HOT,$/;"	e	enum:CMap_e
+CMAP_HSV	colourmap.h	/^    CMAP_HSV,$/;"	e	enum:CMap_e
+CMAP_JET	colourmap.h	/^    CMAP_JET,$/;"	e	enum:CMap_e
+CMAP_LEVELS	colourmap.h	18;"	d
+CMAP_LINES	colourmap.h	/^    CMAP_LINES,$/;"	e	enum:CMap_e
+CMAP_PINK	colourmap.h	/^    CMAP_PINK,$/;"	e	enum:CMap_e
+CMAP_PRISM	colourmap.h	/^    CMAP_PRISM,$/;"	e	enum:CMap_e
+CMAP_SPRING	colourmap.h	/^    CMAP_SPRING,$/;"	e	enum:CMap_e
+CMAP_STR_AUTUMN	colourmap.h	42;"	d
+CMAP_STR_BONE	colourmap.h	43;"	d
+CMAP_STR_COLORCUBE	colourmap.h	44;"	d
+CMAP_STR_COOL	colourmap.h	45;"	d
+CMAP_STR_COPPER	colourmap.h	46;"	d
+CMAP_STR_FLAG	colourmap.h	47;"	d
+CMAP_STR_GRAY	colourmap.h	48;"	d
+CMAP_STR_HOT	colourmap.h	49;"	d
+CMAP_STR_HSV	colourmap.h	50;"	d
+CMAP_STR_JET	colourmap.h	51;"	d
+CMAP_STR_LINES	colourmap.h	52;"	d
+CMAP_STR_PINK	colourmap.h	53;"	d
+CMAP_STR_PRISM	colourmap.h	54;"	d
+CMAP_STR_SPRING	colourmap.h	55;"	d
+CMAP_STR_SUMMER	colourmap.h	56;"	d
+CMAP_STR_WHITE	colourmap.h	57;"	d
+CMAP_STR_WINTER	colourmap.h	58;"	d
+CMAP_SUMMER	colourmap.h	/^    CMAP_SUMMER,$/;"	e	enum:CMap_e
+CMAP_WHITE	colourmap.h	/^    CMAP_WHITE,$/;"	e	enum:CMap_e
+CMAP_WINTER	colourmap.h	/^    CMAP_WINTER$/;"	e	enum:CMap_e
+CMap_e	colourmap.h	/^typedef enum CMap_e$/;"	g
+CMap_t	colourmap.h	/^} CMap_t;$/;"	t	typeref:enum:CMap_e
+DEF_CMAP	colourmap.h	60;"	d
+DEF_CMAP_STR	colourmap.h	61;"	d
+DEF_FORMAT	yapp.h	121;"	d
+DEF_LAW_MAX	yapp.h	235;"	d
+DEF_LAW_MIN	yapp.h	234;"	d
+DEF_LAW_STEP	yapp.h	232;"	d
+DEF_OUT_FORMAT	yapp.h	122;"	d
+DEF_PROC_PERCENT	yapp.h	128;"	d
+DEF_PROC_SPEC	yapp.h	227;"	d
+DEF_PROC_TIME	yapp.h	130;"	d
+DEF_SIZE_BLOCK	yapp.h	123;"	d
+DEF_SKIP_PERCENT	yapp.h	125;"	d
+DEF_SKIP_TIME	yapp.h	126;"	d
+DM_TOL_PERCENT	yapp.h	208;"	d
+EXT_DEDISPSPEC	yapp.h	86;"	d
+EXT_DEDISPSPECCFG	yapp.h	87;"	d
+EXT_DYNSPEC	yapp.h	85;"	d
+EXT_FIL	yapp.h	89;"	d
+EXT_PS	yapp.h	88;"	d
+EXT_TIM	yapp.h	90;"	d
+FILE_EXT	pulsarsnd_original.c	23;"	d	file:
+FILE_EXT	yapp_pulsarsnd.c	23;"	d	file:
+FILE_VERSRC	yapp_makever.c	25;"	d	file:
+FLAG_CH_GOOD	gendispdata.c	22;"	d	file:
+GetColourMapFromName	colourmap.c	/^int GetColourMapFromName(char *pcCMapName)$/;"	f
+GetLatestTimestamp	yapp_makever.c	/^time_t GetLatestTimestamp()$/;"	f
+LEN_GENSTRING	colourmap.h	17;"	d
+LEN_GENSTRING	yapp.h	94;"	d
+MAX_LEN_GENSTRING	yapp_makever.c	22;"	d	file:
+MAX_LEN_PSRNAME	yapp.h	114;"	d
+MAX_PNUM_BINS	yapp.h	112;"	d
+MAX_SIZE_BLOCK	yapp.h	109;"	d
+MAX_SNR_BINS	yapp.h	111;"	d
+MAX_STRING	pulsarsnd_original.c	22;"	d	file:
+MIN_THRES_IN_SIGMA	yapp.h	210;"	d
+NUM_BAD_BOUNDS	yapp.h	100;"	d
+NUM_CMAPS	colourmap.h	19;"	d
+PATH_ERF_LOOKUP	yapp.h	202;"	d
+PG_BUTEXIT_B	yapp.h	190;"	d
+PG_BUTEXIT_CL_TEXT_B	yapp.h	195;"	d
+PG_BUTEXIT_CL_TEXT_L	yapp.h	194;"	d
+PG_BUTEXIT_L	yapp.h	188;"	d
+PG_BUTEXIT_R	yapp.h	189;"	d
+PG_BUTEXIT_T	yapp.h	191;"	d
+PG_BUTEXIT_TEXT_B	yapp.h	193;"	d
+PG_BUTEXIT_TEXT_L	yapp.h	192;"	d
+PG_BUTNEXT_B	yapp.h	181;"	d
+PG_BUTNEXT_CL_TEXT_B	yapp.h	186;"	d
+PG_BUTNEXT_CL_TEXT_L	yapp.h	185;"	d
+PG_BUTNEXT_L	yapp.h	179;"	d
+PG_BUTNEXT_R	yapp.h	180;"	d
+PG_BUTNEXT_T	yapp.h	182;"	d
+PG_BUTNEXT_TEXT_B	yapp.h	184;"	d
+PG_BUTNEXT_TEXT_L	yapp.h	183;"	d
+PG_BUT_B	yapp.h	176;"	d
+PG_BUT_CL_SLEEP	yapp.h	198;"	d
+PG_BUT_FILLCOL	yapp.h	197;"	d
+PG_BUT_L	yapp.h	174;"	d
+PG_BUT_R	yapp.h	175;"	d
+PG_BUT_T	yapp.h	177;"	d
+PG_CH_SCALEFACTOR	yapp.h	164;"	d
+PG_DEV	yapp.h	146;"	d
+PG_DEV_PS	yapp.h	147;"	d
+PG_PLOT_SLEEP	yapp.h	200;"	d
+PG_TICK_STEPS_X	yapp.h	166;"	d
+PG_TICK_STEPS_Y	yapp.h	167;"	d
+PG_VP_BUT_MB	yapp.h	171;"	d
+PG_VP_BUT_ML	yapp.h	169;"	d
+PG_VP_BUT_MR	yapp.h	170;"	d
+PG_VP_BUT_MT	yapp.h	172;"	d
+PG_VP_MB	yapp.h	159;"	d
+PG_VP_ML	yapp.h	157;"	d
+PG_VP_MR	yapp.h	158;"	d
+PG_VP_MT	yapp.h	160;"	d
+PG_VP_MW	yapp.h	161;"	d
+PLOT_DDS_SUFFIX	yapp.h	151;"	d
+PROC_SPEC_NOTSEL	yapp.h	216;"	d
+PROC_SPEC_PERCENT	yapp.h	218;"	d
+PROC_SPEC_TIME	yapp.h	220;"	d
+PrintUsage	gendispdata.c	/^void PrintUsage(const char *pcProgName)$/;"	f
+PrintUsage	killrfi.c	/^void PrintUsage(const char *pcProgName)$/;"	f
+PrintUsage	reorderdds.c	/^void PrintUsage(const char *pcProgName)$/;"	f
+PrintUsage	yapp_dedisp.c	/^void PrintUsage(const char *pcProgName)$/;"	f
+PrintUsage	yapp_dedisperse.c	/^void PrintUsage(const char *pcProgName)$/;"	f
+PrintUsage	yapp_pulsarsnd.c	/^void PrintUsage(const char *pcProgName)$/;"	f
+PrintUsage	yapp_viewdata.c	/^void PrintUsage(const char *pcProgName)$/;"	f
+PrintUsage	yapp_viewmetadata.c	/^void PrintUsage(const char *pcProgName)$/;"	f
+RET_ERROR	yapp_makever.c	20;"	d	file:
+RET_SUCCESS	yapp_makever.c	19;"	d	file:
+SUFFIX_CFG	yapp.h	92;"	d
+SetColourMap	colourmap.c	/^int SetColourMap(int iCMap, int iIsColInv, float fColMin, float fColMax)$/;"	f
+TEST_SITE	gendispdata.c	21;"	d	file:
+TEST_SOURCE	gendispdata.c	20;"	d	file:
+VAR_VER	yapp_makever.c	26;"	d	file:
+VER_BUILD_DELIM	yapp_makever.c	28;"	d	file:
+VER_BUILD_PREFIX	yapp_makever.c	27;"	d	file:
+YAPP_BYTE2BIT_FACTOR	yapp.h	83;"	d
+YAPP_CalcThresholdInSigmas	yapp_common.c	/^double YAPP_CalcThresholdInSigmas(int iTimeSamps)$/;"	f
+YAPP_CleanUp	gendispdata.c	/^void YAPP_CleanUp()$/;"	f
+YAPP_CleanUp	killrfi.c	/^void YAPP_CleanUp()$/;"	f
+YAPP_CleanUp	reorderdds.c	/^void YAPP_CleanUp()$/;"	f
+YAPP_CleanUp	yapp_common.c	/^void YAPP_CleanUp()$/;"	f
+YAPP_CleanUp	yapp_dedisp.c	/^void YAPP_CleanUp()$/;"	f
+YAPP_CleanUp	yapp_dedisperse.c	/^void YAPP_CleanUp()$/;"	f
+YAPP_ERF_ENTRIES	yapp.h	205;"	d
+YAPP_FALSE	yapp.h	48;"	d
+YAPP_FILE_DELAYS_LIN	yapp.h	240;"	d
+YAPP_FILE_DELAYS_OTHER	yapp.h	241;"	d
+YAPP_FILE_DELAYS_QUAD	yapp.h	239;"	d
+YAPP_FORMATSTR_DTS_DDD	yapp.h	58;"	d
+YAPP_FORMATSTR_DTS_TIM	yapp.h	59;"	d
+YAPP_FORMATSTR_FIL	yapp.h	57;"	d
+YAPP_FORMATSTR_SPEC	yapp.h	56;"	d
+YAPP_FORMAT_DTS_DDD	yapp.h	/^    YAPP_FORMAT_DTS_DDD = 0,    \/* Desh's dedispersed data format *\/$/;"	e	enum:tagDedispTimeSeriesFormat
+YAPP_FORMAT_DTS_TIM	yapp.h	/^    YAPP_FORMAT_DTS_TIM         \/* Dunc's time series format *\/$/;"	e	enum:tagDedispTimeSeriesFormat
+YAPP_FORMAT_FIL	yapp.h	/^    YAPP_FORMAT_FIL             \/* Dunc's filterbank file format *\/$/;"	e	enum:tagDynSpecFormat
+YAPP_FORMAT_SPEC	yapp.h	/^    YAPP_FORMAT_SPEC = 0,       \/* Desh's specfile format *\/$/;"	e	enum:tagDynSpecFormat
+YAPP_GetFileType	yapp_common.c	/^int YAPP_GetFileType(char *pcFile)$/;"	f
+YAPP_GetFilenameFromPath	yapp_common.c	/^char* YAPP_GetFilenameFromPath(char *pcPath, char *pcExt)$/;"	f
+YAPP_GetObsNameFromID	yapp_common.c	/^int YAPP_GetObsNameFromID(int iObsID, char *pcObs)$/;"	f
+YAPP_HandleStopSignals	yapp_common.c	/^void YAPP_HandleStopSignals(int iSigNo)$/;"	f
+YAPP_MAX_MEMTABLE	yapp.h	244;"	d
+YAPP_MAX_NUM_BANDS	yapp.h	115;"	d
+YAPP_Malloc	yapp_common.c	/^void* YAPP_Malloc(size_t iNumItems, size_t iSize, int iZero)$/;"	f
+YAPP_RET_ERROR	yapp.h	41;"	d
+YAPP_RET_SUCCESS	yapp.h	40;"	d
+YAPP_ReadDASCfg	yapp_common.c	/^int YAPP_ReadDASCfg(char *pcFileSpec, YUM_t *pstYUM)$/;"	f
+YAPP_ReadData	yapp_common.c	/^int YAPP_ReadData(float *pfBuf,$/;"	f
+YAPP_ReadMetadata	yapp_common.c	/^int YAPP_ReadMetadata(char *pcFileSpec, int iFormat, YUM_t *pstYUM)$/;"	f
+YAPP_ReadSIGPROCHeader	yapp_common.c	/^int YAPP_ReadSIGPROCHeader(char *pcFileSpec, YUM_t *pstYUM)$/;"	f
+YAPP_RegisterSignalHandlers	yapp_common.c	/^int YAPP_RegisterSignalHandlers()$/;"	f
+YAPP_SAMPSIZE_1	yapp.h	75;"	d
+YAPP_SAMPSIZE_16	yapp.h	79;"	d
+YAPP_SAMPSIZE_2	yapp.h	76;"	d
+YAPP_SAMPSIZE_32	yapp.h	80;"	d
+YAPP_SAMPSIZE_4	yapp.h	77;"	d
+YAPP_SAMPSIZE_8	yapp.h	78;"	d
+YAPP_SIGPROC_HEADER	yapp_sigproc.h	/^} YAPP_SIGPROC_HEADER;$/;"	t	typeref:struct:tagSIGPROCHeader
+YAPP_SP_LABEL_AZSTART	yapp_sigproc.h	48;"	d
+YAPP_SP_LABEL_BEID	yapp_sigproc.h	45;"	d
+YAPP_SP_LABEL_CHANBW	yapp_sigproc.h	39;"	d
+YAPP_SP_LABEL_DATATYPE	yapp_sigproc.h	36;"	d
+YAPP_SP_LABEL_DM	yapp_sigproc.h	50;"	d
+YAPP_SP_LABEL_FCHAN1	yapp_sigproc.h	38;"	d
+YAPP_SP_LABEL_FLAGBARY	yapp_sigproc.h	51;"	d
+YAPP_SP_LABEL_HDREND	yapp_sigproc.h	34;"	d
+YAPP_SP_LABEL_HDRSTART	yapp_sigproc.h	33;"	d
+YAPP_SP_LABEL_NUMBITS	yapp_sigproc.h	40;"	d
+YAPP_SP_LABEL_NUMCHANS	yapp_sigproc.h	37;"	d
+YAPP_SP_LABEL_NUMIFS	yapp_sigproc.h	41;"	d
+YAPP_SP_LABEL_OBSID	yapp_sigproc.h	44;"	d
+YAPP_SP_LABEL_SRCDEC	yapp_sigproc.h	47;"	d
+YAPP_SP_LABEL_SRCNAME	yapp_sigproc.h	35;"	d
+YAPP_SP_LABEL_SRCRA	yapp_sigproc.h	46;"	d
+YAPP_SP_LABEL_TSAMP	yapp_sigproc.h	42;"	d
+YAPP_SP_LABEL_TSTART	yapp_sigproc.h	43;"	d
+YAPP_SP_LABEL_ZASTART	yapp_sigproc.h	49;"	d
+YAPP_SP_OBSID_AO	yapp_sigproc.h	/^    YAPP_SP_OBSID_AO,$/;"	e	enum:tagObservatory
+YAPP_SP_OBSID_EFFELSBERG	yapp_sigproc.h	/^    YAPP_SP_OBSID_EFFELSBERG$/;"	e	enum:tagObservatory
+YAPP_SP_OBSID_FAKE	yapp_sigproc.h	/^    YAPP_SP_OBSID_FAKE = 0,$/;"	e	enum:tagObservatory
+YAPP_SP_OBSID_GBT	yapp_sigproc.h	/^    YAPP_SP_OBSID_GBT,$/;"	e	enum:tagObservatory
+YAPP_SP_OBSID_GMRT	yapp_sigproc.h	/^    YAPP_SP_OBSID_GMRT,$/;"	e	enum:tagObservatory
+YAPP_SP_OBSID_JB	yapp_sigproc.h	/^    YAPP_SP_OBSID_JB,$/;"	e	enum:tagObservatory
+YAPP_SP_OBSID_NANCAY	yapp_sigproc.h	/^    YAPP_SP_OBSID_NANCAY,$/;"	e	enum:tagObservatory
+YAPP_SP_OBSID_ORT	yapp_sigproc.h	/^    YAPP_SP_OBSID_ORT,$/;"	e	enum:tagObservatory
+YAPP_SP_OBSID_PARKES	yapp_sigproc.h	/^    YAPP_SP_OBSID_PARKES,$/;"	e	enum:tagObservatory
+YAPP_SP_OBS_AO	yapp_sigproc.h	67;"	d
+YAPP_SP_OBS_EFFELSBERG	yapp_sigproc.h	74;"	d
+YAPP_SP_OBS_FAKE	yapp_sigproc.h	66;"	d
+YAPP_SP_OBS_GBT	yapp_sigproc.h	72;"	d
+YAPP_SP_OBS_GMRT	yapp_sigproc.h	73;"	d
+YAPP_SP_OBS_JB	yapp_sigproc.h	71;"	d
+YAPP_SP_OBS_NANCAY	yapp_sigproc.h	69;"	d
+YAPP_SP_OBS_ORT	yapp_sigproc.h	68;"	d
+YAPP_SP_OBS_PARKES	yapp_sigproc.h	70;"	d
+YAPP_TRUE	yapp.h	49;"	d
+YUM_s	yapp.h	/^typedef struct YUM_s$/;"	s
+YUM_t	yapp.h	/^} YUM_t;$/;"	t	typeref:struct:YUM_s
+_GNU_SOURCE	yapp.h	20;"	d
+_GNU_SOURCE	yapp_makever.c	8;"	d	file:
+__COLOURMAP_H__	colourmap.h	10;"	d
+__YAPP_H__	yapp.h	10;"	d
+__YAPP_SIGPROC_H__	yapp_sigproc.h	10;"	d
+acPulsar	yapp.h	/^    char acPulsar[MAX_LEN_PSRNAME];$/;"	m	struct:YUM_s
+acPulsar	yapp_sigproc.h	/^    char acPulsar[MAX_LEN_PSRNAME];$/;"	m	struct:tagSIGPROCHeader
+acSite	yapp.h	/^    char acSite[LEN_GENSTRING];$/;"	m	struct:YUM_s
+cIsBandFlipped	yapp.h	/^    char cIsBandFlipped;$/;"	m	struct:YUM_s
+dAzStart	yapp.h	/^    double dAzStart;$/;"	m	struct:YUM_s
+dAzStart	yapp_sigproc.h	/^    double dAzStart;$/;"	m	struct:tagSIGPROCHeader
+dChanBW	yapp_sigproc.h	/^    double dChanBW;     \/* in MHz *\/$/;"	m	struct:tagSIGPROCHeader
+dDM	yapp.h	/^    double dDM;$/;"	m	struct:YUM_s
+dDM	yapp_sigproc.h	/^    double dDM;$/;"	m	struct:tagSIGPROCHeader
+dFChan1	yapp_sigproc.h	/^    double dFChan1;     \/* in MHz *\/$/;"	m	struct:tagSIGPROCHeader
+dSourceDec	yapp.h	/^    double dSourceDec;$/;"	m	struct:YUM_s
+dSourceDec	yapp_sigproc.h	/^    double dSourceDec;$/;"	m	struct:tagSIGPROCHeader
+dSourceRA	yapp.h	/^    double dSourceRA;$/;"	m	struct:YUM_s
+dSourceRA	yapp_sigproc.h	/^    double dSourceRA;$/;"	m	struct:tagSIGPROCHeader
+dTBFInt	yapp.h	/^    double dTBFInt;         \/* in s *\/$/;"	m	struct:YUM_s
+dTNextBF	yapp.h	/^    double dTNextBF;        \/* in s *\/$/;"	m	struct:YUM_s
+dTSamp	yapp.h	/^    double dTSamp;          \/* in ms *\/$/;"	m	struct:YUM_s
+dTSamp	yapp_sigproc.h	/^    double dTSamp;      \/* in seconds *\/$/;"	m	struct:tagSIGPROCHeader
+dTStart	yapp_sigproc.h	/^    double dTStart;     \/* in MJD *\/$/;"	m	struct:tagSIGPROCHeader
+dZAStart	yapp.h	/^    double dZAStart;$/;"	m	struct:YUM_s
+dZAStart	yapp_sigproc.h	/^    double dZAStart;$/;"	m	struct:tagSIGPROCHeader
+fBW	yapp.h	/^    float fBW;              \/* in MHz *\/$/;"	m	struct:YUM_s
+fChanBW	yapp.h	/^    float fChanBW;          \/* in MHz *\/$/;"	m	struct:YUM_s
+fFCentre	yapp.h	/^    float fFCentre;         \/* in MHz *\/$/;"	m	struct:YUM_s
+fFMax	yapp.h	/^    float fFMax;        \/* in MHz *\/$/;"	m	struct:YUM_s
+fFMin	yapp.h	/^    float fFMin;        \/* in MHz *\/$/;"	m	struct:YUM_s
+fSampSize	yapp.h	/^    float fSampSize;$/;"	m	struct:YUM_s
+g_aaafCMap	colourmap.c	/^const float g_aaafCMap[NUM_CMAPS][CMAP_LEVELS][3] = {$/;"	v
+g_aadErfLookup	yapp_erflookup.c	/^const double g_aadErfLookup[YAPP_ERF_ENTRIES][3] = {$/;"	v
+g_apvMemTable	yapp_common.c	/^void* g_apvMemTable[YAPP_MAX_MEMTABLE] = {0};$/;"	v
+g_iDispPlots	killrfi.c	/^int g_iDispPlots = SPS_TRUE;$/;"	v
+g_iDispPlots	yapp_dedisp.c	/^int g_iDispPlots = YAPP_TRUE;$/;"	v
+g_iDispPlots	yapp_dedisperse.c	/^int g_iDispPlots = YAPP_TRUE;$/;"	v
+g_iMemTableSize	yapp_common.c	/^int g_iMemTableSize = 0;$/;"	v
+g_iPGDev	yapp_common.c	/^int g_iPGDev = 0;$/;"	v
+g_pFSpec	yapp_common.c	/^FILE *g_pFSpec = NULL;$/;"	v
+g_padBadTimes	killrfi.c	/^double (*g_padBadTimes)[][NUM_BAD_BOUNDS] = NULL;$/;"	v
+g_padBadTimes	yapp_dedisp.c	/^double (*g_padBadTimes)[][NUM_BAD_BOUNDS] = NULL;$/;"	v
+g_padBadTimes	yapp_dedisperse.c	/^double (*g_padBadTimes)[][NUM_BAD_BOUNDS] = NULL;$/;"	v
+g_pcIsChanGood	killrfi.c	/^char *g_pcIsChanGood = NULL;$/;"	v
+g_pcIsChanGood	yapp_dedisp.c	/^char *g_pcIsChanGood = NULL;$/;"	v
+g_pcIsChanGood	yapp_dedisperse.c	/^char *g_pcIsChanGood = NULL;$/;"	v
+g_pcIsTimeGood	killrfi.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
+g_pcIsTimeGood	yapp_dedisp.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
+g_pcIsTimeGood	yapp_dedisperse.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
+g_pcIsTimeGood	yapp_viewdata.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
+g_pdDM	reorderdds.c	/^double *g_pdDM = NULL;$/;"	v
+g_pdDM	yapp_dedisperse.c	/^double *g_pdDM = NULL;$/;"	v
+g_pdDelayTab	killrfi.c	/^double *g_pdDelayTab = NULL;$/;"	v
+g_pdDelayTab	yapp_dedisp.c	/^double *g_pdDelayTab = NULL;$/;"	v
+g_pdDelayTab	yapp_dedisperse.c	/^double *g_pdDelayTab = NULL;$/;"	v
+g_pdMaxDelayTab	yapp_dedisperse.c	/^double *g_pdMaxDelayTab = NULL;$/;"	v
+g_pfBFGain	killrfi.c	/^float *g_pfBFGain = NULL;$/;"	v
+g_pfBFGain	yapp_dedisp.c	/^float *g_pfBFGain = NULL;$/;"	v
+g_pfBFGain	yapp_dedisperse.c	/^float *g_pfBFGain = NULL;$/;"	v
+g_pfBFTimeSectMean	killrfi.c	/^float *g_pfBFTimeSectMean = NULL;$/;"	v
+g_pfBFTimeSectMean	yapp_dedisp.c	/^float *g_pfBFTimeSectMean = NULL;$/;"	v
+g_pfBFTimeSectMean	yapp_dedisperse.c	/^float *g_pfBFTimeSectMean = NULL;$/;"	v
+g_pfBuf	reorderdds.c	/^float *g_pfBuf = NULL;$/;"	v
+g_pfBuf	yapp_viewdata.c	/^float *g_pfBuf = NULL;$/;"	v
+g_pfBuf0	killrfi.c	/^float *g_pfBuf0 = NULL;$/;"	v
+g_pfBuf0	yapp_dedisp.c	/^float *g_pfBuf0 = NULL;$/;"	v
+g_pfBuf0	yapp_dedisperse.c	/^float *g_pfBuf0 = NULL;$/;"	v
+g_pfBuf1	killrfi.c	/^float *g_pfBuf1 = NULL;$/;"	v
+g_pfBuf1	yapp_dedisp.c	/^float *g_pfBuf1 = NULL;$/;"	v
+g_pfBuf1	yapp_dedisperse.c	/^float *g_pfBuf1 = NULL;$/;"	v
+g_pfCleanSpec	killrfi.c	/^float *g_pfCleanSpec = NULL;$/;"	v
+g_pfDedispDMChans	yapp_dedisperse.c	/^float *g_pfDedispDMChans = NULL;$/;"	v
+g_pfDedispData	yapp_dedisp.c	/^float *g_pfDedispData = NULL;$/;"	v
+g_pfDedispData	yapp_dedisperse.c	/^float *g_pfDedispData = NULL;$/;"	v
+g_pfDedispSpec	reorderdds.c	/^float *g_pfDedispSpec = NULL;$/;"	v
+g_pfDispData	gendispdata.c	/^float *g_pfDispData = NULL;$/;"	v
+g_pfPlotBuf	killrfi.c	/^float *g_pfPlotBuf = NULL;$/;"	v
+g_pfPlotBuf	yapp_dedisp.c	/^float *g_pfPlotBuf = NULL;$/;"	v
+g_pfPlotBuf	yapp_dedisperse.c	/^float *g_pfPlotBuf = NULL;$/;"	v
+g_pfPlotBuf	yapp_viewdata.c	/^float *g_pfPlotBuf = NULL;$/;"	v
+g_pfPriBufBk	yapp_dedisperse.c	/^float *g_pfPriBufBk = NULL;$/;"	v
+g_pfXAxis	killrfi.c	/^float *g_pfXAxis = NULL;$/;"	v
+g_pfXAxis	reorderdds.c	/^float *g_pfXAxis = NULL;$/;"	v
+g_pfXAxis	yapp_dedisp.c	/^float *g_pfXAxis = NULL;$/;"	v
+g_pfXAxis	yapp_dedisperse.c	/^float *g_pfXAxis = NULL;$/;"	v
+g_pfXAxis	yapp_viewdata.c	/^float *g_pfXAxis = NULL;$/;"	v
+g_pfYAxis	yapp_dedisp.c	/^float *g_pfYAxis = NULL;$/;"	v
+g_pfYAxis	yapp_viewdata.c	/^float *g_pfYAxis = NULL;$/;"	v
+g_ppFDedispCfg	yapp_dedisperse.c	/^FILE **g_ppFDedispCfg = NULL;$/;"	v
+g_ppFDedispData	yapp_dedisperse.c	/^FILE **g_ppFDedispData = NULL;$/;"	v
+iBFTimeSects	yapp.h	/^    int iBFTimeSects;$/;"	m	struct:YUM_s
+iBackendID	yapp.h	/^    int iBackendID;$/;"	m	struct:YUM_s
+iBackendID	yapp_sigproc.h	/^    int iBackendID;$/;"	m	struct:tagSIGPROCHeader
+iDataTypeID	yapp_sigproc.h	/^    int iDataTypeID;$/;"	m	struct:tagSIGPROCHeader
+iFlagBary	yapp.h	/^    int iFlagBary;$/;"	m	struct:YUM_s
+iFlagBary	yapp_sigproc.h	/^    int iFlagBary;$/;"	m	struct:tagSIGPROCHeader
+iFlagSplicedData	yapp.h	/^    int iFlagSplicedData;$/;"	m	struct:YUM_s
+iHeaderLen	yapp.h	/^    int iHeaderLen;$/;"	m	struct:YUM_s
+iNumBadTimes	yapp.h	/^    int iNumBadTimes;$/;"	m	struct:YUM_s
+iNumBands	yapp.h	/^    int iNumBands;$/;"	m	struct:YUM_s
+iNumBits	yapp.h	/^    int iNumBits;$/;"	m	struct:YUM_s
+iNumBits	yapp_sigproc.h	/^    int iNumBits;$/;"	m	struct:tagSIGPROCHeader
+iNumChans	yapp.h	/^    int iNumChans;$/;"	m	struct:YUM_s
+iNumChans	yapp_sigproc.h	/^    int iNumChans;$/;"	m	struct:tagSIGPROCHeader
+iNumGoodChans	yapp.h	/^    int iNumGoodChans;$/;"	m	struct:YUM_s
+iNumIFs	yapp.h	/^    int iNumIFs;$/;"	m	struct:YUM_s
+iNumIFs	yapp_sigproc.h	/^    int iNumIFs;$/;"	m	struct:tagSIGPROCHeader
+iObsID	yapp_sigproc.h	/^    int iObsID;$/;"	m	struct:tagSIGPROCHeader
+iTimeSamps	yapp.h	/^    int iTimeSamps;$/;"	m	struct:YUM_s
+lDataSizeTotal	yapp.h	/^    long int lDataSizeTotal;$/;"	m	struct:YUM_s
+main	gendispdata.c	/^int main(int argc, char *argv[])$/;"	f
+main	killrfi.c	/^int main(int argc, char *argv[])$/;"	f
+main	pulsarsnd_original.c	/^int main(int argc, char **argv)$/;"	f
+main	reorderdds.c	/^int main(int argc, char *argv[])$/;"	f
+main	yapp_dedisp.c	/^int main(int argc, char *argv[])$/;"	f
+main	yapp_dedisperse.c	/^int main(int argc, char *argv[])$/;"	f
+main	yapp_makever.c	/^int main(int argc, char *argv[])$/;"	f
+main	yapp_pulsarsnd.c	/^int main(int argc, char *argv[])$/;"	f
+main	yapp_viewdata.c	/^int main(int argc, char *argv[])$/;"	f
+main	yapp_viewmetadata.c	/^int main(int argc, char *argv[])$/;"	f
+padBadTimes	yapp.h	/^    double (*padBadTimes)[][NUM_BAD_BOUNDS];$/;"	m	struct:YUM_s
+pcIsChanGood	yapp.h	/^    char *pcIsChanGood;$/;"	m	struct:YUM_s
+pfBFGain	yapp.h	/^    float *pfBFGain;$/;"	m	struct:YUM_s
+pfBFTimeSectMean	yapp.h	/^    float *pfBFTimeSectMean;$/;"	m	struct:YUM_s
+pfFreq	yapp.h	/^    float *pfFreq;      \/* in MHz *\/$/;"	m	struct:YUM_s
+tagDedispTimeSeriesFormat	yapp.h	/^enum tagDedispTimeSeriesFormat$/;"	g
+tagDynSpecFormat	yapp.h	/^enum tagDynSpecFormat$/;"	g
+tagObservatory	yapp_sigproc.h	/^enum tagObservatory$/;"	g
+tagSIGPROCHeader	yapp_sigproc.h	/^typedef struct tagSIGPROCHeader$/;"	s

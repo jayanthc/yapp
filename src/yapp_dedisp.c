@@ -1,28 +1,33 @@
 /**
- * @file yapp_fold.c
- * Folds dedispersed time series data at the specified period.
+ * @file yapp_dedisp.c
+ * Program to dedisperse the input signal for the given value of DM.
  *
  * @verbatim
- * Usage: yapp_dedisp [options] <time-series-data-file>
+ * Usage: yapp_dedisp [options] <dynamic-spectrum-data-file>
  *     -h  --help                           Display this usage information
- *     -s  --data-skip-percent <percentage> The percentage of data to be skipped
- *     -S  --data-skip-time <time>          The length of data in seconds, to be
+ *     -d  --dm <dm>                        The DM at which to de-disperse
+ *                                          (default is 10.0)
+ *     -s  --skip-percent <percentage>      The percentage of data to be skipped
+ *     -S  --skip-time <time>               The length of data in seconds, to be
  *                                          skipped
- *     -p  --data-proc-percent <percentage> The percentage of data to be
+ *     -p  --proc-percent <percentage>      The percentage of data to be
  *                                          processed
  *                                          (default is 100)
- *     -P  --data-proc-time <time>          The length of data in seconds, to be
+ *     -P  --proc-time <time>               The length of data in seconds, to be
  *                                          processed
  *                                          (default is all)
- *     -b  --block-size <size>              Size of each file read/write in
- *                                          bytes
+ *     -b  --block-size <samples>           Number of samples read in one block
+ *                                          (default is 4096 samples)
  *     -c  --clip-level <level>             Number of sigmas above threshold;
  *                                          will clip anything above this level
+ *     -t  --out-format                     Output format - 'ddd' or 'tim'
+ *                                          (default is 'tim')
  *     -o  --no-plots                       Run without displaying plots
  *     -f  --plot-to-file                   Plot to a PostScript file, instead
  *                                          of the screen
  *     -i  --invert                         Invert the background and foreground
  *                                          colours in plots
+ *     -n  --interactive                    Run in interactive mode
  *     -v  --version                        Display the version @endverbatim
  *
  * @author Jayanth Chennamangalam
@@ -171,25 +176,27 @@ int main(int argc, char *argv[])
     int l = 0;
     int m = 0;
     int iInvCols = YAPP_FALSE;
+    char cIsInteractive = YAPP_FALSE;
     const char *pcProgName = NULL;
     int iNextOpt = 0;
     /* valid short options */
-    const char* const pcOptsShort = "hf:d:s:S:p:P:b:c:t:oigv";
+    const char* const pcOptsShort = "hf:d:s:S:p:P:b:c:t:oignv";
     /* valid long options */
     const struct option stOptsLong[] = {
         { "help",                   0, NULL, 'h' },
         { "format",                 1, NULL, 'f' },
         { "dm",                     1, NULL, 'd' },
-        { "data-skip-percent",      1, NULL, 's' },
-        { "data-skip-time",         1, NULL, 'S' },
-        { "data-proc-percent",      1, NULL, 'p' },
-        { "data-proc-time",         1, NULL, 'P' },
+        { "skip-percent",           1, NULL, 's' },
+        { "skip-time",              1, NULL, 'S' },
+        { "proc-percent",           1, NULL, 'p' },
+        { "proc-time",              1, NULL, 'P' },
         { "block-size",             1, NULL, 'b' },
         { "clip-level",             1, NULL, 'c' },
         { "out-format",             1, NULL, 't' },
         { "invert",                 0, NULL, 'i' },
         { "no-plots",               0, NULL, 'o' },
         { "plot-to-file",           0, NULL, 'g' },
+        { "interactive",            0, NULL, 'n' },
         { "version",                0, NULL, 'v' },
         { NULL,                     0, NULL, 0   }
     };
@@ -234,7 +241,7 @@ int main(int argc, char *argv[])
                 cIsDMGiven = YAPP_TRUE;
                 break;
 
-            case 's':   /* -s or --data-skip-percent */
+            case 's':   /* -s or --skip-percent */
                 /* set option */
                 if ((PROC_SPEC_NOTSEL == iProcSpec)
                     || (PROC_SPEC_PERCENT == iProcSpec))
@@ -262,7 +269,7 @@ int main(int argc, char *argv[])
                 }
                 break;
 
-            case 'S':   /* -S or --data-skip-time */
+            case 'S':   /* -S or --skip-time */
                 /* set option */
                 if ((PROC_SPEC_NOTSEL == iProcSpec)
                     || (PROC_SPEC_TIME == iProcSpec))
@@ -281,7 +288,7 @@ int main(int argc, char *argv[])
                 }
                 break;
 
-            case 'p':   /* -p or --data-proc-percent */
+            case 'p':   /* -p or --proc-percent */
                 /* set option */
                 if ((PROC_SPEC_NOTSEL == iProcSpec)
                     || (PROC_SPEC_PERCENT == iProcSpec))
@@ -309,7 +316,7 @@ int main(int argc, char *argv[])
                 }
                 break;
 
-            case 'P':   /* -P or --data-proc-time */
+            case 'P':   /* -P or --proc-time */
                 /* set option */
                 if ((PROC_SPEC_NOTSEL == iProcSpec)
                     || (PROC_SPEC_TIME == iProcSpec))
@@ -373,6 +380,11 @@ int main(int argc, char *argv[])
                 cIsPlotToFile = YAPP_TRUE;
                 break;
 
+            case 'n':  /* -n or --interactive */
+                /* set option */
+                cIsInteractive = YAPP_TRUE;
+                break;
+
             case 'v':   /* -v or --version */
                 /* display the version */
                 (void) printf("%s\n", g_pcVersion);
@@ -428,462 +440,19 @@ int main(int argc, char *argv[])
                        "ERROR: File type determination failed!\n");
         return YAPP_RET_ERROR;
     }
-    else if (YAPP_FORMAT_SPEC == iFormat) /* 'spec' format */
+
+    /* read metadata */
+    iRet = YAPP_ReadMetadata(pcFileSpec, iFormat, &stYUM);
+    if (iRet != YAPP_RET_SUCCESS)
     {
-        /* NOTE: reading data in Desh's 'spec' file format + associated
-           'spec_cfg' file format */
-        fSampSize = (float) sizeof(float);  /* spec files are 32-bit floats */
-
-        /* build the 'cfg' file name from the 'spec' file name, and open it */
-        (void) strcpy(acFileCfg, pcFileSpec);
-        (void) strcat(acFileCfg, SUFFIX_CFG);
-        pFCfg = fopen(acFileCfg, "r");
-        if (NULL == pFCfg)
-        {
-            (void) fprintf(stderr,
-                           "ERROR: Opening file %s failed! %s.\n",
-                           acFileCfg,
-                           strerror(errno));
-            return YAPP_RET_ERROR;
-        }
-
-        /* read the first few parameters from the 'cfg' file */
-        (void) fscanf(pFCfg,
-                      " %lf %d %f %f %d %d %s %d %d %d %d %d %f %s %lf %lf",
-                      &dTSamp,          /* in ms */
-                      &iBytesPerFrame,  /* iNumChans * fSampSize */
-                      &fFCentre,        /* in MHz */
-                      &fBW,             /* in kHz */
-                      &iChanBeg,
-                      &iChanEnd,
-                      acPulsar,
-                      &iDay,
-                      &iMonth,
-                      &iYear,
-                      &iHour,
-                      &iMin,
-                      &fSec,
-                      acSite,
-                      &dTNextBF,        /* in s */
-                      &dTBFInt);        /* in s */
-
-        /* handle negative bandwidths */
-        if (fBW < 0)
-        {
-            fBW = -fBW;
-            cIsBandFlipped = YAPP_TRUE;
-        }
-
-        /* convert the bandwidth to MHz */
-        fBW /= 1000.0;
-
-        /* store a copy of the sampling interval in s */
-        dTSampInSec = dTSamp / 1000.0;
-
-        (void) printf("Field name                        : %s\n", acPulsar);
-        (void) printf("Observing site                    : %s\n", acSite);
-        (void) printf("Date of observation               : %d.%d.%d\n",
-                      iYear,
-                      iMonth,
-                      iDay);
-        (void) printf("Time of observation               : %d:%d:%g\n",
-                      iHour,
-                      iMin,
-                      fSec);
-        (void) printf("Bytes per frame                   : %d\n",
-                      iBytesPerFrame);
-        (void) printf("Centre frequency                  : %g MHz\n", fFCentre);
-        (void) printf("Bandwidth                         : %g MHz\n", fBW);
-        if (cIsBandFlipped)
-        {
-            (void) printf("                                    Band flip.\n");
-        }
-        else
-        {
-            (void) printf("                                    "
-                          "No band flip.\n");
-        }
-        (void) printf("Sampling interval                 : %.10g ms\n", dTSamp);
-        (void) printf("First channel index               : %d\n", iChanBeg);
-        (void) printf("Last channel index                : %d\n", iChanEnd);
-
-        /* calculate the number of channels */
-        iNumChans = iChanEnd - iChanBeg + 1;
-        (void) printf("Number of channels                : %d\n", iNumChans);
-
-        /* calculate the channel bandwidth */
-        fChanBW = fBW / iNumChans;  /* in MHz */
-        (void) printf("Channel bandwidth                 : %.10g MHz\n",
-                      fChanBW);
-
-        /* calculate the absolute min and max frequencies */
-        fFMin = fFCentre - (fBW / 2) + (fChanBW / 2);
-        (void) printf("Lowest frequency                  : %.10g MHz\n", fFMin);
-        fFMax = fFCentre + (fBW / 2) - (fChanBW / 2);
-        (void) printf("Highest frequency                 : %.10g MHz\n", fFMax);
-
-        g_pcIsChanGood = (char *) malloc(sizeof(char) * iNumChans);
-        if (NULL == g_pcIsChanGood)
-        {
-            perror("malloc - g_pcIsChanGood");
-            (void) fclose(pFCfg);
-            return YAPP_RET_ERROR;
-        }
-
-        /* read the channel goodness flags */
-        for (i = 0; i < iNumChans; ++i)
-        {
-            (void) fscanf(pFCfg, " %d", &iChanGoodness);
-            g_pcIsChanGood[i] = (char) iChanGoodness;
-            if (g_pcIsChanGood[i])
-            {
-                ++iNumGoodChans;
-            }
-        }
-        (void) printf("Number of good channels           : %d\n",
-                      iNumGoodChans);
-
-        (void) printf("First band flip time              : %.10g s\n",
-                      dTNextBF);
-        (void) printf("Band flip interval                : %.10g s\n", dTBFInt);
-
-        (void) fscanf(pFCfg, " %d", &iBFTimeSects);
-
-        (void) printf("Number of band flip time sections : %d\n", iBFTimeSects);
-
-        g_pfBFTimeSectMean = (float *) malloc(sizeof(float) * iBFTimeSects);
-        if (NULL == g_pfBFTimeSectMean)
-        {
-            perror("malloc - g_pfBFTimeSectMean");
-            (void) fclose(pFCfg);
-            YAPP_CleanUp();
-            return YAPP_RET_ERROR;
-        }
-
-        for (i = 0; i < iBFTimeSects; ++i)
-        {
-            (void) fscanf(pFCfg, " %f", &g_pfBFTimeSectMean[i]);
-        }
-
-        g_pfBFGain = (float *) malloc(sizeof(float) * iNumChans * iBFTimeSects);
-        if (NULL == g_pfBFGain)
-        {
-            perror("malloc - g_pfBFGain");
-            (void) fclose(pFCfg);
-            YAPP_CleanUp();
-            return YAPP_RET_ERROR;
-        }
-
-        for (i = 0; i < (iNumChans * iBFTimeSects); ++i)
-        {
-            (void) fscanf(pFCfg, " %f", &g_pfBFGain[i]);
-        }
-        pfTimeSectGain = g_pfBFGain;
-
-        (void) fscanf(pFCfg, " %d", &iNumBadTimes);
-        (void) printf("Number of bad time sections       : %d\n", iNumBadTimes);
-        g_padBadTimes = (double(*) [][NUM_BAD_BOUNDS]) malloc(sizeof(double)
-                                                              * iNumBadTimes
-                                                              * NUM_BAD_BOUNDS);
-        if (NULL == g_padBadTimes)
-        {
-            perror("malloc - g_padBadTimes");
-            (void) fclose(pFCfg);
-            YAPP_CleanUp();
-            return YAPP_RET_ERROR;
-        }
-        for (i = 0; i < iNumBadTimes; ++i)
-        {
-            for (j = 0; j < NUM_BAD_BOUNDS; ++j)
-            {
-                (void) fscanf(pFCfg, " %lf", &((*g_padBadTimes)[i][j]));
-            }
-        }
-
-        (void) fclose(pFCfg);
-
-        iRet = stat(pcFileSpec, &stFileStats);
-        if (iRet != YAPP_RET_SUCCESS)
-        {
-            (void) fprintf(stderr,
-                           "ERROR: Failed to stat %s: %s!\n",
-                           pcFileSpec,
-                           strerror(errno));
-            YAPP_CleanUp();
-            return YAPP_RET_ERROR;
-        }
-        iDataSizeTotal = (int) stFileStats.st_size;
-        (void) printf("Duration of data in\n");
-        (void) printf("    Bytes                         : %d\n",
-                      (iDataSizeTotal / iNumChans));
-        iTimeSamps = (int) (iDataSizeTotal / (iNumChans * fSampSize));
-        (void) printf("    Time samples                  : %d\n", iTimeSamps);
-        (void) printf("    Time                          : %g s\n",
-                      (iTimeSamps * dTSampInSec));
+        (void) fprintf(stderr,
+                       "ERROR: Reading metadata failed for file %s!\n",
+                       pcFileSpec);
+        return YAPP_RET_ERROR;
     }
-    else    /* 'fil' format */
-    {
-        /* open the dynamic spectrum data file for reading */
-        pFSpec = fopen(pcFileSpec, "r");
-        if (NULL == pFSpec)
-        {
-            (void) fprintf(stderr,
-                           "ERROR: Opening file %s failed! %s.\n",
-                           pcFileSpec,
-                           strerror(errno));
-            YAPP_CleanUp();
-            return YAPP_RET_ERROR;
-        }
-
-        /* read the parameters from the header section of the file */
-        /* start with the 'HEADER_START' label */
-        (void) fread(&iLen, sizeof(iLen), 1, pFSpec);
-        (void) fread(acLabel, sizeof(char), iLen, pFSpec);
-        acLabel[iLen] = '\0';
-        if (strcmp(acLabel, "HEADER_START") != 0)
-        {
-            (void) fprintf(stderr,
-                           "ERROR: Reading header failed!\n");
-            YAPP_CleanUp();
-            return YAPP_RET_ERROR;
-        }
-        iHeaderLen += (sizeof(iLen) + iLen);
-
-        /* parse the rest of the header */
-        while (strcmp(acLabel, "HEADER_END") != 0)
-        {
-            /* read field label length */
-            (void) fread(&iLen, sizeof(iLen), 1, pFSpec);
-            /* read field label */
-            (void) fread(acLabel, sizeof(char), iLen, pFSpec);
-            acLabel[iLen] = '\0';
-            iHeaderLen += (sizeof(iLen) + iLen);
-            if (0 == strcmp(acLabel, "source_name"))
-            {
-                (void) fread(&iLen, sizeof(iLen), 1, pFSpec);
-                (void) fread(stHeader.acPulsar, sizeof(char), iLen, pFSpec);
-                stHeader.acPulsar[iLen] = '\0';
-                (void) strcpy(acPulsar, stHeader.acPulsar);
-                iHeaderLen += (sizeof(iLen) + iLen);
-            }
-            else if (0 == strcmp(acLabel, "data_type"))
-            {
-                (void) fread(&stHeader.iDataTypeID,
-                             sizeof(stHeader.iDataTypeID),
-                             1,
-                             pFSpec);
-                iHeaderLen += sizeof(stHeader.iDataTypeID);
-            }
-            else if (0 == strcmp(acLabel, "nchans"))
-            {
-                /* read number of channels */
-                (void) fread(&stHeader.iNumChans,
-                             sizeof(stHeader.iNumChans),
-                             1,
-                             pFSpec);
-                iNumChans = stHeader.iNumChans;
-                iHeaderLen += sizeof(stHeader.iNumChans);
-            }
-            else if (0 == strcmp(acLabel, "fch1"))
-            {
-                /* read frequency of first channel */
-                (void) fread(&stHeader.dFChan1,
-                             sizeof(stHeader.dFChan1),
-                             1,
-                             pFSpec);
-                fFCh1 = (float) stHeader.dFChan1;
-                iHeaderLen += sizeof(stHeader.dFChan1);
-            }
-            else if (0 == strcmp(acLabel, "foff"))
-            {
-                /* read channel bandwidth (labelled frequency offset) */
-                (void) fread(&stHeader.dChanBW,
-                             sizeof(stHeader.dChanBW),
-                             1,
-                             pFSpec);
-                fChanBW = (float) stHeader.dChanBW;
-                iHeaderLen += sizeof(stHeader.dChanBW);
-            }
-            else if (0 == strcmp(acLabel, "nbits"))
-            {
-                /* read number of bits per sample */
-                (void) fread(&stHeader.iNumBits,
-                             sizeof(stHeader.iNumBits),
-                             1,
-                             pFSpec);
-                iHeaderLen += sizeof(stHeader.iNumBits);
-            }
-            else if (0 == strcmp(acLabel, "nifs"))
-            {
-                /* read number of IFs */
-                (void) fread(&stHeader.iNumIFs,
-                             sizeof(stHeader.iNumIFs),
-                             1,
-                             pFSpec);
-                iHeaderLen += sizeof(stHeader.iNumIFs);
-            }
-            else if (0 == strcmp(acLabel, "tsamp"))
-            {
-                /* read sampling time in seconds */
-                (void) fread(&stHeader.dTSamp,
-                             sizeof(stHeader.dTSamp),
-                             1,
-                             pFSpec);
-                dTSampInSec = stHeader.dTSamp;
-                dTSamp = dTSampInSec * 1e3;     /* in ms */
-                iHeaderLen += sizeof(stHeader.dTSamp);
-            }
-            else if (0 == strcmp(acLabel, "tstart"))
-            {
-                /* read timestamp of first sample (MJD) */
-                (void) fread(&stHeader.dTStart,
-                             sizeof(stHeader.dTStart),
-                             1,
-                             pFSpec);
-                iHeaderLen += sizeof(stHeader.dTStart);
-            }
-            else if (0 == strcmp(acLabel, "telescope_id"))
-            {
-                /* read telescope ID */
-                (void) fread(&stHeader.iObsID,
-                             sizeof(stHeader.iObsID),
-                             1,
-                             pFSpec);
-                (void) YAPP_GetObsNameFromID(stHeader.iObsID, acSite);
-                iHeaderLen += sizeof(stHeader.iObsID);
-            }
-            else if (0 == strcmp(acLabel, "machine_id"))
-            {
-                /* read backend ID */
-                (void) fread(&stHeader.iBackendID,
-                             sizeof(stHeader.iBackendID),
-                             1,
-                             pFSpec);
-                iHeaderLen += sizeof(stHeader.iBackendID);
-            }
-            else if (0 == strcmp(acLabel, "src_raj"))
-            {
-                /* read source RA (J2000) */
-                (void) fread(&stHeader.dSourceRA,
-                             sizeof(stHeader.dSourceRA),
-                             1,
-                             pFSpec);
-                iHeaderLen += sizeof(stHeader.dSourceRA);
-            }
-            else if (0 == strcmp(acLabel, "src_dej"))
-            {
-                /* read source declination (J2000) */
-                (void) fread(&stHeader.dSourceDec,
-                             sizeof(stHeader.dSourceDec),
-                             1,
-                             pFSpec);
-                iHeaderLen += sizeof(stHeader.dSourceDec);
-            }
-            else if (0 == strcmp(acLabel, "az_start"))
-            {
-                /* read azimuth start */
-                (void) fread(&stHeader.dAzStart,
-                             sizeof(stHeader.dAzStart),
-                             1,
-                             pFSpec);
-                iHeaderLen += sizeof(stHeader.dAzStart);
-            }
-            else if (0 == strcmp(acLabel, "za_start"))
-            {
-                /* read ZA start */
-                (void) fread(&stHeader.dZAStart,
-                             sizeof(stHeader.dZAStart),
-                             1,
-                             pFSpec);
-                iHeaderLen += sizeof(stHeader.dZAStart);
-            }
-            /* DTS-specific field */
-            else if (0 == strcmp(acLabel, "refdm"))
-            {
-                /* read reference DM */
-                (void) fread(&stHeader.dDM, sizeof(stHeader.dDM), 1, pFSpec);
-                iHeaderLen += sizeof(stHeader.dDM);
-            }
-            else if (0 == strcmp(acLabel, "barycentric"))
-            {
-                /* read barycentric flag */
-                (void) fread(&stHeader.iFlagBary,
-                             sizeof(stHeader.iFlagBary),
-                             1,
-                             pFSpec);
-                iHeaderLen += sizeof(stHeader.iFlagBary);
-            }
-            else
-            {
-                /* print a warning about encountering unknown field label */
-                if (strcmp(acLabel, "HEADER_END") != 0)
-                {
-                    (void) fprintf(stderr,
-                                   "WARNING: Unknown field label %s "
-                                   "encountered!\n", acLabel);
-                }
-            }
-        }
-
-        /* close the file, it will be opened later for reading data */
-        (void) fclose(pFSpec);
-
-        (void) printf("Header length                     : %d\n", iHeaderLen);
-        (void) printf("Field name                        : %s\n", acPulsar);
-        (void) printf("Observing site                    : %s\n", acSite);
-        (void) printf("Number of channels                : %d\n", iNumChans);
-
-        if (fChanBW < 0.0)
-        {
-            /* make the channel bandwidth positive */
-            fChanBW = fabs(fChanBW);
-            fFMax = fFCh1;
-            fFMin = fFMax - (iNumChans * fChanBW);
-        }
-        else
-        {
-            fFMin = fFCh1;
-            fFMax = fFMin + (iNumChans * fChanBW);
-        }
-
-        (void) printf("Channel bandwidth                 : %.10g MHz\n",
-                      fChanBW);
-        (void) printf("Lowest frequency                  : %.10g MHz\n", fFMin);
-        (void) printf("Highest frequency                 : %.10g MHz\n", fFMax);
-
-        (void) printf("Sampling interval                 : %.10g ms\n", dTSamp);
-        (void) printf("Timestamp of first sample         : %.16g MJD\n",
-                      stHeader.dTStart);
-        (void) printf("Number of bits per sample         : %d\n",
-                      stHeader.iNumBits);
-        (void) printf("Number of IFs                     : %d\n",
-                      stHeader.iNumIFs);
-
-        fSampSize = ((float) stHeader.iNumBits) / 8;
-
-        iRet = stat(pcFileSpec, &stFileStats);
-        if (iRet != YAPP_RET_SUCCESS)
-        {
-            (void) fprintf(stderr,
-                           "ERROR: Failed to stat %s: %s!\n",
-                           pcFileSpec,
-                           strerror(errno));
-            YAPP_CleanUp();
-            return YAPP_RET_ERROR;
-        }
-        iDataSizeTotal = (int) stFileStats.st_size - iHeaderLen;
-        (void) printf("Duration of data in\n");
-        (void) printf("    Bytes                         : %d\n",
-                      (iDataSizeTotal / iNumChans));
-        iTimeSamps = (int) (iDataSizeTotal / (iNumChans * fSampSize));
-        (void) printf("    Time samples                  : %d\n", iTimeSamps);
-        (void) printf("    Time                          : %g s\n",
-                      (iTimeSamps * dTSampInSec));
-
-        /* set number of good channels to number of channels - no support for
-           SIGPROC ignore files yet */
-        iNumGoodChans = iNumChans;
-
+    pfTimeSectGain = stYUM.pfBFGain;//if DAS
+    //for SIGPROC -->
+    iNumChans = stYUM.iNumChans;//for SIGPROC
         /* flag all channels as good */
         g_pcIsChanGood = (char *) malloc(sizeof(char) * iNumChans);
         if (NULL == g_pcIsChanGood)
@@ -894,7 +463,7 @@ int main(int argc, char *argv[])
         }
         /* set all elements to 'YAPP_TRUE' */
         (void) memset(g_pcIsChanGood, YAPP_TRUE, iNumChans);
-    }
+    //<--for SIGPROC
 
     g_pdDelayTab = (double *) malloc(sizeof(double) * iNumChans);
     if (NULL == g_pdDelayTab)
@@ -1704,16 +1273,8 @@ int main(int argc, char *argv[])
                 fColMax = fDataMax;
             }
 
-#if 0
-            iFlagBW = YAPP_FALSE;
-
-            #ifdef _FC_F77_    /* if using Fortran 77 compiler */
-            set_colours__(&iFlagBW, &fColMin, &fColMax);
-            #else           /* for Fortran 95 */
-            set_colours_(&iFlagBW, &fColMin, &fColMax);
-            #endif
-#endif
-            SetColourMap(CMAP_JET, 0, fColMin, fColMax);
+            /* set the colour map */
+            //SetColourMap(iColourMap, 0, fColMin, fColMax);
 
             /* get the transpose of the two-dimensional array */
             k = 0;
@@ -2245,24 +1806,26 @@ void PrintUsage(const char *pcProgName)
     (void) printf("The DM at which to de-disperse\n");
     (void) printf("                                         ");
     (void) printf("(default is 10.0)\n");
-    (void) printf("    -s  --data-skip-percent <percentage> ");
+    (void) printf("    -s  --skip-percent <percentage>      ");
     (void) printf("The percentage of data to be skipped\n");
-    (void) printf("    -S  --data-skip-time <time>          ");
+    (void) printf("    -S  --skip-time <time>               ");
     (void) printf("The length of data in seconds, to be\n");
     (void) printf("                                         ");
     (void) printf("skipped\n");
-    (void) printf("    -p  --data-proc-percent <percentage> ");
+    (void) printf("    -p  --proc-percent <percentage>      ");
     (void) printf("The percentage of data to be processed\n");
     (void) printf("                                         ");
     (void) printf("(default is 100)\n");
-    (void) printf("    -P  --data-proc-time <time>          ");
+    (void) printf("    -P  --proc-time <time>               ");
     (void) printf("The length of data in seconds, to be\n");
     (void) printf("                                         ");
     (void) printf("processed\n");
     (void) printf("                                         ");
     (void) printf("(default is all)\n");
-    (void) printf("    -b  --block-size <size>              ");
-    (void) printf("Size of each file read/write in bytes\n");
+    (void) printf("    -b  --block-size <samples>           ");
+    (void) printf("Number of samples read in one block\n");
+    (void) printf("                                         ");
+    (void) printf("(default is 4096 samples)\n");
     (void) printf("    -c  --clip-level <level>             ");
     (void) printf("Number of sigmas above threshold; will\n");
     (void) printf("                                         ");
@@ -2281,6 +1844,8 @@ void PrintUsage(const char *pcProgName)
     (void) printf("Invert the background and foreground\n");
     (void) printf("                                         ");
     (void) printf("colours in plots\n");
+    (void) printf("    -n  --interactive                    ");
+    (void) printf("Run in interactive mode\n");
     (void) printf("    -v  --version                        ");
     (void) printf("Display the version\n");
 
