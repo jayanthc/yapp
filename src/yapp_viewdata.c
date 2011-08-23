@@ -554,24 +554,21 @@ int main(int argc, char *argv[])
         return YAPP_RET_ERROR;
     }
 
-    if (YAPP_FALSE == stYUM.iFlagSplicedData)
+    /* set up the image plot's Y-axis (frequency) */
+    g_pfYAxis = (float *) YAPP_Malloc(stYUM.iNumChans,
+                                     sizeof(float),
+                                     YAPP_FALSE);
+    if (NULL == g_pfYAxis)
     {
-        /* set up the image plot's Y-axis (frequency) */
-        g_pfYAxis = (float *) YAPP_Malloc(stYUM.iNumChans,
-                                         sizeof(float),
-                                         YAPP_FALSE);
-        if (NULL == g_pfYAxis)
-        {
-            (void) fprintf(stderr,
-                           "ERROR: Memory allocation for Y-axis failed! %s!\n",
-                           strerror(errno));
-            YAPP_CleanUp();
-            return YAPP_RET_ERROR;
-        }
-        for (i = 0; i < stYUM.iNumChans; ++i)
-        {
-            g_pfYAxis[i] = stYUM.fFMin + i * stYUM.fChanBW;
-        }
+        (void) fprintf(stderr,
+                       "ERROR: Memory allocation for Y-axis failed! %s!\n",
+                       strerror(errno));
+        YAPP_CleanUp();
+        return YAPP_RET_ERROR;
+    }
+    for (i = 0; i < stYUM.iNumChans; ++i)
+    {
+        g_pfYAxis[i] = stYUM.fFMin + i * stYUM.fChanBW;
     }
 
     /* calculate the tick step sizes */
