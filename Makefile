@@ -58,38 +58,36 @@ all: yapp_makever \
 	 yapp_viewdata
 
 yapp_makever: $(SRCDIR)/yapp_makever.c
-	$(CC) $(CFLAGS_L) $(SRCDIR)/yapp_makever.c -o $(IDIR)/$@
+	$(CC) $(CFLAGS_L) $< -o $(IDIR)/$@
 	$(IDIR)/$@
 	$(DELCMD) $(IDIR)/$@
 
 yapp_version.o: $(SRCDIR)/yapp_version.c
-	$(CC) $(CFLAGS_C) $(SRCDIR)/yapp_version.c -o $(IDIR)/$@
+	$(CC) $(CFLAGS_C) $< -o $(IDIR)/$@
 
 yapp_erflookup.o: $(SRCDIR)/yapp_erflookup.c $(SRCDIR)/yapp.h
-	$(CC) $(CFLAGS_C) $(SRCDIR)/yapp_erflookup.c -o $(IDIR)/$@
+	$(CC) $(CFLAGS_C) $< -o $(IDIR)/$@
 
 yapp_common.o: $(SRCDIR)/yapp_common.c $(SRCDIR)/yapp.h
-	$(CC) $(CFLAGS_C) $(DDEBUG) $(SRCDIR)/yapp_common.c -o $(IDIR)/$@
+	$(CC) $(CFLAGS_C) $(DDEBUG) $< -o $(IDIR)/$@
 
 yapp_viewmetadata.o: $(SRCDIR)/yapp_viewmetadata.c $(SRCDIR)/yapp.h
-	$(CC) $(CFLAGS_C) $(SRCDIR)/yapp_viewmetadata.c -o $(IDIR)/$@
+	$(CC) $(CFLAGS_C) $< -o $(IDIR)/$@
 
 # even though yapp_viewmetadata does not use PGPLOT, yapp_common does
-yapp_viewmetadata: $(IDIR)/yapp_viewmetadata.o
-	$(CC) $(SRCDIR)/yapp_viewmetadata.o $(IDIR)/yapp_version.o \
-    $(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o \
-	$(LFLAGS_PGPLOT) $(LFLAGS_MATH) -o $(BINDIR)/$@
+yapp_viewmetadata: $(IDIR)/yapp_viewmetadata.o $(IDIR)/yapp_version.o \
+	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
+	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -o $(BINDIR)/$@
 
 colourmap.o: $(SRCDIR)/colourmap.c $(SRCDIR)/colourmap.h
-	$(CC) $(CFLAGS_C) $(SRCDIR)/colourmap.c -o $(IDIR)/$@
+	$(CC) $(CFLAGS_C) $< -o $(IDIR)/$@
 
 yapp_viewdata.o: $(SRCDIR)/yapp_viewdata.c $(SRCDIR)/yapp.h
-	$(CC) $(CFLAGS_C) $(DDEBUG) $(SRCDIR)/yapp_viewdata.c -o $(IDIR)/$@
+	$(CC) $(CFLAGS_C) $(DDEBUG) $< -o $(IDIR)/$@
 
-yapp_viewdata: $(IDIR)/yapp_viewdata.o
-	$(CC) $(IDIR)/yapp_viewdata.o $(IDIR)/yapp_version.o \
-    $(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o $(IDIR)/colourmap.o \
-    $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -o $(BINDIR)/$@
+yapp_viewdata: $(IDIR)/yapp_viewdata.o $(IDIR)/yapp_version.o \
+	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o $(IDIR)/colourmap.o
+	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -o $(BINDIR)/$@
 
 # install the man pages
 install:
