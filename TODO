@@ -54,4 +54,9 @@ Misc:
     format (JXXXX+YY)
 2.  BUG (PGPLOT BUG): PGPLOT leaks 26 bytes just be cpgopen() and cpgclos().
 
+Bugs in Other Programs:
+1. psrfits2psrfits: Creation of 4-bit files from 16-bit files seems to cause
+   header to be corrupted. File unreadable from yapp_viewmetadata, header,
+   readfile.
+
 EOF
