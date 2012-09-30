@@ -876,6 +876,14 @@ int YAPP_ReadData(float *pfBuf,
         /* copy data from the byte buffer to the float buffer */
         for (i = 0; i < iReadItems; ++i)
         {
+            if (pcBuf[i] >= 0)
+            {
+                pcBuf[i] = 128 - pcBuf[i];
+            }
+            else
+            {
+                pcBuf[i] = 128 + pcBuf[i];
+            }
             pfBuf[i] = (float) pcBuf[i];
         }
     }
@@ -946,7 +954,11 @@ void YAPP_CleanUp()
     /* free all memory on heap */
     for (i = 0; i < g_iMemTableSize; ++i)
     {
-        free(g_apvMemTable[i]);
+        if (g_apvMemTable[i] != NULL)
+        {
+            free(g_apvMemTable[i]);
+            g_apvMemTable[i] = NULL;
+        }
     }
 
     #if 0
@@ -963,6 +975,7 @@ void YAPP_CleanUp()
     if (g_pFSpec != NULL)
     {
         (void) fclose(g_pFSpec);
+        g_pFSpec = NULL;
     }
 
     return;

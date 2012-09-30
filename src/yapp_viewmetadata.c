@@ -109,6 +109,8 @@ int main(int argc, char *argv[])
                            "ERROR: Reading metadata failed for file %s! "
                            "Moving to next file.\n",
                            pcFileSpec);
+            ++iNextOpt;
+            continue;
         }
 
         (void) printf("Observing site                    : %s\n",
