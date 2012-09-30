@@ -473,12 +473,27 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, YUM_t *pstYUM)
     /* read the parameters from the header section of the file */
     /* start with the 'HEADER_START' label */
     iRet = fread(&iLen, sizeof(iLen), 1, g_pFSpec);
+    /* if this is a file with header, iLen should be strlen(HEADER_START) */
+    if (iLen != strlen("HEADER_START"))
+    {
+        /* this must be a headerless/header-separated filterbank file, so open
+           the external header file */
+        iRet = YAPP_ReadSIGPROCHeaderFile(pcFileSpec, pstYUM);
+        if (iRet != YAPP_RET_SUCCESS)
+        {
+            (void) fprintf(stderr,
+                           "ERROR: Reading header file failed!\n");
+            YAPP_CleanUp();
+            return YAPP_RET_ERROR;
+        }
+        return YAPP_RET_SUCCESS;
+    }
     iRet = fread(acLabel, sizeof(char), iLen, g_pFSpec);
     acLabel[iLen] = '\0';
     if (strcmp(acLabel, "HEADER_START") != 0)
     {
         (void) fprintf(stderr,
-                       "ERROR: Reading header failed!\n");
+                       "ERROR: Missing label 'HEADER_START'!\n");
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
@@ -814,6 +829,399 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, YUM_t *pstYUM)
     return YAPP_RET_SUCCESS;
 }
 
+int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM)
+{
+    FILE* pFHdr = NULL;
+    char acFileHeader[LEN_GENSTRING] = {0};
+    char acTemp[LEN_GENSTRING] = {0};
+    size_t iLen = 0;
+    double dFChan = 0.0;
+    struct stat stFileStats = {0};
+    int iRet = YAPP_RET_SUCCESS;
+    int i = 0;
+    int iDataTypeID = 0;
+    double dFChan1 = 0.0;
+    float fFCh1 = 0.0;
+    double dChanBW = 0.0;
+    double dTStart = 0.0;
+    int iObsID = 0;
+    char *pcExt = NULL;
+    char *pcVal = NULL;
+    char* pcLine = NULL;
+
+    /* build the header file name */
+    (void) strncpy(acFileHeader, pcFileSpec, LEN_GENSTRING);
+    pcExt = strrchr(acFileHeader, '.');
+    if (NULL == pcExt)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Could not locate extension in file name %s!\n",
+                       acFileHeader);
+        return YAPP_RET_ERROR;
+    }
+    (void) strcpy(pcExt, ".fhd");
+
+    /* open the header file for reading */
+    pFHdr = fopen(acFileHeader, "r");
+    if (NULL == pFHdr)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Opening file %s failed! %s.\n",
+                       acFileHeader,
+                       strerror(errno));
+        YAPP_CleanUp();
+        return YAPP_RET_ERROR;
+    }
+
+    /* read observing site */
+    (void) getline(&pcLine, &iLen, pFHdr); 
+    pcVal = strrchr(pcLine, ':');
+    if (NULL == pcVal)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Reading header file failed!\n");
+        return YAPP_RET_ERROR;
+    }
+    (void) sscanf(pcVal, ": %s", pstYUM->acSite);
+    /* read field name */
+    (void) getline(&pcLine, &iLen, pFHdr); 
+    pcVal = strrchr(pcLine, ':');
+    if (NULL == pcVal)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Reading header file failed!\n");
+        return YAPP_RET_ERROR;
+    }
+    (void) sscanf(pcVal, ": %s", pstYUM->acPulsar);
+    /* read sampling interval */
+    (void) getline(&pcLine, &iLen, pFHdr); 
+    pcVal = strrchr(pcLine, ':');
+    if (NULL == pcVal)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Reading header file failed!\n");
+        return YAPP_RET_ERROR;
+    }
+    (void) sscanf(pcVal, ": %lf", &pstYUM->dTSamp);
+    /* read number of channels */
+    (void) getline(&pcLine, &iLen, pFHdr); 
+    pcVal = strrchr(pcLine, ':');
+    if (NULL == pcVal)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Reading header file failed!\n");
+        return YAPP_RET_ERROR;
+    }
+    (void) sscanf(pcVal, ": %d", &pstYUM->iNumChans);
+    /* read and ignore number of good channels */
+    (void) getline(&pcLine, &iLen, pFHdr); 
+    /* read channel bandwidth */
+    (void) getline(&pcLine, &iLen, pFHdr); 
+    pcVal = strrchr(pcLine, ':');
+    if (NULL == pcVal)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Reading header file failed!\n");
+        return YAPP_RET_ERROR;
+    }
+    (void) sscanf(pcVal, ": %f", &pstYUM->fChanBW);
+    /* read lowest frequency */
+    (void) getline(&pcLine, &iLen, pFHdr); 
+    pcVal = strrchr(pcLine, ':');
+    if (NULL == pcVal)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Reading header file failed!\n");
+        return YAPP_RET_ERROR;
+    }
+    (void) sscanf(pcVal, ": %f", &pstYUM->fFMin);
+    /* read highest frequency */
+    (void) getline(&pcLine, &iLen, pFHdr); 
+    pcVal = strrchr(pcLine, ':');
+    if (NULL == pcVal)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Reading header file failed!\n");
+        return YAPP_RET_ERROR;
+    }
+    (void) sscanf(pcVal, ": %f", &pstYUM->fFMax);
+    /* read number of bands */
+    (void) getline(&pcLine, &iLen, pFHdr); 
+    pcVal = strrchr(pcLine, ':');
+    if (NULL == pcVal)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Reading header file failed!\n");
+        return YAPP_RET_ERROR;
+    }
+    (void) sscanf(pcVal, ": %d", &pstYUM->iNumBands);
+    /* read number of bad time sections */
+    (void) getline(&pcLine, &iLen, pFHdr); 
+    pcVal = strrchr(pcLine, ':');
+    if (NULL == pcVal)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Reading header file failed!\n");
+        return YAPP_RET_ERROR;
+    }
+    (void) sscanf(pcVal, ": %d", &pstYUM->iNumBadTimes);
+    /* read number of bits */
+    (void) getline(&pcLine, &iLen, pFHdr); 
+    pcVal = strrchr(pcLine, ':');
+    if (NULL == pcVal)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Reading header file failed!\n");
+        return YAPP_RET_ERROR;
+    }
+    (void) sscanf(pcVal, ": %d", &pstYUM->iNumBits);
+    /* read number of IFs */
+    (void) getline(&pcLine, &iLen, pFHdr); 
+    pcVal = strrchr(pcLine, ':');
+    if (NULL == pcVal)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Reading header file failed!\n");
+        return YAPP_RET_ERROR;
+    }
+    (void) sscanf(pcVal, ": %d", &pstYUM->iNumIFs);
+
+    #if 0
+        else if (0 == strcmp(acLabel, "data_type"))
+        {
+            iRet = fread(&iDataTypeID,
+                         sizeof(iDataTypeID),
+                         1,
+                         g_pFSpec);
+            pstYUM->iHeaderLen += sizeof(iDataTypeID);
+        }
+        else if (0 == strcmp(acLabel, "tstart"))
+        {
+            /* read timestamp of first sample (MJD) */
+            iRet = fread(&dTStart,
+                         sizeof(dTStart),
+                         1,
+                         g_pFSpec);
+            pstYUM->iHeaderLen += sizeof(dTStart);
+        }
+        else if (0 == strcmp(acLabel, "machine_id"))
+        {
+            /* read backend ID */
+            iRet = fread(&pstYUM->iBackendID,
+                         sizeof(pstYUM->iBackendID),
+                         1,
+                         g_pFSpec);
+            pstYUM->iHeaderLen += sizeof(pstYUM->iBackendID);
+        }
+        else if (0 == strcmp(acLabel, "src_raj"))
+        {
+            /* read source RA (J2000) */
+            iRet = fread(&pstYUM->dSourceRA,
+                         sizeof(pstYUM->dSourceRA),
+                         1,
+                         g_pFSpec);
+            pstYUM->iHeaderLen += sizeof(pstYUM->dSourceRA);
+        }
+        else if (0 == strcmp(acLabel, "src_dej"))
+        {
+            /* read source declination (J2000) */
+            iRet = fread(&pstYUM->dSourceDec,
+                         sizeof(pstYUM->dSourceDec),
+                         1,
+                         g_pFSpec);
+            pstYUM->iHeaderLen += sizeof(pstYUM->dSourceDec);
+        }
+        else if (0 == strcmp(acLabel, "az_start"))
+        {
+            /* read azimuth start */
+            iRet = fread(&pstYUM->dAzStart,
+                         sizeof(pstYUM->dAzStart),
+                         1,
+                         g_pFSpec);
+            pstYUM->iHeaderLen += sizeof(pstYUM->dAzStart);
+        }
+        else if (0 == strcmp(acLabel, "za_start"))
+        {
+            /* read ZA start */
+            iRet = fread(&pstYUM->dZAStart,
+                         sizeof(pstYUM->dZAStart),
+                         1,
+                         g_pFSpec);
+            pstYUM->iHeaderLen += sizeof(pstYUM->dZAStart);
+        }
+        /* DTS-specific field */
+        else if (0 == strcmp(acLabel, "refdm"))
+        {
+            /* read reference DM */
+            iRet = fread(&pstYUM->dDM, sizeof(pstYUM->dDM), 1, g_pFSpec);
+            pstYUM->iHeaderLen += sizeof(pstYUM->dDM);
+        }
+        else if (0 == strcmp(acLabel, "barycentric"))
+        {
+            /* read barycentric flag */
+            iRet = fread(&pstYUM->iFlagBary,
+                         sizeof(pstYUM->iFlagBary),
+                         1,
+                         g_pFSpec);
+            pstYUM->iHeaderLen += sizeof(pstYUM->iFlagBary);
+        }
+        else if (0 == strcmp(acLabel, "FREQUENCY_START"))
+        {
+            pstYUM->iFlagSplicedData = YAPP_TRUE;
+
+            /* read field label length */
+            iRet = fread(&iLen, sizeof(iLen), 1, g_pFSpec);
+            /* read field label */
+            iRet = fread(acLabel, sizeof(char), iLen, g_pFSpec);
+            acLabel[iLen] = '\0';
+            pstYUM->iHeaderLen += (sizeof(iLen) + iLen);
+            /* allocate memory for the frequency channel array read from
+               the header */
+            pstYUM->pfFreq = (float *) YAPP_Malloc(pstYUM->iNumChans,
+                                           sizeof(float),
+                                           YAPP_FALSE);
+            if (NULL == pstYUM->pfFreq)
+            {
+                (void) fprintf(stderr,
+                               "ERROR: Memory allocation for frequency "
+                               " channel array failed! %s!\n",
+                               strerror(errno));
+                YAPP_CleanUp();
+                return YAPP_RET_ERROR;
+            }
+
+            /* store in the reverse order */
+            i = pstYUM->iNumChans - 1;
+            /* parse frequency channels for spliced data */
+            while (strcmp(acLabel, "FREQUENCY_END") != 0)
+            {
+                /* read field label length */
+                iRet = fread(&iLen, sizeof(iLen), 1, g_pFSpec);
+                /* read field label */
+                iRet = fread(acLabel, sizeof(char), iLen, g_pFSpec);
+                acLabel[iLen] = '\0';
+                pstYUM->iHeaderLen += (sizeof(iLen) + iLen);
+                if (0 == strcmp(acLabel, "fchannel"))
+                {
+                    iRet = fread(&dFChan, sizeof(dFChan), 1, g_pFSpec);
+                    pstYUM->pfFreq[i] = (float) dFChan;
+                    pstYUM->iHeaderLen += sizeof(dFChan);
+                }
+                else
+                {
+                    /* print a warning about encountering unknown field label */
+                    if (strcmp(acLabel, "FREQUENCY_END") != 0)
+                    {
+                        (void) fprintf(stderr,
+                                       "WARNING: Unknown field label %s "
+                                       "encountered!\n", acLabel);
+                        YAPP_CleanUp();
+                        return YAPP_RET_ERROR;
+                    }
+                }
+                --i;
+            }
+        }
+        else
+        {
+            /* print a warning about encountering unknown field label */
+            if (strcmp(acLabel, "HEADER_END") != 0)
+            {
+                (void) fprintf(stderr,
+                               "WARNING: Unknown field label %s "
+                               "encountered!\n", acLabel);
+            }
+        }
+    }
+
+    /* close the file, it may be opened later for reading data */
+    (void) fclose(g_pFSpec);
+    /* set the stream pointer to NULL so that YAPP_CleanUp does not try to
+       close it */
+    g_pFSpec = NULL;
+
+    if (pstYUM->fChanBW < 0.0)
+    {
+        /* make the channel bandwidth positive */
+        pstYUM->fChanBW = fabs(pstYUM->fChanBW);
+        pstYUM->fFMax = fFCh1;
+        pstYUM->fFMin = pstYUM->fFMax - (pstYUM->iNumChans * pstYUM->fChanBW);
+    }
+    else
+    {
+        pstYUM->fFMin = fFCh1;
+        pstYUM->fFMax = pstYUM->fFMin + (pstYUM->iNumChans * pstYUM->fChanBW);
+    }
+    /* calculate bandwidth and centre frequency */
+    pstYUM->fBW = pstYUM->fFMax - pstYUM->fFMin;
+    pstYUM->fFCentre = pstYUM->fFMin + (pstYUM->fBW / 2);
+
+
+    if (YAPP_TRUE == pstYUM->iFlagSplicedData)
+    {
+        /* in spliced data files, the first frequency is always the
+           highest - since we have inverted the array, it is the last
+           frequency */
+        pstYUM->fFMax = pstYUM->pfFreq[pstYUM->iNumChans-1];
+        /* get the lowest frequency */
+        pstYUM->fFMin = pstYUM->pfFreq[0];
+        /* calculate the channel bandwidth */
+        pstYUM->fChanBW = pstYUM->pfFreq[1] - pstYUM->pfFreq[0];
+
+        /* TODO: Number-of-bands calculation not accurate */
+        for (i = 1; i < pstYUM->iNumChans; ++i)
+        {
+            /*if (fabsf(pfFreq[i] - pfFreq[i-1]) > fChanBW)*/
+            /* kludge: */
+            if (fabsf(pstYUM->pfFreq[i] - pstYUM->pfFreq[i-1]) > (2 * pstYUM->fChanBW))
+            {
+                ++pstYUM->iNumBands;
+                if (YAPP_MAX_NUM_BANDS == pstYUM->iNumBands)
+                {
+                    (void) printf("WARNING: "
+                                  "Maximum number of bands reached!\n");
+                    break;
+                }
+            }
+        }
+    }
+    else
+    {
+        pstYUM->iNumBands = 1;
+    }
+    #endif
+
+    /* calculate bandwidth and centre frequency */
+    pstYUM->fBW = pstYUM->fFMax - pstYUM->fFMin;
+    pstYUM->fFCentre = pstYUM->fFMin + (pstYUM->fBW / 2);
+
+    /* TODO: find out the discontinuities and print them as well, also
+             number of spliced bands */
+
+    pstYUM->fSampSize = ((float) pstYUM->iNumBits) / YAPP_BYTE2BIT_FACTOR;
+
+    iRet = stat(pcFileSpec, &stFileStats);
+    if (iRet != YAPP_RET_SUCCESS)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Failed to stat %s: %s!\n",
+                       pcFileSpec,
+                       strerror(errno));
+        YAPP_CleanUp();
+        return YAPP_RET_ERROR;
+    }
+    pstYUM->lDataSizeTotal = (long) stFileStats.st_size - pstYUM->iHeaderLen;
+    pstYUM->iTimeSamps = (int) (pstYUM->lDataSizeTotal / (pstYUM->iNumChans * pstYUM->fSampSize));
+
+    /* set number of good channels to number of channels - no support for
+       SIGPROC ignore files yet */
+    pstYUM->iNumGoodChans = pstYUM->iNumChans;
+
+    free(pcLine);
+
+    return YAPP_RET_SUCCESS;
+}
+
 /*
  * Read one block of data from disk
  */
@@ -876,6 +1284,14 @@ int YAPP_ReadData(float *pfBuf,
         /* copy data from the byte buffer to the float buffer */
         for (i = 0; i < iReadItems; ++i)
         {
+            if (pcBuf[i] >= 0)
+            {
+                pcBuf[i] = 128 - pcBuf[i];
+            }
+            else
+            {
+                pcBuf[i] = 128 + pcBuf[i];
+            }
             pfBuf[i] = (float) pcBuf[i];
         }
     }
@@ -946,7 +1362,11 @@ void YAPP_CleanUp()
     /* free all memory on heap */
     for (i = 0; i < g_iMemTableSize; ++i)
     {
-        free(g_apvMemTable[i]);
+        if (g_apvMemTable[i] != NULL)
+        {
+            free(g_apvMemTable[i]);
+            g_apvMemTable[i] = NULL;
+        }
     }
 
     #if 0
@@ -963,6 +1383,7 @@ void YAPP_CleanUp()
     if (g_pFSpec != NULL)
     {
         (void) fclose(g_pFSpec);
+        g_pFSpec = NULL;
     }
 
     return;
