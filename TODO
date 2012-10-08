@@ -3,28 +3,31 @@ TODO
 
 NEW: CRASH on gpubox
 
-yapp_viewmetadata:
-1.  FEATURE: Handle the headerless/header-separated filterbank format input.
-
 yapp_viewdata:
-1.  BUG: Signal-handling in non-interactive mode causes blocking in cpgclos()
+1.  BUG: yapp_viewdata -b <> <file> doesn't work for block size < 4. Even with
+    block size = 4, only one pixel is seen (2 for 5, 3 for 6, etc.)
+2.  BUG: Signal-handling in non-interactive mode causes blocking in cpgclos()
     and crash on kill.
-2.  BUG: Crash in:
+3.  BUG: Crash in:
     yapp_viewdata -P 10 ../ort/0833b45.spec
-3.  BUG: For block size < 1024, bytes to skip not happening at multiple of
+4.  BUG: For block size < 1024, bytes to skip not happening at multiple of
     block size.
-4.  BUG:
+5.  BUG:
     plotraw -b 62334 a14aa899.spec
     Anything above 62334 (out of 62385) is nan (problem maybe with
     das_spectro_lin).
-5.  i. BUG: data skip: --data-skip-percent and --data-skip-time doesn't behave
+6.  i. BUG: data skip: --data-skip-percent and --data-skip-time doesn't behave
     in the same way, for low amounts of data.
     ii. Block 2 for sps -n <min> -x <max> -p 20 -b <x> <file> and block 1 for
     sps -n <min> -x <max> -s 10 -p 20 -b <x> <file> does not seem to be the
     same. this is true for time mode too.
-6.  BUG: Eliminte flickering in noninteractive mode plots by redrawing only
+7.  BUG: Eliminte flickering in noninteractive mode plots by redrawing only
     axes.
-7.  FEATURE: Support user-defined colourmaps.
+8.  FEATURE: Support user-defined colourmaps.
+
+yapp_spec:
+1.  BUG: Crash while reading last block for PFB ON with N >= 1024.
+2.  Think of a different name.
 
 yapp_dedisp:
 1.  BUG: *.tim files created by yapp_dedisp for *.fil does not result in pulsar

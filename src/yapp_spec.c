@@ -63,7 +63,6 @@ char g_cIsPFBOn = YAPP_FALSE;
 char g_acFileData[256] = {0};
 char g_acFileCoeff[256] = {0};
 int g_iFileData = 0;
-char g_cIsDone = YAPP_FALSE;
 signed char* g_pcPFBCoeff = NULL;
 signed char* g_pcOptPFBCoeff = NULL;
 
@@ -85,7 +84,6 @@ int main(int argc, char *argv[])
     long lBytesToProc = 0;
     int iTimeSampsSkip = 0;
     int iTimeSampsToProc = 0;
-    char cIsPFB = YAPP_FALSE;
     char cIsFil = YAPP_FALSE;
     int iNTaps = 1;                       /* 1 if no PFB, NUM_TAPS if PFB */
     int iNFFT = DEF_NFFT;
@@ -110,14 +108,17 @@ int main(int argc, char *argv[])
     int iTimeSamps = 0;
     double dTSamp = 0.0;
     char acHdrBuf[LEN_GENSTRING] = {0};
+    char acSite[LEN_GENSTRING] = {0};
+    char acPulsar[MAX_LEN_PSRNAME] = {0};
     int i = 0;
     int j = 0;
+    char cHasGraphics = YAPP_FALSE;
     int iInvCols = YAPP_FALSE;
     char cIsNonInteractive = YAPP_FALSE;
     const char *pcProgName = NULL;
     int iNextOpt = 0;
     /* valid short options */
-    const char* const pcOptsShort = "hs:S:p:P:fn:a:l:fitv";
+    const char* const pcOptsShort = "hs:p:bn:a:l:fe:r:gitv";
     /* valid long options */
     const struct option stOptsLong[] = {
         { "help",                   0, NULL, 'h' },
@@ -128,6 +129,9 @@ int main(int argc, char *argv[])
         { "nacc",                   1, NULL, 'a' },
         { "tsamp",                  1, NULL, 'l' },
         { "fil",                    0, NULL, 'f' },
+        { "site",                   1, NULL, 'e' }, 
+        { "pulsar",                 1, NULL, 'r' },
+        { "graphics",               0, NULL, 'g' },
         { "invert",                 0, NULL, 'i' },
         { "non-interactive",        0, NULL, 't' },
         { "version",                0, NULL, 'v' },
@@ -160,7 +164,9 @@ int main(int argc, char *argv[])
 
             case 'b':   /* -b or --pfb */
                 /* set option */
-                cIsPFB = YAPP_TRUE;
+                g_cIsPFBOn = YAPP_TRUE;
+                /* set the number of taps */
+                iNTaps = NUM_TAPS;
                 break;
 
             case 'n':   /* -n or --nfft */
@@ -182,6 +188,21 @@ int main(int argc, char *argv[])
             case 'f':   /* -f or --fil */
                 /* set option */
                 cIsFil = YAPP_TRUE;
+                break;
+
+            case 'e':   /* -e or --site */
+                /* set option */
+                (void) strncpy(acSite, optarg, LEN_GENSTRING);
+                break;
+
+            case 'r':   /* -r or --pulsar */
+                /* set option */
+                (void) strncpy(acPulsar, optarg, MAX_LEN_PSRNAME);
+                break;
+
+            case 'g':   /* -g or --graphics */
+                /* set option */
+                cHasGraphics = YAPP_TRUE;
                 break;
 
             case 'i':  /* -i or --invert */
@@ -373,8 +394,8 @@ int main(int argc, char *argv[])
         }
 
         /* populate the output metadata structure */
-        (void) strncpy(stYUM.acSite, "Test", LEN_GENSTRING);
-        (void) strncpy(stYUM.acPulsar, "B0000+0000", MAX_LEN_PSRNAME);
+        (void) strncpy(stYUM.acSite, acSite, LEN_GENSTRING);
+        (void) strncpy(stYUM.acPulsar, acPulsar, MAX_LEN_PSRNAME);
         stYUM.dTSamp = dTSampInSec * 1e3 * iNFFT * iNumAcc;
         stYUM.iTimeSamps = (int) ((float) iTimeSamps / (iNFFT * iNumAcc));
         stYUM.iNumChans = iNFFT;
@@ -470,49 +491,52 @@ int main(int argc, char *argv[])
     /* skip data, if any are to be skipped */
     //(void) fseek(g_pFSpec, lBytesToSkip, SEEK_SET);
 
-    /* open the PGPLOT graphics device */
-    g_iPGDev = cpgopen(PG_DEV);
-    if (g_iPGDev <= 0)
+    if (cHasGraphics)
     {
-        (void) fprintf(stderr,
-                       "ERROR: Opening graphics device %s failed!\n",
-                       PG_DEV);
-        YAPP_CleanUp();
-        return YAPP_RET_ERROR;
-    }
+        /* open the PGPLOT graphics device */
+        g_iPGDev = cpgopen(PG_DEV);
+        if (g_iPGDev <= 0)
+        {
+            (void) fprintf(stderr,
+                           "ERROR: Opening graphics device %s failed!\n",
+                           PG_DEV);
+            YAPP_CleanUp();
+            return YAPP_RET_ERROR;
+        }
 
-    /* set the background colour to white and the foreground colour to
-       black, if user requires so */
-    if (YAPP_TRUE == iInvCols)
-    {
-        cpgscr(0, 1.0, 1.0, 1.0);
-        cpgscr(1, 0.0, 0.0, 0.0);
-    }
+        /* set the background colour to white and the foreground colour to
+           black, if user requires so */
+        if (YAPP_TRUE == iInvCols)
+        {
+            cpgscr(0, 1.0, 1.0, 1.0);
+            cpgscr(1, 0.0, 0.0, 0.0);
+        }
 
-    /* set up the plot's X-axis */
-    g_pfXAxis = (float *) YAPP_Malloc(iBlockSize,
-                                      sizeof(float),
-                                      YAPP_FALSE);
-    if (NULL == g_pfXAxis)
-    {
-        (void) fprintf(stderr,
-                       "ERROR: Memory allocation for X-axis failed! %s!\n",
-                       strerror(errno));
-        YAPP_CleanUp();
-        return YAPP_RET_ERROR;
-    }
-    /* load the X-axis frequency axis */
-    for (i = 0; i < iBlockSize; ++i)
-    {
-        //temp
-        g_pfXAxis[i] = ((float) i * 128.0) / iNFFT;
-    }
+        /* set up the plot's X-axis */
+        g_pfXAxis = (float *) YAPP_Malloc(iBlockSize,
+                                          sizeof(float),
+                                          YAPP_FALSE);
+        if (NULL == g_pfXAxis)
+        {
+            (void) fprintf(stderr,
+                           "ERROR: Memory allocation for X-axis failed! %s!\n",
+                           strerror(errno));
+            YAPP_CleanUp();
+            return YAPP_RET_ERROR;
+        }
+        /* load the X-axis frequency axis */
+        for (i = 0; i < iBlockSize; ++i)
+        {
+            //temp
+            g_pfXAxis[i] = ((float) i * 128.0) / iNFFT;
+        }
 
-    #if 0
-    /* calculate the tick step sizes */
-    fXStep = (int) ((((iBlockSize - 1) * dTSampInSec) - 0)
-                    / PG_TICK_STEPS_X);
-    #endif
+        #if 0
+        /* calculate the tick step sizes */
+        fXStep = (int) ((((iBlockSize - 1) * dTSampInSec) - 0)
+                        / PG_TICK_STEPS_X);
+        #endif
+    }
 
     while (iNumReads > 0)
     {
@@ -595,123 +619,124 @@ int main(int argc, char *argv[])
             {
                 (void) write(iFileSpec, g_pfSumPow, iNFFT * sizeof(float));
 
-                #if 0
-                fDataMin = g_pfSumPow[0];
-                fDataMax = g_pfSumPow[0];
-                for (j = 0; j < iBlockSize; ++j)
+                if (cHasGraphics)
                 {
-                    if (g_pfSumPow[j] < fDataMin)
+                    fDataMin = g_pfSumPow[0];
+                    fDataMax = g_pfSumPow[0];
+                    for (j = 0; j < iBlockSize; ++j)
                     {
-                        fDataMin = g_pfSumPow[j];
-                    }
-                    if (g_pfSumPow[j] > fDataMax)
-                    {
-                        fDataMax = g_pfSumPow[j];
-                    }
-                }
-
-                #ifdef DEBUG
-                (void) printf("Minimum value of data             : %g\n",
-                              fDataMin);
-                (void) printf("Maximum value of data             : %g\n",
-                              fDataMax);
-                #endif
-
-                fColMin = fDataMin;
-                fColMax = fDataMax;
-
-                if (!(cIsLastBlock))
-                {
-                    /* erase just before plotting, to reduce flicker */
-                    cpgeras();
-                }
-
-                cpgsvp(PG_VP_ML, PG_VP_MR, PG_VP_MB, PG_VP_MT);
-                cpgswin(g_pfXAxis[0], g_pfXAxis[iBlockSize-1], fColMin, fColMax);
-                cpglab("Bin Number", "", "SumPow");
-                cpgbox("BCNST", 0.0, 0, "BCNST", 0.0, 0);
-                cpgsci(PG_CI_PLOT);
-                cpgline(iNFFT, g_pfXAxis, g_pfSumPow);
-                cpgsci(PG_CI_DEF);
-
-                if (!(cIsLastBlock))
-                {
-                    if (!(cIsNonInteractive))
-                    {
-                        /* draw the 'next' and 'exit' buttons */
-                        cpgsvp(PG_VP_BUT_ML, PG_VP_BUT_MR, PG_VP_BUT_MB, PG_VP_BUT_MT);
-                        cpgswin(PG_BUT_L, PG_BUT_R, PG_BUT_B, PG_BUT_T);
-                        cpgsci(PG_BUT_FILLCOL); /* set the fill colour */
-                        cpgrect(PG_BUTNEXT_L, PG_BUTNEXT_R, PG_BUTNEXT_B, PG_BUTNEXT_T);
-                        cpgrect(PG_BUTEXIT_L, PG_BUTEXIT_R, PG_BUTEXIT_B, PG_BUTEXIT_T);
-                        cpgsci(0);  /* set colour index to white */
-                        cpgtext(PG_BUTNEXT_TEXT_L, PG_BUTNEXT_TEXT_B, "Next");
-                        cpgtext(PG_BUTEXIT_TEXT_L, PG_BUTEXIT_TEXT_B, "Exit");
-
-                        fButX = (PG_BUTNEXT_R - PG_BUTNEXT_L) / 2;
-                        fButY = (PG_BUTNEXT_T - PG_BUTNEXT_B) / 2;
-
-                        while (YAPP_TRUE)
+                        if (g_pfSumPow[j] < fDataMin)
                         {
-                            iRet = cpgcurs(&fButX, &fButY, &cCurChar);
-                            if (0 == iRet)
-                            {
-                                (void) fprintf(stderr,
-                                               "WARNING: "
-                                               "Reading cursor parameters failed!\n");
-                                break;
-                            }
-
-                            if (((fButX >= PG_BUTNEXT_L) && (fButX <= PG_BUTNEXT_R))
-                                && ((fButY >= PG_BUTNEXT_B) && (fButY <= PG_BUTNEXT_T)))
-                            {
-                                /* animate button click */
-                                cpgsci(PG_BUT_FILLCOL);
-                                cpgtext(PG_BUTNEXT_TEXT_L, PG_BUTNEXT_TEXT_B, "Next");
-                                cpgsci(0);  /* set colour index to white */
-                                cpgtext(PG_BUTNEXT_CL_TEXT_L, PG_BUTNEXT_CL_TEXT_B, "Next");
-                                (void) usleep(PG_BUT_CL_SLEEP);
-                                cpgsci(PG_BUT_FILLCOL); /* set colour index to fill
-                                                           colour */
-                                cpgtext(PG_BUTNEXT_CL_TEXT_L, PG_BUTNEXT_CL_TEXT_B, "Next");
-                                cpgsci(0);  /* set colour index to white */
-                                cpgtext(PG_BUTNEXT_TEXT_L, PG_BUTNEXT_TEXT_B, "Next");
-                                cpgsci(1);  /* reset colour index to black */
-                                (void) usleep(PG_BUT_CL_SLEEP);
-
-                                break;
-                            }
-                            #if 1
-                            else if (((fButX >= PG_BUTEXIT_L) && (fButX <= PG_BUTEXIT_R))
-                                && ((fButY >= PG_BUTEXIT_B) && (fButY <= PG_BUTEXIT_T)))
-                            {
-                                /* animate button click */
-                                cpgsci(PG_BUT_FILLCOL);
-                                cpgtext(PG_BUTEXIT_TEXT_L, PG_BUTEXIT_TEXT_B, "Exit");
-                                cpgsci(0);  /* set colour index to white */
-                                cpgtext(PG_BUTEXIT_CL_TEXT_L, PG_BUTEXIT_CL_TEXT_B, "Exit");
-                                (void) usleep(PG_BUT_CL_SLEEP);
-                                cpgsci(PG_BUT_FILLCOL); /* set colour index to fill
-                                                           colour */
-                                cpgtext(PG_BUTEXIT_CL_TEXT_L, PG_BUTEXIT_CL_TEXT_B, "Exit");
-                                cpgsci(0);  /* set colour index to white */
-                                cpgtext(PG_BUTEXIT_TEXT_L, PG_BUTEXIT_TEXT_B, "Exit");
-                                cpgsci(1);  /* reset colour index to black */
-                                (void) usleep(PG_BUT_CL_SLEEP);
-
-                                YAPP_CleanUp();
-                                return YAPP_RET_SUCCESS;
-                            }
-                            #endif
+                            fDataMin = g_pfSumPow[j];
+                        }
+                        if (g_pfSumPow[j] > fDataMax)
+                        {
+                            fDataMax = g_pfSumPow[j];
                         }
                     }
-                    else
+
+                    #ifdef DEBUG
+                    (void) printf("Minimum value of data             : %g\n",
+                                  fDataMin);
+                    (void) printf("Maximum value of data             : %g\n",
+                                  fDataMax);
+                    #endif
+
+                    fColMin = fDataMin;
+                    fColMax = fDataMax;
+
+                    if (!(cIsLastBlock))
                     {
-                        /* pause before erasing */
-                        (void) usleep(PG_PLOT_SLEEP);
+                        /* erase just before plotting, to reduce flicker */
+                        cpgeras();
+                    }
+
+                    cpgsvp(PG_VP_ML, PG_VP_MR, PG_VP_MB, PG_VP_MT);
+                    cpgswin(g_pfXAxis[0], g_pfXAxis[iBlockSize-1], fColMin, fColMax);
+                    cpglab("Bin Number", "", "SumPow");
+                    cpgbox("BCNST", 0.0, 0, "BCNST", 0.0, 0);
+                    cpgsci(PG_CI_PLOT);
+                    cpgline(iNFFT, g_pfXAxis, g_pfSumPow);
+                    cpgsci(PG_CI_DEF);
+
+                    if (!(cIsLastBlock))
+                    {
+                        if (!(cIsNonInteractive))
+                        {
+                            /* draw the 'next' and 'exit' buttons */
+                            cpgsvp(PG_VP_BUT_ML, PG_VP_BUT_MR, PG_VP_BUT_MB, PG_VP_BUT_MT);
+                            cpgswin(PG_BUT_L, PG_BUT_R, PG_BUT_B, PG_BUT_T);
+                            cpgsci(PG_BUT_FILLCOL); /* set the fill colour */
+                            cpgrect(PG_BUTNEXT_L, PG_BUTNEXT_R, PG_BUTNEXT_B, PG_BUTNEXT_T);
+                            cpgrect(PG_BUTEXIT_L, PG_BUTEXIT_R, PG_BUTEXIT_B, PG_BUTEXIT_T);
+                            cpgsci(0);  /* set colour index to white */
+                            cpgtext(PG_BUTNEXT_TEXT_L, PG_BUTNEXT_TEXT_B, "Next");
+                            cpgtext(PG_BUTEXIT_TEXT_L, PG_BUTEXIT_TEXT_B, "Exit");
+
+                            fButX = (PG_BUTNEXT_R - PG_BUTNEXT_L) / 2;
+                            fButY = (PG_BUTNEXT_T - PG_BUTNEXT_B) / 2;
+
+                            while (YAPP_TRUE)
+                            {
+                                iRet = cpgcurs(&fButX, &fButY, &cCurChar);
+                                if (0 == iRet)
+                                {
+                                    (void) fprintf(stderr,
+                                                   "WARNING: "
+                                                   "Reading cursor parameters failed!\n");
+                                    break;
+                                }
+
+                                if (((fButX >= PG_BUTNEXT_L) && (fButX <= PG_BUTNEXT_R))
+                                    && ((fButY >= PG_BUTNEXT_B) && (fButY <= PG_BUTNEXT_T)))
+                                {
+                                    /* animate button click */
+                                    cpgsci(PG_BUT_FILLCOL);
+                                    cpgtext(PG_BUTNEXT_TEXT_L, PG_BUTNEXT_TEXT_B, "Next");
+                                    cpgsci(0);  /* set colour index to white */
+                                    cpgtext(PG_BUTNEXT_CL_TEXT_L, PG_BUTNEXT_CL_TEXT_B, "Next");
+                                    (void) usleep(PG_BUT_CL_SLEEP);
+                                    cpgsci(PG_BUT_FILLCOL); /* set colour index to fill
+                                                               colour */
+                                    cpgtext(PG_BUTNEXT_CL_TEXT_L, PG_BUTNEXT_CL_TEXT_B, "Next");
+                                    cpgsci(0);  /* set colour index to white */
+                                    cpgtext(PG_BUTNEXT_TEXT_L, PG_BUTNEXT_TEXT_B, "Next");
+                                    cpgsci(1);  /* reset colour index to black */
+                                    (void) usleep(PG_BUT_CL_SLEEP);
+
+                                    break;
+                                }
+                                #if 1
+                                else if (((fButX >= PG_BUTEXIT_L) && (fButX <= PG_BUTEXIT_R))
+                                    && ((fButY >= PG_BUTEXIT_B) && (fButY <= PG_BUTEXIT_T)))
+                                {
+                                    /* animate button click */
+                                    cpgsci(PG_BUT_FILLCOL);
+                                    cpgtext(PG_BUTEXIT_TEXT_L, PG_BUTEXIT_TEXT_B, "Exit");
+                                    cpgsci(0);  /* set colour index to white */
+                                    cpgtext(PG_BUTEXIT_CL_TEXT_L, PG_BUTEXIT_CL_TEXT_B, "Exit");
+                                    (void) usleep(PG_BUT_CL_SLEEP);
+                                    cpgsci(PG_BUT_FILLCOL); /* set colour index to fill
+                                                               colour */
+                                    cpgtext(PG_BUTEXIT_CL_TEXT_L, PG_BUTEXIT_CL_TEXT_B, "Exit");
+                                    cpgsci(0);  /* set colour index to white */
+                                    cpgtext(PG_BUTEXIT_TEXT_L, PG_BUTEXIT_TEXT_B, "Exit");
+                                    cpgsci(1);  /* reset colour index to black */
+                                    (void) usleep(PG_BUT_CL_SLEEP);
+
+                                    YAPP_CleanUp();
+                                    return YAPP_RET_SUCCESS;
+                                }
+                                #endif
+                            }
+                        }
+                        else
+                        {
+                            /* pause before erasing */
+                            (void) usleep(PG_PLOT_SLEEP);
+                        }
                     }
                 }
-                #endif
             }
             else
             {
@@ -745,7 +770,12 @@ int main(int argc, char *argv[])
 
     (void) close(iFileSpec);
 
-    (void) printf("DONE!\n");
+    (void) printf("\nDONE!\n");
+
+    if (cHasGraphics)
+    {
+        cpgclos();
+    }
 
     CleanUp(iNTaps);
     YAPP_CleanUp();
@@ -1016,11 +1046,6 @@ int ReadData(char cIsFirst, int iNTaps, int iNFFT)
         {
             g_astPFBData[i].pcData = g_pcInBuf + (i * NUM_BYTES_PER_SAMP * iNFFT);
             ++g_iReadCount;
-            if (g_iReadCount == g_iNumReads)
-            {
-                (void) printf("Data read done!\n");
-                g_cIsDone = YAPP_TRUE;
-            }
 
             /* unpack data */
             /* assuming real and imaginary parts are interleaved, and X and Y are
@@ -1048,11 +1073,6 @@ int ReadData(char cIsFirst, int iNTaps, int iNFFT)
         /* write new data to the write buffer */
         g_astPFBData[g_iPFBWriteIdx].pcData += (iNTaps * NUM_BYTES_PER_SAMP * iNFFT);
         ++g_iReadCount;
-        if (g_iReadCount == g_iNumReads)
-        {
-            (void) printf("Data read done!\n");
-            g_cIsDone = YAPP_TRUE;
-        }
 
         /* unpack data */
         /* assuming real and imaginary parts are interleaved, and X and Y are
@@ -1327,6 +1347,12 @@ void PrintUsage(const char *pcProgName)
     (void) printf("Sampling time in s\n");
     (void) printf("    -f  --fil                            ");
     (void) printf("Output spectra in filterbank format\n");
+    (void) printf("    -e  --site                           ");
+    (void) printf("Observing site name\n");
+    (void) printf("    -r  --pulsar                         ");
+    (void) printf("Pulsar name\n");
+    (void) printf("    -g  --graphics                       ");
+    (void) printf("Turn on plotting\n");
     (void) printf("    -i  --invert                         ");
     (void) printf("Invert background and foreground\n");
     (void) printf("                                         ");

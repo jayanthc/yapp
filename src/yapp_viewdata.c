@@ -491,6 +491,7 @@ int main(int argc, char *argv[])
 
     /* allocate memory for the buffer, based on the number of channels and time
        samples */
+    /* TODO: include fSampSize as well */
     g_pfBuf = (float *) YAPP_Malloc((stYUM.iNumChans * iBlockSize),
                                     sizeof(float),
                                     YAPP_FALSE);
