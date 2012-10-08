@@ -197,7 +197,10 @@ enum tagDedispTimeSeriesFormat
 #define PG_BUT_FILLCOL          1
 #define PG_BUT_CL_SLEEP         100000  /* in microseconds, 100 ms */
 
-#define PG_PLOT_SLEEP       500000  /* in microseconds, 500 ms */
+#define PG_PLOT_SLEEP           500000  /* in microseconds, 500 ms */
+
+#define PG_CI_DEF               1
+#define PG_CI_PLOT              11
 
 #define PATH_ERF_LOOKUP     "./ERF_LOOKUP_TABLE"    /**< @brief Path to the
                                                          error function lookup

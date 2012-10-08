@@ -64,8 +64,8 @@ char g_acFileData[256] = {0};
 char g_acFileCoeff[256] = {0};
 int g_iFileData = 0;
 char g_cIsDone = YAPP_FALSE;
-char* g_pcPFBCoeff = NULL;
-char* g_pcOptPFBCoeff = NULL;
+signed char* g_pcPFBCoeff = NULL;
+signed char* g_pcOptPFBCoeff = NULL;
 
 static long int s_lDataLoaded = 0;
 
@@ -78,6 +78,7 @@ int main(int argc, char *argv[])
     int iBlockSize = 0;
     int iNumAcc = DEF_ACC;
     int iFileSpec = 0;
+    int iFileSpecHdr = 0;
     int iSpecCount = 0;
     struct stat stFileStats = {0};
     long lBytesToSkip = 0;
@@ -104,9 +105,13 @@ int main(int argc, char *argv[])
     float fButY = 0.0;
     char cCurChar = 0;
     int iNumSamps = 0;
+    long int lDataSizeTotal = (long) 0;
+    float fSampSize = 0.0; 
+    int iTimeSamps = 0;
+    double dTSamp = 0.0;
+    char acHdrBuf[LEN_GENSTRING] = {0};
     int i = 0;
     int j = 0;
-    int k = 0;
     int iInvCols = YAPP_FALSE;
     char cIsNonInteractive = YAPP_FALSE;
     const char *pcProgName = NULL;
@@ -216,6 +221,13 @@ int main(int argc, char *argv[])
         return YAPP_RET_ERROR;
     }
 
+    if (0.0 == dTSampInSec)
+    {
+        (void) fprintf(stderr, "ERROR: Sampling interval not specified!\n");
+        PrintUsage(pcProgName);
+        return YAPP_RET_ERROR;
+    }
+
     /* register the signal-handling function */
     iRet = YAPP_RegisterSignalHandlers();
     if (iRet != YAPP_RET_SUCCESS)
@@ -228,8 +240,7 @@ int main(int argc, char *argv[])
     /* get the input filename */
     (void) strncpy(g_acFileData, argv[optind], 256); 
 
-    /* populate the metadata structure */
-    stYUM.dTSamp = dTSampInSec * 1e3;
+    dTSamp = dTSampInSec * 1e3;
 
     iRet = stat(g_acFileData, &stFileStats);
     if (iRet != YAPP_RET_SUCCESS)
@@ -241,55 +252,55 @@ int main(int argc, char *argv[])
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
-    stYUM.lDataSizeTotal = (long) stFileStats.st_size;
-    stYUM.fSampSize = NUM_BYTES_PER_SAMP * sizeof(char); 
-    stYUM.iTimeSamps = (int) (stYUM.lDataSizeTotal / stYUM.fSampSize);
+    lDataSizeTotal = (long) stFileStats.st_size;
+    fSampSize = NUM_BYTES_PER_SAMP * sizeof(char); 
+    iTimeSamps = (int) (lDataSizeTotal / fSampSize);
 
     /* calculate bytes to skip and read */
     if (0 == dDataProcTime)
     {
-        dDataProcTime = stYUM.iTimeSamps * dTSampInSec;
+        dDataProcTime = iTimeSamps * dTSampInSec;
     }
 
     /* check if the input time duration is less than the length of the
        data */
-    if (((double) dDataProcTime) > (stYUM.iTimeSamps * dTSampInSec))
+    if (((double) dDataProcTime) > (iTimeSamps * dTSampInSec))
     {
         (void) fprintf(stderr,
                        "WARNING: Input time is longer than length of "
                        "data!\n");
     }
 
-    lBytesToSkip = (long) ((dDataSkipTime * 1000.0 / stYUM.dTSamp)
+    lBytesToSkip = (long) ((dDataSkipTime * 1000.0 / dTSamp)
                                                     /* number of samples */
-                           * stYUM.fSampSize);
-    lBytesToProc = (long) ((dDataProcTime * 1000.0 / stYUM.dTSamp)
+                           * fSampSize);
+    lBytesToProc = (long) ((dDataProcTime * 1000.0 / dTSamp)
                                                     /* number of samples */
-                           * stYUM.fSampSize);
+                           * fSampSize);
 
-    if ((lBytesToSkip + lBytesToProc) > stYUM.lDataSizeTotal)
+    if ((lBytesToSkip + lBytesToProc) > lDataSizeTotal)
     {
         (void) printf("WARNING: Total data to be read (skipped and processed) "
                       "is more than the size of the file! ");
-        lBytesToProc = stYUM.lDataSizeTotal - lBytesToSkip;
+        lBytesToProc = lDataSizeTotal - lBytesToSkip;
         (void) printf("Newly calculated size of data to be processed: %ld "
                       "bytes\n",
                       lBytesToProc);
     }
 
-    iTimeSampsSkip = (int) (lBytesToSkip / stYUM.fSampSize);
+    iTimeSampsSkip = (int) (lBytesToSkip / fSampSize);
     (void) printf("Skipping\n"
                   "    %ld of %ld bytes\n"
                   "    %d of %d time samples\n"
                   "    %.10g of %.10g seconds\n",
                   lBytesToSkip,
-                  stYUM.lDataSizeTotal,
+                  lDataSizeTotal,
                   iTimeSampsSkip,
-                  stYUM.iTimeSamps,
+                  iTimeSamps,
                   (iTimeSampsSkip * dTSampInSec),
-                  (stYUM.iTimeSamps * dTSampInSec));
+                  (iTimeSamps * dTSampInSec));
 
-    iTimeSampsToProc = (int) (lBytesToProc / stYUM.fSampSize);
+    iTimeSampsToProc = (int) (lBytesToProc / fSampSize);
     iNumReads = (int) ceilf(((float) iTimeSampsToProc) / iBlockSize);
 
     /* initialise */
@@ -326,23 +337,128 @@ int main(int argc, char *argv[])
                   "    %.10g of %.10g seconds\n"
                   "in %d reads with block size %d time samples...\n",
                   lBytesToProc,
-                  stYUM.lDataSizeTotal,
+                  lDataSizeTotal,
                   iTimeSampsToProc,
-                  stYUM.iTimeSamps,
+                  iTimeSamps,
                   (iTimeSampsToProc * dTSampInSec),
-                  (stYUM.iTimeSamps * dTSampInSec),
+                  (iTimeSamps * dTSampInSec),
                   iNumReads,
                   iBlockSize);
 
     /* open output file */
-    iFileSpec = open("spec.fil",
-                 O_CREAT | O_TRUNC | O_WRONLY,
-                 S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-    if (iFileSpec < EXIT_SUCCESS)
+    if (cIsFil)
     {
-        (void) fprintf(stderr, "ERROR! Opening spectrum file failed!\n");
+        /* open fil file */
+        iFileSpec = open("spec.fil",
+                         O_CREAT | O_TRUNC | O_WRONLY,
+                         S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+        if (iFileSpec < EXIT_SUCCESS)
+        {
+            (void) fprintf(stderr, "ERROR: Opening spectrum file failed!\n");
+            CleanUp(iNTaps);
+            YAPP_CleanUp();
+            return EXIT_FAILURE;
+        }
+    
+        /* open fil header file */
+        iFileSpecHdr = open("spec.fhd",
+                            O_CREAT | O_TRUNC | O_WRONLY,
+                            S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+        if (iFileSpecHdr < EXIT_SUCCESS)
+        {
+            (void) fprintf(stderr, "ERROR: Opening spectrum header file failed!\n");
+            CleanUp(iNTaps);
+            YAPP_CleanUp();
+            return EXIT_FAILURE;
+        }
+
+        /* populate the output metadata structure */
+        (void) strncpy(stYUM.acSite, "Test", LEN_GENSTRING);
+        (void) strncpy(stYUM.acPulsar, "B0000+0000", MAX_LEN_PSRNAME);
+        stYUM.dTSamp = dTSampInSec * 1e3 * iNFFT * iNumAcc;
+        stYUM.iTimeSamps = (int) ((float) iTimeSamps / (iNFFT * iNumAcc));
+        stYUM.iNumChans = iNFFT;
+        stYUM.iNumGoodChans = iNFFT;
+        stYUM.fChanBW = (((float) 1) / (dTSampInSec * iNFFT)) / 1e6;
+        stYUM.fFMin = 0.0;
+        stYUM.fFMax = stYUM.iNumChans * stYUM.fChanBW;
+        stYUM.iNumBands = 1;
+        stYUM.iNumBadTimes = 0;
+        stYUM.iNumBits = 32;
+        stYUM.iNumIFs = 1;
+
+        /* write header info */
+        (void) sprintf(acHdrBuf,
+                       "Observing site                    : %s\n",
+                       stYUM.acSite);
+        (void) write(iFileSpecHdr, acHdrBuf, strlen(acHdrBuf));
+        (void) sprintf(acHdrBuf,
+                       "Field name                        : %s\n",
+                       stYUM.acPulsar);
+        (void) write(iFileSpecHdr, acHdrBuf, strlen(acHdrBuf));
+        (void) sprintf(acHdrBuf,
+                       "Sampling interval                 : %.10g ms\n",
+                       stYUM.dTSamp);
+        (void) write(iFileSpecHdr, acHdrBuf, strlen(acHdrBuf));
+        (void) sprintf(acHdrBuf,
+                       "Number of channels                : %d\n",
+                       stYUM.iNumChans);
+        (void) write(iFileSpecHdr, acHdrBuf, strlen(acHdrBuf));
+        (void) sprintf(acHdrBuf,
+                       "Number of good channels           : %d\n",
+                       stYUM.iNumGoodChans);
+        (void) write(iFileSpecHdr, acHdrBuf, strlen(acHdrBuf));
+        (void) sprintf(acHdrBuf,
+                       "Channel bandwidth                 : %.10g MHz\n",
+                       stYUM.fChanBW);
+        (void) write(iFileSpecHdr, acHdrBuf, strlen(acHdrBuf));
+        (void) sprintf(acHdrBuf,
+                       "Lowest frequency                  : %.10g MHz\n",
+                       stYUM.fFMin);
+        (void) write(iFileSpecHdr, acHdrBuf, strlen(acHdrBuf));
+        (void) sprintf(acHdrBuf,
+                       "Highest frequency                 : %.10g MHz\n",
+                       stYUM.fFMax);
+        (void) write(iFileSpecHdr, acHdrBuf, strlen(acHdrBuf));
+        (void) sprintf(acHdrBuf,
+                       "Estimated number of bands         : %d\n",
+                       stYUM.iNumBands);
+        (void) write(iFileSpecHdr, acHdrBuf, strlen(acHdrBuf));
+        (void) sprintf(acHdrBuf,
+                       "Number of bad time sections       : %d\n",
+                       stYUM.iNumBadTimes);
+        (void) write(iFileSpecHdr, acHdrBuf, strlen(acHdrBuf));
+        (void) sprintf(acHdrBuf,
+                       "Number of bits per sample         : %d\n",
+                       stYUM.iNumBits);
+        (void) write(iFileSpecHdr, acHdrBuf, strlen(acHdrBuf));
+        (void) sprintf(acHdrBuf,
+                       "Number of IFs                     : %d\n",
+                       stYUM.iNumIFs);
+        (void) write(iFileSpecHdr, acHdrBuf, strlen(acHdrBuf));
+        (void) sprintf(acHdrBuf, "Duration of data in\n");
+        (void) write(iFileSpecHdr, acHdrBuf, strlen(acHdrBuf));
+        (void) sprintf(acHdrBuf,
+                       "    Bytes                         : %ld\n",
+                       (lDataSizeTotal / (iNFFT * iNumAcc)));
+        (void) write(iFileSpecHdr, acHdrBuf, strlen(acHdrBuf));
+        (void) sprintf(acHdrBuf,
+                       "    Time samples                  : %d\n",
+                       stYUM.iTimeSamps);
+        (void) write(iFileSpecHdr, acHdrBuf, strlen(acHdrBuf));
+        (void) sprintf(acHdrBuf,
+                       "    Time                          : %g s\n",
+                       (stYUM.iTimeSamps * (stYUM.dTSamp * 1e-3)));
+        (void) write(iFileSpecHdr, acHdrBuf, strlen(acHdrBuf));
+
+        (void) close(iFileSpecHdr);
+    }
+    else
+    {
+        (void) fprintf(stderr, "ERROR: Currently supports only fil files!\n");
         CleanUp(iNTaps);
         YAPP_CleanUp();
+        PrintUsage(pcProgName);
         return EXIT_FAILURE;
     }
 
@@ -479,6 +595,7 @@ int main(int argc, char *argv[])
             {
                 (void) write(iFileSpec, g_pfSumPow, iNFFT * sizeof(float));
 
+                #if 0
                 fDataMin = g_pfSumPow[0];
                 fDataMax = g_pfSumPow[0];
                 for (j = 0; j < iBlockSize; ++j)
@@ -513,7 +630,9 @@ int main(int argc, char *argv[])
                 cpgswin(g_pfXAxis[0], g_pfXAxis[iBlockSize-1], fColMin, fColMax);
                 cpglab("Bin Number", "", "SumPow");
                 cpgbox("BCNST", 0.0, 0, "BCNST", 0.0, 0);
+                cpgsci(PG_CI_PLOT);
                 cpgline(iNFFT, g_pfXAxis, g_pfSumPow);
+                cpgsci(PG_CI_DEF);
 
                 if (!(cIsLastBlock))
                 {
@@ -592,6 +711,7 @@ int main(int argc, char *argv[])
                         (void) usleep(PG_PLOT_SLEEP);
                     }
                 }
+                #endif
             }
             else
             {
@@ -623,6 +743,8 @@ int main(int argc, char *argv[])
         }
     }
 
+    (void) close(iFileSpec);
+
     (void) printf("DONE!\n");
 
     CleanUp(iNTaps);
@@ -636,7 +758,6 @@ int main(int argc, char *argv[])
 int InitPFB(int iNTaps, int iNFFT)
 {
     int i = 0;
-    int j = 0;
     int iRet = EXIT_SUCCESS;
 
     if (g_cIsPFBOn)
@@ -885,6 +1006,7 @@ int ReadData(char cIsFirst, int iNTaps, int iNFFT)
 {
     int i = 0;
     int j = 0;
+    int k = 0;
 
     if (cIsFirst)
     {
@@ -905,16 +1027,16 @@ int ReadData(char cIsFirst, int iNTaps, int iNFFT)
                interleaved, like so:
                reX, imX, reY, imY, ... */
             j = 0;
-            for (j = 0; j < NUM_BYTES_PER_SAMP * iNFFT; j += NUM_BYTES_PER_SAMP)
+            for (k = 0; k < NUM_BYTES_PER_SAMP * iNFFT; k += NUM_BYTES_PER_SAMP)
             {
                 g_astPFBData[i].pfcDataX[j][0]
-                                        = (float) g_astPFBData[i].pcData[j];
+                                        = (float) g_astPFBData[i].pcData[k];
                 g_astPFBData[i].pfcDataX[j][1]
-                                        = (float) g_astPFBData[i].pcData[j+1];
+                                        = (float) g_astPFBData[i].pcData[k+1];
                 g_astPFBData[i].pfcDataY[j][0]
-                                        = (float) g_astPFBData[i].pcData[j+2];
+                                        = (float) g_astPFBData[i].pcData[k+2];
                 g_astPFBData[i].pfcDataY[j][1]
-                                        = (float) g_astPFBData[i].pcData[j+3];
+                                        = (float) g_astPFBData[i].pcData[k+3];
                 ++j;
             }
         }
@@ -1024,25 +1146,76 @@ void CleanUp(int iNTaps)
     int i = 0;
 
     /* free resources */
-    free(g_pcInBuf);
+    if (g_pcInBuf != NULL)
+    {
+        free(g_pcInBuf);
+        g_pcInBuf = NULL;
+    }
 
     for (i = 0; i < iNTaps; ++i)
     {
-        fftwf_free(g_astPFBData[i].pfcDataX);
-        fftwf_free(g_astPFBData[i].pfcDataY);
+        if (g_astPFBData[i].pfcDataX != NULL)
+        {
+            fftwf_free(g_astPFBData[i].pfcDataX);
+            g_astPFBData[i].pfcDataX = NULL;
+        }
+        if (g_astPFBData[i].pfcDataY != NULL)
+        {
+            fftwf_free(g_astPFBData[i].pfcDataY);
+            g_astPFBData[i].pfcDataY = NULL;
+        }
     }
-    fftwf_free(g_pfcFFTInX);
-    fftwf_free(g_pfcFFTInY);
-    fftwf_free(g_pfcFFTOutX);
-    fftwf_free(g_pfcFFTOutY);
+    if (g_pfcFFTInX != NULL)
+    {
+        fftwf_free(g_pfcFFTInX);
+        g_pfcFFTInX = NULL;
+    }
+    if (g_pfcFFTInY != NULL)
+    {
+        fftwf_free(g_pfcFFTInY);
+        g_pfcFFTInY = NULL;
+    }
+    if (g_pfcFFTOutX != NULL)
+    {
+        fftwf_free(g_pfcFFTOutX);
+        g_pfcFFTOutX = NULL;
+    }
+    if (g_pfcFFTOutY != NULL)
+    {
+        fftwf_free(g_pfcFFTOutY);
+        g_pfcFFTOutY = NULL;
+    }
+    if (g_pcPFBCoeff != NULL)
+    {
+        free(g_pcPFBCoeff);
+        g_pcPFBCoeff = NULL;
+    }
+    if (g_pcOptPFBCoeff != NULL)
+    {
+	    free(g_pcOptPFBCoeff);
+        g_pcOptPFBCoeff = NULL;
+    }
 
-    free(g_pcPFBCoeff);
-	free(g_pcOptPFBCoeff);
-
-    free(g_pfSumPowX);
-    free(g_pfSumPowY);
-    free(g_pfSumStokesRe);
-    free(g_pfSumStokesIm);
+    if (g_pfSumPowX != NULL)
+    {
+        free(g_pfSumPowX);
+        g_pfSumPowX = NULL;
+    }
+    if (g_pfSumPowY != NULL)
+    {
+        free(g_pfSumPowY);
+        g_pfSumPowY = NULL;
+    }
+    if (g_pfSumStokesRe != NULL)
+    {
+        free(g_pfSumStokesRe);
+        g_pfSumStokesRe = NULL;
+    }
+    if (g_pfSumStokesIm != NULL)
+    {
+        free(g_pfSumStokesIm);
+        g_pfSumStokesIm = NULL;
+    }
 
     /* destroy plans */
     fftwf_destroy_plan(g_stPlanX);
@@ -1050,7 +1223,11 @@ void CleanUp(int iNTaps)
 
     fftwf_cleanup();
 
-    (void) close(g_iFileData);
+    if (g_iFileData != 0)
+    {
+        (void) close(g_iFileData);
+        g_iFileData = 0;
+    }
 
     return;
 }
