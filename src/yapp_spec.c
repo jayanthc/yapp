@@ -778,7 +778,7 @@ int InitPFB(int iNTaps, int iNFFT)
                            strerror(errno));
             return EXIT_FAILURE;
         }
-		g_pcOptPFBCoeff = (signed char *) malloc(2
+        g_pcOptPFBCoeff = (signed char *) malloc(2
                                                  * iNTaps
                                                  * iNFFT
                                                  * sizeof(signed char)); 
@@ -824,12 +824,12 @@ int InitPFB(int iNTaps, int iNFFT)
         }
         (void) close(iFileCoeff);
 
-    	/* duplicate the coefficients for PFB optimisation */
+        /* duplicate the coefficients for PFB optimisation */
         for (i = 0; i < (iNTaps * iNFFT); ++i)
         {
             g_pcOptPFBCoeff[2*i] = g_pcPFBCoeff[i];
             g_pcOptPFBCoeff[(2*i)+1] = g_pcPFBCoeff[i];
-    	}
+        }
     }
 
     /* allocate memory for data array contents */
@@ -1086,9 +1086,9 @@ int DoPFB(int iNTaps, int iNFFT)
     int j = 0;
     int k = 0;
     int iCoeffStartIdx = 0;
-	float *pfIn = NULL;
-	signed char *pcCoeff = NULL;
-	float *pfOut = NULL;
+    float *pfIn = NULL;
+    signed char *pcCoeff = NULL;
+    float *pfOut = NULL;
 
     /* reset memory */
     (void) memset(g_pfcFFTInX, '\0', iNFFT * sizeof(fftwf_complex));
@@ -1098,20 +1098,20 @@ int DoPFB(int iNTaps, int iNFFT)
     for (j = 0; j < iNTaps; ++j)
     {
         iCoeffStartIdx = 2 * j * iNFFT;
-		pfOut = &g_pfcFFTInX[0][0];
-		pfIn = &g_astPFBData[i].pfcDataX[0][0];
-		pcCoeff = &g_pcOptPFBCoeff[iCoeffStartIdx];
+        pfOut = &g_pfcFFTInX[0][0];
+        pfIn = &g_astPFBData[i].pfcDataX[0][0];
+        pcCoeff = &g_pcOptPFBCoeff[iCoeffStartIdx];
         for (k = 0; k < (2 * iNFFT); ++k)
         {
             pfOut[k] += pfIn[k] * pcCoeff[k];
         }
-		pfOut = &g_pfcFFTInY[0][0];
-		pfIn = &g_astPFBData[i].pfcDataY[0][0];
-		pcCoeff = &g_pcOptPFBCoeff[iCoeffStartIdx];
+        pfOut = &g_pfcFFTInY[0][0];
+        pfIn = &g_astPFBData[i].pfcDataY[0][0];
+        pcCoeff = &g_pcOptPFBCoeff[iCoeffStartIdx];
         for (k = 0; k < (2 * iNFFT); ++k)
-		{
-	  		pfOut[k] += pfIn[k] * pcCoeff[k];
-		}
+        {
+            pfOut[k] += pfIn[k] * pcCoeff[k];
+        }
         i = g_astPFBData[i].iNextIdx;
     }
 
@@ -1192,7 +1192,7 @@ void CleanUp(int iNTaps)
     }
     if (g_pcOptPFBCoeff != NULL)
     {
-	    free(g_pcOptPFBCoeff);
+        free(g_pcOptPFBCoeff);
         g_pcOptPFBCoeff = NULL;
     }
 
