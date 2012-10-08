@@ -33,6 +33,8 @@
 
 #define USEC2SEC            1e-6
 
+#define YAPP_RET_DATADONE   1
+
 typedef struct tagPFBData
 {
     signed char *pcData;        /* raw data, LEN_DATA long*/

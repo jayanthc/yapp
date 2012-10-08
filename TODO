@@ -25,9 +25,8 @@ yapp_viewdata:
     axes.
 8.  FEATURE: Support user-defined colourmaps.
 
-yapp_spec:
-1.  BUG: Crash while reading last block for PFB ON with N >= 1024.
-2.  Think of a different name.
+yapp_ft:
+1.  BUG: Something wrong with data reading when file size is not 2^x.
 
 yapp_dedisp:
 1.  BUG: *.tim files created by yapp_dedisp for *.fil does not result in pulsar
