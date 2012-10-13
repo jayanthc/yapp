@@ -13,15 +13,15 @@ The YAPP tools available with this release are:
     yapp_viewdata       : Plots raw dynamic spectrum data to PGPLOT device.
 
 The supported file formats for both tools are DAS '.spec' and SIGPROC '.fil'.
-The headerless '.fil' format is not yet supported.                                           
+The header-less '.fil' format is not yet supported.
 
 System requirements: Linux/Mac OS, PGPLOT with C binding
 
 Installation instructions: On a typical Ubuntu-based machine in which PGPLOT
 was installed via APT, running 'make' followed by 'sudo make install' should
 work, with the binaries being copied to /usr/local/bin. For different operating
-systems and/or different PGPLOT installion directories and/or a different
-choice of YAPP installion directory, the makefile may need to be modified by
+systems and/or different PGPLOT installation directories and/or a different
+choice of YAPP installation directory, the makefile may need to be modified by
 hand.
 
 Created by Jayanth Chennamangalam
