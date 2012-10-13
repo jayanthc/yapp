@@ -24,11 +24,11 @@ yapp_viewdata:
 7.  BUG: Eliminte flickering in noninteractive mode plots by redrawing only
     axes.
 8.  FEATURE: Support user-defined colourmaps.
+9.  BUG: X-axis tick mark calculation is not correct in some cases
 
 yapp_ft:
 1.  BUG: Something wrong with data reading when file size is not 2^x.
-2.  Use YAPP_Malloc() throughout the code.
-3.  Make sure casts to (size_t) are in place.
+2.  Make sure casts to (size_t) are in place.
 
 yapp_dedisp:
 1.  BUG: *.tim files created by yapp_dedisp for *.fil does not result in pulsar

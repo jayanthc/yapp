@@ -63,8 +63,7 @@ char g_cIsPFBOn = YAPP_FALSE;
 char g_acFileData[256] = {0};
 char g_acFileCoeff[256] = {0};
 int g_iFileData = 0;
-signed char* g_pcPFBCoeff = NULL;
-signed char* g_pcOptPFBCoeff = NULL;
+float* g_pfPFBCoeff = NULL;
 
 int main(int argc, char *argv[])
 {
@@ -168,7 +167,6 @@ int main(int argc, char *argv[])
             case 'n':   /* -n or --nfft */
                 /* set option */
                 iNFFT = atoi(optarg);
-                iBlockSize = iNFFT;
                 break;
 
             case 'a':   /* -a or --nacc */
@@ -245,6 +243,9 @@ int main(int argc, char *argv[])
         return YAPP_RET_ERROR;
     }
 
+    /* set the read block size */
+    iBlockSize = iNFFT;
+
     /* register the signal-handling function */
     iRet = YAPP_RegisterSignalHandlers();
     if (iRet != YAPP_RET_SUCCESS)
@@ -266,7 +267,7 @@ int main(int argc, char *argv[])
                        "ERROR: Failed to stat %s: %s!\n",
                        g_acFileData,
                        strerror(errno));
-        YAPP_CleanUp();
+        CleanUp(iNTaps);
         return YAPP_RET_ERROR;
     }
     lDataSizeTotal = (long) stFileStats.st_size;
@@ -327,7 +328,6 @@ int main(int argc, char *argv[])
     {
         (void) fprintf(stderr, "ERROR! InitPFB failed!\n");
         CleanUp(iNTaps);
-        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
 
@@ -374,7 +374,6 @@ int main(int argc, char *argv[])
         {
             (void) fprintf(stderr, "ERROR: Opening spectrum file failed!\n");
             CleanUp(iNTaps);
-            YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
     
@@ -386,7 +385,6 @@ int main(int argc, char *argv[])
         {
             (void) fprintf(stderr, "ERROR: Opening spectrum header file failed!\n");
             CleanUp(iNTaps);
-            YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
 
@@ -474,9 +472,8 @@ int main(int argc, char *argv[])
     else
     {
         (void) fprintf(stderr, "ERROR: Currently supports only fil files!\n");
-        CleanUp(iNTaps);
-        YAPP_CleanUp();
         PrintUsage(pcProgName);
+        CleanUp(iNTaps);
         return YAPP_RET_ERROR;
     }
 
@@ -497,7 +494,7 @@ int main(int argc, char *argv[])
             (void) fprintf(stderr,
                            "ERROR: Opening graphics device %s failed!\n",
                            PG_DEV);
-            YAPP_CleanUp();
+            CleanUp(iNTaps);
             return YAPP_RET_ERROR;
         }
 
@@ -518,21 +515,15 @@ int main(int argc, char *argv[])
             (void) fprintf(stderr,
                            "ERROR: Memory allocation for X-axis failed! %s!\n",
                            strerror(errno));
-            YAPP_CleanUp();
+            CleanUp(iNTaps);
             return YAPP_RET_ERROR;
         }
         /* load the X-axis frequency axis */
         for (i = 0; i < iBlockSize; ++i)
         {
-            //temp
-            g_pfXAxis[i] = ((float) i * 128.0) / iNFFT;
+            /* frequency axis in MHz */
+            g_pfXAxis[i] = ((float) i * 1e-6) / (dTSampInSec * iNFFT);
         }
-
-        #if 0
-        /* calculate the tick step sizes */
-        fXStep = (int) ((((iBlockSize - 1) * dTSampInSec) - 0)
-                        / PG_TICK_STEPS_X);
-        #endif
     }
 
     while (iNumReads > 0)
@@ -546,7 +537,6 @@ int main(int argc, char *argv[])
         {
             (void) fprintf(stderr, "ERROR: Reading data failed!\n");
             CleanUp(iNTaps);
-            YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
         if (cIsFirst)
@@ -579,7 +569,6 @@ int main(int argc, char *argv[])
             (void) fprintf(stderr, "ERROR! FFT failed!\n");
             (void) close(iFileSpec);
             CleanUp(iNTaps);
-            YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
 
@@ -653,7 +642,7 @@ int main(int argc, char *argv[])
 
                     cpgsvp(PG_VP_ML, PG_VP_MR, PG_VP_MB, PG_VP_MT);
                     cpgswin(g_pfXAxis[0], g_pfXAxis[iBlockSize-1], fColMin, fColMax);
-                    cpglab("Bin Number", "", "SumPow");
+                    cpglab("Frequency (MHz)", "Total Power", "Power Spectrum");
                     cpgbox("BCNST", 0.0, 0, "BCNST", 0.0, 0);
                     cpgsci(PG_CI_PLOT);
                     cpgline(iNFFT, g_pfXAxis, g_pfSumPow);
@@ -706,7 +695,6 @@ int main(int argc, char *argv[])
 
                                     break;
                                 }
-                                #if 1
                                 else if (((fButX >= PG_BUTEXIT_L) && (fButX <= PG_BUTEXIT_R))
                                     && ((fButY >= PG_BUTEXIT_B) && (fButY <= PG_BUTEXIT_T)))
                                 {
@@ -724,10 +712,12 @@ int main(int argc, char *argv[])
                                     cpgsci(1);  /* reset colour index to black */
                                     (void) usleep(PG_BUT_CL_SLEEP);
 
-                                    YAPP_CleanUp();
+                                    (void) close(iFileSpec);
+                                    (void) printf("\nDONE!\n");
+                                    cpgclos();
+                                    CleanUp(iNTaps);
                                     return YAPP_RET_SUCCESS;
                                 }
-                                #endif
                             }
                         }
                         else
@@ -769,16 +759,12 @@ int main(int argc, char *argv[])
     }
 
     (void) close(iFileSpec);
-
     (void) printf("\nDONE!\n");
-
     if (cHasGraphics)
     {
         cpgclos();
     }
-
     CleanUp(iNTaps);
-    YAPP_CleanUp();
 
     return YAPP_RET_SUCCESS;
 }
@@ -798,21 +784,10 @@ int InitPFB(int iNTaps, int iNFFT)
            taps = 1 */
         iNTaps = NUM_TAPS;
 
-        g_pcPFBCoeff = (signed char *) malloc(iNTaps
-                                              * iNFFT
-                                              * sizeof(signed char));
-        if (NULL == g_pcPFBCoeff)
-        {
-            (void) fprintf(stderr,
-                           "ERROR: Memory allocation failed! %s.\n",
-                           strerror(errno));
-            return YAPP_RET_ERROR;
-        }
-        g_pcOptPFBCoeff = (signed char *) malloc(2
-                                                 * iNTaps
-                                                 * iNFFT
-                                                 * sizeof(signed char)); 
-        if (NULL == g_pcOptPFBCoeff)
+        g_pfPFBCoeff = (float *) YAPP_Malloc((size_t) iNTaps * iNFFT,
+                                             sizeof(float),
+                                             YAPP_FALSE);
+        if (NULL == g_pfPFBCoeff)
         {
             (void) fprintf(stderr,
                            "ERROR: Memory allocation failed! %s.\n",
@@ -842,9 +817,9 @@ int InitPFB(int iNTaps, int iNFFT)
         }
 
         iRet = read(iFileCoeff,
-                    g_pcPFBCoeff,
-                    iNTaps * iNFFT * sizeof(signed char));
-        if (iRet != (iNTaps * iNFFT * sizeof(signed char)))
+                    g_pfPFBCoeff,
+                    iNTaps * iNFFT * sizeof(float));
+        if (iRet != (iNTaps * iNFFT * sizeof(float)))
         {
             (void) fprintf(stderr,
                            "ERROR: Reading filter coefficients failed! %s.\n",
@@ -853,13 +828,6 @@ int InitPFB(int iNTaps, int iNFFT)
             return YAPP_RET_ERROR;
         }
         (void) close(iFileCoeff);
-
-        /* duplicate the coefficients for PFB optimisation */
-        for (i = 0; i < (iNTaps * iNFFT); ++i)
-        {
-            g_pcOptPFBCoeff[2*i] = g_pcPFBCoeff[i];
-            g_pcOptPFBCoeff[(2*i)+1] = g_pcPFBCoeff[i];
-        }
     }
 
     /* allocate memory for data array contents */
@@ -930,7 +898,9 @@ int InitPFB(int iNTaps, int iNFFT)
         return YAPP_RET_ERROR;
     }
 
-    g_pfSumPow = (float *) calloc(iNFFT, sizeof(float));
+    g_pfSumPow = (float *) YAPP_Malloc((size_t) iNFFT,
+                                       sizeof(float),
+                                       YAPP_TRUE);
     if (NULL == g_pfSumPow)
     {
         (void) fprintf(stderr,
@@ -938,7 +908,9 @@ int InitPFB(int iNTaps, int iNFFT)
                        strerror(errno));
         return YAPP_RET_ERROR;
     }
-    g_pfSumPowX = (float *) calloc(iNFFT, sizeof(float));
+    g_pfSumPowX = (float *) YAPP_Malloc((size_t) iNFFT,
+                                        sizeof(float),
+                                        YAPP_TRUE);
     if (NULL == g_pfSumPowX)
     {
         (void) fprintf(stderr,
@@ -946,7 +918,9 @@ int InitPFB(int iNTaps, int iNFFT)
                        strerror(errno));
         return YAPP_RET_ERROR;
     }
-    g_pfSumPowY = (float *) calloc(iNFFT, sizeof(float));
+    g_pfSumPowY = (float *) YAPP_Malloc((size_t) iNFFT,
+                                        sizeof(float),
+                                        YAPP_TRUE);
     if (NULL == g_pfSumPowY)
     {
         (void) fprintf(stderr,
@@ -954,7 +928,9 @@ int InitPFB(int iNTaps, int iNFFT)
                        strerror(errno));
         return YAPP_RET_ERROR;
     }
-    g_pfSumStokesRe = (float *) calloc(iNFFT, sizeof(float));
+    g_pfSumStokesRe = (float *) YAPP_Malloc((size_t) iNFFT,
+                                            sizeof(float),
+                                            YAPP_TRUE);
     if (NULL == g_pfSumStokesRe)
     {
         (void) fprintf(stderr,
@@ -962,7 +938,9 @@ int InitPFB(int iNTaps, int iNFFT)
                        strerror(errno));
         return YAPP_RET_ERROR;
     }
-    g_pfSumStokesIm = (float *) calloc(iNFFT, sizeof(float));
+    g_pfSumStokesIm = (float *) YAPP_Malloc((size_t) iNFFT,
+                                            sizeof(float),
+                                            YAPP_TRUE);
     if (NULL == g_pfSumStokesIm)
     {
         (void) fprintf(stderr,
@@ -1002,8 +980,9 @@ int LoadDataToMem(int iNFFT)
         return YAPP_RET_ERROR;
     }
 
-    g_pcInBuf = (signed char*) malloc(stFileStats.st_size
-                                      * sizeof(signed char));
+    g_pcInBuf = (signed char*) YAPP_Malloc(stFileStats.st_size,
+                                           sizeof(signed char),
+                                           YAPP_FALSE);
     if (NULL == g_pcInBuf)
     {
         (void) fprintf(stderr,
@@ -1074,14 +1053,16 @@ int ReadData(char cIsFirst, int iNTaps, int iNFFT)
             if (g_iNumBytes - g_iReadBytes != 0)
             {
                 (void) printf("\nINFO: Ignoring last %d bytes of data!\n", g_iNumBytes - g_iReadBytes);
+                printf("%d\n", g_astPFBData[g_iPFBWriteIdx].pcData + (iNTaps * NUM_BYTES_PER_SAMP * iNFFT) - g_pcInBuf);
             }
             g_iPFBReadIdx = g_astPFBData[g_iPFBReadIdx].iNextIdx;
             return YAPP_RET_DATADONE;
         }
 
         /* write new data to the write buffer */
-        //g_astPFBData[g_iPFBWriteIdx].pcData += (iNTaps * NUM_BYTES_PER_SAMP * iNFFT);
-        g_astPFBData[g_iPFBWriteIdx].pcData += (NUM_BYTES_PER_SAMP * iNFFT);
+        //temp
+        g_astPFBData[g_iPFBWriteIdx].pcData += (iNTaps * NUM_BYTES_PER_SAMP * iNFFT);
+        //g_astPFBData[g_iPFBWriteIdx].pcData += (NUM_BYTES_PER_SAMP * iNFFT);
 
         /* unpack data */
         /* assuming real and imaginary parts are interleaved, and X and Y are
@@ -1126,20 +1107,13 @@ int DoPFB(int iNTaps, int iNFFT)
     i = g_iPFBReadIdx;
     for (j = 0; j < iNTaps; ++j)
     {
-        iCoeffStartIdx = 2 * j * iNFFT;
-        pfOut = &g_pfcFFTInX[0][0];
-        pfIn = &g_astPFBData[i].pfcDataX[0][0];
-        pcCoeff = &g_pcOptPFBCoeff[iCoeffStartIdx];
-        for (k = 0; k < (2 * iNFFT); ++k)
+        iCoeffStartIdx = j * iNFFT;
+        for (k = 0; k < iNFFT; ++k)
         {
-            pfOut[k] += pfIn[k] * pcCoeff[k];
-        }
-        pfOut = &g_pfcFFTInY[0][0];
-        pfIn = &g_astPFBData[i].pfcDataY[0][0];
-        pcCoeff = &g_pcOptPFBCoeff[iCoeffStartIdx];
-        for (k = 0; k < (2 * iNFFT); ++k)
-        {
-            pfOut[k] += pfIn[k] * pcCoeff[k];
+            g_pfcFFTInX[k][0] += g_astPFBData[i].pfcDataX[k][0] * g_pfPFBCoeff[iCoeffStartIdx+k];
+            g_pfcFFTInX[k][1] += g_astPFBData[i].pfcDataX[k][1] * g_pfPFBCoeff[iCoeffStartIdx+k];
+            g_pfcFFTInY[k][0] += g_astPFBData[i].pfcDataY[k][0] * g_pfPFBCoeff[iCoeffStartIdx+k];
+            g_pfcFFTInY[k][1] += g_astPFBData[i].pfcDataY[k][1] * g_pfPFBCoeff[iCoeffStartIdx+k];
         }
         i = g_astPFBData[i].iNextIdx;
     }
@@ -1175,12 +1149,6 @@ void CleanUp(int iNTaps)
     int i = 0;
 
     /* free resources */
-    if (g_pcInBuf != NULL)
-    {
-        free(g_pcInBuf);
-        g_pcInBuf = NULL;
-    }
-
     for (i = 0; i < iNTaps; ++i)
     {
         if (g_astPFBData[i].pfcDataX != NULL)
@@ -1214,37 +1182,6 @@ void CleanUp(int iNTaps)
         fftwf_free(g_pfcFFTOutY);
         g_pfcFFTOutY = NULL;
     }
-    if (g_pcPFBCoeff != NULL)
-    {
-        free(g_pcPFBCoeff);
-        g_pcPFBCoeff = NULL;
-    }
-    if (g_pcOptPFBCoeff != NULL)
-    {
-        free(g_pcOptPFBCoeff);
-        g_pcOptPFBCoeff = NULL;
-    }
-
-    if (g_pfSumPowX != NULL)
-    {
-        free(g_pfSumPowX);
-        g_pfSumPowX = NULL;
-    }
-    if (g_pfSumPowY != NULL)
-    {
-        free(g_pfSumPowY);
-        g_pfSumPowY = NULL;
-    }
-    if (g_pfSumStokesRe != NULL)
-    {
-        free(g_pfSumStokesRe);
-        g_pfSumStokesRe = NULL;
-    }
-    if (g_pfSumStokesIm != NULL)
-    {
-        free(g_pfSumStokesIm);
-        g_pfSumStokesIm = NULL;
-    }
 
     /* destroy plans */
     fftwf_destroy_plan(g_stPlanX);
@@ -1258,68 +1195,11 @@ void CleanUp(int iNTaps)
         g_iFileData = 0;
     }
 
-    return;
-}
-
-#if 0
-void Plot()
-{
-    float fMinFreq = g_pfFreq[0];
-    float fMaxFreq = g_pfFreq[iNFFT-1];
-    float fMinY = FLT_MAX;
-    float fMaxY = -(FLT_MAX);
-    int i = 0;
-
-    for (i = 0; i < iNFFT; ++i)
-    {
-        if (g_pfSumPowX[i] != 0.0)
-        {
-            g_pfSumPowX[i] = 10 * log10f(g_pfSumPowX[i]);
-        }
-        if (g_pfSumPowY[i] != 0.0)
-        {
-            g_pfSumPowY[i] = 10 * log10f(g_pfSumPowY[i]);
-        }
-    }
-
-    /* plot accumulated X-pol. power */
-    fMinY = FLT_MAX;
-    fMaxY = -(FLT_MAX);
-    for (i = 0; i < iNFFT; ++i)
-    {
-        if (g_pfSumPowX[i] > fMaxY)
-        {
-            fMaxY = g_pfSumPowX[i];
-        }
-        if (g_pfSumPowX[i] < fMinY)
-        {
-            fMinY = g_pfSumPowX[i];
-        }
-    }
-    /* to avoid min == max */
-    fMaxY += 1.0;
-    fMinY -= 1.0;
-    #if 1
-    for (i = 0; i < iNFFT; ++i)
-    {
-        g_pfSumPowX[i] -= fMaxY;
-    }
-    fMinY -= fMaxY;
-    fMaxY = 0;
-    #endif
-    cpgpanl(1, 1);
-    cpgeras();
-    cpgsvp(PG_VP_ML, PG_VP_MR, PG_VP_MB, PG_VP_MT);
-    cpgswin(fMinFreq, fMaxFreq, fMinY, fMaxY);
-    //cpglab("Bin Number", "", "SumPowX");
-    cpgbox("BCNST", 0.0, 0, "BCNST", 0.0, 0);
-    cpgsci(PG_CI_PLOT);
-    cpgline(iNFFT, g_pfFreq, g_pfSumPowX);
-    cpgsci(PG_CI_DEF);
+    /* free all memory allocated using YAPP_Malloc() */
+    YAPP_CleanUp();
 
     return;
 }
-#endif
 
 /*
  * Prints usage information
