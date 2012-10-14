@@ -43,8 +43,7 @@ extern int g_iPGDev;
    termination, such as those triggered by SIGINT or SIGTERM */
 float *g_pfXAxis = NULL;
 signed char *g_pcInBuf = NULL;
-int g_iReadBytes = 0;
-int g_iNumBytes = 0;
+size_t g_iReadBytes = 0;
 PFB_DATA g_astPFBData[NUM_TAPS] = {{0}};
 int g_iPFBReadIdx = 0;
 int g_iPFBWriteIdx = 0;
@@ -295,6 +294,15 @@ int main(int argc, char *argv[])
     lBytesToProc = (long) floor((dDataProcTime / dTSampInSec)
                                                     /* number of samples */
                            * fSampSize);
+    /* truncate lBytesToProc to (X * iNTaps * iNFFT * NUM_BYTES_PER_SAMP)
+       bytes where X is the largest possible integer, if more */
+    float fBlocks = (float) lBytesToProc / (iNTaps * iNFFT * NUM_BYTES_PER_SAMP);
+    int iBlocks = (int) fBlocks;
+    if (fBlocks != (float) iBlocks)
+    {
+        size_t iDiffBytes = (size_t) ((fBlocks - (float) iBlocks) * iNTaps * iNFFT * NUM_BYTES_PER_SAMP);
+        lBytesToProc -= iDiffBytes;
+    }
 
     if ((lBytesToSkip + lBytesToProc) > lDataSizeTotal)
     {
@@ -1004,8 +1012,6 @@ int LoadDataToMem(int iNFFT)
         (void) printf("File read done!\n");
     }
 
-    g_iNumBytes = stFileStats.st_size;
-
     return YAPP_RET_SUCCESS;
 }
 
@@ -1041,28 +1047,15 @@ int ReadData(char cIsFirst, int iNTaps, int iNFFT)
                                         = (float) g_astPFBData[i].pcData[k+3];
                 ++j;
             }
-            g_iReadBytes += (iNTaps * NUM_BYTES_PER_SAMP * iNFFT);
         }
         g_iPFBWriteIdx = 0;     /* next write into the first buffer */
         g_iPFBReadIdx = 0;      /* PFB to be performed from first buffer */
+        g_iReadBytes += (iNTaps * NUM_BYTES_PER_SAMP * iNFFT);
     }
     else
     {
-        if ((g_iNumBytes - g_iReadBytes) < (NUM_BYTES_PER_SAMP * iNFFT))
-        {
-            if (g_iNumBytes - g_iReadBytes != 0)
-            {
-                (void) printf("\nINFO: Ignoring last %d bytes of data!\n", g_iNumBytes - g_iReadBytes);
-                printf("%d\n", g_astPFBData[g_iPFBWriteIdx].pcData + (iNTaps * NUM_BYTES_PER_SAMP * iNFFT) - g_pcInBuf);
-            }
-            g_iPFBReadIdx = g_astPFBData[g_iPFBReadIdx].iNextIdx;
-            return YAPP_RET_DATADONE;
-        }
-
         /* write new data to the write buffer */
-        //temp
-        g_astPFBData[g_iPFBWriteIdx].pcData += (iNTaps * NUM_BYTES_PER_SAMP * iNFFT);
-        //g_astPFBData[g_iPFBWriteIdx].pcData += (NUM_BYTES_PER_SAMP * iNFFT);
+        g_astPFBData[g_iPFBWriteIdx].pcData += (NUM_BYTES_PER_SAMP * iNFFT);
 
         /* unpack data */
         /* assuming real and imaginary parts are interleaved, and X and Y are
