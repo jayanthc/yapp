@@ -87,6 +87,7 @@ enum tagDedispTimeSeriesFormat
 #define EXT_DEDISPSPECCFG           ".cfg"
 #define EXT_PS                      ".ps"
 #define EXT_FIL                     ".fil"
+#define EXT_FHD                     ".fhd"
 #define EXT_TIM                     ".tim"
 
 #define SUFFIX_CFG                  "_cfg"
@@ -197,7 +198,10 @@ enum tagDedispTimeSeriesFormat
 #define PG_BUT_FILLCOL          1
 #define PG_BUT_CL_SLEEP         100000  /* in microseconds, 100 ms */
 
-#define PG_PLOT_SLEEP       500000  /* in microseconds, 500 ms */
+#define PG_PLOT_SLEEP           500000  /* in microseconds, 500 ms */
+
+#define PG_CI_DEF               1
+#define PG_CI_PLOT              11
 
 #define PATH_ERF_LOOKUP     "./ERF_LOOKUP_TABLE"    /**< @brief Path to the
                                                          error function lookup
@@ -402,6 +406,14 @@ int YAPP_GetFileType(char *pcFile);
  * @param[in]   pcExt       Extension that is to be stripped
  */
 char* YAPP_GetFilenameFromPath(char *pcPath, char *pcExt);
+
+/**
+ * Extracts the filename from the given path, with the extension. Caller is
+ * responsible for freeing the returned memory.
+ *
+ * @param[in]   pcPath      Path to the file
+ */
+char* YAPP_GetFilenameWithExtFromPath(char *pcPath);
 
 /**
  * Retrieves the observatory name from its ID.

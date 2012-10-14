@@ -55,7 +55,9 @@ all: yapp_makever \
 	 yapp_viewmetadata \
 	 colourmap.o \
 	 yapp_viewdata.o \
-	 yapp_viewdata
+	 yapp_viewdata \
+	 yapp_ft.o \
+	 yapp_ft
 
 yapp_makever: $(SRCDIR)/yapp_makever.c
 	$(CC) $(CFLAGS_L) $< -o $(IDIR)/$@
@@ -89,6 +91,13 @@ yapp_viewdata: $(IDIR)/yapp_viewdata.o $(IDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o $(IDIR)/colourmap.o
 	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -o $(BINDIR)/$@
 
+yapp_ft.o: $(SRCDIR)/yapp_ft.c $(SRCDIR)/yapp.h
+	$(CC) $(CFLAGS_C) $(DDEBUG) $< -o $(IDIR)/$@
+
+yapp_ft: $(IDIR)/yapp_ft.o $(IDIR)/yapp_version.o \
+	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
+	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -lfftw3f -o $(BINDIR)/$@
+
 # install the man pages
 install:
 	@echo Copying binaries...
@@ -106,4 +115,5 @@ clean:
 	$(DELCMD) $(IDIR)/yapp_viewmetadata.o
 	$(DELCMD) $(IDIR)/colourmap.o
 	$(DELCMD) $(IDIR)/yapp_viewdata.o
+	$(DELCMD) $(IDIR)/yapp_ft.o
 
