@@ -7,7 +7,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=windows-1252" />
 <meta name="author" content="Jayanth Chennamangalam" />
 <meta name="description" content="Yet Another Pulsar Processor" />
-<title>Yet Another Pulsar Processor : yapp_viewmetadata</title>
+<title>Yet Another Pulsar Processor : yapp_ft</title>
 <link rel="stylesheet" href="css/default.css" type="text/css" />
 
 <!-- Google Analytics begin -->
@@ -36,7 +36,7 @@
       <td class="mainLeft">
         <table>
           <tr>
-            <td class="title">yapp_viewmetadata</td>
+            <td class="title">yapp_ft</td>
           </tr>
           <tr>
             <td>
@@ -45,37 +45,81 @@
 <!-- man2html begin -->
  <h3>NAME</h3> 
   
-  yapp_viewmetadata - view metadata/data header/configuration information
+  yapp_ft - perform Fourier transform and optionally polyphase filtering on baseband data
   <h3>SYNOPSIS</h3> 
    
-   <b>yapp_viewmetadata</b> 
+   <b>yapp_ft</b> 
     
     [options]
-    <i>dynamic-spectrum-data-file</i> 
+    <i>baseband-data-file</i> 
      
      <h3>DESCRIPTION</h3> 
       
-      Prints metadata/data header/configuration information to standard output.
-      The supported file formats are DAS '.spec' and SIGPROC '.fil'.
-             
+      Performs Fourier transform and optionally polyphase filtering on baseband data.
+      In other words, this is a software spectrometer. The input should be 8-bit, complex, dual-polarization data.
+      The output is written in the headerless SIGPROC '.fil' format.
+
       <h3>OPTIONS</h3> 
        
        <dl> 
        <dt><b>-h, --help</b></dt><dd> 
 Display a short help text.
 	   </dd>
+       <dt><b>-s, --skip-time</b> <i>time</i></dt><dd> 
+Length of data to be skipped, in seconds (default is 0).
+	   </dd>
+       <dt><b>-p, --proc-time</b> <i>time</i></dt><dd> 
+Length of data to be processed, in seconds (default is all data).
+	   </dd>
+       <dt><b>-b, --pfb</b></dt><dd> 
+Turn polyphase filtering on.
+	   </dd>
+       <dt><b>-n, --nfft</b> <i>N</i></dt><dd> 
+Number of points in FFT (default is 1024).
+	   </dd>
+       <dt><b>-a, --nacc</b> <i>acc-len</i></dt><dd> 
+Number of spectra to be accumulated (default is 1 - no accumulation).
+	   </dd>
+       <dt><b>-l, --tsamp</b> <i>tsamp</i></dt><dd> 
+Sampling time in seconds.
+	   </dd>
+       <dt><b>-f, --fil</b></dt><dd> 
+Output spectra in filterbank format (currently the only format supported).
+	   </dd>
+       <dt><b>-e, --site</b> <i>site-name</i></dt><dd> 
+Observing site name.
+	   </dd>
+       <dt><b>-r, --pulsar</b> <i>psr-name</i></dt><dd> 
+Pulsar name.
+	   </dd>
+       <dt><b>-g, --graphics</b></dt><dd> 
+Turn on plotting.
+	   </dd>
+       <dt><b>-i, --invert</b></dt><dd> 
+Invert background and foreground colours in plots.
+	   </dd>
+       <dt><b>-n, --non-interactive</b></dt><dd> 
+Run in non-interactive mode.
+	   </dd>
        <dt><b>-v, --version</b></dt><dd> 
 Display the version.
 	   </dd>
        </dl> 
-       <h3>EXAMPLES</h3> 
+       <h3>FILES</h3>
+       <dl>
+<dt>If running with PFB on, this program requires a filter coefficients file to
+be present in the current directory. Filter coefficients files can be created
+using the yapp_gencoeff.py script.</dt>
+       </dl>
+
+       <h3>EXAMPLE</h3> 
         
-        <dl>
-        <dt>yapp_viewmetadata data.fil</dt>
-        <dt>yapp_viewmetadata *.spec</dt>
+        <dl> 
+        <dt>yapp_ft -b -n 4096 -a 10 -l 0.00000078125 -f -e GBT -r J1921+2153 rawdata.dat</dt>
         </dl> 
         <h3>SEE ALSO</h3> 
          
+         <b><a href="yapp_viewmetadata.htm">yapp_viewmetadata</a></b>(1),
          <b><a href="yapp_viewdata.htm">yapp_viewdata</a></b>(1)
           
           <h3>AUTHOR</h3> 
