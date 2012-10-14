@@ -11,9 +11,10 @@ The YAPP tools available with this release are:
     yapp_viewmetadata   : Prints metadata/data header/configuration information
                           to standard output.
     yapp_viewdata       : Plots raw dynamic spectrum data to PGPLOT device.
+    yapp_ft             : Performs FFT [+ PFB] on 8-bit complex dual-pol.
+                          baseband data.
 
 The supported file formats for both tools are DAS '.spec' and SIGPROC '.fil'.
-The header-less '.fil' format is not yet supported.
 
 System requirements: Linux/Mac OS, PGPLOT with C binding
 

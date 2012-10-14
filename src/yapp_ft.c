@@ -306,8 +306,8 @@ int main(int argc, char *argv[])
 
     if ((lBytesToSkip + lBytesToProc) > lDataSizeTotal)
     {
-        (void) printf("WARNING: Total data to be read (skipped and processed) %d, %d "
-                      "is more than the size of the file! ",
+        (void) printf("WARNING: Total data to be read (skipped and processed) "
+                      "%d, %d is more than the size of the file! ",
                        lBytesToSkip, lBytesToProc);
         lBytesToProc = lDataSizeTotal - lBytesToSkip;
         (void) printf("Newly calculated size of data to be processed: %ld "
@@ -329,11 +329,13 @@ int main(int argc, char *argv[])
 
     /* truncate lBytesToProc to (X * iNTaps * iNFFT * NUM_BYTES_PER_SAMP)
        bytes where X is the largest possible integer, if more */
-    float fBlocks = (float) lBytesToProc / (iNTaps * iNFFT * NUM_BYTES_PER_SAMP);
+    float fBlocks = (float) lBytesToProc
+                    / (iNTaps * iNFFT * NUM_BYTES_PER_SAMP);
     int iBlocks = (int) fBlocks;
     if (fBlocks != (float) iBlocks)
     {
-        size_t iDiffBytes = (size_t) ((fBlocks - (float) iBlocks) * iNTaps * iNFFT * NUM_BYTES_PER_SAMP);
+        size_t iDiffBytes = (size_t) ((fBlocks - (float) iBlocks)
+                                      * iNTaps * iNFFT * NUM_BYTES_PER_SAMP);
         lBytesToProc -= iDiffBytes;
     }
 
@@ -377,7 +379,8 @@ int main(int argc, char *argv[])
     if (cIsFil)
     {
         /* create output file */
-        char* pcFilename = YAPP_GetFilenameWithExtFromPath(g_acFileData);   /* this will be freed by the garbage collector */
+        /* this will be freed by the YAPP garbage collector */
+        char* pcFilename = YAPP_GetFilenameWithExtFromPath(g_acFileData);
         (void) strcpy(acFileSpec, pcFilename);
         (void) strcat(acFileSpec, EXT_FIL);
         iFileSpec = open(acFileSpec,
@@ -391,7 +394,8 @@ int main(int argc, char *argv[])
         }
     
         /* open fil header file */
-        pcFilename = YAPP_GetFilenameWithExtFromPath(g_acFileData); /* this will be freed by the garbage collector */
+        /* this will be freed by the YAPP garbage collector */
+        pcFilename = YAPP_GetFilenameWithExtFromPath(g_acFileData);
         (void) strcpy(acFileSpecHdr, pcFilename);
         (void) strcat(acFileSpecHdr, EXT_FHD);
         iFileSpecHdr = open(acFileSpecHdr,
@@ -399,7 +403,8 @@ int main(int argc, char *argv[])
                             S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
         if (iFileSpecHdr < YAPP_RET_SUCCESS)
         {
-            (void) fprintf(stderr, "ERROR: Opening spectrum header file failed!\n");
+            (void) fprintf(stderr,
+                           "ERROR: Opening spectrum header file failed!\n");
             CleanUp(iNTaps);
             return YAPP_RET_ERROR;
         }
@@ -600,10 +605,10 @@ int main(int argc, char *argv[])
                                   + (g_pfcFFTOutY[i][1] * g_pfcFFTOutY[i][1]);
                 /* Re(XY*) */
                 g_pfSumStokesRe[i] += (g_pfcFFTOutX[i][0] * g_pfcFFTOutY[i][0])
-                                      + (g_pfcFFTOutX[i][1] * g_pfcFFTOutY[i][1]);
+                    + (g_pfcFFTOutX[i][1] * g_pfcFFTOutY[i][1]);
                 /* Im(XY*) */
                 g_pfSumStokesIm[i] += (g_pfcFFTOutX[i][1] * g_pfcFFTOutY[i][0])
-                                      - (g_pfcFFTOutX[i][0] * g_pfcFFTOutY[i][1]);
+                    - (g_pfcFFTOutX[i][0] * g_pfcFFTOutY[i][1]);
             }
         }
         ++iSpecCount;
@@ -646,7 +651,10 @@ int main(int argc, char *argv[])
                     }
 
                     cpgsvp(PG_VP_ML, PG_VP_MR, PG_VP_MB, PG_VP_MT);
-                    cpgswin(g_pfXAxis[0], g_pfXAxis[iBlockSize-1], fColMin, fColMax);
+                    cpgswin(g_pfXAxis[0],
+                            g_pfXAxis[iBlockSize-1],
+                            fColMin,
+                            fColMax);
                     cpglab("Frequency (MHz)", "Total Power", "Power Spectrum");
                     cpgbox("BCNST", 0.0, 0, "BCNST", 0.0, 0);
                     cpgsci(PG_CI_PLOT);
