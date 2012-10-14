@@ -1,0 +1,95 @@
+.\#
+.\# Yet Another Pulsar Processor Commands
+.\# yapp_ft Manual Page
+.\#
+.\# Created by Jayanth Chennamangalam on 2012.10.14
+.\#
+
+.TH YAPP_FT 1 "2012-10-14" "YAPP 1.1-beta" \
+"Yet Another Pulsar Processor"
+
+
+.SH NAME
+yapp_ft \- perform Fourier transform and optionally polyphase filtering on \
+baseband data
+
+
+.SH SYNOPSIS
+.B yapp_ft
+[options]
+.I baseband-data-file
+
+
+.SH DESCRIPTION
+Performs Fourier transform and optionally polyphase filtering on baseband \
+data. In other words, this is a software spectrometer. The input should be \
+8-bit, complex, dual-polarization data. The output is written in the \
+headerless SIGPROC '.fil' format.
+
+
+.SH OPTIONS
+.TP
+.B \-h, --help
+Display a short help text.
+.TP
+.B \-s, --skip-time \fItime
+Length of data to be skipped, in seconds (default is 0).
+.TP
+.B \-p, --proc-time \fItime
+Length of data to be processed, in seconds (default is all data).
+.TP
+.B \-b, --pfb
+Turn polyphase filtering on.
+.TP
+.B \-n, --nfft \fIN
+Number of points in FFT (default is 1024).
+.TP
+.B \-a, --nacc \fIacc-len
+Number of spectra to be accumulated (default is 1 - no accumulation).
+.TP
+.B \-l, --tsamp \fItsamp
+Sampling time in seconds.
+.TP
+.B \-f, --fil
+Output spectra in filterbank format (currently the only format supported).
+.TP
+.B \-e, --site
+Observing site name.
+.TP
+.B \-r, --pulsar
+Pulsar name.
+.TP
+.B \-g, --graphics
+Turn on plotting.
+.TP
+.B \-i, --invert
+Invert background and foreground colours in plots.
+.TP
+.B \-t, --non-interactive
+Run in non-interactive mode.
+.TP
+.B \-v, --version
+Display the version.
+
+
+.SH FILES
+.TP
+If running with PFB on, this program requires a filter coefficients file to \
+be present in the current directory. Filter coefficients files can be created \
+using the yapp_gencoeff.py script.
+
+
+.SH EXAMPLE
+.TP
+yapp_ft -b -n 4096 -a 10 -l 0.00000078125 -f -e GBT -r J1921+2153 rawdata.dat
+
+
+.SH SEE ALSO
+.BR yapp_viewmetadata (1),
+.BR yapp_viewdata (1)
+
+
+.SH AUTHOR
+.TP 
+Written by Jayanth Chennamangalam. http://jayanthc.github.com/yapp/
+
