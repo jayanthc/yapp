@@ -33,9 +33,12 @@
 
 #define USEC2SEC            1e-6
 
+#define YAPP_RET_READDONE   1
+
 typedef struct tagPFBData
 {
-    signed char *pcData;        /* raw data, LEN_DATA long*/
+    signed char *pcData;        /* raw data, (iNFFT * NUM_BYTES_PER_SAMP)
+                                   bytes long */
     fftwf_complex *pfcDataX;    /* unpacked pol-X data, g_iNFFT long */
     fftwf_complex *pfcDataY;    /* unpacked pol-Y data, g_iNFFT long */
     int iNextIdx;               /* index of next element in PFB ring buffer */
@@ -45,11 +48,6 @@ typedef struct tagPFBData
  * Initialises the PFB
  */
 int InitPFB(int iNTaps, int iNFFT);
-
-/**
- * Reads all data from the input file and loads it into memory.
- */
-int LoadDataToMem(int iNFFT);
 
 /**
  * Reads one block (32MB) of data form memory.

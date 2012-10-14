@@ -87,6 +87,7 @@ enum tagDedispTimeSeriesFormat
 #define EXT_DEDISPSPECCFG           ".cfg"
 #define EXT_PS                      ".ps"
 #define EXT_FIL                     ".fil"
+#define EXT_FHD                     ".fhd"
 #define EXT_TIM                     ".tim"
 
 #define SUFFIX_CFG                  "_cfg"
@@ -405,6 +406,14 @@ int YAPP_GetFileType(char *pcFile);
  * @param[in]   pcExt       Extension that is to be stripped
  */
 char* YAPP_GetFilenameFromPath(char *pcPath, char *pcExt);
+
+/**
+ * Extracts the filename from the given path, with the extension. Caller is
+ * responsible for freeing the returned memory.
+ *
+ * @param[in]   pcPath      Path to the file
+ */
+char* YAPP_GetFilenameWithExtFromPath(char *pcPath);
 
 /**
  * Retrieves the observatory name from its ID.

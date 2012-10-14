@@ -97,8 +97,52 @@ char* YAPP_GetFilenameFromPath(char *pcPath, char *pcExt)
         /* TODO: handle NULL return in caller */
     }
 
-    /* build the name of the PGPLOT device */
     (void) strncpy(pcFilename, pcPos, (strlen(pcPos) - strlen(pcExt)));
+
+    return pcFilename;
+}
+
+/*
+ * Extracts the filename from a given path, with the extension
+ */
+char* YAPP_GetFilenameWithExtFromPath(char *pcPath)
+{
+    char *pcPos = NULL;
+    char *pcPosPrev = NULL;
+    char *pcFilename = NULL;
+    int iSlashCount = 0;
+
+    /* extract the non-extension part of the input file */
+    pcPos = pcPath;
+    do
+    {
+        pcPosPrev = pcPos;
+        pcPos = strstr((pcPos + 1), "/");
+        ++iSlashCount;
+    }
+    while (pcPos != NULL);
+    --iSlashCount;
+    pcPos = pcPosPrev + 1;
+
+    if (0 == iSlashCount)   /* there was no slash */
+    {
+        pcPos = pcPath;
+    }
+
+    /* allocate memory for the filename */
+    pcFilename = (char *) YAPP_Malloc((strlen(pcPos) + 1),
+                                      sizeof(char),
+                                      YAPP_TRUE);
+    if (NULL == pcFilename)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Memory allocation for filename failed! %s!\n",
+                       strerror(errno));
+        return NULL;
+        /* TODO: handle NULL return in caller */
+    }
+
+    (void) strncpy(pcFilename, pcPos, strlen(pcPos));
 
     return pcFilename;
 }

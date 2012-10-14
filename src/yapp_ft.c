@@ -42,8 +42,6 @@ extern int g_iPGDev;
 /* the following are global only to enable cleaning up in case of abnormal
    termination, such as those triggered by SIGINT or SIGTERM */
 float *g_pfXAxis = NULL;
-signed char *g_pcInBuf = NULL;
-size_t g_iReadBytes = 0;
 PFB_DATA g_astPFBData[NUM_TAPS] = {{0}};
 int g_iPFBReadIdx = 0;
 int g_iPFBWriteIdx = 0;
@@ -59,8 +57,8 @@ float *g_pfSumPowY = NULL;
 float *g_pfSumStokesRe = NULL;
 float *g_pfSumStokesIm = NULL;
 char g_cIsPFBOn = YAPP_FALSE;
-char g_acFileData[256] = {0};
-char g_acFileCoeff[256] = {0};
+char g_acFileData[LEN_GENSTRING] = {0};
+char g_acFileCoeff[LEN_GENSTRING] = {0};
 int g_iFileData = 0;
 float* g_pfPFBCoeff = NULL;
 
@@ -101,6 +99,8 @@ int main(int argc, char *argv[])
     float fSampSize = 0.0; 
     int iTimeSamps = 0;
     double dTSamp = 0.0;
+    char acFileSpec[LEN_GENSTRING] = {0};
+    char acFileSpecHdr[LEN_GENSTRING] = {0};
     char acHdrBuf[LEN_GENSTRING] = {0};
     char acSite[LEN_GENSTRING] = {0};
     char acPulsar[MAX_LEN_PSRNAME] = {0};
@@ -242,6 +242,15 @@ int main(int argc, char *argv[])
         return YAPP_RET_ERROR;
     }
 
+    if (!cIsFil)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Only .fil output supported! "
+                       "Please run with the '-f' flag.\n");
+        PrintUsage(pcProgName);
+        return YAPP_RET_ERROR;
+    }
+
     /* set the read block size */
     iBlockSize = iNFFT;
 
@@ -255,7 +264,7 @@ int main(int argc, char *argv[])
     }
 
     /* get the input filename */
-    (void) strncpy(g_acFileData, argv[optind], 256); 
+    (void) strncpy(g_acFileData, argv[optind], LEN_GENSTRING); 
 
     dTSamp = dTSampInSec * 1e3;
 
@@ -294,15 +303,6 @@ int main(int argc, char *argv[])
     lBytesToProc = (long) floor((dDataProcTime / dTSampInSec)
                                                     /* number of samples */
                            * fSampSize);
-    /* truncate lBytesToProc to (X * iNTaps * iNFFT * NUM_BYTES_PER_SAMP)
-       bytes where X is the largest possible integer, if more */
-    float fBlocks = (float) lBytesToProc / (iNTaps * iNFFT * NUM_BYTES_PER_SAMP);
-    int iBlocks = (int) fBlocks;
-    if (fBlocks != (float) iBlocks)
-    {
-        size_t iDiffBytes = (size_t) ((fBlocks - (float) iBlocks) * iNTaps * iNFFT * NUM_BYTES_PER_SAMP);
-        lBytesToProc -= iDiffBytes;
-    }
 
     if ((lBytesToSkip + lBytesToProc) > lDataSizeTotal)
     {
@@ -327,6 +327,16 @@ int main(int argc, char *argv[])
                   (iTimeSampsSkip * dTSampInSec),
                   (iTimeSamps * dTSampInSec));
 
+    /* truncate lBytesToProc to (X * iNTaps * iNFFT * NUM_BYTES_PER_SAMP)
+       bytes where X is the largest possible integer, if more */
+    float fBlocks = (float) lBytesToProc / (iNTaps * iNFFT * NUM_BYTES_PER_SAMP);
+    int iBlocks = (int) fBlocks;
+    if (fBlocks != (float) iBlocks)
+    {
+        size_t iDiffBytes = (size_t) ((fBlocks - (float) iBlocks) * iNTaps * iNFFT * NUM_BYTES_PER_SAMP);
+        lBytesToProc -= iDiffBytes;
+    }
+
     iTimeSampsToProc = (int) (lBytesToProc / fSampSize);
     iNumReads = (int) floorf(((float) iTimeSampsToProc) / iBlockSize);
 
@@ -349,14 +359,6 @@ int main(int argc, char *argv[])
         return YAPP_RET_ERROR;
     }
 
-    /* load data into memory */
-    iRet = LoadDataToMem(iNFFT);
-    if (iRet != YAPP_RET_SUCCESS)
-    {
-        (void) fprintf(stderr, "ERROR! Loading to memory failed!\n");
-        return YAPP_RET_ERROR;
-    }
-
     (void) printf("Processing\n"
                   "    %ld of %ld bytes\n"
                   "    %d of %d time samples\n"
@@ -374,8 +376,11 @@ int main(int argc, char *argv[])
     /* open output file */
     if (cIsFil)
     {
-        /* open fil file */
-        iFileSpec = open("spec.fil",
+        /* create output file */
+        char* pcFilename = YAPP_GetFilenameWithExtFromPath(g_acFileData);   /* this will be freed by the garbage collector */
+        (void) strcpy(acFileSpec, pcFilename);
+        (void) strcat(acFileSpec, EXT_FIL);
+        iFileSpec = open(acFileSpec,
                          O_CREAT | O_TRUNC | O_WRONLY,
                          S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
         if (iFileSpec < YAPP_RET_SUCCESS)
@@ -386,7 +391,10 @@ int main(int argc, char *argv[])
         }
     
         /* open fil header file */
-        iFileSpecHdr = open("spec.fhd",
+        pcFilename = YAPP_GetFilenameWithExtFromPath(g_acFileData); /* this will be freed by the garbage collector */
+        (void) strcpy(acFileSpecHdr, pcFilename);
+        (void) strcat(acFileSpecHdr, EXT_FHD);
+        iFileSpecHdr = open(acFileSpecHdr,
                             O_CREAT | O_TRUNC | O_WRONLY,
                             S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
         if (iFileSpecHdr < YAPP_RET_SUCCESS)
@@ -477,13 +485,6 @@ int main(int argc, char *argv[])
 
         (void) close(iFileSpecHdr);
     }
-    else
-    {
-        (void) fprintf(stderr, "ERROR: Currently supports only fil files!\n");
-        PrintUsage(pcProgName);
-        CleanUp(iNTaps);
-        return YAPP_RET_ERROR;
-    }
 
     if (1 == iNumReads)
     {
@@ -491,7 +492,7 @@ int main(int argc, char *argv[])
     }
 
     /* skip data, if any are to be skipped */
-    //(void) fseek(g_pFSpec, lBytesToSkip, SEEK_SET);
+    (void) lseek(g_iFileData, lBytesToSkip, SEEK_SET);
 
     if (cHasGraphics)
     {
@@ -547,17 +548,13 @@ int main(int argc, char *argv[])
             CleanUp(iNTaps);
             return YAPP_RET_ERROR;
         }
-        if (cIsFirst)
+        else if (YAPP_RET_READDONE == iRet)
         {
-            iNumReads -= iNTaps;
-            iReadBlockCount += iNTaps;
-            cIsFirst = YAPP_FALSE;
+            break;
         }
-        else
-        {
-            --iNumReads;
-            ++iReadBlockCount;
-        }
+        cIsFirst = YAPP_FALSE;
+        --iNumReads;
+        ++iReadBlockCount;
 
         if (g_cIsPFBOn)
         {
@@ -841,6 +838,16 @@ int InitPFB(int iNTaps, int iNFFT)
     /* allocate memory for data array contents */
     for (i = 0; i < iNTaps; ++i)
     {
+        g_astPFBData[i].pcData = (signed char*) YAPP_Malloc((size_t) iNFFT * NUM_BYTES_PER_SAMP,
+                                                            sizeof(signed char),
+                                                            YAPP_FALSE);
+        if (NULL == g_astPFBData[i].pcData)
+        {
+            (void) fprintf(stderr,
+                           "ERROR: Memory allocation failed! %s.\n",
+                           strerror(errno));
+            return YAPP_RET_ERROR;
+        }
         g_astPFBData[i].pfcDataX = (fftwf_complex *) fftwf_malloc(iNFFT
                                                       * sizeof(fftwf_complex));
         if (NULL == g_astPFBData[i].pfcDataX)
@@ -972,52 +979,10 @@ int InitPFB(int iNTaps, int iNFFT)
     return YAPP_RET_SUCCESS;
 }
 
-/* function that reads data from the data file and loads it into memory */
-int LoadDataToMem(int iNFFT)
-{
-    struct stat stFileStats = {0};
-    int iRet = YAPP_RET_SUCCESS;
-
-    iRet = stat(g_acFileData, &stFileStats);
-    if (iRet != YAPP_RET_SUCCESS)
-    {
-        (void) fprintf(stderr,
-                       "ERROR: Failed to stat %s: %s!\n",
-                       g_acFileData,
-                       strerror(errno));
-        return YAPP_RET_ERROR;
-    }
-
-    g_pcInBuf = (signed char*) YAPP_Malloc(stFileStats.st_size,
-                                           sizeof(signed char),
-                                           YAPP_FALSE);
-    if (NULL == g_pcInBuf)
-    {
-        (void) fprintf(stderr,
-                       "ERROR: Memory allocation failed! %s.\n",
-                       strerror(errno));
-        return YAPP_RET_ERROR;
-    }
-
-    iRet = read(g_iFileData, g_pcInBuf, stFileStats.st_size);
-    if (iRet < YAPP_RET_SUCCESS)
-    {
-        (void) fprintf(stderr,
-                       "ERROR: Data reading failed! %s.\n",
-                       strerror(errno));
-        return YAPP_RET_ERROR;
-    }
-    else if (iRet != stFileStats.st_size)
-    {
-        (void) printf("File read done!\n");
-    }
-
-    return YAPP_RET_SUCCESS;
-}
-
 /* function that reads data from input buffer */
 int ReadData(char cIsFirst, int iNTaps, int iNFFT)
 {
+    int iRet = YAPP_RET_SUCCESS;
     int i = 0;
     int j = 0;
     int k = 0;
@@ -1028,7 +993,14 @@ int ReadData(char cIsFirst, int iNTaps, int iNFFT)
         /* ASSUMPTION: there is at least iNTaps blocks of data */
         for (i = 0; i < iNTaps; ++i)
         {
-            g_astPFBData[i].pcData = g_pcInBuf + (i * NUM_BYTES_PER_SAMP * iNFFT);
+            iRet = read(g_iFileData, g_astPFBData[i].pcData, iNFFT * NUM_BYTES_PER_SAMP);
+            if (iRet < YAPP_RET_SUCCESS)
+            {
+                (void) fprintf(stderr,
+                               "ERROR: Data reading failed! %s.\n",
+                               strerror(errno));
+                return YAPP_RET_ERROR;
+            }
 
             /* unpack data */
             /* assuming real and imaginary parts are interleaved, and X and Y are
@@ -1050,12 +1022,23 @@ int ReadData(char cIsFirst, int iNTaps, int iNFFT)
         }
         g_iPFBWriteIdx = 0;     /* next write into the first buffer */
         g_iPFBReadIdx = 0;      /* PFB to be performed from first buffer */
-        g_iReadBytes += (iNTaps * NUM_BYTES_PER_SAMP * iNFFT);
     }
     else
     {
         /* write new data to the write buffer */
-        g_astPFBData[g_iPFBWriteIdx].pcData += (NUM_BYTES_PER_SAMP * iNFFT);
+        iRet = read(g_iFileData, g_astPFBData[g_iPFBWriteIdx].pcData, iNFFT * NUM_BYTES_PER_SAMP);
+        if (iRet < YAPP_RET_SUCCESS)
+        {
+            (void) fprintf(stderr,
+                           "ERROR: Data reading failed! %s.\n",
+                           strerror(errno));
+            return YAPP_RET_ERROR;
+        }
+        if (iRet < iNFFT * NUM_BYTES_PER_SAMP)
+        {
+            g_iPFBReadIdx = g_astPFBData[g_iPFBReadIdx].iNextIdx;
+            return YAPP_RET_READDONE;
+        }
 
         /* unpack data */
         /* assuming real and imaginary parts are interleaved, and X and Y are
@@ -1076,7 +1059,6 @@ int ReadData(char cIsFirst, int iNTaps, int iNFFT)
         }
         g_iPFBWriteIdx = g_astPFBData[g_iPFBWriteIdx].iNextIdx;
         g_iPFBReadIdx = g_astPFBData[g_iPFBReadIdx].iNextIdx;
-        g_iReadBytes += (NUM_BYTES_PER_SAMP * iNFFT);
     }
 
     return YAPP_RET_SUCCESS;
