@@ -894,7 +894,6 @@ int main(int argc, char *argv[])
 
                         break;
                     }
-                    #if 1
                     else if (((fButX >= PG_BUTEXIT_L) && (fButX <= PG_BUTEXIT_R))
                         && ((fButY >= PG_BUTEXIT_B) && (fButY <= PG_BUTEXIT_T)))
                     {
@@ -915,7 +914,6 @@ int main(int argc, char *argv[])
                         YAPP_CleanUp();
                         return YAPP_RET_SUCCESS;
                     }
-                    #endif
                 }
             }
             else

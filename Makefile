@@ -59,11 +59,11 @@ all: yapp_makever \
 	 yapp_viewdata \
 	 yapp_ft.o \
 	 yapp_ft \
+	 yapp_dedisp.o \
+	 yapp_dedisp \
 	 tags
 #	 yapp_dedisperse.o \
 	 set_colours.o \
-	 yapp_dedisp.o \
-	 yapp_dedisp \
 	 yapp_dedisperse \
 	 reorderdds.o \
 	 reorderdds \
@@ -109,6 +109,13 @@ yapp_ft: $(IDIR)/yapp_ft.o $(IDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
 	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -lfftw3f -o $(BINDIR)/$@
 
+yapp_dedisp.o: $(SRCDIR)/yapp_dedisp.c $(SRCDIR)/yapp.h
+	$(CC) $(CFLAGS_C) $(DDEBUG) $(DFC) $(SRCDIR)/yapp_dedisp.c -o $(IDIR)/$@
+
+yapp_dedisp: $(IDIR)/yapp_dedisp.o
+	$(CC) $(IDIR)/yapp_dedisp.o $(IDIR)/yapp_version.o $(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o \
+		$(IDIR)/colourmap.o $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -o $(BINDIR)/$@
+
 ifeq ($(FC), g77)
 DFC = -D_FC_F77_
 set_colours.o: $(SRCDIR)/set_colours.f
@@ -140,13 +147,6 @@ reorderdds.o: $(SRCDIR)/reorderdds.c
 reorderdds: $(IDIR)/reorderdds.o
 	$(FC) $(IDIR)/reorderdds.o $(IDIR)/yapp_version.o $(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o \
         $(IDIR)/set_colours.o $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -o $(BINDIR)/$@
-
-yapp_dedisp.o: $(SRCDIR)/yapp_dedisp.c $(SRCDIR)/yapp.h
-	$(CC) $(CFLAGS_C) $(DDEBUG) $(DFC) $(SRCDIR)/yapp_dedisp.c -o $(IDIR)/$@
-
-yapp_dedisp: $(IDIR)/yapp_dedisp.o
-	$(FC) $(IDIR)/yapp_dedisp.o $(IDIR)/yapp_version.o $(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o \
-		$(IDIR)/colourmap.o $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -o $(BINDIR)/$@
 
 yapp_pulsarsnd.o: $(SRCDIR)/yapp_pulsarsnd.c $(SRCDIR)/yapp.h
 	$(CC) $(CFLAGS_C) $(SRCDIR)/yapp_pulsarsnd.c -o $(IDIR)/$@
@@ -184,8 +184,8 @@ clean:
 	$(DELCMD) $(IDIR)/colourmap.o
 	$(DELCMD) $(IDIR)/yapp_viewdata.o
 	$(DELCMD) $(IDIR)/yapp_ft.o
+	$(DELCMD) $(IDIR)/yapp_dedisp.o
 #	$(DELCMD) $(IDIR)/set_colours.o
-#	$(DELCMD) $(IDIR)/yapp_dedisp.o
 #	$(DELCMD) $(IDIR)/yapp_dedisperse.o
 #	$(DELCMD) $(IDIR)/reorderdds.o
 #	$(DELCMD) $(IDIR)/yapp_pulsarsnd.o

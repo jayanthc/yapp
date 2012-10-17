@@ -95,10 +95,10 @@ int main(int argc, char *argv[])
     float fButX = 0.0;
     float fButY = 0.0;
     char cCurChar = 0;
-    long int lDataSizeTotal = (long) 0;
+    long int lDataSizeTotal = 0;
     float fSampSize = 0.0; 
     int iTimeSamps = 0;
-    double dTSamp = 0.0;
+    double dTSamp = 0.0;    /* in ms */
     char acFileSpec[LEN_GENSTRING] = {0};
     char acFileSpecHdr[LEN_GENSTRING] = {0};
     char acHdrBuf[LEN_GENSTRING] = {0};

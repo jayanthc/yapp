@@ -7,27 +7,23 @@
  *     -h  --help                           Display this usage information
  *     -d  --dm <dm>                        The DM at which to de-disperse
  *                                          (default is 10.0)
- *     -s  --skip-percent <percentage>      The percentage of data to be skipped
- *     -S  --skip-time <time>               The length of data in seconds, to be
+ *     -s  --skip-time <time>               The length of data in seconds, to be
  *                                          skipped
- *     -p  --proc-percent <percentage>      The percentage of data to be
- *                                          processed
- *                                          (default is 100)
- *     -P  --proc-time <time>               The length of data in seconds, to be
+ *     -p  --proc-time <time>               The length of data in seconds, to be
  *                                          processed
  *                                          (default is all)
  *     -b  --block-size <samples>           Number of samples read in one block
  *                                          (default is 4096 samples)
- *     -c  --clip-level <level>             Number of sigmas above threshold;
- *                                          will clip anything above this level
- *     -t  --out-format                     Output format - 'ddd' or 'tim'
+ *     -o  --out-format                     Output format - 'ddd' or 'tim'
  *                                          (default is 'tim')
- *     -o  --no-plots                       Run without displaying plots
- *     -f  --plot-to-file                   Plot to a PostScript file, instead
- *                                          of the screen
+ *     -g  --graphics                       Turn on plotting
+ *     -m  --colour-map <name>              MATLAB colour map for plotting
+ *                                          (default is 'jet')
  *     -i  --invert                         Invert the background and foreground
  *                                          colours in plots
- *     -n  --interactive                    Run in interactive mode
+ *     -t  --non-interactive                Run in non-interactive mode
+ *     -f  --plot-to-file                   Plot to a PostScript file, instead
+ *                                          of the screen
  *     -v  --version                        Display the version @endverbatim
  *
  * @author Jayanth Chennamangalam
@@ -50,7 +46,11 @@
  */
 extern const char *g_pcVersion;
 
-int g_iDispPlots = YAPP_TRUE;
+/* PGPLOT device ID */
+extern int g_iPGDev;
+
+/* data file */
+extern FILE *g_pFSpec;
 
 /* the following are global only to enable cleaning up in case of abnormal
    termination, such as those triggered by SIGINT or SIGTERM */
@@ -69,7 +69,6 @@ float *g_pfYAxis = NULL;
 
 int main(int argc, char *argv[])
 {
-    FILE *pFSpec = NULL;
     FILE *pFCfg = NULL;
     FILE *pFDedispData = NULL;
     char *pcFileSpec = NULL;
@@ -78,12 +77,9 @@ int main(int argc, char *argv[])
     int iFormat = DEF_FORMAT;
     int iOutputFormat = DEF_OUT_FORMAT;
     char cIsPlotToFile = YAPP_FALSE;
-    int iDataSkipPercent = DEF_SKIP_PERCENT;
-    int iDataSkipTime = DEF_SKIP_TIME;
-    int iDataProcPercent = DEF_PROC_PERCENT;
-    int iDataProcTime = DEF_PROC_TIME;
-    int iProcSpec = PROC_SPEC_NOTSEL;   /* by default, the processing
-                                           specification is not selected */
+    double dDataSkipTime = DEF_SKIP_TIME;
+    double dDataProcTime = DEF_PROC_TIME;
+    YUM_t stYUM = {{0}};
     char cIsDMGiven = YAPP_FALSE;
     int iChanGoodness = (int) YAPP_TRUE;
     double dDelay = 0.0;
@@ -103,7 +99,6 @@ int main(int argc, char *argv[])
     float fNoiseRMS = 0.0;
     float fThreshold = 0.0;
     float fSNRMin = 0.0;
-    float fClipLevel = 0.0;
     double dNumSigmas = 0.0;
     float fF1 = 0.0;
     float fF2 = 0.0;
@@ -116,8 +111,6 @@ int main(int argc, char *argv[])
     float fFCh1 = 0.0;          /* frequency of the first channel */
     double dMaxDelay = 0.0;
     int iBytesPerFrame = 0;
-    float fFCentre = 0.0;
-    float fBW = 0.0;
     int iChanBeg = 0;
     int iChanEnd = 0;
     char acPulsar[LEN_GENSTRING] = {0};
@@ -143,8 +136,8 @@ int main(int argc, char *argv[])
     float *pfOffsetSpec = NULL;
     int iPrimaryBuf = BUF_0;
     int iOffset = 0;
-    int iBytesToSkip = 0;
-    int iBytesToProc = 0;
+    long int lBytesToSkip = 0;
+    long int lBytesToProc = 0;
     int iTimeSamps = 0;
     int iTimeSampsSkip = 0;
     int iTimeSampsToProc = 0;
@@ -156,7 +149,7 @@ int main(int argc, char *argv[])
     int iSecBufReadSampCount = 0;   /* iReadBlockCount * iBlockSize */
     char cIsLastBlock = YAPP_FALSE;
     struct stat stFileStats = {0};
-    int iDataSizeTotal = 0;
+    long int lDataSizeTotal = 0;
     int iRet = YAPP_RET_SUCCESS;
     float afTM[6] = {0.0};
     float fDataMin = 0.0;
@@ -170,33 +163,35 @@ int main(int argc, char *argv[])
     float fYStep = 0.0;
     int iNumSamps = 0;
     int iDiff = 0;
+    float fButX = 0.0;
+    float fButY = 0.0;
+    char cCurChar = 0;
     int i = 0;
     int j = 0;
     int k = 0;
     int l = 0;
     int m = 0;
+    char cHasGraphics = YAPP_FALSE;
+    int iColourMap = DEF_CMAP;
     int iInvCols = YAPP_FALSE;
-    char cIsInteractive = YAPP_FALSE;
+    char cIsNonInteractive = YAPP_FALSE;
     const char *pcProgName = NULL;
     int iNextOpt = 0;
     /* valid short options */
-    const char* const pcOptsShort = "hf:d:s:S:p:P:b:c:t:oignv";
+    const char* const pcOptsShort = "hd:s:p:b:o:gm:itfv";
     /* valid long options */
     const struct option stOptsLong[] = {
         { "help",                   0, NULL, 'h' },
-        { "format",                 1, NULL, 'f' },
         { "dm",                     1, NULL, 'd' },
-        { "skip-percent",           1, NULL, 's' },
-        { "skip-time",              1, NULL, 'S' },
-        { "proc-percent",           1, NULL, 'p' },
-        { "proc-time",              1, NULL, 'P' },
+        { "skip-time",              1, NULL, 's' },
+        { "proc-time",              1, NULL, 'p' },
         { "block-size",             1, NULL, 'b' },
-        { "clip-level",             1, NULL, 'c' },
-        { "out-format",             1, NULL, 't' },
+        { "out-format",             1, NULL, 'o' },
+        { "graphics",               0, NULL, 'g' },
+        { "colour-map",             1, NULL, 'm' },
         { "invert",                 0, NULL, 'i' },
-        { "no-plots",               0, NULL, 'o' },
-        { "plot-to-file",           0, NULL, 'g' },
-        { "interactive",            0, NULL, 'n' },
+        { "non-interactive",        0, NULL, 't' },
+        { "plot-to-file",           0, NULL, 'f' },
         { "version",                0, NULL, 'v' },
         { NULL,                     0, NULL, 0   }
     };
@@ -215,124 +210,20 @@ int main(int argc, char *argv[])
                 PrintUsage(pcProgName);
                 return YAPP_RET_SUCCESS;
 
-            case 'f':   /* -f or --format */
-                /* set option */
-                if (0 == strcmp(optarg, YAPP_FORMATSTR_SPEC))
-                {
-                    iFormat = YAPP_FORMAT_SPEC;
-                }
-                else if (0 == strcmp(optarg, YAPP_FORMATSTR_FIL))
-                {
-                    iFormat = YAPP_FORMAT_FIL;
-                }
-                else
-                {
-                    (void) fprintf(stderr,
-                                   "ERROR: Format should be either 'spec' or "
-                                   "'fil'!\n");
-                    PrintUsage(pcProgName);
-                    return YAPP_RET_ERROR;
-                }
-                break;
-
             case 'd':   /* -d or --dm-limit */
                 /* set option */
                 dDM = atof(optarg);
                 cIsDMGiven = YAPP_TRUE;
                 break;
 
-            case 's':   /* -s or --skip-percent */
+            case 's':   /* -s or --skip-time */
                 /* set option */
-                if ((PROC_SPEC_NOTSEL == iProcSpec)
-                    || (PROC_SPEC_PERCENT == iProcSpec))
-                {
-                    iDataSkipPercent = atoi(optarg);
-                    if (iDataSkipPercent > 100)
-                    {
-                        (void) fprintf(stderr,
-                                       "ERROR: Data skip percentage should be "
-                                       "less than 100!\n");
-                        PrintUsage(pcProgName);
-                        return YAPP_RET_ERROR;
-                    }
-
-                    iProcSpec = PROC_SPEC_PERCENT;
-                }
-                else    /* if the specification mode is time, not percentage */
-                {
-                    (void) fprintf(stderr,
-                                   "ERROR: Data processing specification mode "
-                                   "should be either exclusively percentage or "
-                                   "exclusively time!\n");
-                    PrintUsage(pcProgName);
-                    return YAPP_RET_ERROR;
-                }
+                dDataSkipTime = atof(optarg);
                 break;
 
-            case 'S':   /* -S or --skip-time */
+            case 'p':   /* -p or --proc-time */
                 /* set option */
-                if ((PROC_SPEC_NOTSEL == iProcSpec)
-                    || (PROC_SPEC_TIME == iProcSpec))
-                {
-                    iDataSkipTime = atoi(optarg);
-                    iProcSpec = PROC_SPEC_TIME;
-                }
-                else    /* if the specification mode is percentage, not time */
-                {
-                    (void) fprintf(stderr,
-                                   "ERROR: Data processing specification mode "
-                                   "should be either exclusively percentage or "
-                                   "exclusively time!\n");
-                    PrintUsage(pcProgName);
-                    return YAPP_RET_ERROR;
-                }
-                break;
-
-            case 'p':   /* -p or --proc-percent */
-                /* set option */
-                if ((PROC_SPEC_NOTSEL == iProcSpec)
-                    || (PROC_SPEC_PERCENT == iProcSpec))
-                {
-                    iDataProcPercent = atoi(optarg);
-                    if (iDataProcPercent > 100)
-                    {
-                        (void) fprintf(stderr,
-                                       "ERROR: Data processing percentage "
-                                       "should be less than 100!\n");
-                        PrintUsage(pcProgName);
-                        return YAPP_RET_ERROR;
-                    }
-
-                    iProcSpec = PROC_SPEC_PERCENT;
-                }
-                else    /* if the specification mode is time, not percentage */
-                {
-                    (void) fprintf(stderr,
-                                   "ERROR: Data processing specification mode "
-                                   "should be either exclusively percentage or "
-                                   "exclusively time!\n");
-                    PrintUsage(pcProgName);
-                    return YAPP_RET_ERROR;
-                }
-                break;
-
-            case 'P':   /* -P or --proc-time */
-                /* set option */
-                if ((PROC_SPEC_NOTSEL == iProcSpec)
-                    || (PROC_SPEC_TIME == iProcSpec))
-                {
-                    iDataProcTime = atoi(optarg);
-                    iProcSpec = PROC_SPEC_TIME;
-                }
-                else    /* if the specification mode is percentage, not time */
-                {
-                    (void) fprintf(stderr,
-                                   "ERROR: Data processing specification mode "
-                                   "should be either exclusively percentage or "
-                                   "exclusively time!\n");
-                    PrintUsage(pcProgName);
-                    return YAPP_RET_ERROR;
-                }
+                dDataProcTime = atof(optarg);
                 break;
 
             case 'b':   /* -b or --block-size */
@@ -340,12 +231,7 @@ int main(int argc, char *argv[])
                 iBlockSize = atoi(optarg);
                 break;
 
-            case 'c':   /* -c or --clip-level */
-                /* set option */
-                fClipLevel = (float) atof(optarg);
-                break;
-
-            case 't':   /* -t or --out-format */
+            case 'o':   /* -o or --out-format */
                 /* set option */
                 if (0 == strcmp(optarg, YAPP_FORMATSTR_DTS_DDD))
                 {
@@ -365,24 +251,29 @@ int main(int argc, char *argv[])
                 }
                 break;
 
+            case 'g':   /* -g or --graphics */
+                /* set option */
+                cHasGraphics = YAPP_TRUE;
+                break;
+
+            case 'm':   /* -m or --colour-map */
+                /* set option */
+                iColourMap = GetColourMapFromName(optarg);
+                break;
+
             case 'i':  /* -i or --invert */
                 /* set option */
                 iInvCols = YAPP_TRUE;
                 break;
 
-            case 'o':   /* -o or --no-plots */
+            case 't':  /* -t or --non-interactive */
                 /* set option */
-                g_iDispPlots = YAPP_FALSE;
+                cIsNonInteractive = YAPP_TRUE;
                 break;
 
-            case 'g':   /* -g or --plot-to-file */
+            case 'f':   /* -f or --plot-to-file */
                 /* set option */
                 cIsPlotToFile = YAPP_TRUE;
-                break;
-
-            case 'n':  /* -n or --interactive */
-                /* set option */
-                cIsInteractive = YAPP_TRUE;
                 break;
 
             case 'v':   /* -v or --version */
@@ -450,14 +341,25 @@ int main(int argc, char *argv[])
                        pcFileSpec);
         return YAPP_RET_ERROR;
     }
+    dTSamp = stYUM.dTSamp;
+    dTSampInSec = dTSamp * 1e-3;
+    fChanBW = stYUM.fChanBW;
+    iTimeSamps = stYUM.iTimeSamps; 
+    iNumGoodChans = stYUM.iNumGoodChans;
+    fSampSize = stYUM.fSampSize;
+    lDataSizeTotal = stYUM.lDataSizeTotal;
+    fFMax = stYUM.fFMax;
+    fFMin = stYUM.fFMin;
     pfTimeSectGain = stYUM.pfBFGain;//if DAS
     //for SIGPROC -->
     iNumChans = stYUM.iNumChans;//for SIGPROC
         /* flag all channels as good */
-        g_pcIsChanGood = (char *) malloc(sizeof(char) * iNumChans);
+        g_pcIsChanGood = (char *) YAPP_Malloc((size_t) iNumChans, sizeof(char), YAPP_FALSE);
         if (NULL == g_pcIsChanGood)
         {
-            perror("malloc - g_pcIsChanGood");
+            (void) fprintf(stderr,
+                           "ERROR: Memory allocation failed! %s!\n",
+                           strerror(errno));
             (void) fclose(pFCfg);
             return YAPP_RET_ERROR;
         }
@@ -465,10 +367,12 @@ int main(int argc, char *argv[])
         (void) memset(g_pcIsChanGood, YAPP_TRUE, iNumChans);
     //<--for SIGPROC
 
-    g_pdDelayTab = (double *) malloc(sizeof(double) * iNumChans);
+    g_pdDelayTab = (double *) YAPP_Malloc((size_t) iNumChans, sizeof(double), YAPP_FALSE);
     if (NULL == g_pdDelayTab)
     {
-        perror("malloc - g_pdDelayTab");
+        (void) fprintf(stderr,
+                       "ERROR: Memory allocation failed! %s!\n",
+                       strerror(errno));
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
@@ -593,73 +497,59 @@ int main(int argc, char *argv[])
        because we don't read beyond the second buffer */
     if (iBlockSize < iMaxOffset)
     {
-        (void) printf("WARNING: Block size is less than the calculated maximum "
-                      "offset! Changing block size to %d.\n",
+        (void) printf("WARNING: Block size is less than the calculated maximum"
+                      " offset! Changing block size to %d.\n",
                       iMaxOffset);
         iBlockSize = iMaxOffset;
     }
 
-    /* check which of the data processing specification modes - percentage or
-       time - has been selected by the user, and calculate bytes to skip and
-       read */
-    if (PROC_SPEC_TIME == iProcSpec)
+    /* calculate bytes to skip and read */
+    if (0 == dDataProcTime)
     {
-        /* ensure that the input time duration is less than the length of the
-           data */
-        if (((double) iDataProcTime) > (iTimeSamps * dTSampInSec))
-        {
-            (void) fprintf(stderr,
-                           "ERROR: Input time is longer than length of "
-                           "data!\n");
-            YAPP_CleanUp();
-            return YAPP_RET_ERROR;
-        }
-
-        iBytesToSkip = (int) ((iDataSkipTime * 1000.0 / dTSamp)
-                                                        /* number of samples */
-                              * iNumChans
-                              * fSampSize);
-        iBytesToProc = (int) ((iDataProcTime * 1000.0 / dTSamp)
-                                                        /* number of samples */
-                              * iNumChans
-                              * fSampSize);
-    }
-    else    /* if it is not selected, or percentage is selected, use percentage
-               mode */
-    {
-        iBytesToSkip = (int) (floorf(iTimeSamps
-                                     * (((float) iDataSkipPercent) / 100))
-                                                        /* number of samples */
-                              * iNumChans
-                              * fSampSize);
-        iBytesToProc = (int) (ceilf(iTimeSamps
-                                    * (((float) iDataProcPercent) / 100))
-                                                        /* number of samples */
-                              * iNumChans
-                              * fSampSize);
+        dDataProcTime = iTimeSamps * dTSampInSec;
     }
 
-    if (iBytesToSkip >= iDataSizeTotal)
+    /* check if the input time duration is less than the length of the
+       data */
+    if (dDataProcTime > (iTimeSamps * dTSampInSec))
     {
-        (void) printf("WARNING: Data to be skipped is greater than or equal to "
-                      "the size of the file! Terminating.\n");
+        (void) fprintf(stderr,
+                       "ERROR: Input time is longer than length of "
+                       "data!\n");
+        YAPP_CleanUp();
+        return YAPP_RET_ERROR;
+    }
+
+    lBytesToSkip = (long) floor((dDataSkipTime / dTSampInSec)
+                                                    /* number of samples */
+                          * iNumChans
+                          * fSampSize);
+    lBytesToProc = (long) floor((dDataProcTime / dTSampInSec)
+                                                    /* number of samples */
+                          * iNumChans
+                          * fSampSize);
+
+    if (lBytesToSkip >= lDataSizeTotal)
+    {
+        (void) printf("WARNING: Data to be skipped is greater than or equal to"
+                      " the size of the file! Terminating.\n");
         YAPP_CleanUp();
         return YAPP_RET_SUCCESS;
     }
 
-    if ((iBytesToSkip + iBytesToProc) > iDataSizeTotal)
+    if ((lBytesToSkip + lBytesToProc) > lDataSizeTotal)
     {
         (void) printf("WARNING: Total data to be read (skipped and processed) "
                       "is more than the size of the file! ");
-        iBytesToProc = iDataSizeTotal - iBytesToSkip;
-        (void) printf("Newly calculated size of data to be processed: %d "
+        lBytesToProc = lDataSizeTotal - lBytesToSkip;
+        (void) printf("Newly calculated size of data to be processed: %ld "
                       "bytes\n",
-                      iBytesToProc);
+                      lBytesToProc);
     }
 
     if (iBlockSize == iMaxOffset)
     {
-        if (iBytesToProc < (iBlockSize * iNumChans * sizeof(float)))
+        if (lBytesToProc < (iBlockSize * iNumChans * sizeof(float)))
         {
             /* if the block size is equivalent to the maximum delay that is to
                be applied, and if the number of bytes to be processed is less
@@ -670,7 +560,7 @@ int main(int argc, char *argv[])
             (void) printf("WARNING: Amount of data to be processed is less "
                           "than the calculated maximum offset! Will process "
                           "more data than what was requested.\n");
-            iBytesToProc = iBlockSize * iNumChans * sizeof(float);
+            lBytesToProc = iBlockSize * iNumChans * sizeof(float);
         }
     }
     else
@@ -678,7 +568,7 @@ int main(int argc, char *argv[])
         /* here, iBlockSize > iMaxOffset */
         assert(iBlockSize > iMaxOffset);
 
-        if (iBytesToProc < (iMaxOffset * iNumChans * sizeof(float)))
+        if (lBytesToProc < (iMaxOffset * iNumChans * sizeof(float)))
         {
             /* if the number of bytes to be processed is less than the maximum
                offset, de-dispersion will be affected, as we don't have more
@@ -687,44 +577,44 @@ int main(int argc, char *argv[])
             (void) printf("WARNING: Amount of data to be processed is less "
                           "than the calculated maximum offset! Will process "
                           "more data than what was requested.\n");
-            iBytesToProc = iMaxOffset * iNumChans *sizeof(float);
+            lBytesToProc = iMaxOffset * iNumChans *sizeof(float);
             (void) printf("WARNING: Amount of data to be processed is less "
                           "than the block size! Adjusting block size "
                           "accordingly.\n");
-            iBlockSize = iBytesToProc / (iNumChans * sizeof(float));
+            iBlockSize = lBytesToProc / (iNumChans * sizeof(float));
         }
         else
         {
-            if (iBytesToProc < (iBlockSize * iNumChans * sizeof(float)))
+            if (lBytesToProc < (iBlockSize * iNumChans * sizeof(float)))
             {
-                /* here, iMaxOffset <=(eqv) iBytesToProc <(eqv) iBlockSize */
+                /* here, iMaxOffset <=(eqv) lBytesToProc <(eqv) iBlockSize */
                 (void) printf("WARNING: Amount of data to be processed is less "
                               "than the block size! Adjusting block size "
                               "accordingly.\n");
-                iBlockSize = iBytesToProc / (iNumChans * sizeof(float));
+                iBlockSize = lBytesToProc / (iNumChans * sizeof(float));
             }
         }
     }
 
     /* since we may have adjusted the number of bytes to be processed, correct
        the number of bytes to be skipped, too */
-    if ((iBytesToSkip + iBytesToProc) > iDataSizeTotal)
+    if ((lBytesToSkip + lBytesToProc) > lDataSizeTotal)
     {
         (void) printf("WARNING: Total data to be read (skipped and processed) "
                       "is more than the size of the file! ");
-        iBytesToSkip = iDataSizeTotal - iBytesToProc;
-        (void) printf("Newly calculated size of data to be skipped: %d bytes\n",
-                      iBytesToSkip);
+        lBytesToSkip = lDataSizeTotal - lBytesToProc;
+        (void) printf("Newly calculated size of data to be skipped: %ld bytes\n",
+                      lBytesToSkip);
     }
 
-    iTimeSampsSkip = (int) (iBytesToSkip / (iNumChans * fSampSize));
-    (void) printf("Skipping %d of %d bytes (%d time samples)...\n",
-                  iBytesToSkip,
-                  iDataSizeTotal,
+    iTimeSampsSkip = (int) (lBytesToSkip / (iNumChans * fSampSize));
+    (void) printf("Skipping %ld of %ld bytes (%d time samples)...\n",
+                  lBytesToSkip,
+                  lDataSizeTotal,
                   iTimeSampsSkip);
 
-    iTimeSampsToProc = (int) (iBytesToProc / (iNumChans * fSampSize));
-    iNumReads = (int) ceilf(((float) iTimeSampsToProc) / iBlockSize);
+    iTimeSampsToProc = (int) (lBytesToProc / (iNumChans * fSampSize));
+    iNumReads = (int) floorf(((float) iTimeSampsToProc) / iBlockSize);
     iTotNumReads = iNumReads;
 
     /* optimisation - store some commonly used values in variables */
@@ -732,12 +622,12 @@ int main(int argc, char *argv[])
     iDataSizePerBlock = (int) (fSampSize * iTotSampsPerBlock);
 
     (void) printf("Processing\n"
-                  "    %d of %d bytes\n"
+                  "    %ld of %ld bytes\n"
                   "    %d of %d time samples\n"
                   "    %.10g of %.10g seconds\n"
                   "in %d reads with block size %d time samples...\n",
-                  iBytesToProc,
-                  iDataSizeTotal,
+                  lBytesToProc,
+                  lDataSizeTotal,
                   iTimeSampsToProc,
                   iTimeSamps,
                   (iTimeSampsToProc * dTSampInSec),
@@ -763,10 +653,12 @@ int main(int argc, char *argv[])
     fSNRMin = fThreshold / fNoiseRMS;
 
     /* allocate memory for the time sample goodness flag array */
-    g_pcIsTimeGood = (char *) malloc(sizeof(char) * iTimeSampsToProc);
+    g_pcIsTimeGood = (char *) YAPP_Malloc((size_t) iTimeSampsToProc, sizeof(char), YAPP_FALSE);
     if (NULL == g_pcIsTimeGood)
     {
-        perror("malloc - g_pcIsTimeGood");
+        (void) fprintf(stderr,
+                       "ERROR: Memory allocation failed! %s!\n",
+                       strerror(errno));
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
@@ -774,8 +666,8 @@ int main(int argc, char *argv[])
     (void) memset(g_pcIsTimeGood, YAPP_TRUE, iTimeSampsToProc);
 
     /* open the dynamic spectrum data file for reading */
-    pFSpec = fopen(pcFileSpec, "r");
-    if (NULL == pFSpec)
+    g_pFSpec = fopen(pcFileSpec, "r");
+    if (NULL == g_pFSpec)
     {
         (void) fprintf(stderr,
                        "ERROR: Opening file %s failed! %s.\n",
@@ -787,19 +679,23 @@ int main(int argc, char *argv[])
 
     /* allocate memory for the primary and secondary buffers, based on the
        number of channels and time samples */
-    g_pfBuf0 = (float *) malloc(sizeof(float) * iNumChans * iBlockSize);
+    g_pfBuf0 = (float *) YAPP_Malloc((size_t) iNumChans * iBlockSize, sizeof(float), YAPP_FALSE);
     if (NULL == g_pfBuf0)
     {
-        perror("malloc - g_pfBuf0");
-        (void) fclose(pFSpec);
+        (void) fprintf(stderr,
+                       "ERROR: Memory allocation failed! %s!\n",
+                       strerror(errno));
+        (void) fclose(g_pFSpec);
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
-    g_pfBuf1 = (float *) malloc(sizeof(float) * iNumChans * iBlockSize);
+    g_pfBuf1 = (float *) YAPP_Malloc((size_t) iNumChans * iBlockSize, sizeof(float), YAPP_FALSE);
     if (NULL == g_pfBuf1)
     {
-        perror("malloc - g_pfBuf1");
-        (void) fclose(pFSpec);
+        (void) fprintf(stderr,
+                       "ERROR: Memory allocation failed! %s!\n",
+                       strerror(errno));
+        (void) fclose(g_pFSpec);
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
@@ -810,11 +706,13 @@ int main(int argc, char *argv[])
     }
 
     /* allocate memory for storing the dedispersed data */
-    g_pfDedispData = (float *) malloc(sizeof(float) * iBlockSize);
+    g_pfDedispData = (float *) YAPP_Malloc((size_t) iBlockSize, sizeof(float), YAPP_FALSE);
     if (NULL == g_pfDedispData)
     {
-        perror("malloc - g_pfDedispData");
-        (void) fclose(pFSpec);
+        (void) fprintf(stderr,
+                       "ERROR: Memory allocation failed! %s!\n",
+                       strerror(errno));
+        (void) fclose(g_pFSpec);
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
@@ -822,25 +720,27 @@ int main(int argc, char *argv[])
     if (YAPP_FORMAT_FIL == iFormat)
     {
         /* skip the header */
-        (void) fseek(pFSpec, (long) iHeaderLen, SEEK_SET);
+        (void) fseek(g_pFSpec, (long) iHeaderLen, SEEK_SET);
         /* skip data, if any are to be skipped */
-        (void) fseek(pFSpec, (long) iBytesToSkip, SEEK_CUR);
+        (void) fseek(g_pFSpec, (long) lBytesToSkip, SEEK_CUR);
     }
     else
     {
         /* skip data, if any are to be skipped */
-        (void) fseek(pFSpec, (long) iBytesToSkip, SEEK_SET);
+        (void) fseek(g_pFSpec, (long) lBytesToSkip, SEEK_SET);
     }
 
     /* read the first block of data */
     (void) printf("Reading data block %d.\n", iReadBlockCount);
-    (void) YAPP_ReadData(pFSpec, g_pfBuf0, fSampSize, iTotSampsPerBlock);
+    (void) YAPP_ReadData(g_pfBuf0, fSampSize, iTotSampsPerBlock);
     pfPriBuf = g_pfBuf0;
     pfSpectrum = g_pfBuf0;
     iPrimaryBuf = BUF_0;
     --iNumReads;
     ++iReadBlockCount;
 
+//temp
+#if 0
     if (YAPP_FORMAT_SPEC == iFormat)
     {
         /* flag bad time sections, and if required, normalise within the beam
@@ -873,7 +773,7 @@ int main(int argc, char *argv[])
                     (void) fprintf(stderr,
                                    "ERROR: Beam flip time section anomaly "
                                    "detected!\n");
-                    (void) fclose(pFSpec);
+                    (void) fclose(g_pFSpec);
                     YAPP_CleanUp();
                     return YAPP_RET_ERROR;
                 }
@@ -886,24 +786,6 @@ int main(int argc, char *argv[])
             {
                 if (g_pcIsChanGood[j])
                 {
-                    /* clip points, if they cross the user-specified maximum
-                       sigmas */
-                    if (fClipLevel != 0.0)
-                    {
-                        if (pfSpectrum[j] > ((dNumSigmas + fClipLevel)
-                                             * fNoiseRMS))
-                        {
-                            pfSpectrum[j] = (dNumSigmas + fClipLevel)
-                                            * fNoiseRMS;
-                        }
-                        else if (pfSpectrum[j] < -((dNumSigmas + fClipLevel)
-                                                   * fNoiseRMS))
-                        {
-                            pfSpectrum[j] = -((dNumSigmas + fClipLevel)
-                                                  * fNoiseRMS);
-                        }
-                    }
-
                     pfSpectrum[j] = (pfSpectrum[j]
                                      / g_pfBFTimeSectMean[iTimeSect])
                                     - pfTimeSectGain[j];
@@ -911,8 +793,9 @@ int main(int argc, char *argv[])
             }
         }
     }
+#endif
 
-    if (g_iDispPlots)
+    if (cHasGraphics)
     {
         /* open the PGPLOT graphics device */
         if (cIsPlotToFile)
@@ -931,7 +814,7 @@ int main(int argc, char *argv[])
                 (void) fprintf(stderr,
                                "ERROR: Opening graphics device %s failed!\n",
                                acDev);
-                (void) fclose(pFSpec);
+                (void) fclose(g_pFSpec);
                 YAPP_CleanUp();
                 return YAPP_RET_ERROR;
             }
@@ -945,7 +828,7 @@ int main(int argc, char *argv[])
                 (void) fprintf(stderr,
                                "ERROR: Opening graphics device %s failed!\n",
                                PG_DEV);
-                (void) fclose(pFSpec);
+                (void) fclose(g_pFSpec);
                 YAPP_CleanUp();
                 return YAPP_RET_ERROR;
             }
@@ -961,23 +844,27 @@ int main(int argc, char *argv[])
        }
 
         /* set up the plot's X-axis */
-        g_pfXAxis = (float *) malloc(sizeof(float) * iBlockSize);
+        g_pfXAxis = (float *) YAPP_Malloc((size_t) iBlockSize, sizeof(float), YAPP_FALSE);
         if (NULL == g_pfXAxis)
         {
-            perror("malloc - g_pfXAxis");
+            (void) fprintf(stderr,
+                           "ERROR: Memory allocation failed! %s!\n",
+                           strerror(errno));
             cpgclos();
-            (void) fclose(pFSpec);
+            (void) fclose(g_pFSpec);
             YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
 
         /* set up the image plot's Y-axis (frequency) */
-        g_pfYAxis = (float *) malloc(sizeof(float) * iNumChans);
+        g_pfYAxis = (float *) YAPP_Malloc((size_t) iNumChans, sizeof(float), YAPP_FALSE);
         if (NULL == g_pfYAxis)
         {
-            perror("malloc - g_pfYAxis");
+            (void) fprintf(stderr,
+                           "ERROR: Memory allocation failed! %s!\n",
+                           strerror(errno));
             cpgclos();
-            (void) fclose(pFSpec);
+            (void) fclose(g_pFSpec);
             YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
@@ -993,12 +880,14 @@ int main(int argc, char *argv[])
         fYStep = (int) ((fFMax - fFMin) / PG_TICK_STEPS_Y);
 
         /* allocate memory for the cpgimag() plotting buffer */
-        g_pfPlotBuf = (float *) malloc(sizeof(float) * iNumChans * iBlockSize);
+        g_pfPlotBuf = (float *) YAPP_Malloc((size_t) iNumChans * iBlockSize, sizeof(float), YAPP_FALSE);
         if (NULL == g_pfPlotBuf)
         {
-            perror("malloc - g_pfPlotBuf");
+            (void) fprintf(stderr,
+                           "ERROR: Memory allocation failed! %s!\n",
+                           strerror(errno));
             cpgclos();
-            (void) fclose(pFSpec);
+            (void) fclose(g_pFSpec);
             YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
@@ -1020,7 +909,7 @@ int main(int argc, char *argv[])
                 "ERROR: Opening file %s failed! %s.\n",
                 acFileDedisp,
                 strerror(errno));
-        (void) fclose(pFSpec);
+        (void) fclose(g_pFSpec);
         return YAPP_RET_ERROR;
     }
 
@@ -1207,9 +1096,10 @@ int main(int argc, char *argv[])
     }
 
     /* set up the plots */
-    if (g_iDispPlots)
+    if (cHasGraphics)
     {
         cpgsubp(1, 3);
+        cpgsch(1.8);
 
         afTM[0] = 1;
         afTM[1] = 1;
@@ -1223,7 +1113,7 @@ int main(int argc, char *argv[])
         /* for optimisation - calculate ((iReadBlockCount - 1) * iBlockSize) */
         iReadSmpCount = (iReadBlockCount - 1) * iBlockSize;
 
-        if (g_iDispPlots)
+        if (cHasGraphics)
         {
             /* common for all panels */
             for (i = 0; i < iBlockSize; ++i)
@@ -1233,6 +1123,11 @@ int main(int argc, char *argv[])
             }
 
             cpgpanl(1, 1);
+            if (!(cIsLastBlock))
+            {
+                /* erase just before plotting, to reduce flicker */
+                cpgeras();
+            }
 
             pfSpectrum = pfPriBuf;
             fDataMin = pfSpectrum[0];
@@ -1274,7 +1169,7 @@ int main(int argc, char *argv[])
             }
 
             /* set the colour map */
-            //SetColourMap(iColourMap, 0, fColMin, fColMax);
+            SetColourMap(iColourMap, 0, fColMin, fColMax);
 
             /* get the transpose of the two-dimensional array */
             k = 0;
@@ -1339,29 +1234,27 @@ int main(int argc, char *argv[])
             (void) printf("Reading data block %d.\n", iReadBlockCount);
             if (BUF_0 == iPrimaryBuf)
             {
-                iReadItems = YAPP_ReadData(pFSpec,
-                                           g_pfBuf1,
+                iReadItems = YAPP_ReadData(g_pfBuf1,
                                            fSampSize,
                                            iTotSampsPerBlock);
                 pfSecBuf = g_pfBuf1;
             }
             else
             {
-                iReadItems = YAPP_ReadData(pFSpec,
-                                           g_pfBuf0,
+                iReadItems = YAPP_ReadData(g_pfBuf0,
                                            fSampSize,
                                            iTotSampsPerBlock);
                 pfSecBuf = g_pfBuf0;
             }
-            if (ferror(pFSpec))
+            if (ferror(g_pFSpec))
             {
                 (void) fprintf(stderr, "ERROR: File read failed!\n");
-                if (g_iDispPlots)
+                if (cHasGraphics)
                 {
                     cpgclos();
                 }
                 (void) fclose(pFDedispData);
-                (void) fclose(pFSpec);
+                (void) fclose(g_pFSpec);
                 YAPP_CleanUp();
                 return YAPP_RET_ERROR;
             }
@@ -1393,6 +1286,8 @@ int main(int argc, char *argv[])
                first buffer */
             iSecBufReadSampCount = iReadBlockCount * iBlockSize;
 
+            //temp
+            #if 0
             if (YAPP_FORMAT_SPEC == iFormat)
             {
                 /* flag bad time sections, and if required, normalise within
@@ -1427,12 +1322,12 @@ int main(int argc, char *argv[])
                             (void) fprintf(stderr,
                                            "ERROR: Beam flip time section "
                                            "anomaly detected!\n");
-                            if (g_iDispPlots)
+                            if (cHasGraphics)
                             {
                                 cpgclos();
                             }
                             (void) fclose(pFDedispData);
-                            (void) fclose(pFSpec);
+                            (void) fclose(g_pFSpec);
                             YAPP_CleanUp();
                             return YAPP_RET_ERROR;
                         }
@@ -1445,25 +1340,6 @@ int main(int argc, char *argv[])
                     {
                         if (g_pcIsChanGood[j])
                         {
-                            /* clip points, if they cross the user-specified
-                               maximum sigmas */
-                            if (fClipLevel != 0.0)
-                            {
-                                if (pfSpectrum[j] > ((dNumSigmas + fClipLevel)
-                                                     * fNoiseRMS))
-                                {
-                                    pfSpectrum[j] = (dNumSigmas + fClipLevel)
-                                                    * fNoiseRMS;
-                                }
-                                else if (pfSpectrum[j] < -((dNumSigmas
-                                                            + fClipLevel)
-                                                           * fNoiseRMS))
-                                {
-                                    pfSpectrum[j] = -((dNumSigmas + fClipLevel)
-                                                      * fNoiseRMS);
-                                }
-                            }
-
                             pfSpectrum[j] = (pfSpectrum[j]
                                              / g_pfBFTimeSectMean[iTimeSect])
                                             - pfTimeSectGain[j];
@@ -1471,6 +1347,7 @@ int main(int argc, char *argv[])
                     }
                 }
             }
+            #endif
         }
 
         (void) printf("Processing data block %d.\n", (iReadBlockCount - 1));
@@ -1537,9 +1414,14 @@ int main(int argc, char *argv[])
             iEffcNumGoodChans = 0;
         }
 
-        if (g_iDispPlots)
+        if (cHasGraphics)
         {
             cpgpanl(1, 2);
+            if (!(cIsLastBlock))
+            {
+                /* erase just before plotting, to reduce flicker */
+                cpgeras();
+            }
 
             pfSpectrum = pfPriBuf;
             fDataMin = pfSpectrum[0];
@@ -1580,14 +1462,7 @@ int main(int argc, char *argv[])
                 fColMax = fDataMax;
             }
 
-#if 0
-            iFlagBW = YAPP_FALSE;
-
-            /* for nitro
-            set_colours__(&iFlagBW, &fColMin, &fColMax);
-            */
-#endif
-            SetColourMap(CMAP_JET, 0, fColMin, fColMax);
+            SetColourMap(iColourMap, 0, fColMin, fColMax);
 
             /* get the transpose of the two-dimensional array */
             k = 0;
@@ -1650,9 +1525,14 @@ int main(int argc, char *argv[])
                       iBlockSize,
                       pFDedispData);
 
-        if (g_iDispPlots)
+        if (cHasGraphics)
         {
             cpgpanl(1, 3);
+            if (!(cIsLastBlock))
+            {
+                /* erase just before plotting, to reduce flicker */
+                cpgeras();
+            }
 
             fDataMin = g_pfDedispData[0];
             fDataMax = g_pfDedispData[0];
@@ -1680,7 +1560,78 @@ int main(int argc, char *argv[])
 
             if (!(cIsLastBlock))
             {
-                cpgpage();
+                if (!(cIsNonInteractive))
+                {
+                    /* draw the 'next' and 'exit' buttons */
+                    cpgsvp(PG_VP_BUT_ML, PG_VP_BUT_MR, PG_VP_BUT_MB, PG_VP_BUT_MT);
+                    cpgswin(PG_BUT_L, PG_BUT_R, PG_BUT_B, PG_BUT_T);
+                    cpgsci(PG_BUT_FILLCOL); /* set the fill colour */
+                    cpgrect(PG_BUTNEXT_L, PG_BUTNEXT_R, PG_BUTNEXT_B, PG_BUTNEXT_T);
+                    cpgrect(PG_BUTEXIT_L, PG_BUTEXIT_R, PG_BUTEXIT_B, PG_BUTEXIT_T);
+                    cpgsci(0);  /* set colour index to white */
+                    cpgtext(PG_BUTNEXT_TEXT_L, PG_BUTNEXT_TEXT_B, "Next");
+                    cpgtext(PG_BUTEXIT_TEXT_L, PG_BUTEXIT_TEXT_B, "Exit");
+
+                    fButX = (PG_BUTNEXT_R - PG_BUTNEXT_L) / 2;
+                    fButY = (PG_BUTNEXT_T - PG_BUTNEXT_B) / 2;
+
+                    while (YAPP_TRUE)
+                    {
+                        iRet = cpgcurs(&fButX, &fButY, &cCurChar);
+                        if (0 == iRet)
+                        {
+                            (void) fprintf(stderr,
+                                           "WARNING: "
+                                           "Reading cursor parameters failed!\n");
+                            break;
+                        }
+
+                        if (((fButX >= PG_BUTNEXT_L) && (fButX <= PG_BUTNEXT_R))
+                            && ((fButY >= PG_BUTNEXT_B) && (fButY <= PG_BUTNEXT_T)))
+                        {
+                            /* animate button click */
+                            cpgsci(PG_BUT_FILLCOL);
+                            cpgtext(PG_BUTNEXT_TEXT_L, PG_BUTNEXT_TEXT_B, "Next");
+                            cpgsci(0);  /* set colour index to white */
+                            cpgtext(PG_BUTNEXT_CL_TEXT_L, PG_BUTNEXT_CL_TEXT_B, "Next");
+                            (void) usleep(PG_BUT_CL_SLEEP);
+                            cpgsci(PG_BUT_FILLCOL); /* set colour index to fill
+                                                       colour */
+                            cpgtext(PG_BUTNEXT_CL_TEXT_L, PG_BUTNEXT_CL_TEXT_B, "Next");
+                            cpgsci(0);  /* set colour index to white */
+                            cpgtext(PG_BUTNEXT_TEXT_L, PG_BUTNEXT_TEXT_B, "Next");
+                            cpgsci(1);  /* reset colour index to black */
+                            (void) usleep(PG_BUT_CL_SLEEP);
+
+                            break;
+                        }
+                        else if (((fButX >= PG_BUTEXIT_L) && (fButX <= PG_BUTEXIT_R))
+                            && ((fButY >= PG_BUTEXIT_B) && (fButY <= PG_BUTEXIT_T)))
+                        {
+                            /* animate button click */
+                            cpgsci(PG_BUT_FILLCOL);
+                            cpgtext(PG_BUTEXIT_TEXT_L, PG_BUTEXIT_TEXT_B, "Exit");
+                            cpgsci(0);  /* set colour index to white */
+                            cpgtext(PG_BUTEXIT_CL_TEXT_L, PG_BUTEXIT_CL_TEXT_B, "Exit");
+                            (void) usleep(PG_BUT_CL_SLEEP);
+                            cpgsci(PG_BUT_FILLCOL); /* set colour index to fill
+                                                       colour */
+                            cpgtext(PG_BUTEXIT_CL_TEXT_L, PG_BUTEXIT_CL_TEXT_B, "Exit");
+                            cpgsci(0);  /* set colour index to white */
+                            cpgtext(PG_BUTEXIT_TEXT_L, PG_BUTEXIT_TEXT_B, "Exit");
+                            cpgsci(1);  /* reset colour index to black */
+                            (void) usleep(PG_BUT_CL_SLEEP);
+
+                            YAPP_CleanUp();
+                            return YAPP_RET_SUCCESS;
+                        }
+                    }
+                }
+                else
+                {
+                    /* pause before erasing */
+                    (void) usleep(PG_PLOT_SLEEP);
+                }
             }
         }
 
@@ -1705,88 +1656,16 @@ int main(int argc, char *argv[])
 
     (void) printf("DONE!\n");
 
-    if (g_iDispPlots)
+    if (cHasGraphics)
     {
         cpgclos();
     }
 
     (void) fclose(pFDedispData);
-    (void) fclose(pFSpec);
+    (void) fclose(g_pFSpec);
     YAPP_CleanUp();
 
     return YAPP_RET_SUCCESS;
-}
-
-/*
- * Cleans up all allocated memory
- */
-void YAPP_CleanUp()
-{
-    if (g_pfDedispData != NULL)
-    {
-        free(g_pfDedispData);
-        g_pfDedispData = NULL;
-    }
-    if (g_pfBuf0 != NULL)
-    {
-        free(g_pfBuf0);
-        g_pfBuf0 = NULL;
-    }
-    if (g_pfBuf1 != NULL)
-    {
-        free(g_pfBuf1);
-        g_pfBuf1 = NULL;
-    }
-    if (g_pdDelayTab != NULL)
-    {
-        free(g_pdDelayTab);
-        g_pdDelayTab = NULL;
-    }
-    if (g_padBadTimes != NULL)
-    {
-        free(g_padBadTimes);
-        g_padBadTimes = NULL;
-    }
-    if (g_pfBFGain != NULL)
-    {
-        free(g_pfBFGain);
-        g_pfBFGain = NULL;
-    }
-    if (g_pfBFTimeSectMean != NULL)
-    {
-        free(g_pfBFTimeSectMean);
-        g_pfBFTimeSectMean = NULL;
-    }
-    if (g_pcIsChanGood != NULL)
-    {
-        free(g_pcIsChanGood);
-        g_pcIsChanGood = NULL;
-    }
-    if (g_pcIsTimeGood != NULL)
-    {
-        free(g_pcIsTimeGood);
-        g_pcIsTimeGood = NULL;
-    }
-    if (g_iDispPlots)
-    {
-        if (g_pfPlotBuf != NULL)
-        {
-            free(g_pfPlotBuf);
-            g_pfPlotBuf = NULL;
-        }
-        if (g_pfXAxis != NULL)
-        {
-            free(g_pfXAxis);
-            g_pfXAxis = NULL;
-        }
-        if (g_pfYAxis != NULL)
-        {
-            free(g_pfYAxis);
-            g_pfYAxis = NULL;
-        }
-    }
-
-    return;
 }
 
 /*
@@ -1798,25 +1677,15 @@ void PrintUsage(const char *pcProgName)
                   pcProgName);
     (void) printf("    -h  --help                           ");
     (void) printf("Display this usage information\n");
-    (void) printf("    -f  --format <format>                ");
-    (void) printf("Select the format - 'spec' or 'fil'\n");
-    (void) printf("                                         ");
-    (void) printf("(default is 'spec')\n");
     (void) printf("    -d  --dm <dm>                        ");
     (void) printf("The DM at which to de-disperse\n");
     (void) printf("                                         ");
     (void) printf("(default is 10.0)\n");
-    (void) printf("    -s  --skip-percent <percentage>      ");
-    (void) printf("The percentage of data to be skipped\n");
-    (void) printf("    -S  --skip-time <time>               ");
+    (void) printf("    -s  --skip-time <time>               ");
     (void) printf("The length of data in seconds, to be\n");
     (void) printf("                                         ");
     (void) printf("skipped\n");
-    (void) printf("    -p  --proc-percent <percentage>      ");
-    (void) printf("The percentage of data to be processed\n");
-    (void) printf("                                         ");
-    (void) printf("(default is 100)\n");
-    (void) printf("    -P  --proc-time <time>               ");
+    (void) printf("    -p  --proc-time <time>               ");
     (void) printf("The length of data in seconds, to be\n");
     (void) printf("                                         ");
     (void) printf("processed\n");
@@ -1826,26 +1695,26 @@ void PrintUsage(const char *pcProgName)
     (void) printf("Number of samples read in one block\n");
     (void) printf("                                         ");
     (void) printf("(default is 4096 samples)\n");
-    (void) printf("    -c  --clip-level <level>             ");
-    (void) printf("Number of sigmas above threshold; will\n");
-    (void) printf("                                         ");
-    (void) printf("clip anything above this level\n");
-    (void) printf("    -t  --out-format                     ");
+    (void) printf("    -o  --out-format                     ");
     (void) printf("Output format - 'ddd' or 'tim'\n");
     (void) printf("                                         ");
     (void) printf("(default is 'tim')\n");
-    (void) printf("    -o  --no-plots                       ");
-    (void) printf("Run without displaying plots\n");
-    (void) printf("    -f  --plot-to-file                   ");
-    (void) printf("Plot to a PostScript file, instead of\n");
+    (void) printf("    -g  --graphics                       ");
+    (void) printf("Turn on plotting\n");
+    (void) printf("    -m  --colour-map <name>              ");
+    (void) printf("MATLAB colour map for plotting\n");
     (void) printf("                                         ");
-    (void) printf("the screen\n");
+    (void) printf("(default is 'jet')\n");
     (void) printf("    -i  --invert                         ");
     (void) printf("Invert the background and foreground\n");
     (void) printf("                                         ");
     (void) printf("colours in plots\n");
-    (void) printf("    -n  --interactive                    ");
-    (void) printf("Run in interactive mode\n");
+    (void) printf("    -t  --non-interactive                ");
+    (void) printf("Run in non-interactive mode\n");
+    (void) printf("    -f  --plot-to-file                   ");
+    (void) printf("Plot to a PostScript file, instead of\n");
+    (void) printf("                                         ");
+    (void) printf("the screen\n");
     (void) printf("    -v  --version                        ");
     (void) printf("Display the version\n");
 
