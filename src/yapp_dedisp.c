@@ -113,7 +113,6 @@ int main(int argc, char *argv[])
     int iBytesPerFrame = 0;
     int iChanBeg = 0;
     int iChanEnd = 0;
-    char acPulsar[LEN_GENSTRING] = {0};
     int iDay = 0;
     int iMonth = 0;
     int iYear = 0;
@@ -803,7 +802,6 @@ int main(int argc, char *argv[])
             /* build the name of the PGPLOT device */
             pcFilename = YAPP_GetFilenameFromPath(pcFileSpec, EXT_DYNSPEC);
             (void) strcpy(acDev, pcFilename);
-            free(pcFilename);
             (void) strcat(acDev, PLOT_DDS_SUFFIX);
             (void) strcat(acDev, EXT_PS);
             (void) strcat(acDev, PG_DEV_PS);
@@ -898,9 +896,14 @@ int main(int argc, char *argv[])
     pcFilename = YAPP_GetFilenameFromPath(pcFileSpec, EXT_DYNSPEC);
 
     (void) strcpy(acFileDedisp, pcFilename);
-    (void) strcat(acFileDedisp, EXT_DEDISPSPEC);
-
-    free(pcFilename);
+    if (YAPP_FORMAT_DTS_TIM == iOutputFormat)
+    {
+        (void) strcat(acFileDedisp, EXT_TIM);
+    }
+    else
+    {
+        (void) strcat(acFileDedisp, EXT_DEDISPSPEC);
+    }
 
     pFDedispData = fopen(acFileDedisp, "w");
     if (NULL == pFDedispData)
@@ -910,6 +913,7 @@ int main(int argc, char *argv[])
                 acFileDedisp,
                 strerror(errno));
         (void) fclose(g_pFSpec);
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
 
@@ -931,6 +935,7 @@ int main(int argc, char *argv[])
         /* write field label */
         (void) strcpy(acLabel, "source_name");
         (void) fwrite(acLabel, sizeof(char), iLen, pFDedispData);
+        (void) strncpy(stHeader.acPulsar, stYUM.acPulsar, MAX_LEN_PSRNAME); 
         iLen = strlen(stHeader.acPulsar);
         (void) fwrite(&iLen, sizeof(iLen), 1, pFDedispData);
         (void) fwrite(stHeader.acPulsar, sizeof(char), iLen, pFDedispData);
@@ -964,6 +969,7 @@ int main(int argc, char *argv[])
         (void) fwrite(&iLen, sizeof(iLen), 1, pFDedispData);
         (void) strcpy(acLabel, "fch1");
         (void) fwrite(acLabel, sizeof(char), iLen, pFDedispData);
+        stHeader.dFChan1 = (double) stYUM.fFMin;
         (void) fwrite(&stHeader.dFChan1,
                       sizeof(stHeader.dFChan1),
                       1,
@@ -986,6 +992,7 @@ int main(int argc, char *argv[])
         (void) fwrite(&iLen, sizeof(iLen), 1, pFDedispData);
         (void) strcpy(acLabel, "nifs");
         (void) fwrite(acLabel, sizeof(char), iLen, pFDedispData);
+        stHeader.iNumIFs = stYUM.iNumIFs;
         (void) fwrite(&stHeader.iNumIFs,
                       sizeof(stHeader.iNumIFs),
                       1,
@@ -996,6 +1003,7 @@ int main(int argc, char *argv[])
         (void) fwrite(&iLen, sizeof(iLen), 1, pFDedispData);
         (void) strcpy(acLabel, "tsamp");
         (void) fwrite(acLabel, sizeof(char), iLen, pFDedispData);
+        stHeader.dTSamp = stYUM.dTSamp * 1e-3;  /* in s */
         (void) fwrite(&stHeader.dTSamp,
                       sizeof(stHeader.dTSamp),
                       1,
@@ -1006,6 +1014,8 @@ int main(int argc, char *argv[])
         (void) fwrite(&iLen, sizeof(iLen), 1, pFDedispData);
         (void) strcpy(acLabel, "tstart");
         (void) fwrite(acLabel, sizeof(char), iLen, pFDedispData);
+        //temp
+        stHeader.dTStart = (double) 56219;
         (void) fwrite(&stHeader.dTStart,
                       sizeof(stHeader.dTStart),
                       1,
@@ -1016,6 +1026,8 @@ int main(int argc, char *argv[])
         (void) fwrite(&iLen, sizeof(iLen), 1, pFDedispData);
         (void) strcpy(acLabel, "telescope_id");
         (void) fwrite(acLabel, sizeof(char), iLen, pFDedispData);
+        //temp
+        stHeader.iObsID = 0;    /* 'unknown type' in SIGPROC */
         (void) fwrite(&stHeader.iObsID,
                       sizeof(stHeader.iObsID),
                       1,
@@ -1026,6 +1038,8 @@ int main(int argc, char *argv[])
         (void) fwrite(&iLen, sizeof(iLen), 1, pFDedispData);
         (void) strcpy(acLabel, "machine_id");
         (void) fwrite(acLabel, sizeof(char), iLen, pFDedispData);
+        //temp
+        stHeader.iBackendID = 0;    /* 'unknown type' in SIGPROC */
         (void) fwrite(&stHeader.iBackendID,
                       sizeof(stHeader.iBackendID),
                       1,
@@ -1083,6 +1097,8 @@ int main(int argc, char *argv[])
         (void) fwrite(&iLen, sizeof(iLen), 1, pFDedispData);
         (void) strcpy(acLabel, "barycentric");
         (void) fwrite(acLabel, sizeof(char), iLen, pFDedispData);
+        //temp
+        stHeader.iFlagBary = 0;
         (void) fwrite(&stHeader.iFlagBary,
                       sizeof(stHeader.iFlagBary),
                       1,
@@ -1622,6 +1638,10 @@ int main(int argc, char *argv[])
                             cpgsci(1);  /* reset colour index to black */
                             (void) usleep(PG_BUT_CL_SLEEP);
 
+                            cpgclos();
+                            (void) fclose(pFDedispData);
+                            g_pFSpec = NULL;
+                            (void) fclose(g_pFSpec);
                             YAPP_CleanUp();
                             return YAPP_RET_SUCCESS;
                         }
@@ -1663,6 +1683,7 @@ int main(int argc, char *argv[])
 
     (void) fclose(pFDedispData);
     (void) fclose(g_pFSpec);
+    g_pFSpec = NULL;
     YAPP_CleanUp();
 
     return YAPP_RET_SUCCESS;
