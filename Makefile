@@ -61,6 +61,8 @@ all: yapp_makever \
 	 yapp_ft \
 	 yapp_dedisp.o \
 	 yapp_dedisp \
+	 yapp_fold.o \
+	 yapp_fold \
 	 tags
 #	 yapp_dedisperse.o \
 	 set_colours.o \
@@ -115,6 +117,13 @@ yapp_dedisp.o: $(SRCDIR)/yapp_dedisp.c $(SRCDIR)/yapp.h
 yapp_dedisp: $(IDIR)/yapp_dedisp.o
 	$(CC) $(IDIR)/yapp_dedisp.o $(IDIR)/yapp_version.o $(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o \
 		$(IDIR)/colourmap.o $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -o $(BINDIR)/$@
+
+yapp_fold.o: $(SRCDIR)/yapp_fold.c $(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h
+	$(CC) $(CFLAGS_C) $(DDEBUG) $< -o $(IDIR)/$@
+
+yapp_fold: $(IDIR)/yapp_fold.o $(IDIR)/yapp_version.o \
+	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
+	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -o $(BINDIR)/$@
 
 ifeq ($(FC), g77)
 DFC = -D_FC_F77_
@@ -185,6 +194,7 @@ clean:
 	$(DELCMD) $(IDIR)/yapp_viewdata.o
 	$(DELCMD) $(IDIR)/yapp_ft.o
 	$(DELCMD) $(IDIR)/yapp_dedisp.o
+	$(DELCMD) $(IDIR)/yapp_fold.o
 #	$(DELCMD) $(IDIR)/set_colours.o
 #	$(DELCMD) $(IDIR)/yapp_dedisperse.o
 #	$(DELCMD) $(IDIR)/reorderdds.o
