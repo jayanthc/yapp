@@ -352,18 +352,18 @@ int main(int argc, char *argv[])
     pfTimeSectGain = stYUM.pfBFGain;//if DAS
     //for SIGPROC -->
     iNumChans = stYUM.iNumChans;//for SIGPROC
-        /* flag all channels as good */
-        g_pcIsChanGood = (char *) YAPP_Malloc((size_t) iNumChans, sizeof(char), YAPP_FALSE);
-        if (NULL == g_pcIsChanGood)
-        {
-            (void) fprintf(stderr,
-                           "ERROR: Memory allocation failed! %s!\n",
-                           strerror(errno));
-            (void) fclose(pFCfg);
-            return YAPP_RET_ERROR;
-        }
-        /* set all elements to 'YAPP_TRUE' */
-        (void) memset(g_pcIsChanGood, YAPP_TRUE, iNumChans);
+    /* flag all channels as good */
+    g_pcIsChanGood = (char *) YAPP_Malloc((size_t) iNumChans, sizeof(char), YAPP_FALSE);
+    if (NULL == g_pcIsChanGood)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Memory allocation failed! %s!\n",
+                       strerror(errno));
+        (void) fclose(pFCfg);
+        return YAPP_RET_ERROR;
+    }
+    /* set all elements to 'YAPP_TRUE' */
+    (void) memset(g_pcIsChanGood, YAPP_TRUE, iNumChans);
     //<--for SIGPROC
 
     g_pdDelayTab = (double *) YAPP_Malloc((size_t) iNumChans, sizeof(double), YAPP_FALSE);
@@ -490,7 +490,7 @@ int main(int argc, char *argv[])
 #endif
 
     /* calculate the maximum sample offset from the maximum delay */
-    iMaxOffset = (int) -(dMaxDelay / dTSamp);
+    iMaxOffset = (int) -round(dMaxDelay / dTSamp);
 
     /* ensure that the block size is at least equivalent to the maximum offset,
        because we don't read beyond the second buffer */
@@ -1139,11 +1139,8 @@ int main(int argc, char *argv[])
             }
 
             cpgpanl(1, 1);
-            if (!(cIsLastBlock))
-            {
-                /* erase just before plotting, to reduce flicker */
-                cpgeras();
-            }
+            /* erase just before plotting, to reduce flicker */
+            cpgeras();
 
             pfSpectrum = pfPriBuf;
             fDataMin = pfSpectrum[0];
@@ -1384,7 +1381,7 @@ int main(int argc, char *argv[])
                        channel from the delay table */
                     dDelay = g_pdDelayTab[l];
                     /* calculate the sample number offset from the delay */
-                    iOffset = (int) -(dDelay / dTSamp);
+                    iOffset = (int) -round(dDelay / dTSamp);
                     /* apply the delay - shift all time samples up */
                     if ((k + iOffset) >= iBlockSize)
                     {
@@ -1424,7 +1421,7 @@ int main(int argc, char *argv[])
                 g_pfDedispData[k] = 0.0;
             }
 
-             g_pfDedispData[k] /= fNoiseRMS;
+            g_pfDedispData[k] /= fNoiseRMS;
 
             /* reset the effective number of good channels */
             iEffcNumGoodChans = 0;
@@ -1433,11 +1430,8 @@ int main(int argc, char *argv[])
         if (cHasGraphics)
         {
             cpgpanl(1, 2);
-            if (!(cIsLastBlock))
-            {
-                /* erase just before plotting, to reduce flicker */
-                cpgeras();
-            }
+            /* erase just before plotting, to reduce flicker */
+            cpgeras();
 
             pfSpectrum = pfPriBuf;
             fDataMin = pfSpectrum[0];
@@ -1544,11 +1538,8 @@ int main(int argc, char *argv[])
         if (cHasGraphics)
         {
             cpgpanl(1, 3);
-            if (!(cIsLastBlock))
-            {
-                /* erase just before plotting, to reduce flicker */
-                cpgeras();
-            }
+            /* erase just before plotting, to reduce flicker */
+            cpgeras();
 
             fDataMin = g_pfDedispData[0];
             fDataMax = g_pfDedispData[0];
