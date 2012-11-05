@@ -98,7 +98,6 @@ int main(int argc, char *argv[])
     int iReadBlockCount = 0;
     char cIsLastBlock = YAPP_FALSE;
     int iRet = YAPP_RET_SUCCESS;
-    float afTM[6] = {0.0};
     float fDataMin = 0.0;
     float fDataMax = 0.0;
     int iReadItems = 0;
@@ -346,7 +345,7 @@ int main(int argc, char *argv[])
             iDataProcTime = stYUM.iTimeSamps * dTSampInSec;
         }
 
-        /* ensure that the input time duration is less than the length of the
+        /* check if the input time duration is less than the length of the
            data */
         if (((double) iDataProcTime) > (stYUM.iTimeSamps * dTSampInSec))
         {
@@ -452,14 +451,17 @@ int main(int argc, char *argv[])
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
-    fStatBW = stYUM.iNumGoodChans * stYUM.fChanBW;  /* in MHz */
-    (void) printf("Usable bandwidth                  : %g MHz\n", fStatBW);
-    fNoiseRMS = 1.0 / sqrt(fStatBW * stYUM.dTSamp * 1e3);
-    (void) printf("Expected noise RMS                : %g\n", fNoiseRMS);
-    fThreshold = (float) (dNumSigmas * fNoiseRMS);
-    (void) printf("Threshold                         : %g\n", fThreshold);
-    /* calculate the minimum SNR */
-    fSNRMin = fThreshold / fNoiseRMS;
+    //if (iFormat != YAPP_FORMAT_DTS_TIM)
+    {
+        fStatBW = stYUM.iNumGoodChans * stYUM.fChanBW;  /* in MHz */
+        (void) printf("Usable bandwidth                  : %g MHz\n", fStatBW);
+        fNoiseRMS = 1.0 / sqrt(fStatBW * stYUM.dTSamp * 1e3);
+        (void) printf("Expected noise RMS                : %g\n", fNoiseRMS);
+        fThreshold = (float) (dNumSigmas * fNoiseRMS);
+        (void) printf("Threshold                         : %g\n", fThreshold);
+        /* calculate the minimum SNR */
+        fSNRMin = fThreshold / fNoiseRMS;
+    }
 
     /* allocate memory for the time sample goodness flag array */
     g_pcIsTimeGood = (char *) YAPP_Malloc(iTimeSampsToProc,
@@ -491,8 +493,7 @@ int main(int argc, char *argv[])
 
     /* allocate memory for the buffer, based on the number of channels and time
        samples */
-    /* TODO: include fSampSize as well */
-    g_pfBuf = (float *) YAPP_Malloc((stYUM.iNumChans * iBlockSize),
+    g_pfBuf = (float *) YAPP_Malloc((size_t) stYUM.iNumChans * iBlockSize * stYUM.fSampSize,
                                     sizeof(float),
                                     YAPP_FALSE);
     if (NULL == g_pfBuf)
@@ -585,13 +586,6 @@ int main(int argc, char *argv[])
             iNumTicksY = stYUM.iNumBands + 1;
         }
         fYStep = (int) ((stYUM.fFMax - stYUM.fFMin) / iNumTicksY);
-
-        afTM[0] = 1;
-        afTM[1] = 1;
-        afTM[2] = 0;
-        afTM[3] = 1;
-        afTM[4] = 0;
-        afTM[5] = 1;
     }
 
     /* allocate memory for the cpgimag() plotting buffer */
@@ -785,9 +779,6 @@ int main(int argc, char *argv[])
 
         if (iFormat != YAPP_FORMAT_DTS_TIM)
         {
-            /* set the colour map */
-            SetColourMap(iColourMap, 0, fColMin, fColMax);
-
             /* get the transpose of the two-dimensional array */
             i = 0;
             j = 0;
@@ -808,7 +799,6 @@ int main(int argc, char *argv[])
 
         /* erase just before plotting, to reduce flicker */
         cpgeras();
-        cpgsvp(PG_VP_ML, PG_VP_MR, PG_VP_MB, PG_VP_MT);
         for (i = 0; i < iBlockSize; ++i)
         {
             g_pfXAxis[i] = (float) (((iReadBlockCount - 1)
@@ -818,45 +808,15 @@ int main(int argc, char *argv[])
         }
         if (iFormat != YAPP_FORMAT_DTS_TIM)
         {
-            cpgswin(1, (iBlockSize - 2), 1, (stYUM.iNumChans - 2));
-            cpgbox("C", 0.0, 0, "C", 0.0, 0);
-            cpgaxis("N",
-                    1, 1,
-                    (iBlockSize - 2), 1,
-                    g_pfXAxis[1], g_pfXAxis[iBlockSize-2],
-                    fXStep,
-                    0,
-                    0.0,
-                    0.4,
-                    1.0,
-                    0.8,
-                    0);
-            cpgaxis("N",
-                    1, 1,
-                    1, (stYUM.iNumChans - 2),
-                    g_pfYAxis[1], g_pfYAxis[stYUM.iNumChans-2],
-                    fYStep,
-                    0,
-                    0.4,
-                    0.0,
-                    1.0,
-                    -0.8,
-                    0);
-            cpglab("Time (s)", "Frequency (MHz)", "Dynamic Spectrum");
-            cpgimag(g_pfPlotBuf,
-                    iBlockSize,
-                    stYUM.iNumChans,
-                    1,
-                    (iBlockSize - 2),
-                    1,
-                    (stYUM.iNumChans - 2),
-                    fDataMin,
-                    fDataMax,
-                    afTM);
-            cpgwedg("RI", 1.0, 5.0, fDataMin, fDataMax, "");
+            pgwrapPlot2D(g_pfPlotBuf, fDataMin, fDataMax,
+                         g_pfXAxis, iBlockSize, dTSampInSec,
+                         g_pfYAxis, stYUM.iNumChans, stYUM.fChanBW,
+                         "Time (s)", "Frequency (MHz)", "Before Dedispersion",
+                         iColourMap);
         }
         else
         {
+            cpgsvp(PG_VP_ML, PG_VP_MR, PG_VP_MB, PG_VP_MT);
             cpgswin(g_pfXAxis[0],
                     g_pfXAxis[iBlockSize-1],
                     fColMin,

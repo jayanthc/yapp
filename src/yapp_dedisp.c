@@ -55,6 +55,7 @@ extern FILE *g_pFSpec;
 /* the following are global only to enable cleaning up in case of abnormal
    termination, such as those triggered by SIGINT or SIGTERM */
 double *g_pdDelayTab = NULL;
+int *g_piOffsetTab = NULL;
 char *g_pcIsChanGood = NULL;
 char *g_pcIsTimeGood = NULL;
 float *g_pfBFTimeSectMean = NULL;
@@ -106,10 +107,8 @@ int main(int argc, char *argv[])
     double dTSampInSec = 0.0;   /* holds sampling time in s */
     YAPP_SIGPROC_HEADER stHeader = {{0}};
     char acLabel[LEN_GENSTRING] = {0};
-    int iHeaderLen = 0;
     int iLen = 0;
     float fFCh1 = 0.0;          /* frequency of the first channel */
-    double dMaxDelay = 0.0;
     int iBytesPerFrame = 0;
     int iChanBeg = 0;
     int iChanEnd = 0;
@@ -150,16 +149,15 @@ int main(int argc, char *argv[])
     struct stat stFileStats = {0};
     long int lDataSizeTotal = 0;
     int iRet = YAPP_RET_SUCCESS;
-    float afTM[6] = {0.0};
     float fDataMin = 0.0;
     float fDataMax = 0.0;
     int iReadItems = 0;
     char acDev[LEN_GENSTRING] = {0};
     char *pcFilename = NULL;
-    float fColMin = 0.0;
-    float fColMax = 0.0;
-    float fXStep = 0.0;
-    float fYStep = 0.0;
+    //float fColMin = 0.0;
+    //float fColMax = 0.0;
+    //float fXStep = 0.0;
+    //float fYStep = 0.0;
     int iNumSamps = 0;
     int iDiff = 0;
     float fButX = 0.0;
@@ -376,8 +374,18 @@ int main(int argc, char *argv[])
         return YAPP_RET_ERROR;
     }
 
+    g_piOffsetTab = (int *) YAPP_Malloc((size_t) iNumChans, sizeof(int), YAPP_FALSE);
+    if (NULL == g_piOffsetTab)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Memory allocation failed! %s!\n",
+                       strerror(errno));
+        YAPP_CleanUp();
+        return YAPP_RET_ERROR;
+    }
+
     /* calculate quadratic delays */
-    /* NOTE: g_pdDelayTab[k] may not be 0 for the highest frequency channel,
+    /* NOTE: delay may not be 0 for the highest frequency channel,
        but the offset samples may be (depending on the sampling rate) */
 #ifdef DEBUG
     {
@@ -402,20 +410,21 @@ int main(int argc, char *argv[])
             fF2 = fFMin;
             for (k = 0; k < iNumChans; ++k)
             {
-                g_pdDelayTab[k] = -4.148808e6
-                                  * ((1.0 / powf(fF1, 2))
-                                     - (1.0 / powf(fF2, 2)))
-                                  * dDM;    /* in ms */
+                dDelay = -4.148808e6
+                         * ((1.0 / powf(fF1, 2))
+                            - (1.0 / powf(fF2, 2)))
+                         * dDM;    /* in ms */
+                g_piOffsetTab[k] = (int) -round(dDelay / dTSamp);
 #ifdef DEBUG
                 (void) fprintf(pFFileDelaysQuad,
                                "%d %g %d\n",
                                k,
-                               g_pdDelayTab[k],
-                               (int) -(g_pdDelayTab[k]/dTSamp));
+                               dDelay,
+                               g_piOffsetTab[k]);
 #endif
                 fF2 += fChanBW;
             }
-            dMaxDelay = g_pdDelayTab[0];
+            iMaxOffset = g_piOffsetTab[0];
         }
         else
         {
@@ -423,20 +432,21 @@ int main(int argc, char *argv[])
             fF2 = fFMax;
             for (k = iNumChans - 1; k >= 0; --k)
             {
-                g_pdDelayTab[k] = 4.148808e6
-                                  * ((1.0 / powf(fF1, 2))
-                                     - (1.0 / powf(fF2, 2)))
-                                  * dDM;     /* in ms */
+                dDelay = 4.148808e6
+                         * ((1.0 / powf(fF1, 2))
+                            - (1.0 / powf(fF2, 2)))
+                         * dDM;     /* in ms */
+                g_piOffsetTab[k] = (int) -round(dDelay / dTSamp);
 #ifdef DEBUG
                 (void) fprintf(pFFileDelaysQuad,
                                "%d %g %d\n",
                                k,
-                               g_pdDelayTab[k],
-                               (int) -(g_pdDelayTab[k]/dTSamp));
+                               dDelay,
+                               g_piOffsetTab[k]);
 #endif
                 fF2 -= fChanBW;
             }
-            dMaxDelay = g_pdDelayTab[iNumChans-1];
+            iMaxOffset = g_piOffsetTab[iNumChans-1];
         }
     }
     else
@@ -447,50 +457,77 @@ int main(int argc, char *argv[])
             fF2 = fFMax;
             for (k = iNumChans - 1; k >= 0; --k)
             {
-                g_pdDelayTab[k] = -4.148808e6
-                                  * ((1.0 / powf(fF1, 2))
-                                     - (1.0 / powf(fF2, 2)))
-                                  * dDM;     /* in ms */
+                dDelay = -4.148808e6
+                         * ((1.0 / powf(fF1, 2))
+                            - (1.0 / powf(fF2, 2)))
+                         * dDM;     /* in ms */
+                g_piOffsetTab[k] = (int) -round(dDelay / dTSamp);
 #ifdef DEBUG
                 (void) fprintf(pFFileDelaysQuad,
                                "%d %g %d\n",
                                k,
-                               g_pdDelayTab[k],
-                               (int) -(g_pdDelayTab[k]/dTSamp));
+                               dDelay,
+                               g_piOffsetTab[k]);
 #endif
                 fF2 -= fChanBW;
             }
-            dMaxDelay = g_pdDelayTab[iNumChans-1];
+            iMaxOffset = g_piOffsetTab[iNumChans-1];
         }
         else
         {
-            fF1 = fFMax;
-            fF2 = fFMin;
-            for (k = 0; k < iNumChans; ++k)
+            #if 0
+            FILE *pFFileDelays = NULL;
+            pFFileDelays = fopen("test.out", "r");
+            k = 0;
+            while (!feof(pFFileDelays))
             {
-                g_pdDelayTab[k] = 4.148808e6
-                                  * ((1.0 / powf(fF1, 2))
-                                     - (1.0 / powf(fF2, 2)))
-                                  * dDM;    /* in ms */
+                (void) fscanf(pFFileDelays, "%d\n", &g_piOffsetTab[k]);
+                printf("%d\n", g_piOffsetTab[k]);
+                ++k;
+            }
+            fclose(pFFileDelays);
+            #else
+            fF1 = fFMax;
+            //fF2 = fFMin + fChanBW;
+            fF2 = fFMax;
+            //for (k = 0; k < iNumChans; ++k)
+            for (k = iNumChans; k > 0; --k)
+            {
+                dDelay = (double) 4.148741601e6
+                         * (((double) 1.0 / (fF1 * fF1))
+                            - ((double) 1.0 / (fF2 * fF2)))
+                         * dDM;    /* in ms */
+                /*double dFrac = (-dDelay / dTSamp) - floor(-dDelay / dTSamp);
+                if (dFrac >= 0.80)
+                {
+                    g_piOffsetTab[k] = (int) -floor(dDelay / dTSamp);
+                }
+                else
+                {
+                    g_piOffsetTab[k] = (int) -ceil(dDelay / dTSamp);
+                }*/
+                g_piOffsetTab[k] = (int) (-dDelay / dTSamp);
+                //printf("%e, %e, %e, %e, %d\n", fF1, fF2, -dDelay, dTSampInSec, g_piOffsetTab[k]);
+                //g_piOffsetTab[k] = (int) round(-dDelay / dTSamp);
+                g_pdDelayTab[k] = dDelay;
 #ifdef DEBUG
                 (void) fprintf(pFFileDelaysQuad,
                                "%d %g %d\n",
                                k,
-                               g_pdDelayTab[k],
-                               (int) -(g_pdDelayTab[k]/dTSamp));
+                               dDelay,
+                               g_piOffsetTab[k]);
 #endif
-                fF2 += fChanBW;
+                //fF2 += fChanBW;
+                fF2 -= fChanBW;
             }
-            dMaxDelay = g_pdDelayTab[0];
+            #endif
+            iMaxOffset = g_piOffsetTab[0];
         }
     }
 #ifdef DEBUG
         (void) fclose(pFFileDelaysQuad);
     }
 #endif
-
-    /* calculate the maximum sample offset from the maximum delay */
-    iMaxOffset = (int) -round(dMaxDelay / dTSamp);
 
     /* ensure that the block size is at least equivalent to the maximum offset,
        because we don't read beyond the second buffer */
@@ -607,10 +644,16 @@ int main(int argc, char *argv[])
     }
 
     iTimeSampsSkip = (int) (lBytesToSkip / (iNumChans * fSampSize));
-    (void) printf("Skipping %ld of %ld bytes (%d time samples)...\n",
+    (void) printf("Skipping\n"
+                  "    %ld of %ld bytes\n"
+                  "    %d of %d time samples\n"
+                  "    %.10g of %.10g seconds\n",
                   lBytesToSkip,
                   lDataSizeTotal,
-                  iTimeSampsSkip);
+                  iTimeSampsSkip,
+                  stYUM.iTimeSamps,
+                  (iTimeSampsSkip * dTSampInSec),
+                  (stYUM.iTimeSamps * dTSampInSec));
 
     iTimeSampsToProc = (int) (lBytesToProc / (iNumChans * fSampSize));
     iNumReads = (int) floorf(((float) iTimeSampsToProc) / iBlockSize);
@@ -652,7 +695,9 @@ int main(int argc, char *argv[])
     fSNRMin = fThreshold / fNoiseRMS;
 
     /* allocate memory for the time sample goodness flag array */
-    g_pcIsTimeGood = (char *) YAPP_Malloc((size_t) iTimeSampsToProc, sizeof(char), YAPP_FALSE);
+    g_pcIsTimeGood = (char *) YAPP_Malloc((size_t) iTimeSampsToProc,
+                                          sizeof(char),
+                                          YAPP_FALSE);
     if (NULL == g_pcIsTimeGood)
     {
         (void) fprintf(stderr,
@@ -678,7 +723,9 @@ int main(int argc, char *argv[])
 
     /* allocate memory for the primary and secondary buffers, based on the
        number of channels and time samples */
-    g_pfBuf0 = (float *) YAPP_Malloc((size_t) iNumChans * iBlockSize, sizeof(float), YAPP_FALSE);
+    g_pfBuf0 = (float *) YAPP_Malloc((size_t) iNumChans * iBlockSize * fSampSize,
+                                     sizeof(float),
+                                     YAPP_FALSE);
     if (NULL == g_pfBuf0)
     {
         (void) fprintf(stderr,
@@ -688,7 +735,9 @@ int main(int argc, char *argv[])
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
-    g_pfBuf1 = (float *) YAPP_Malloc((size_t) iNumChans * iBlockSize, sizeof(float), YAPP_FALSE);
+    g_pfBuf1 = (float *) YAPP_Malloc((size_t) iNumChans * iBlockSize * fSampSize,
+                                     sizeof(float),
+                                     YAPP_FALSE);
     if (NULL == g_pfBuf1)
     {
         (void) fprintf(stderr,
@@ -719,7 +768,7 @@ int main(int argc, char *argv[])
     if (YAPP_FORMAT_FIL == iFormat)
     {
         /* skip the header */
-        (void) fseek(g_pFSpec, (long) iHeaderLen, SEEK_SET);
+        (void) fseek(g_pFSpec, (long) stYUM.iHeaderLen, SEEK_SET);
         /* skip data, if any are to be skipped */
         (void) fseek(g_pFSpec, (long) lBytesToSkip, SEEK_CUR);
     }
@@ -731,7 +780,13 @@ int main(int argc, char *argv[])
 
     /* read the first block of data */
     (void) printf("Reading data block %d.\n", iReadBlockCount);
-    (void) YAPP_ReadData(g_pfBuf0, fSampSize, iTotSampsPerBlock);
+    iReadItems = YAPP_ReadData(g_pfBuf0, fSampSize, iTotSampsPerBlock);
+    if (YAPP_RET_ERROR == iReadItems)
+    {
+        (void) fprintf(stderr, "ERROR: Reading data failed!\n");
+        YAPP_CleanUp();
+        return YAPP_RET_ERROR;
+    }
     pfPriBuf = g_pfBuf0;
     pfSpectrum = g_pfBuf0;
     iPrimaryBuf = BUF_0;
@@ -866,19 +921,22 @@ int main(int argc, char *argv[])
             YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
-
         for (i = 0; i < iNumChans; ++i)
         {
             g_pfYAxis[i] = fFMin + i * fChanBW;
         }
 
+        #if 0
         /* calculate the tick step sizes */
         fXStep = (int) ((((iBlockSize - 1) * dTSampInSec) - 0)
                         / PG_TICK_STEPS_X);
         fYStep = (int) ((fFMax - fFMin) / PG_TICK_STEPS_Y);
+        #endif
 
         /* allocate memory for the cpgimag() plotting buffer */
-        g_pfPlotBuf = (float *) YAPP_Malloc((size_t) iNumChans * iBlockSize, sizeof(float), YAPP_FALSE);
+        g_pfPlotBuf = (float *) YAPP_Malloc((size_t) iNumChans * iBlockSize,
+                                            sizeof(float),
+                                            YAPP_FALSE);
         if (NULL == g_pfPlotBuf)
         {
             (void) fprintf(stderr,
@@ -1116,11 +1174,6 @@ int main(int argc, char *argv[])
     {
         cpgsubp(1, 3);
         cpgsch(1.8);
-
-        afTM[0] = 1;
-        afTM[1] = 1;
-        afTM[3] = 1;
-        afTM[5] = 1;
     }
 
     /* dedisperse the data */
@@ -1164,6 +1217,7 @@ int main(int argc, char *argv[])
             (void) printf("Minimum value of data             : %g\n", fDataMin);
             (void) printf("Maximum value of data             : %g\n", fDataMax);
 
+            #if 0
             if (-fThreshold > fDataMin)
             {
                 fColMin = -fThreshold;
@@ -1180,9 +1234,7 @@ int main(int argc, char *argv[])
             {
                 fColMax = fDataMax;
             }
-
-            /* set the colour map */
-            SetColourMap(iColourMap, 0, fColMin, fColMax);
+            #endif
 
             /* get the transpose of the two-dimensional array */
             k = 0;
@@ -1201,43 +1253,11 @@ int main(int argc, char *argv[])
                 l = ++m;
             }
 
-            cpgsvp(PG_VP_ML, PG_VP_MR, PG_VP_MB, PG_VP_MT);
-            cpgswin(1, (iBlockSize - 2), 1, (iNumChans - 2));
-            cpgbox("C", 0.0, 0, "C", 0.0, 0);
-            cpgaxis("N",
-                    1, 1,
-                    (iBlockSize - 2), 1,
-                    g_pfXAxis[1], g_pfXAxis[iBlockSize-2],
-                    fXStep,
-                    0,
-                    0.0,
-                    0.4,
-                    1.0,
-                    0.8,
-                    0);
-            cpgaxis("N",
-                    1, 1,
-                    1, (iNumChans - 2),
-                    g_pfYAxis[1], g_pfYAxis[iNumChans-2],
-                    fYStep,
-                    0,
-                    0.4,
-                    0.0,
-                    1.0,
-                    -0.8,
-                    0);
-            cpglab("Time (s)", "Frequency (MHz)", "Before De-Dispersion");
-            cpgimag(g_pfPlotBuf,
-                    iBlockSize,
-                    iNumChans,
-                    1,
-                    (iBlockSize - 2),
-                    1,
-                    (iNumChans - 2),
-                    fDataMin,
-                    fDataMax,
-                    afTM);
-            cpgwedg("RI", 1.0, 5.0, fDataMin, fDataMax, "");
+            pgwrapPlot2D(g_pfPlotBuf, fDataMin, fDataMax,
+                         g_pfXAxis, iBlockSize, dTSampInSec,
+                         g_pfYAxis, iNumChans, fChanBW,
+                         "Time (s)", "Frequency (MHz)", "Before Dedispersion",
+                         iColourMap);
         }
 
         /* read the next data block, for reading samples that would be
@@ -1377,11 +1397,24 @@ int main(int argc, char *argv[])
             {
                 if (g_pcIsChanGood[l])
                 {
-                    /* get the delay for the corresponding DM and frequency
-                       channel from the delay table */
-                    dDelay = g_pdDelayTab[l];
-                    /* calculate the sample number offset from the delay */
-                    iOffset = (int) -round(dDelay / dTSamp);
+                    /* get the offset for the corresponding DM and frequency
+                       channel from the offset table */
+                    #if 0
+                    double dDelay = g_pdDelayTab[l];
+                    double dFrac = (-dDelay / dTSamp) - floor(-dDelay / dTSamp);
+                    if (dFrac < 0.33)
+                    {
+                        iOffset = (int) -ceil(dDelay / dTSamp);
+                    }
+                    else if (dFrac >= 0.66)
+                    {
+                        iOffset = (int) -floor(dDelay / dTSamp);
+                    }
+
+                    if ((dFrac < 0.33) || (dFrac >= 0.66))
+                    {
+                    #endif
+                    iOffset = g_piOffsetTab[l];
                     /* apply the delay - shift all time samples up */
                     if ((k + iOffset) >= iBlockSize)
                     {
@@ -1408,6 +1441,39 @@ int main(int argc, char *argv[])
                             ++iEffcNumGoodChans;
                         }
                     }
+                    #if 0
+                    }
+                    else
+                    {
+                        /* add */
+                        iOffset = (int) -ceil(dDelay / dTSamp);
+                        if ((k + iOffset + 1) >= iBlockSize)
+                        {
+                            if (!(cIsLastBlock))
+                            {
+                                m = k + iOffset + 1 - iBlockSize;
+                                pfOffsetSpec = pfSecBuf + m * iNumChans;
+                                pfSpectrum[l] = pfOffsetSpec[l];
+                                if (g_pcIsTimeGood[iReadSmpCount+k+iOffset + 1])
+                                {
+                                    g_pfDedispData[k] += ((pfSpectrum[l] + pfSpectrum[l+1]));
+                                    ++iEffcNumGoodChans;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            pfOffsetSpec = pfPriBuf
+                                           + (k + iOffset) * iNumChans;
+                            pfSpectrum[l] = pfOffsetSpec[l];
+                            if (g_pcIsTimeGood[iReadSmpCount+k+iOffset])
+                            {
+                                g_pfDedispData[k] += ((pfSpectrum[l] + pfSpectrum[l+1]));
+                                ++iEffcNumGoodChans;
+                            }
+                        }
+                    }
+                    #endif
                 }
             }
 
@@ -1455,6 +1521,7 @@ int main(int argc, char *argv[])
             (void) printf("Minimum value of data             : %g\n", fDataMin);
             (void) printf("Maximum value of data             : %g\n", fDataMax);
 
+            #if 0
             if (-fThreshold > fDataMin)
             {
                 fColMin = -fThreshold;
@@ -1471,8 +1538,7 @@ int main(int argc, char *argv[])
             {
                 fColMax = fDataMax;
             }
-
-            SetColourMap(iColourMap, 0, fColMin, fColMax);
+            #endif
 
             /* get the transpose of the two-dimensional array */
             k = 0;
@@ -1491,43 +1557,11 @@ int main(int argc, char *argv[])
                 l = ++m;
             }
 
-            cpgsvp(PG_VP_ML, PG_VP_MR, PG_VP_MB, PG_VP_MT);
-            cpgswin(1, (iBlockSize - 2), 1, (iNumChans - 2));
-            cpgbox("C", 0.0, 0, "C", 0.0, 0);
-            cpgaxis("N",
-                    1, 1,
-                    (iBlockSize - 2), 1,
-                    g_pfXAxis[1], g_pfXAxis[iBlockSize-2],
-                    fXStep,
-                    0,
-                    0.0,
-                    0.4,
-                    1.0,
-                    0.8,
-                    0);
-            cpgaxis("N",
-                    1, 1,
-                    1, (iNumChans - 2),
-                    g_pfYAxis[1], g_pfYAxis[iNumChans-2],
-                    fYStep,
-                    0,
-                    0.4,
-                    0.0,
-                    1.0,
-                    -0.8,
-                    0);
-            cpglab("Time (s)", "Frequency (MHz)", "After De-Dispersion");
-            cpgimag(g_pfPlotBuf,
-                    iBlockSize,
-                    iNumChans,
-                    1,
-                    (iBlockSize - 2),
-                    1,
-                    (iNumChans - 2),
-                    fDataMin,
-                    fDataMax,
-                    afTM);
-            cpgwedg("RI", 1.0, 5.0, fDataMin, fDataMax, "");
+            pgwrapPlot2D(g_pfPlotBuf, fDataMin, fDataMax,
+                         g_pfXAxis, iBlockSize, dTSampInSec,
+                         g_pfYAxis, iNumChans, fChanBW,
+                         "Time (s)", "Frequency (MHz)", "After Dedispersion",
+                         iColourMap);
         }
 
         (void) fwrite(g_pfDedispData,
@@ -1563,7 +1597,10 @@ int main(int argc, char *argv[])
             cpgswin(g_pfXAxis[0], g_pfXAxis[iBlockSize-1], fDataMin, fDataMax);
             cpgbox("BCNST", 0.0, 0, "BCNST", 0.0, 0);
             cpglab("Time (s)", "", "");
+            cpgsci(PG_CI_PLOT);
             cpgline(iBlockSize, g_pfXAxis, g_pfDedispData);
+            //cpgpt(iBlockSize, g_pfXAxis, g_pfDedispData, 5);
+            cpgsci(PG_CI_DEF);
 
             if (!(cIsLastBlock))
             {
@@ -1631,8 +1668,8 @@ int main(int argc, char *argv[])
 
                             cpgclos();
                             (void) fclose(pFDedispData);
-                            g_pFSpec = NULL;
                             (void) fclose(g_pFSpec);
+                            g_pFSpec = NULL;
                             YAPP_CleanUp();
                             return YAPP_RET_SUCCESS;
                         }

@@ -21,30 +21,30 @@ CMAP_HOT	src/colourmap.h	/^    CMAP_HOT,$/;"	e	enum:CMap_e
 CMAP_HOT_INV	src/colourmap.h	/^    CMAP_HOT_INV,$/;"	e	enum:CMap_e
 CMAP_HSV	src/colourmap.h	/^    CMAP_HSV,$/;"	e	enum:CMap_e
 CMAP_JET	src/colourmap.h	/^    CMAP_JET,$/;"	e	enum:CMap_e
-CMAP_LEVELS	src/colourmap.h	18;"	d
+CMAP_LEVELS	src/colourmap.h	30;"	d
 CMAP_LINES	src/colourmap.h	/^    CMAP_LINES,$/;"	e	enum:CMap_e
 CMAP_PINK	src/colourmap.h	/^    CMAP_PINK,$/;"	e	enum:CMap_e
 CMAP_PRISM	src/colourmap.h	/^    CMAP_PRISM,$/;"	e	enum:CMap_e
 CMAP_SPRING	src/colourmap.h	/^    CMAP_SPRING,$/;"	e	enum:CMap_e
-CMAP_STR_AUTUMN	src/colourmap.h	44;"	d
-CMAP_STR_BLUE	src/colourmap.h	62;"	d
-CMAP_STR_BONE	src/colourmap.h	45;"	d
-CMAP_STR_COLORCUBE	src/colourmap.h	46;"	d
-CMAP_STR_COOL	src/colourmap.h	47;"	d
-CMAP_STR_COPPER	src/colourmap.h	48;"	d
-CMAP_STR_FLAG	src/colourmap.h	49;"	d
-CMAP_STR_GRAY	src/colourmap.h	50;"	d
-CMAP_STR_HOT	src/colourmap.h	51;"	d
-CMAP_STR_HOT_INV	src/colourmap.h	52;"	d
-CMAP_STR_HSV	src/colourmap.h	53;"	d
-CMAP_STR_JET	src/colourmap.h	54;"	d
-CMAP_STR_LINES	src/colourmap.h	55;"	d
-CMAP_STR_PINK	src/colourmap.h	56;"	d
-CMAP_STR_PRISM	src/colourmap.h	57;"	d
-CMAP_STR_SPRING	src/colourmap.h	58;"	d
-CMAP_STR_SUMMER	src/colourmap.h	59;"	d
-CMAP_STR_WHITE	src/colourmap.h	60;"	d
-CMAP_STR_WINTER	src/colourmap.h	61;"	d
+CMAP_STR_AUTUMN	src/colourmap.h	56;"	d
+CMAP_STR_BLUE	src/colourmap.h	74;"	d
+CMAP_STR_BONE	src/colourmap.h	57;"	d
+CMAP_STR_COLORCUBE	src/colourmap.h	58;"	d
+CMAP_STR_COOL	src/colourmap.h	59;"	d
+CMAP_STR_COPPER	src/colourmap.h	60;"	d
+CMAP_STR_FLAG	src/colourmap.h	61;"	d
+CMAP_STR_GRAY	src/colourmap.h	62;"	d
+CMAP_STR_HOT	src/colourmap.h	63;"	d
+CMAP_STR_HOT_INV	src/colourmap.h	64;"	d
+CMAP_STR_HSV	src/colourmap.h	65;"	d
+CMAP_STR_JET	src/colourmap.h	66;"	d
+CMAP_STR_LINES	src/colourmap.h	67;"	d
+CMAP_STR_PINK	src/colourmap.h	68;"	d
+CMAP_STR_PRISM	src/colourmap.h	69;"	d
+CMAP_STR_SPRING	src/colourmap.h	70;"	d
+CMAP_STR_SUMMER	src/colourmap.h	71;"	d
+CMAP_STR_WHITE	src/colourmap.h	72;"	d
+CMAP_STR_WINTER	src/colourmap.h	73;"	d
 CMAP_SUMMER	src/colourmap.h	/^    CMAP_SUMMER,$/;"	e	enum:CMap_e
 CMAP_WHITE	src/colourmap.h	/^    CMAP_WHITE,$/;"	e	enum:CMap_e
 CMAP_WINTER	src/colourmap.h	/^    CMAP_WINTER,$/;"	e	enum:CMap_e
@@ -53,8 +53,8 @@ CMap_t	src/colourmap.h	/^} CMap_t;$/;"	t	typeref:enum:CMap_e
 CleanUp	src/yapp_ft.c	/^void CleanUp(int iNTaps)$/;"	f
 CopyDataForFFT	src/yapp_ft.c	/^int CopyDataForFFT(int iNFFT)$/;"	f
 DEF_ACC	src/yapp_ft.h	24;"	d
-DEF_CMAP	src/colourmap.h	64;"	d
-DEF_CMAP_STR	src/colourmap.h	65;"	d
+DEF_CMAP	src/colourmap.h	76;"	d
+DEF_CMAP_STR	src/colourmap.h	77;"	d
 DEF_FOLD_PULSES	src/yapp.h	131;"	d
 DEF_FORMAT	src/yapp.h	120;"	d
 DEF_LAW_MAX	src/yapp.h	238;"	d
@@ -88,7 +88,7 @@ FILE_VERSRC	src/yapp_makever.c	25;"	d	file:
 GetColourMapFromName	src/colourmap.c	/^int GetColourMapFromName(char *pcCMapName)$/;"	f
 GetLatestTimestamp	src/yapp_makever.c	/^time_t GetLatestTimestamp()$/;"	f
 InitPFB	src/yapp_ft.c	/^int InitPFB(int iNTaps, int iNFFT)$/;"	f
-LEN_GENSTRING	src/colourmap.h	17;"	d
+LEN_GENSTRING	src/colourmap.h	29;"	d
 LEN_GENSTRING	src/yapp.h	93;"	d
 MAX_LEN_GENSTRING	src/yapp_makever.c	22;"	d	file:
 MAX_LEN_PSRNAME	src/yapp.h	113;"	d
@@ -98,7 +98,7 @@ MAX_SNR_BINS	src/yapp.h	110;"	d
 MIN_THRES_IN_SIGMA	src/yapp.h	213;"	d
 NUM_BAD_BOUNDS	src/yapp.h	99;"	d
 NUM_BYTES_PER_SAMP	src/yapp_ft.h	17;"	d
-NUM_CMAPS	src/colourmap.h	19;"	d
+NUM_CMAPS	src/colourmap.h	31;"	d
 NUM_TAPS	src/yapp_ft.h	18;"	d
 NUM_TAPS	src/yapp_ft.h	27;"	d
 PATH_ERF_LOOKUP	src/yapp.h	205;"	d
@@ -137,10 +137,15 @@ PG_VP_BUT_MB	src/yapp.h	171;"	d
 PG_VP_BUT_ML	src/yapp.h	169;"	d
 PG_VP_BUT_MR	src/yapp.h	170;"	d
 PG_VP_BUT_MT	src/yapp.h	172;"	d
+PG_VP_MB	src/colourmap.h	24;"	d
 PG_VP_MB	src/yapp.h	159;"	d
+PG_VP_ML	src/colourmap.h	22;"	d
 PG_VP_ML	src/yapp.h	157;"	d
+PG_VP_MR	src/colourmap.h	23;"	d
 PG_VP_MR	src/yapp.h	158;"	d
+PG_VP_MT	src/colourmap.h	25;"	d
 PG_VP_MT	src/yapp.h	160;"	d
+PG_VP_MW	src/colourmap.h	26;"	d
 PG_VP_MW	src/yapp.h	161;"	d
 PLOT_DDS_SUFFIX	src/yapp.h	151;"	d
 PROC_SPEC_NOTSEL	src/yapp.h	219;"	d
@@ -336,6 +341,7 @@ g_pfcFFTInX	src/yapp_ft.c	/^fftwf_complex *g_pfcFFTInX = NULL;$/;"	v
 g_pfcFFTInY	src/yapp_ft.c	/^fftwf_complex *g_pfcFFTInY = NULL;$/;"	v
 g_pfcFFTOutX	src/yapp_ft.c	/^fftwf_complex *g_pfcFFTOutX = NULL;$/;"	v
 g_pfcFFTOutY	src/yapp_ft.c	/^fftwf_complex *g_pfcFFTOutY = NULL;$/;"	v
+g_piOffsetTab	src/yapp_dedisp.c	/^int *g_piOffsetTab = NULL;$/;"	v
 g_ppFDedispCfg	src/yapp_dedisperse.c	/^FILE **g_ppFDedispCfg = NULL;$/;"	v
 g_ppFDedispData	src/yapp_dedisperse.c	/^FILE **g_ppFDedispData = NULL;$/;"	v
 g_stPlanX	src/yapp_ft.c	/^fftwf_plan g_stPlanX = {0};$/;"	v
@@ -377,6 +383,7 @@ pfBFTimeSectMean	src/yapp.h	/^    float *pfBFTimeSectMean;$/;"	m	struct:YUM_s
 pfFreq	src/yapp.h	/^    float *pfFreq;      \/* in MHz *\/$/;"	m	struct:YUM_s
 pfcDataX	src/yapp_ft.h	/^    fftwf_complex *pfcDataX;    \/* unpacked pol-X data, g_iNFFT long *\/$/;"	m	struct:tagPFBData
 pfcDataY	src/yapp_ft.h	/^    fftwf_complex *pfcDataY;    \/* unpacked pol-Y data, g_iNFFT long *\/$/;"	m	struct:tagPFBData
+pgwrapPlot2D	src/colourmap.c	/^void pgwrapPlot2D(float* pfBuf, float fDataMin, float fDataMax,$/;"	f
 tagFileFormats	src/yapp.h	/^enum tagFileFormats$/;"	g
 tagObservatory	src/yapp_sigproc.h	/^enum tagObservatory$/;"	g
 tagPFBData	src/yapp_ft.h	/^typedef struct tagPFBData$/;"	s

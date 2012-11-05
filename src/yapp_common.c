@@ -1330,6 +1330,7 @@ int YAPP_ReadData(float *pfBuf,
     else if (YAPP_SAMPSIZE_16 == (fSampSize * YAPP_BYTE2BIT_FACTOR))
     {
         /* 16-bit/2-byte data */
+        #if 0
         /* copy data from the byte buffer to the float buffer */
         for (i = 0; i < iReadItems; ++i)
         {
@@ -1337,11 +1338,18 @@ int YAPP_ReadData(float *pfBuf,
             (void) memcpy(&sSample, pcCur, (int) fSampSize);
             pfBuf[i] = (float) sSample;
         }
+        #endif
+        short int* psBuf = (short int*) pcBuf;
+        for (i = 0; i < iReadItems; ++i)
+        {
+            pfBuf[i] = (float) psBuf[i];
+        }
     }
     else if (YAPP_SAMPSIZE_8 == (fSampSize * YAPP_BYTE2BIT_FACTOR))
     {
         /* 8-bit/1-byte data */
         /* copy data from the byte buffer to the float buffer */
+        #if 0
         for (i = 0; i < iReadItems; ++i)
         {
             if (pcBuf[i] >= 0)
@@ -1354,6 +1362,12 @@ int YAPP_ReadData(float *pfBuf,
             }
             pfBuf[i] = (float) pcBuf[i];
         }
+        #else
+        for (i = 0; i < iReadItems; ++i)
+        {
+            pfBuf[i] = (float) pcBuf[i];
+        }
+        #endif
     }
     else if (YAPP_SAMPSIZE_4 == (fSampSize * YAPP_BYTE2BIT_FACTOR))
     {

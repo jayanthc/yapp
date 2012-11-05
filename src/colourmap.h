@@ -14,6 +14,18 @@
 #include <string.h>
 #include <cpgplot.h>
 
+/* TODO: this block is a duplicate of that in yapp.h */
+/**
+ * @defgroup PlotMargins PGPLOT viewport margins
+ */
+/* @{ */
+#define PG_VP_ML            0.12    /**< @brief Left margin */
+#define PG_VP_MR            0.88    /**< @brief Right margin */
+#define PG_VP_MB            0.12    /**< @brief Bottom margin */
+#define PG_VP_MT            0.88    /**< @brief Top margin */
+#define PG_VP_MW            0.12    /**< @brief Margin width */
+/* @} */
+
 #define LEN_GENSTRING       256
 #define CMAP_LEVELS         64
 #define NUM_CMAPS           19
@@ -66,6 +78,14 @@ typedef enum CMap_e
 
 int SetColourMap(int iCMap, int iIsColInv, float fColMin, float fColMax);
 int GetColourMapFromName(char *pcCMapName);
+/*
+ * Wrapper for PGPLOT grayscale plotting
+ */
+void pgwrapPlot2D(float* pfBuf, float fDataMin, float fDataMax,
+                  float* pfX, int iLenX, float fXStep,
+                  float* pfY, int iLenY, float fYStep,
+                  char* pcXLabel, char* pcYLabel, char* pcTitle,
+                  int iColourMap);
 
 #endif  /* __COLOURMAP_H__ */
 

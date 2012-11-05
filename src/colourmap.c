@@ -1424,3 +1424,78 @@ int GetColourMapFromName(char *pcCMapName)
     return iCMap;
 }
 
+/*
+ * void pgwrapPlot2D(float* pfBuf, float fDataMin, float fDataMax,
+ *                   float* pfX, int iLenX, float fXStep,
+ *                   float* pfY, int iLenY, float fYStep)
+ */
+void pgwrapPlot2D(float* pfBuf, float fDataMin, float fDataMax,
+                  float* pfX, int iLenX, float fXStep,
+                  float* pfY, int iLenY, float fYStep,
+                  char* pcXLabel, char* pcYLabel, char* pcTitle,
+                  int iColourMap)
+{
+    float afTM[6] = {0.0};                      /* the transformation matrix */
+
+    /* x-width of the one pixel = (xmax - xmin + xstep) / xlen */
+    afTM[1] = (pfX[iLenX-1] - pfX[0] + fXStep) / iLenX;
+    /* starting position (left) in world co-ordinates */
+    afTM[0] = pfX[0] - afTM[1];
+    afTM[2] = 0;
+    /* y-height of one pixel = (ymax - ymin + ystep) / ylen */
+    afTM[5] = (pfY[iLenY-1] - pfY[0] + fYStep) / iLenY;
+    /* starting position (bottom) in world co-ordinates */
+    afTM[3] = pfY[0] - afTM[5];
+    afTM[4] = 0;
+
+    /* set the viewport margins, in normalised device co-ordinates */
+    cpgsvp(PG_VP_ML, PG_VP_MR, PG_VP_MB, PG_VP_MT);
+    /* set the window boundaries in world co-ordinates */
+    cpgswin(pfX[0], pfX[iLenX-1], pfY[0], pfY[iLenY-1]);
+    /* set the colour map */
+    SetColourMap(iColourMap, 0, fDataMin, fDataMax);
+    /* plot the image */
+    cpgimag((const float *) pfBuf,  /* data to be plotted */
+            iLenX,
+            iLenY,
+            1,
+            iLenX,
+            1,
+            iLenY,
+            fDataMin,
+            fDataMax,
+            afTM);
+    /* draw a box around the image */
+    cpgbox("CST", 0.0, 0, "CST", 0.0, 0);
+    /* mark the x-axis */
+    cpgaxis("N",
+            pfX[0], pfY[0],
+            pfX[iLenX-1], pfY[0],
+            pfX[0], pfX[iLenX-1],
+            0.0,
+            0,
+            0.5,
+            0.0,
+            0.5,
+            0.5,
+            0);
+    /* mark the y-axis */
+    cpgaxis("N",
+            pfX[0], pfY[0],
+            pfX[0], pfY[iLenY-1],
+            pfY[0], pfY[iLenY-1],
+            0.0,
+            0,
+            0.0,
+            0.5,
+            0.5,
+            -0.5,
+            0);
+    /* add labels and title */
+    cpglab(pcXLabel, pcYLabel, pcTitle);
+    /* plot the colour index for reference */
+    cpgwedg("RI", 1.0, 5.0, fDataMin, fDataMax, "");
+
+    return;
+}
+
