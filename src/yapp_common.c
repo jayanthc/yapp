@@ -816,6 +816,7 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
     {
         if (pstYUM->fChanBW < 0.0)
         {
+            pstYUM->cIsBandFlipped = YAPP_TRUE;
             /* make the channel bandwidth positive */
             pstYUM->fChanBW = fabs(pstYUM->fChanBW);
             pstYUM->fFMax = fFCh1;
@@ -823,6 +824,7 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
         }
         else
         {
+            pstYUM->cIsBandFlipped = YAPP_FALSE;
             pstYUM->fFMin = fFCh1;
             pstYUM->fFMax = pstYUM->fFMin + (pstYUM->iNumChans * pstYUM->fChanBW);
         }

@@ -570,9 +570,19 @@ int main(int argc, char *argv[])
             YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
-        for (i = 0; i < stYUM.iNumChans; ++i)
+        if (stYUM.cIsBandFlipped)
         {
-            g_pfYAxis[i] = stYUM.fFMin + i * stYUM.fChanBW;
+            for (i = 0; i < stYUM.iNumChans; ++i)
+            {
+                g_pfYAxis[i] = stYUM.fFMax - i * stYUM.fChanBW;
+            }
+        }
+        else
+        {
+            for (i = 0; i < stYUM.iNumChans; ++i)
+            {
+                g_pfYAxis[i] = stYUM.fFMin + i * stYUM.fChanBW;
+            }
         }
     }
 

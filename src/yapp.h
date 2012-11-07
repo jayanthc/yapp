@@ -117,6 +117,7 @@ enum tagFileFormats
  * @defgroup Defaults Default values
  */
 /* @{ */
+#define DEF_LAW             2.0
 #define DEF_FORMAT          YAPP_FORMAT_SPEC
 #define DEF_OUT_FORMAT      YAPP_FORMAT_DTS_DDD
 #define DEF_SIZE_BLOCK      MAX_SIZE_BLOCK  /**< @brief Default block size */
@@ -473,6 +474,19 @@ int YAPP_ReadData(float *pfBuf,
  * @param[in]   iTimeSamps  Number of time samples that are to be processed
  */
 double YAPP_CalcThresholdInSigmas(int iTimeSamps);
+
+/**
+ * Calculate dispersion delays for correction.
+ *
+ * @param[in]   dDM         DM in pc cm^-3
+ * @param[in]   stYUM       Metadata
+ * @param[in]   fLaw        Dispersion law
+ * @param[out]  piMaxOffset Maximum correction in terms of samples
+ */
+int YAPP_CalcDelays(double dDM,
+                    YUM_t stYUM,
+                    float fLaw,
+                    int* piMaxOffset);
 
 /*
  * The memory allocator

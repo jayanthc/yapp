@@ -31,11 +31,8 @@ yapp_viewdata:
 yapp_ft:
 
 yapp_dedisp:
-1.  BUG: *.tim files created by yapp_dedisp for *.fil does not result in pulsar
-    detection using seek+best - take care of chbw -/+ and choose ref freq.
-    accordingly
-2.  BUG: if file name is fake.fil, output is fak.tim or fak.dds
-3.  BUG: dedisp: Negative DM dedispersion not correct.
+1.  BUG: if file name is fake.fil, output is fak.tim or fak.dds
+2.  BUG: dedisp: Negative DM dedispersion not correct.
 
 yapp_dedisperse:
 1.  BUG: yapp_dedisperse not working properly.

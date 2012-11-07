@@ -7,6 +7,8 @@
  *     -h  --help                           Display this usage information
  *     -d  --dm <dm>                        The DM at which to de-disperse
  *                                          (default is 10.0)
+ *     -l  --law <law>                      Dispersion law
+ *                                          (default is 2.0)
  *     -s  --skip-time <time>               The length of data in seconds, to be
  *                                          skipped
  *     -p  --proc-time <time>               The length of data in seconds, to be
@@ -54,7 +56,6 @@ extern FILE *g_pFSpec;
 
 /* the following are global only to enable cleaning up in case of abnormal
    termination, such as those triggered by SIGINT or SIGTERM */
-double *g_pdDelayTab = NULL;
 int *g_piOffsetTab = NULL;
 char *g_pcIsChanGood = NULL;
 char *g_pcIsTimeGood = NULL;
@@ -85,6 +86,7 @@ int main(int argc, char *argv[])
     int iChanGoodness = (int) YAPP_TRUE;
     double dDelay = 0.0;
     double dDM = 0.0;
+    float fLaw = DEF_LAW;
     float fFMin = 0.0;
     float fFMax = 0.0;
     float fChanBW = 0.0;
@@ -95,7 +97,6 @@ int main(int argc, char *argv[])
     int iDataSizePerBlock = 0;  /* fSampSize * iNumChans * iBlockSize */
     int iNumGoodChans = 0;
     int iEffcNumGoodChans = 0;
-    char cIsBandFlipped = YAPP_FALSE;
     float fStatBW = 0.0;
     float fNoiseRMS = 0.0;
     float fThreshold = 0.0;
@@ -154,10 +155,6 @@ int main(int argc, char *argv[])
     int iReadItems = 0;
     char acDev[LEN_GENSTRING] = {0};
     char *pcFilename = NULL;
-    //float fColMin = 0.0;
-    //float fColMax = 0.0;
-    //float fXStep = 0.0;
-    //float fYStep = 0.0;
     int iNumSamps = 0;
     int iDiff = 0;
     float fButX = 0.0;
@@ -175,11 +172,12 @@ int main(int argc, char *argv[])
     const char *pcProgName = NULL;
     int iNextOpt = 0;
     /* valid short options */
-    const char* const pcOptsShort = "hd:s:p:b:o:gm:itfv";
+    const char* const pcOptsShort = "hd:l:s:p:b:o:gm:itfv";
     /* valid long options */
     const struct option stOptsLong[] = {
         { "help",                   0, NULL, 'h' },
         { "dm",                     1, NULL, 'd' },
+        { "law",                    1, NULL, 'l' },
         { "skip-time",              1, NULL, 's' },
         { "proc-time",              1, NULL, 'p' },
         { "block-size",             1, NULL, 'b' },
@@ -364,170 +362,14 @@ int main(int argc, char *argv[])
     (void) memset(g_pcIsChanGood, YAPP_TRUE, iNumChans);
     //<--for SIGPROC
 
-    g_pdDelayTab = (double *) YAPP_Malloc((size_t) iNumChans, sizeof(double), YAPP_FALSE);
-    if (NULL == g_pdDelayTab)
+    iRet = YAPP_CalcDelays(dDM, stYUM, fLaw, &iMaxOffset);
+    if (iRet != YAPP_RET_SUCCESS)
     {
         (void) fprintf(stderr,
-                       "ERROR: Memory allocation failed! %s!\n",
-                       strerror(errno));
+                       "ERROR: Calculating delays failed!\n");
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
-
-    g_piOffsetTab = (int *) YAPP_Malloc((size_t) iNumChans, sizeof(int), YAPP_FALSE);
-    if (NULL == g_piOffsetTab)
-    {
-        (void) fprintf(stderr,
-                       "ERROR: Memory allocation failed! %s!\n",
-                       strerror(errno));
-        YAPP_CleanUp();
-        return YAPP_RET_ERROR;
-    }
-
-    /* calculate quadratic delays */
-    /* NOTE: delay may not be 0 for the highest frequency channel,
-       but the offset samples may be (depending on the sampling rate) */
-#ifdef DEBUG
-    {
-        FILE *pFFileDelaysQuad = NULL;
-
-        pFFileDelaysQuad = fopen(YAPP_FILE_DELAYS_QUAD, "w");
-        if (NULL == pFFileDelaysQuad)
-        {
-            fprintf(stderr,
-                    "ERROR: Opening file %s failed! %s.\n",
-                    YAPP_FILE_DELAYS_QUAD,
-                    strerror(errno));
-            YAPP_CleanUp();
-            return YAPP_RET_ERROR;
-        }
-#endif
-    if (dDM < 0)
-    {
-        if (cIsBandFlipped)
-        {
-            fF1 = fFMax;
-            fF2 = fFMin;
-            for (k = 0; k < iNumChans; ++k)
-            {
-                dDelay = -4.148808e6
-                         * ((1.0 / powf(fF1, 2))
-                            - (1.0 / powf(fF2, 2)))
-                         * dDM;    /* in ms */
-                g_piOffsetTab[k] = (int) -round(dDelay / dTSamp);
-#ifdef DEBUG
-                (void) fprintf(pFFileDelaysQuad,
-                               "%d %g %d\n",
-                               k,
-                               dDelay,
-                               g_piOffsetTab[k]);
-#endif
-                fF2 += fChanBW;
-            }
-            iMaxOffset = g_piOffsetTab[0];
-        }
-        else
-        {
-            fF1 = fFMin;
-            fF2 = fFMax;
-            for (k = iNumChans - 1; k >= 0; --k)
-            {
-                dDelay = 4.148808e6
-                         * ((1.0 / powf(fF1, 2))
-                            - (1.0 / powf(fF2, 2)))
-                         * dDM;     /* in ms */
-                g_piOffsetTab[k] = (int) -round(dDelay / dTSamp);
-#ifdef DEBUG
-                (void) fprintf(pFFileDelaysQuad,
-                               "%d %g %d\n",
-                               k,
-                               dDelay,
-                               g_piOffsetTab[k]);
-#endif
-                fF2 -= fChanBW;
-            }
-            iMaxOffset = g_piOffsetTab[iNumChans-1];
-        }
-    }
-    else
-    {
-        if (cIsBandFlipped)
-        {
-            fF1 = fFMin;
-            fF2 = fFMax;
-            for (k = iNumChans - 1; k >= 0; --k)
-            {
-                dDelay = -4.148808e6
-                         * ((1.0 / powf(fF1, 2))
-                            - (1.0 / powf(fF2, 2)))
-                         * dDM;     /* in ms */
-                g_piOffsetTab[k] = (int) -round(dDelay / dTSamp);
-#ifdef DEBUG
-                (void) fprintf(pFFileDelaysQuad,
-                               "%d %g %d\n",
-                               k,
-                               dDelay,
-                               g_piOffsetTab[k]);
-#endif
-                fF2 -= fChanBW;
-            }
-            iMaxOffset = g_piOffsetTab[iNumChans-1];
-        }
-        else
-        {
-            #if 0
-            FILE *pFFileDelays = NULL;
-            pFFileDelays = fopen("test.out", "r");
-            k = 0;
-            while (!feof(pFFileDelays))
-            {
-                (void) fscanf(pFFileDelays, "%d\n", &g_piOffsetTab[k]);
-                printf("%d\n", g_piOffsetTab[k]);
-                ++k;
-            }
-            fclose(pFFileDelays);
-            #else
-            fF1 = fFMax;
-            //fF2 = fFMin + fChanBW;
-            fF2 = fFMax;
-            //for (k = 0; k < iNumChans; ++k)
-            for (k = iNumChans; k > 0; --k)
-            {
-                dDelay = (double) 4.148741601e6
-                         * (((double) 1.0 / (fF1 * fF1))
-                            - ((double) 1.0 / (fF2 * fF2)))
-                         * dDM;    /* in ms */
-                /*double dFrac = (-dDelay / dTSamp) - floor(-dDelay / dTSamp);
-                if (dFrac >= 0.80)
-                {
-                    g_piOffsetTab[k] = (int) -floor(dDelay / dTSamp);
-                }
-                else
-                {
-                    g_piOffsetTab[k] = (int) -ceil(dDelay / dTSamp);
-                }*/
-                g_piOffsetTab[k] = (int) (-dDelay / dTSamp);
-                //printf("%e, %e, %e, %e, %d\n", fF1, fF2, -dDelay, dTSampInSec, g_piOffsetTab[k]);
-                //g_piOffsetTab[k] = (int) round(-dDelay / dTSamp);
-                g_pdDelayTab[k] = dDelay;
-#ifdef DEBUG
-                (void) fprintf(pFFileDelaysQuad,
-                               "%d %g %d\n",
-                               k,
-                               dDelay,
-                               g_piOffsetTab[k]);
-#endif
-                //fF2 += fChanBW;
-                fF2 -= fChanBW;
-            }
-            #endif
-            iMaxOffset = g_piOffsetTab[0];
-        }
-    }
-#ifdef DEBUG
-        (void) fclose(pFFileDelaysQuad);
-    }
-#endif
 
     /* ensure that the block size is at least equivalent to the maximum offset,
        because we don't read beyond the second buffer */
@@ -921,9 +763,19 @@ int main(int argc, char *argv[])
             YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
-        for (i = 0; i < iNumChans; ++i)
+        if (stYUM.cIsBandFlipped)
         {
-            g_pfYAxis[i] = fFMin + i * fChanBW;
+            for (i = 0; i < iNumChans; ++i)
+            {
+                g_pfYAxis[i] = fFMax - i * fChanBW;
+            }
+        }
+        else
+        {
+            for (i = 0; i < iNumChans; ++i)
+            {
+                g_pfYAxis[i] = fFMin + i * fChanBW;
+            }
         }
 
         #if 0
@@ -1010,6 +862,7 @@ int main(int argc, char *argv[])
                       1,
                       pFDedispData);
 
+        //TODO: check if we need this
         /* write number of channels */
         iLen = strlen("nchans");
         (void) fwrite(&iLen, sizeof(iLen), 1, pFDedispData);
@@ -1022,12 +875,20 @@ int main(int argc, char *argv[])
                       1,
                       pFDedispData);
 
+        //TODO: check if we need this
         /* write frequency of first channel */
         iLen = strlen("fch1");
         (void) fwrite(&iLen, sizeof(iLen), 1, pFDedispData);
         (void) strcpy(acLabel, "fch1");
         (void) fwrite(acLabel, sizeof(char), iLen, pFDedispData);
-        stHeader.dFChan1 = (double) stYUM.fFMin;
+        if (stYUM.fChanBW < 0.0)
+        {
+            stHeader.dFChan1 = (double) stYUM.fFMax;
+        }
+        else
+        {
+            stHeader.dFChan1 = (double) stYUM.fFMin;
+        }
         (void) fwrite(&stHeader.dFChan1,
                       sizeof(stHeader.dFChan1),
                       1,
@@ -1141,6 +1002,7 @@ int main(int argc, char *argv[])
                       1,
                       pFDedispData);
 
+        //TODO: check if we need this
         /* write reference DM */
         iLen = strlen("refdm");
         (void) fwrite(&iLen, sizeof(iLen), 1, pFDedispData);
@@ -1399,21 +1261,6 @@ int main(int argc, char *argv[])
                 {
                     /* get the offset for the corresponding DM and frequency
                        channel from the offset table */
-                    #if 0
-                    double dDelay = g_pdDelayTab[l];
-                    double dFrac = (-dDelay / dTSamp) - floor(-dDelay / dTSamp);
-                    if (dFrac < 0.33)
-                    {
-                        iOffset = (int) -ceil(dDelay / dTSamp);
-                    }
-                    else if (dFrac >= 0.66)
-                    {
-                        iOffset = (int) -floor(dDelay / dTSamp);
-                    }
-
-                    if ((dFrac < 0.33) || (dFrac >= 0.66))
-                    {
-                    #endif
                     iOffset = g_piOffsetTab[l];
                     /* apply the delay - shift all time samples up */
                     if ((k + iOffset) >= iBlockSize)
@@ -1441,39 +1288,6 @@ int main(int argc, char *argv[])
                             ++iEffcNumGoodChans;
                         }
                     }
-                    #if 0
-                    }
-                    else
-                    {
-                        /* add */
-                        iOffset = (int) -ceil(dDelay / dTSamp);
-                        if ((k + iOffset + 1) >= iBlockSize)
-                        {
-                            if (!(cIsLastBlock))
-                            {
-                                m = k + iOffset + 1 - iBlockSize;
-                                pfOffsetSpec = pfSecBuf + m * iNumChans;
-                                pfSpectrum[l] = pfOffsetSpec[l];
-                                if (g_pcIsTimeGood[iReadSmpCount+k+iOffset + 1])
-                                {
-                                    g_pfDedispData[k] += ((pfSpectrum[l] + pfSpectrum[l+1]));
-                                    ++iEffcNumGoodChans;
-                                }
-                            }
-                        }
-                        else
-                        {
-                            pfOffsetSpec = pfPriBuf
-                                           + (k + iOffset) * iNumChans;
-                            pfSpectrum[l] = pfOffsetSpec[l];
-                            if (g_pcIsTimeGood[iReadSmpCount+k+iOffset])
-                            {
-                                g_pfDedispData[k] += ((pfSpectrum[l] + pfSpectrum[l+1]));
-                                ++iEffcNumGoodChans;
-                            }
-                        }
-                    }
-                    #endif
                 }
             }
 
@@ -1730,6 +1544,10 @@ void PrintUsage(const char *pcProgName)
     (void) printf("The DM at which to de-disperse\n");
     (void) printf("                                         ");
     (void) printf("(default is 10.0)\n");
+    (void) printf("    -l  --law <law>                      ");
+    (void) printf("Dispersion law\n");
+    (void) printf("                                         ");
+    (void) printf("(default is 2.0)\n");
     (void) printf("    -s  --skip-time <time>               ");
     (void) printf("The length of data in seconds, to be\n");
     (void) printf("                                         ");
@@ -1768,5 +1586,148 @@ void PrintUsage(const char *pcProgName)
     (void) printf("Display the version\n");
 
     return;
+}
+
+int YAPP_CalcDelays(double dDM,
+                    YUM_t stYUM,
+                    float fLaw,
+                    int* piMaxOffset)
+{
+    int i = 0;
+    float fF1 = 0.0;
+    float fF2 = 0.0;
+    double dDelay = 0.0;
+
+    g_piOffsetTab = (int *) YAPP_Malloc((size_t) stYUM.iNumChans,
+                                        sizeof(int),
+                                        YAPP_FALSE);
+    if (NULL == g_piOffsetTab)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Memory allocation failed! %s!\n",
+                       strerror(errno));
+        YAPP_CleanUp();
+        return YAPP_RET_ERROR;
+    }
+
+    /* calculate quadratic delays */
+    /* NOTE: delay may not be 0 for the highest frequency channel,
+       but the offset samples may be (depending on the sampling rate) */
+    //TODO: should be - and adjust the mjd according to infinite freq.
+#ifdef DEBUG
+    {
+        FILE *pFFileDelaysQuad = NULL;
+
+        pFFileDelaysQuad = fopen(YAPP_FILE_DELAYS_QUAD, "w");
+        if (NULL == pFFileDelaysQuad)
+        {
+            fprintf(stderr,
+                    "ERROR: Opening file %s failed! %s.\n",
+                    YAPP_FILE_DELAYS_QUAD,
+                    strerror(errno));
+            YAPP_CleanUp();
+            return YAPP_RET_ERROR;
+        }
+#endif
+    if (dDM < 0)
+    {
+        if (stYUM.cIsBandFlipped)
+        {
+            fF1 = stYUM.fFMax;
+            fF2 = stYUM.fFMax;
+            for (i = stYUM.iNumChans - 1; i >= 0; --i)
+            {
+                dDelay = (double) -4.148741601e6
+                         * (((double) 1.0 / pow(fF1, fLaw))
+                            - ((double) 1.0 / pow(fF2, fLaw)))
+                         * dDM;    /* in ms */
+                g_piOffsetTab[i] = (int) (dDelay / stYUM.dTSamp);
+#ifdef DEBUG
+                (void) fprintf(pFFileDelaysQuad,
+                               "%d %g %d\n",
+                               i,
+                               dDelay,
+                               g_piOffsetTab[i]);
+#endif
+                fF2 -= stYUM.fChanBW;
+            }
+            *piMaxOffset = g_piOffsetTab[0];
+        }
+        else
+        {
+            fF1 = stYUM.fFMax;
+            fF2 = stYUM.fFMax;
+            for (i = 0; i < stYUM.iNumChans; ++i)
+            {
+                dDelay = (double) -4.148741601e6
+                         * (((double) 1.0 / pow(fF1, fLaw))
+                            - ((double) 1.0 / pow(fF2, fLaw)))
+                         * dDM;    /* in ms */
+                g_piOffsetTab[i] = (int) (dDelay / stYUM.dTSamp);
+#ifdef DEBUG
+                (void) fprintf(pFFileDelaysQuad,
+                               "%d %g %d\n",
+                               i,
+                               dDelay,
+                               g_piOffsetTab[i]);
+#endif
+                fF2 -= stYUM.fChanBW;
+            }
+            *piMaxOffset = g_piOffsetTab[stYUM.iNumChans-1];
+        }
+    }
+    else
+    {
+        if (stYUM.cIsBandFlipped)
+        {
+            fF1 = stYUM.fFMax;
+            fF2 = stYUM.fFMax;
+            for (i = 0; i < stYUM.iNumChans; ++i)
+            {
+                dDelay = (double) -4.148741601e6
+                         * (((double) 1.0 / pow(fF1, fLaw))
+                            - ((double) 1.0 / pow(fF2, fLaw)))
+                         * dDM;    /* in ms */
+                g_piOffsetTab[i] = (int) (dDelay / stYUM.dTSamp);
+#ifdef DEBUG
+                (void) fprintf(pFFileDelaysQuad,
+                               "%d %g %d\n",
+                               i,
+                               dDelay,
+                               g_piOffsetTab[i]);
+#endif
+                fF2 -= stYUM.fChanBW;
+            }
+            *piMaxOffset = g_piOffsetTab[stYUM.iNumChans-1];
+        }
+        else
+        {
+            fF1 = stYUM.fFMax;
+            fF2 = stYUM.fFMax;
+            for (i = stYUM.iNumChans - 1; i >= 0; --i)
+            {
+                dDelay = (double) -4.148741601e6
+                         * (((double) 1.0 / pow(fF1, fLaw))
+                            - ((double) 1.0 / pow(fF2, fLaw)))
+                         * dDM;    /* in ms */
+                g_piOffsetTab[i] = (int) (dDelay / stYUM.dTSamp);
+#ifdef DEBUG
+                (void) fprintf(pFFileDelaysQuad,
+                               "%d %g %d\n",
+                               i,
+                               dDelay,
+                               g_piOffsetTab[i]);
+#endif
+                fF2 -= stYUM.fChanBW;
+            }
+            *piMaxOffset = g_piOffsetTab[0];
+        }
+    }
+#ifdef DEBUG
+        (void) fclose(pFFileDelaysQuad);
+    }
+#endif
+
+    return YAPP_RET_SUCCESS;
 }
 

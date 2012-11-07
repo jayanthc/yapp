@@ -139,8 +139,8 @@ int main(int argc, char *argv[])
                       stYUM.fFMax);
         if (YAPP_TRUE == stYUM.cIsBandFlipped)
         {
-            (void) printf("                                  "
-                          " Band-flipped\n");
+            (void) printf("                                    "
+                          "Flipped band\n");
         }
         (void) printf("Estimated number of bands         : %d\n",
                       stYUM.iNumBands);
