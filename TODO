@@ -1,11 +1,9 @@
 TODO
 ----
 
-NEW: CRASH on gpubox
-
 yapp_viewdata:
-1.  BUG: yapp_viewdata -b <> <file> doesn't work for block size < 4. Even with
-    block size = 4, only one pixel is seen (2 for 5, 3 for 6, etc.)
+1.  BUG: yapp_viewdata -b <> <file> doesn't work for block size < 2.
+    SOLUTION: print error for block size = 1
 2.  BUG: Signal-handling in non-interactive mode causes blocking in cpgclos()
     and crash on kill.
 3.  BUG: Crash in:
@@ -21,14 +19,10 @@ yapp_viewdata:
     ii. Block 2 for sps -n <min> -x <max> -p 20 -b <x> <file> and block 1 for
     sps -n <min> -x <max> -s 10 -p 20 -b <x> <file> does not seem to be the
     same. this is true for time mode too.
-7.  BUG: Eliminte flickering in noninteractive mode plots by redrawing only
-    axes.
-8.  FEATURE: Support user-defined colourmaps.
-9.  BUG: X-axis tick mark calculation is not correct in some cases
-10. BUG: In YAPP_ReadData(), take malloc() outside.
-11. BUG: Last block of 0833b45.spec not plotting correctly.
-
-yapp_ft:
+7.  FEATURE: Support user-defined colourmaps.
+8.  BUG: X-axis tick mark calculation is not correct in some cases
+9.  BUG: In YAPP_ReadData(), take malloc() outside.
+10. BUG: Last block of 0833b45.spec not plotting correctly.
 
 yapp_dedisp:
 1.  BUG: if file name is fake.fil, output is fak.tim or fak.dds
