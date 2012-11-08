@@ -23,6 +23,8 @@ yapp_viewdata:
 8.  BUG: X-axis tick mark calculation is not correct in some cases
 9.  BUG: In YAPP_ReadData(), take malloc() outside.
 10. BUG: Last block of 0833b45.spec not plotting correctly.
+11. Remove skip-percentage and proc-percentage
+12. BUG: crash in reading 4bit data
 
 yapp_dedisp:
 1.  BUG: if file name is fake.fil, output is fak.tim or fak.dds

@@ -16,7 +16,7 @@
  *                                          (default is all)
  *     -b  --block-size <samples>           Number of samples read in one block
  *                                          (default is 4096 samples)
- *     -o  --out-format                     Output format - 'ddd' or 'tim'
+ *     -o  --out-format <format>            Output format - 'ddd' or 'tim'
  *                                          (default is 'tim')
  *     -g  --graphics                       Turn on plotting
  *     -m  --colour-map <name>              MATLAB colour map for plotting
@@ -1410,10 +1410,9 @@ int main(int argc, char *argv[])
 
             cpgswin(g_pfXAxis[0], g_pfXAxis[iBlockSize-1], fDataMin, fDataMax);
             cpgbox("BCNST", 0.0, 0, "BCNST", 0.0, 0);
-            cpglab("Time (s)", "", "");
+            cpglab("Time (s)", "Total Power", "Dedipsersed Time Series");
             cpgsci(PG_CI_PLOT);
             cpgline(iBlockSize, g_pfXAxis, g_pfDedispData);
-            //cpgpt(iBlockSize, g_pfXAxis, g_pfDedispData, 5);
             cpgsci(PG_CI_DEF);
 
             if (!(cIsLastBlock))
@@ -1562,7 +1561,7 @@ void PrintUsage(const char *pcProgName)
     (void) printf("Number of samples read in one block\n");
     (void) printf("                                         ");
     (void) printf("(default is 4096 samples)\n");
-    (void) printf("    -o  --out-format                     ");
+    (void) printf("    -o  --out-format <format>            ");
     (void) printf("Output format - 'ddd' or 'tim'\n");
     (void) printf("                                         ");
     (void) printf("(default is 'tim')\n");

@@ -5,13 +5,9 @@
  * @verbatim
  * Usage: yapp_viewdata [options] <dynamic-spectrum-data-file>
  *     -h  --help                           Display this usage information
- *     -s  --skip-percent <percentage>      The percentage of data to be skipped
- *     -S  --skip-time <time>               The length of data in seconds, to be
+ *     -s  --skip <time>                    The length of data in seconds, to be
  *                                          skipped
- *     -p  --proc-percent <percentage>      The percentage of data to be
- *                                          processed
- *                                          (default is 100)
- *     -P  --proc-time <time>               The length of data in seconds, to be
+ *     -p  --proc <time>                    The length of data in seconds, to be
  *                                          processed
  *                                          (default is all)
  *     -b  --block-size <samples>           Number of samples read in one block
@@ -121,14 +117,12 @@ int main(int argc, char *argv[])
     const char *pcProgName = NULL;
     int iNextOpt = 0;
     /* valid short options */
-    const char* const pcOptsShort = "hs:S:p:P:b:c:m:inv";
+    const char* const pcOptsShort = "hs:p:b:c:m:inv";
     /* valid long options */
     const struct option stOptsLong[] = {
         { "help",                   0, NULL, 'h' },
-        { "skip-percent",           1, NULL, 's' },
-        { "skip-time",              1, NULL, 'S' },
-        { "proc-percent",           1, NULL, 'p' },
-        { "proc-time",              1, NULL, 'P' },
+        { "skip",                   1, NULL, 'S' },
+        { "proc",                   1, NULL, 'P' },
         { "block-size",             1, NULL, 'b' },
         { "clip-level",             1, NULL, 'c' },
         { "colour-map",             1, NULL, 'm' },
@@ -821,7 +815,7 @@ int main(int argc, char *argv[])
             pgwrapPlot2D(g_pfPlotBuf, fDataMin, fDataMax,
                          g_pfXAxis, iBlockSize, dTSampInSec,
                          g_pfYAxis, stYUM.iNumChans, stYUM.fChanBW,
-                         "Time (s)", "Frequency (MHz)", "Before Dedispersion",
+                         "Time (s)", "Frequency (MHz)", "Dynamic Spectrum",
                          iColourMap);
         }
         else
@@ -936,17 +930,11 @@ void PrintUsage(const char *pcProgName)
                   pcProgName);
     (void) printf("    -h  --help                           ");
     (void) printf("Display this usage information\n");
-    (void) printf("    -s  --skip-percent <percentage>      ");
-    (void) printf("The percentage of data to be skipped\n");
-    (void) printf("    -S  --skip-time <time>               ");
+    (void) printf("    -S  --skip <time>                    ");
     (void) printf("The length of data in seconds, to be\n");
     (void) printf("                                         ");
     (void) printf("skipped\n");
-    (void) printf("    -p  --proc-percent <percentage>      ");
-    (void) printf("The percentage of data to be processed\n");
-    (void) printf("                                         ");
-    (void) printf("(default is 100)\n");
-    (void) printf("    -P  --proc-time <time>               ");
+    (void) printf("    -p  --proc <time>                    ");
     (void) printf("The length of data in seconds, to be\n");
     (void) printf("                                         ");
     (void) printf("processed\n");
