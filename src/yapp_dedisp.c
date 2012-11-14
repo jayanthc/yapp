@@ -5,27 +5,25 @@
  * @verbatim
  * Usage: yapp_dedisp [options] <dynamic-spectrum-data-file>
  *     -h  --help                           Display this usage information
+ *     -s  --skip <time>                    The length of data in seconds, to be
+ *                                          skipped
+ *     -p  --proc <time>                    The length of data in seconds, to be
+ *                                          processed
+ *                                          (default is all)
+ *     -n  --nsamp <samples>                Number of samples read in one block
+ *                                          (default is 4096 samples)
  *     -d  --dm <dm>                        The DM at which to de-disperse
  *                                          (default is 10.0)
  *     -l  --law <law>                      Dispersion law
  *                                          (default is 2.0)
- *     -s  --skip-time <time>               The length of data in seconds, to be
- *                                          skipped
- *     -p  --proc-time <time>               The length of data in seconds, to be
- *                                          processed
- *                                          (default is all)
- *     -b  --block-size <samples>           Number of samples read in one block
- *                                          (default is 4096 samples)
  *     -o  --out-format <format>            Output format - 'ddd' or 'tim'
  *                                          (default is 'tim')
  *     -g  --graphics                       Turn on plotting
- *     -m  --colour-map <name>              MATLAB colour map for plotting
+ *     -m  --colour-map <name>              Colour map for plotting
  *                                          (default is 'jet')
  *     -i  --invert                         Invert the background and foreground
  *                                          colours in plots
- *     -t  --non-interactive                Run in non-interactive mode
- *     -f  --plot-to-file                   Plot to a PostScript file, instead
- *                                          of the screen
+ *     -e  --non-interactive                Run in non-interactive mode
  *     -v  --version                        Display the version @endverbatim
  *
  * @author Jayanth Chennamangalam
@@ -33,14 +31,11 @@
  */
 
 /* TODO: 1. ORT & MST radar data reads nan or inf for the last few samples of
-            data
-         2. No need for DEF_PROC_TIME */
+            data*/
 
 #include "yapp.h"
 #include "yapp_sigproc.h"   /* for SIGPROC filterbank file format support */
 #include "colourmap.h"
-
-/* TODO: Handle the headerless/header-separated filterbank format file */
 
 /**
  * The build version string, maintained in the file version.c, which is
@@ -79,8 +74,8 @@ int main(int argc, char *argv[])
     int iFormat = DEF_FORMAT;
     int iOutputFormat = DEF_OUT_FORMAT;
     char cIsPlotToFile = YAPP_FALSE;
-    double dDataSkipTime = DEF_SKIP_TIME;
-    double dDataProcTime = DEF_PROC_TIME;
+    double dDataSkipTime = 0.0;
+    double dDataProcTime = 0.0;
     YUM_t stYUM = {{0}};
     char cIsDMGiven = YAPP_FALSE;
     int iChanGoodness = (int) YAPP_TRUE;
@@ -172,21 +167,20 @@ int main(int argc, char *argv[])
     const char *pcProgName = NULL;
     int iNextOpt = 0;
     /* valid short options */
-    const char* const pcOptsShort = "hd:l:s:p:b:o:gm:itfv";
+    const char* const pcOptsShort = "hs:p:n:d:l:o:gm:iev";
     /* valid long options */
     const struct option stOptsLong[] = {
         { "help",                   0, NULL, 'h' },
+        { "skip",                   1, NULL, 's' },
+        { "proc",                   1, NULL, 'p' },
+        { "nsamp",                  1, NULL, 'n' },
         { "dm",                     1, NULL, 'd' },
         { "law",                    1, NULL, 'l' },
-        { "skip-time",              1, NULL, 's' },
-        { "proc-time",              1, NULL, 'p' },
-        { "block-size",             1, NULL, 'b' },
         { "out-format",             1, NULL, 'o' },
         { "graphics",               0, NULL, 'g' },
         { "colour-map",             1, NULL, 'm' },
         { "invert",                 0, NULL, 'i' },
-        { "non-interactive",        0, NULL, 't' },
-        { "plot-to-file",           0, NULL, 'f' },
+        { "non-interactive",        0, NULL, 'e' },
         { "version",                0, NULL, 'v' },
         { NULL,                     0, NULL, 0   }
     };
@@ -205,25 +199,25 @@ int main(int argc, char *argv[])
                 PrintUsage(pcProgName);
                 return YAPP_RET_SUCCESS;
 
-            case 'd':   /* -d or --dm-limit */
-                /* set option */
-                dDM = atof(optarg);
-                cIsDMGiven = YAPP_TRUE;
-                break;
-
-            case 's':   /* -s or --skip-time */
+            case 's':   /* -s or --skip */
                 /* set option */
                 dDataSkipTime = atof(optarg);
                 break;
 
-            case 'p':   /* -p or --proc-time */
+            case 'p':   /* -p or --proc */
                 /* set option */
                 dDataProcTime = atof(optarg);
                 break;
 
-            case 'b':   /* -b or --block-size */
+            case 'n':   /* -n or --nsamp */
                 /* set option */
                 iBlockSize = atoi(optarg);
+                break;
+
+            case 'd':   /* -d or --dm */
+                /* set option */
+                dDM = atof(optarg);
+                cIsDMGiven = YAPP_TRUE;
                 break;
 
             case 'o':   /* -o or --out-format */
@@ -261,14 +255,9 @@ int main(int argc, char *argv[])
                 iInvCols = YAPP_TRUE;
                 break;
 
-            case 't':  /* -t or --non-interactive */
+            case 'e':  /* -e or --non-interactive */
                 /* set option */
                 cIsNonInteractive = YAPP_TRUE;
-                break;
-
-            case 'f':   /* -f or --plot-to-file */
-                /* set option */
-                cIsPlotToFile = YAPP_TRUE;
                 break;
 
             case 'v':   /* -v or --version */
@@ -382,7 +371,7 @@ int main(int argc, char *argv[])
     }
 
     /* calculate bytes to skip and read */
-    if (0 == dDataProcTime)
+    if (0.0 == dDataProcTime)
     {
         dDataProcTime = iTimeSamps * dTSampInSec;
     }
@@ -409,7 +398,7 @@ int main(int argc, char *argv[])
 
     if (lBytesToSkip >= lDataSizeTotal)
     {
-        (void) printf("WARNING: Data to be skipped is greater than or equal to"
+        (void) printf("WARNING: Data to be skipped is greater than or equal to "
                       " the size of the file! Terminating.\n");
         YAPP_CleanUp();
         return YAPP_RET_SUCCESS;
@@ -609,15 +598,16 @@ int main(int argc, char *argv[])
 
     if (YAPP_FORMAT_FIL == iFormat)
     {
+        /* TODO: Need to do this only if the file contains the header */
         /* skip the header */
         (void) fseek(g_pFSpec, (long) stYUM.iHeaderLen, SEEK_SET);
         /* skip data, if any are to be skipped */
-        (void) fseek(g_pFSpec, (long) lBytesToSkip, SEEK_CUR);
+        (void) fseek(g_pFSpec, lBytesToSkip, SEEK_CUR);
     }
     else
     {
         /* skip data, if any are to be skipped */
-        (void) fseek(g_pFSpec, (long) lBytesToSkip, SEEK_SET);
+        (void) fseek(g_pFSpec, lBytesToSkip, SEEK_SET);
     }
 
     /* read the first block of data */
@@ -1539,6 +1529,20 @@ void PrintUsage(const char *pcProgName)
                   pcProgName);
     (void) printf("    -h  --help                           ");
     (void) printf("Display this usage information\n");
+    (void) printf("    -s  --skip <time>                    ");
+    (void) printf("The length of data in seconds, to be\n");
+    (void) printf("                                         ");
+    (void) printf("skipped\n");
+    (void) printf("    -p  --proc <time>                    ");
+    (void) printf("The length of data in seconds, to be\n");
+    (void) printf("                                         ");
+    (void) printf("processed\n");
+    (void) printf("                                         ");
+    (void) printf("(default is all)\n");
+    (void) printf("    -n  --nsamp <samples>                ");
+    (void) printf("Number of samples read in one block\n");
+    (void) printf("                                         ");
+    (void) printf("(default is 4096 samples)\n");
     (void) printf("    -d  --dm <dm>                        ");
     (void) printf("The DM at which to de-disperse\n");
     (void) printf("                                         ");
@@ -1547,20 +1551,6 @@ void PrintUsage(const char *pcProgName)
     (void) printf("Dispersion law\n");
     (void) printf("                                         ");
     (void) printf("(default is 2.0)\n");
-    (void) printf("    -s  --skip-time <time>               ");
-    (void) printf("The length of data in seconds, to be\n");
-    (void) printf("                                         ");
-    (void) printf("skipped\n");
-    (void) printf("    -p  --proc-time <time>               ");
-    (void) printf("The length of data in seconds, to be\n");
-    (void) printf("                                         ");
-    (void) printf("processed\n");
-    (void) printf("                                         ");
-    (void) printf("(default is all)\n");
-    (void) printf("    -b  --block-size <samples>           ");
-    (void) printf("Number of samples read in one block\n");
-    (void) printf("                                         ");
-    (void) printf("(default is 4096 samples)\n");
     (void) printf("    -o  --out-format <format>            ");
     (void) printf("Output format - 'ddd' or 'tim'\n");
     (void) printf("                                         ");
@@ -1568,19 +1558,15 @@ void PrintUsage(const char *pcProgName)
     (void) printf("    -g  --graphics                       ");
     (void) printf("Turn on plotting\n");
     (void) printf("    -m  --colour-map <name>              ");
-    (void) printf("MATLAB colour map for plotting\n");
+    (void) printf("Colour map for plotting\n");
     (void) printf("                                         ");
     (void) printf("(default is 'jet')\n");
     (void) printf("    -i  --invert                         ");
     (void) printf("Invert the background and foreground\n");
     (void) printf("                                         ");
     (void) printf("colours in plots\n");
-    (void) printf("    -t  --non-interactive                ");
+    (void) printf("    -e  --non-interactive                ");
     (void) printf("Run in non-interactive mode\n");
-    (void) printf("    -f  --plot-to-file                   ");
-    (void) printf("Plot to a PostScript file, instead of\n");
-    (void) printf("                                         ");
-    (void) printf("the screen\n");
     (void) printf("    -v  --version                        ");
     (void) printf("Display the version\n");
 

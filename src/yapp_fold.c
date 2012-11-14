@@ -5,16 +5,16 @@
  * @verbatim
  * Usage: yapp_fold [options] <time-series-data-file>
  *     -h  --help                           Display this usage information
- *     -s  --skip-time <time>               The length of data in seconds, to be
+ *     -s  --skip <time>                    The length of data in seconds, to be
  *                                          skipped
  *                                          (default is 0 s)
- *     -p  --proc-time <time>               The length of data in seconds, to be
+ *     -p  --proc <time>                    The length of data in seconds, to be
  *                                          processed
  *                                          (default is all)
- *     -f  --period                         Folding period in milliseconds
+ *     -t  --period                         Folding period in milliseconds
  *     -i  --invert                         Invert the background and foreground
  *                                          colours in plots
- *     -t  --non-interactive                Run in non-interactive mode
+ *     -e  --non-interactive                Run in non-interactive mode
  *     -v  --version                        Display the version @endverbatim
  *
  * @author Jayanth Chennamangalam
@@ -46,8 +46,8 @@ int main(int argc, char *argv[])
 {
     char *pcFileData = NULL;
     int iFormat = DEF_FORMAT;
-    int iDataSkipTime = DEF_SKIP_TIME;
-    int iDataProcTime = DEF_PROC_TIME;
+    double dDataSkipTime = 0.0;
+    double dDataProcTime = 0.0;
     YUM_t stYUM = {{0}};
     int iTotSampsPerBlock = 0;  /* iBlockSize */
     int iDataSizePerBlock = 0;  /* fSampSize * iBlockSize */
@@ -89,15 +89,15 @@ int main(int argc, char *argv[])
     const char *pcProgName = NULL;
     int iNextOpt = 0;
     /* valid short options */
-    const char* const pcOptsShort = "hs:p:f:itv";
+    const char* const pcOptsShort = "hs:p:t:iev";
     /* valid long options */
     const struct option stOptsLong[] = {
         { "help",                   0, NULL, 'h' },
-        { "skip-time",              1, NULL, 's' },
-        { "proc-time",              1, NULL, 'p' },
-        { "period",                 1, NULL, 'f' },
+        { "skip",                   1, NULL, 's' },
+        { "proc",                   1, NULL, 'p' },
+        { "period",                 1, NULL, 't' },
         { "invert",                 0, NULL, 'i' },
-        { "non-interactive",        0, NULL, 't' },
+        { "non-interactive",        0, NULL, 'e' },
         { "version",                0, NULL, 'v' },
         { NULL,                     0, NULL, 0   }
     };
@@ -116,17 +116,17 @@ int main(int argc, char *argv[])
                 PrintUsage(pcProgName);
                 return YAPP_RET_SUCCESS;
 
-            case 's':   /* -s or --skip-time */
+            case 's':   /* -s or --skip */
                 /* set option */
-                iDataSkipTime = atoi(optarg);
+                dDataSkipTime = atof(optarg);
                 break;
 
-            case 'p':   /* -p or --proc-time */
+            case 'p':   /* -p or --proc */
                 /* set option */
-                iDataProcTime = atoi(optarg);
+                dDataProcTime = atof(optarg);
                 break;
 
-            case 'f':   /* -f or --period */
+            case 't':   /* -t or --period */
                 /* set option */
                 dPeriod = atof(optarg);
                 break;
@@ -136,7 +136,7 @@ int main(int argc, char *argv[])
                 iInvCols = YAPP_TRUE;
                 break;
 
-            case 't':  /* -t or --non-interactive */
+            case 'e':  /* -e or --non-interactive */
                 /* set option */
                 cIsNonInteractive = YAPP_TRUE;
                 break;
@@ -202,14 +202,14 @@ int main(int argc, char *argv[])
     /* convert sampling interval to seconds */
     dTSampInSec = stYUM.dTSamp / 1e3;
 
-    if (0 == iDataProcTime)
+    if (0.0 == dDataProcTime)
     {
-        iDataProcTime = stYUM.iTimeSamps * dTSampInSec;
+        dDataProcTime = stYUM.iTimeSamps * dTSampInSec;
     }
 
-    /* ensure that the input time duration is less than the length of the
+    /* check if the input time duration is less than the length of the
        data */
-    if (((double) iDataProcTime) > (stYUM.iTimeSamps * dTSampInSec))
+    if (dDataProcTime > (stYUM.iTimeSamps * dTSampInSec))
     {
         (void) fprintf(stderr,
                        "ERROR: Input time is longer than length of "
@@ -218,10 +218,10 @@ int main(int argc, char *argv[])
         return YAPP_RET_ERROR;
     }
 
-    lBytesToSkip = (long) ((iDataSkipTime * 1000.0 / stYUM.dTSamp)
+    lBytesToSkip = (long) floor((dDataSkipTime / dTSampInSec)
                                                     /* number of samples */
                            * stYUM.fSampSize);
-    lBytesToProc = (long) ((iDataProcTime * 1000.0 / stYUM.dTSamp)
+    lBytesToProc = (long) floor((dDataProcTime / dTSampInSec)
                                                     /* number of samples */
                            * stYUM.fSampSize);
 
@@ -274,7 +274,7 @@ int main(int argc, char *argv[])
                   (stYUM.iTimeSamps * dTSampInSec));
 
     iTimeSampsToProc = (int) (lBytesToProc / (stYUM.fSampSize));
-    iNumReads = (int) ceilf(((float) iTimeSampsToProc) / iBlockSize);
+    iNumReads = (int) floorf(((float) iTimeSampsToProc) / iBlockSize);
     iTotNumReads = iNumReads;
 
     /* optimisation - store some commonly used values in variables */
@@ -567,25 +567,25 @@ void PrintUsage(const char *pcProgName)
                   pcProgName);
     (void) printf("    -h  --help                           ");
     (void) printf("Display this usage information\n");
-    (void) printf("    -s  --skip-time <time>               ");
+    (void) printf("    -s  --skip <time>                    ");
     (void) printf("The length of data in seconds, to be\n");
     (void) printf("                                         ");
     (void) printf("skipped\n");
     (void) printf("                                         ");
     (void) printf("(default is 0 s)\n");
-    (void) printf("    -p  --proc-time <time>               ");
+    (void) printf("    -p  --proc <time>                    ");
     (void) printf("The length of data in seconds, to be\n");
     (void) printf("                                         ");
     (void) printf("processed\n");
     (void) printf("                                         ");
     (void) printf("(default is all)\n");
-    (void) printf("    -f  --period                         ");
+    (void) printf("    -t  --period                         ");
     (void) printf("Folding period in milliseconds\n");
     (void) printf("    -i  --invert                         ");
     (void) printf("Invert background and foreground\n");
     (void) printf("                                         ");
     (void) printf("colours in plots\n");
-    (void) printf("    -t  --non-interactive                ");
+    (void) printf("    -e  --non-interactive                ");
     (void) printf("Run in non-interactive mode\n");
     (void) printf("    -v  --version                        ");
     (void) printf("Display the version\n");

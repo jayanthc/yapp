@@ -3,24 +3,28 @@
  * Program to compute [PFB +] FFT on baseband (raw voltage time series) data
  *
  * @verbatim
- * Usage: yapp_viewdata [options] <dynamic-spectrum-data-file>
+ * Usage: yapp_viewdata [options] <data-file>
  *     -h  --help                           Display this usage information
- *     -s  --skip-time <time>               The length of data in seconds, to be
+ *     -s  --skip <time>                    The length of data in seconds, to be
  *                                          skipped
- *                                          (default is 0)
- *     -p  --proc-time <time>               The length of data in seconds, to be
+ *                                          (default is 0 s)
+ *     -p  --proc <time>                    The length of data in seconds, to be
  *                                          processed
  *                                          (default is all)
+ *     -l  --tsamp <tsamp>                  Sampling time in s
+ *     -f  --centre-freq <freq>             Centre frequency of observing band
  *     -b  --pfb                            Turn PFB on
- *     -n  --nfft <N>                       Number of points in FFT
+ *     -t  --ntaps <ntaps>                  Number of taps in the PFB
+ *                                          (default is 8)
+ *     -n  --nfft <nfft>                    Number of points in FFT
  *                                          (default is 1024)
  *     -a  --nacc <acc-len>                 Number of spectra to accumulate
  *                                          (default is 1)
- *     -l  --tsamp <tsamp>                  Sampling time in s
- *     -f  --fil                            Output spectra in filterbank format
+ *     -o  --obs-site <site-name>           Observatory name
+ *     -r  --pulsar <psr-name>              Pulsar name
  *     -i  --invert                         Invert the background and foreground
  *                                          colours in plots
- *     -t  --non-interactive                Run in non-interactive mode
+ *     -e  --non-interactive                Run in non-interactive mode
  *     -v  --version                        Display the version @endverbatim
  *
  * @author Jayanth Chennamangalam
@@ -64,8 +68,8 @@ float* g_pfPFBCoeff = NULL;
 
 int main(int argc, char *argv[])
 {
-    double dDataSkipTime = DEF_SKIP_TIME;
-    double dDataProcTime = DEF_PROC_TIME;
+    double dDataSkipTime = 0.0;
+    double dDataProcTime = 0.0;
     YUM_t stYUM = {{0}};
     double dTSampInSec = 0.0;   /* holds sampling time in s */
     int iBlockSize = 0;
@@ -78,11 +82,12 @@ int main(int argc, char *argv[])
     long lBytesToProc = 0;
     int iTimeSampsSkip = 0;
     int iTimeSampsToProc = 0;
-    char cIsFil = YAPP_FALSE;
+    char cIsFil = YAPP_TRUE;
     int iNTaps = 1;                       /* 1 if no PFB, NUM_TAPS if PFB */
     int iNFFT = DEF_NFFT;
     int iNumReads = 0;
     int iReadBlockCount = 0;
+    float fFreqCen = 0.0;
     char cIsFirst = YAPP_TRUE;
     char cIsLastBlock = YAPP_FALSE;
     int iRet = YAPP_RET_SUCCESS;
@@ -112,22 +117,23 @@ int main(int argc, char *argv[])
     const char *pcProgName = NULL;
     int iNextOpt = 0;
     /* valid short options */
-    const char* const pcOptsShort = "hs:p:bn:a:l:fe:r:gitv";
+    const char* const pcOptsShort = "hs:p:l:f:bt:n:a:o:r:giev";
     /* valid long options */
     const struct option stOptsLong[] = {
         { "help",                   0, NULL, 'h' },
         { "skip-time",              1, NULL, 's' },
         { "proc-time",              1, NULL, 'p' },
+        { "tsamp",                  1, NULL, 'l' },
+        { "centre-freq",            1, NULL, 'f' },
         { "pfb",                    0, NULL, 'b' },
+        { "ntaps",                  1, NULL, 't' },
         { "nfft",                   1, NULL, 'n' },
         { "nacc",                   1, NULL, 'a' },
-        { "tsamp",                  1, NULL, 'l' },
-        { "fil",                    0, NULL, 'f' },
-        { "site",                   1, NULL, 'e' }, 
+        { "obs-site",               1, NULL, 'o' }, 
         { "pulsar",                 1, NULL, 'r' },
         { "graphics",               0, NULL, 'g' },
         { "invert",                 0, NULL, 'i' },
-        { "non-interactive",        0, NULL, 't' },
+        { "non-interactive",        0, NULL, 'e' },
         { "version",                0, NULL, 'v' },
         { NULL,                     0, NULL, 0   }
     };
@@ -156,11 +162,24 @@ int main(int argc, char *argv[])
                 dDataProcTime = atof(optarg);
                 break;
 
+            case 'l':   /* -l or --tsamp */
+                /* set option */
+                dTSampInSec = atof(optarg);
+                break;
+
+            case 'f':   /* -f or --centre-freq */
+                /* set option */
+                fFreqCen = atof(optarg);
+                break;
+
             case 'b':   /* -b or --pfb */
                 /* set option */
                 g_cIsPFBOn = YAPP_TRUE;
-                /* set the number of taps */
-                iNTaps = NUM_TAPS;
+                break;
+
+            case 't':   /* -t or --ntaps */
+                /* set option */
+                iNTaps = atoi(optarg);
                 break;
 
             case 'n':   /* -n or --nfft */
@@ -173,17 +192,7 @@ int main(int argc, char *argv[])
                 iNumAcc = (int) atoi(optarg);
                 break;
 
-            case 'l':   /* -l or --tsamp */
-                /* set option */
-                dTSampInSec = atof(optarg);
-                break;
-
-            case 'f':   /* -f or --fil */
-                /* set option */
-                cIsFil = YAPP_TRUE;
-                break;
-
-            case 'e':   /* -e or --site */
+            case 'o':   /* -o or --obs-site */
                 /* set option */
                 (void) strncpy(acSite, optarg, LEN_GENSTRING);
                 break;
@@ -203,7 +212,7 @@ int main(int argc, char *argv[])
                 iInvCols = YAPP_TRUE;
                 break;
 
-            case 't':  /* -t or --non-interactive */
+            case 'e':  /* -e or --non-interactive */
                 /* set option */
                 cIsNonInteractive = YAPP_TRUE;
                 break;
@@ -242,13 +251,17 @@ int main(int argc, char *argv[])
         return YAPP_RET_ERROR;
     }
 
-    if (!cIsFil)
+    if (0.0 == fFreqCen)
     {
-        (void) fprintf(stderr,
-                       "ERROR: Only .fil output supported! "
-                       "Please run with the '-f' flag.\n");
+        (void) fprintf(stderr, "ERROR: Centre frequency not specified!\n");
         PrintUsage(pcProgName);
         return YAPP_RET_ERROR;
+    }
+
+    if ((g_cIsPFBOn) && (1 == iNTaps))
+    {
+        /* set default number of taps */
+        iNTaps = NUM_TAPS;
     }
 
     /* set the read block size */
@@ -417,8 +430,8 @@ int main(int argc, char *argv[])
         stYUM.iNumChans = iNFFT;
         stYUM.iNumGoodChans = iNFFT;
         stYUM.fChanBW = (((float) 1) / (dTSampInSec * iNFFT)) / 1e6;
-        stYUM.fFMin = 0.0;
-        stYUM.fFMax = stYUM.iNumChans * stYUM.fChanBW;
+        stYUM.fFMin = fFreqCen - ((stYUM.iNumChans / 2) * stYUM.fChanBW);
+        stYUM.fFMax = fFreqCen + ((stYUM.iNumChans / 2) * stYUM.fChanBW);
         stYUM.iNumBands = 1;
         stYUM.iNumBadTimes = 0;
         stYUM.iNumBits = 32;
@@ -793,10 +806,6 @@ int InitPFB(int iNTaps, int iNFFT)
     {
         int iFileCoeff = 0;
 
-        /* set number of taps to NUM_TAPS if PFB is on, else number of
-           taps = 1 */
-        iNTaps = NUM_TAPS;
-
         g_pfPFBCoeff = (float *) YAPP_Malloc((size_t) iNTaps * iNFFT,
                                              sizeof(float),
                                              YAPP_FALSE);
@@ -811,9 +820,8 @@ int InitPFB(int iNTaps, int iNFFT)
         /* read filter coefficients */
         /* build file name */
         (void) sprintf(g_acFileCoeff,
-                       "%s_%s_%d_%d_%d%s",
+                       "%s_%d_%d_%d%s",
                        FILE_COEFF_PREFIX,
-                       FILE_COEFF_DATATYPE,
                        iNTaps,
                        iNFFT,
                        DEF_NUM_SUBBANDS,
@@ -1189,7 +1197,7 @@ void CleanUp(int iNTaps)
  */
 void PrintUsage(const char *pcProgName)
 {
-    (void) printf("Usage: %s [options] <dynamic-spectrum-data-file>\n",
+    (void) printf("Usage: %s [options] <data-file>\n",
                   pcProgName);
     (void) printf("    -h  --help                           ");
     (void) printf("Display this usage information\n");
@@ -1198,16 +1206,26 @@ void PrintUsage(const char *pcProgName)
     (void) printf("                                         ");
     (void) printf("skipped\n");
     (void) printf("                                         ");
-    (void) printf("(default is 0)\n");
+    (void) printf("(default is 0 s)\n");
     (void) printf("    -p  --proc-time <time>               ");
     (void) printf("The length of data in seconds, to be\n");
     (void) printf("                                         ");
     (void) printf("processed\n");
     (void) printf("                                         ");
     (void) printf("(default is all)\n");
+    (void) printf("    -l  --tsamp <tsamp>                  ");
+    (void) printf("Sampling time in s\n");
+    (void) printf("    -f  --centre-freq <freq>             ");
+    (void) printf("Centre frequency of observing band,\n");
+    (void) printf("                                         ");
+    (void) printf("in MHz\n");
     (void) printf("    -b  --pfb                            ");
     (void) printf("Turn PFB on\n");
-    (void) printf("    -n  --nfft <N>                       ");
+    (void) printf("    -t  --ntaps <ntaps>                  ");
+    (void) printf("Number of taps in the PFB\n");
+    (void) printf("                                         ");
+    (void) printf("(default is 8)\n");
+    (void) printf("    -n  --nfft <nfft>                    ");
     (void) printf("Number of points in FFT\n");
     (void) printf("                                         ");
     (void) printf("(default is 1024)\n");
@@ -1215,12 +1233,8 @@ void PrintUsage(const char *pcProgName)
     (void) printf("Number of spectra to accumulate\n");
     (void) printf("                                         ");
     (void) printf("(default is 1)\n");
-    (void) printf("    -l  --tsamp <tsamp>                  ");
-    (void) printf("Sampling time in s\n");
-    (void) printf("    -f  --fil                            ");
-    (void) printf("Output spectra in filterbank format\n");
-    (void) printf("    -e  --site                           ");
-    (void) printf("Observing site name\n");
+    (void) printf("    -o  --obs-site                       ");
+    (void) printf("Observatory name\n");
     (void) printf("    -r  --pulsar                         ");
     (void) printf("Pulsar name\n");
     (void) printf("    -g  --graphics                       ");
@@ -1229,7 +1243,7 @@ void PrintUsage(const char *pcProgName)
     (void) printf("Invert background and foreground\n");
     (void) printf("                                         ");
     (void) printf("colours in plots\n");
-    (void) printf("    -t  --non-interactive                ");
+    (void) printf("    -e  --non-interactive                ");
     (void) printf("Run in non-interactive mode\n");
     (void) printf("    -v  --version                        ");
     (void) printf("Display the version\n");

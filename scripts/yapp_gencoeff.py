@@ -18,32 +18,27 @@ def PrintUsage(ProgName):
     "Prints usage information."
     print "Usage: " + ProgName + " [options]"
     print "    -h  --help                 Display this usage information"
-    print "    -n  --nfft <value>         Number of points in FFT"
-    print "    -t  --taps <value>         Number of taps in PFB"
-    print "    -b  --sub-bands <value>    Number of sub-bands in data"
-    print "    -d  --data-type <value>    Data type - \"float\" or "          \
-          + "\"signedchar\""
-    print "    -p  --no-plot              Do not plot coefficients"
+    print "    -n  --nfft <nfft>          Length of the Fourier transform"
+    print "                               (default is 4096)"
+    print "    -t  --ntaps <ntaps>        Number of taps in PFB"
+    print "                               (default is 8)"
+#    print "    -b  --nsubbands <value>    Number of sub-bands in data"
+#    print "                               (default is 1)"
+    print "    -g  --graphics              Turn on graphics"
     return
 
 # default values
-NFFT = 32768                # number of points in FFT
+NFFT = 4096                 # number of points in FFT
 NTaps = 8                   # number of taps in PFB
 NSubBands = 1               # number of sub-bands in data
-DataType = "signedchar"     # data type - "float" or "signedchar"
-Plot = True                 # plot flag
+Plot = False                # plot flag
 
 # get the command line arguments
 ProgName = sys.argv[0]
-OptsShort = "hn:t:b:d:p"
-OptsLong = ["help", "nfft=", "taps=", "sub-bands=", "data-type=", "no-plot"]
-
-# check if the minimum expected number of arguments has been passed
-# to the program
-if (1 == len(sys.argv)):
-    sys.stderr.write("ERROR: No arguments passed to the program!\n")
-    PrintUsage(ProgName)
-    sys.exit(1)
+#OptsShort = "hn:t:b:g"
+#OptsLong = ["help", "nfft=", "ntaps=", "nsubbands=", "graphics"]
+OptsShort = "hn:t:g"
+OptsLong = ["help", "nfft=", "ntaps=", "graphics"]
 
 # get the arguments using the getopt module
 try:
@@ -61,14 +56,12 @@ for o, a in Opts:
         sys.exit()
     elif o in ("-n", "--nfft"):
         NFFT = int(a)
-    elif o in ("-t", "--taps"):
+    elif o in ("-t", "--ntaps"):
         NTaps = int(a)
-    elif o in ("-b", "--sub-bands"):
-        NSubBands = int(a)
-    elif o in ("-d", "--data-type"):
-        DataType = a
-    elif o in ("-p", "--no-plot"):
-        Plot = False
+    #elif o in ("-b", "--sub-bands"):
+    #    NSubBands = int(a)
+    elif o in ("-g", "--graphics"):
+        Plot = True
     else:
         PrintUsage(ProgName)
         sys.exit(1)
@@ -80,56 +73,25 @@ X = numpy.array([(float(i) / NFFT) - (float(NTaps) / 2) for i in range(M)])
 PFBCoeff = numpy.sinc(X) * numpy.hanning(M)
 # <-- the filter-coefficient-generation section
 
-# create conversion map
-if ("signedchar" == DataType):
-    Map = numpy.zeros(256, numpy.float32)
-    for i in range(0, 128):
-        Map[i] = float(i) / 128
-    for i in range(128, 256):
-        Map[i] = - (float(256 -i) / 128)
-
 # 32-bit (float) coefficients
 PFBCoeffFloat32 = numpy.zeros(M * NSubBands, numpy.float32)
-# 8-bit (signedchar) coefficients
-if ("signedchar" == DataType):
-    PFBCoeffInt8 = numpy.zeros(M * NSubBands, numpy.int8)
 k = 0
 for i in range(len(PFBCoeff)):
     Coeff = float(PFBCoeff[i])
-    if ("signedchar" == DataType):
-        for j in range(256):
-            #if (math.fabs(Coeff - Map[j]) <= (0.0078125 / 2)):
-            if (math.fabs(Coeff - Map[j]) <= 0.0078125):
-                for m in range(NSubBands):
-                    PFBCoeffInt8[k+m] = j
-                break
-    elif ("float" == DataType):
-        for m in range(NSubBands):
-            PFBCoeffFloat32[k+m] = Coeff
-    else:
-        # print usage information and exit
-        sys.stderr.write("ERROR: Invalid data type!\n")
-        PrintUsage(ProgName)
-        sys.exit(1)
+    for m in range(NSubBands):
+        PFBCoeffFloat32[k+m] = Coeff
     k = k + NSubBands
 
 # write the coefficients to disk and also plot it
 FileCoeff = open("coeff_"                                                     \
-                  + DataType + "_"                                            \
                   + str(NTaps) + "_"                                          \
                   + str(NFFT) + "_"                                           \
                   + str(NSubBands) + ".dat",                                  \
                  "wb")
-if ("signedchar" == DataType):
-    FileCoeff.write(PFBCoeffInt8)
-    # plot the coefficients
-    if (Plot):
-        plotter.plot(PFBCoeffInt8)
-else:
-    FileCoeff.write(PFBCoeffFloat32)
-    # plot the coefficients
-    if (Plot):
-        plotter.plot(PFBCoeffFloat32)
+FileCoeff.write(PFBCoeffFloat32)
+# plot the coefficients
+if (Plot):
+    plotter.plot(PFBCoeffFloat32)
 
 FileCoeff.close()
 

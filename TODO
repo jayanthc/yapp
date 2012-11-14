@@ -1,35 +1,35 @@
 TODO
 ----
 
+yapp_ft:
+1.  BUG: Support non-default number of taps.
+
+
 yapp_viewdata:
-1.  BUG: yapp_viewdata -b <> <file> doesn't work for block size < 2.
-    SOLUTION: print error for block size = 1
-2.  BUG: Signal-handling in non-interactive mode causes blocking in cpgclos()
+1.  BUG: Signal-handling in non-interactive mode causes blocking in cpgclos()
     and crash on kill.
-3.  BUG: Crash in:
-    yapp_viewdata -P 10 ../ort/0833b45.spec
-4.  BUG: For block size < 1024, bytes to skip not happening at multiple of
-    block size.
-5.  BUG:
+2.  BUG:
     plotraw -b 62334 a14aa899.spec
     Anything above 62334 (out of 62385) is nan (problem maybe with
     das_spectro_lin).
-6.  i. BUG: data skip: --data-skip-percent and --data-skip-time doesn't behave
-    in the same way, for low amounts of data.
-    ii. Block 2 for sps -n <min> -x <max> -p 20 -b <x> <file> and block 1 for
-    sps -n <min> -x <max> -s 10 -p 20 -b <x> <file> does not seem to be the
-    same. this is true for time mode too.
+3.  BUG: In YAPP_ReadData(), take malloc() outside.
+4.  BUG: Last block of 0833b45.spec not plotting correctly.
+5.  BUG: crash in reading 4bit data
+6.  BUG: Process exactly the amount of time asked for, not at multiples of
+    block size.
 7.  FEATURE: Support user-defined colourmaps.
-8.  BUG: X-axis tick mark calculation is not correct in some cases
-9.  BUG: In YAPP_ReadData(), take malloc() outside.
-10. BUG: Last block of 0833b45.spec not plotting correctly.
-11. Remove skip-percentage and proc-percentage
-12. BUG: crash in reading 4bit data
+
 
 yapp_dedisp:
 1.  BUG: if file name is fake.fil, output is fak.tim or fak.dds
 2.  BUG: dedisp: Negative DM dedispersion not correct.
 
+
+All:
+1.  FEATURE: Add block X of Y in plots.
+
+
+-------------------------------------------------------------------------------
 yapp_dedisperse:
 1.  BUG: yapp_dedisperse not working properly.
 2.  BUG:

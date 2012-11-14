@@ -7,18 +7,19 @@
  *     -h  --help                           Display this usage information
  *     -s  --skip <time>                    The length of data in seconds, to be
  *                                          skipped
+ *                                          (default is 0 s)
  *     -p  --proc <time>                    The length of data in seconds, to be
  *                                          processed
  *                                          (default is all)
- *     -b  --block-size <samples>           Number of samples read in one block
+ *     -n  --nsamp <samples>                Number of samples read in one block
  *                                          (default is 4096 samples)
  *     -c  --clip-level <level>             Number of sigmas above threshold;
  *                                          will clip anything above this level
- *     -m  --colour-map <name>              MATLAB colour map for plotting
+ *     -m  --colour-map <name>              Colour map for plotting
  *                                          (default is 'jet')
  *     -i  --invert                         Invert the background and foreground
  *                                          colours in plots
- *     -n  --non-interactive                Run in non-interactive mode
+ *     -e  --non-interactive                Run in non-interactive mode
  *     -v  --version                        Display the version @endverbatim
  *
  * @author Jayanth Chennamangalam
@@ -26,15 +27,11 @@
  */
 
 /* TODO: 1. ORT & MST radar data reads nan or inf for the last few samples of
-            data
-         2. No need for DEF_PROC_TIME
-         3. Read and plot dedispersed data */
+            data*/
 
 #include "yapp.h"
 #include "yapp_sigproc.h"   /* for SIGPROC filterbank file format support */
 #include "colourmap.h"
-
-/* TODO: Handle the headerless/header-separated filterbank format file */
 
 /**
  * The build version string, maintained in the file version.c, which is
@@ -60,15 +57,12 @@ int main(int argc, char *argv[])
 {
     char *pcFileSpec = NULL;
     int iFormat = DEF_FORMAT;
-    int iDataSkipPercent = DEF_SKIP_PERCENT;
-    int iDataSkipTime = DEF_SKIP_TIME;
-    int iDataProcPercent = DEF_PROC_PERCENT;
-    int iDataProcTime = DEF_PROC_TIME;
-    int iProcSpec = PROC_SPEC_NOTSEL;   /* by default, the processing
-                                           specification is not selected */
+    double dDataSkipTime = 0.0;
+    double dDataProcTime = 0.0;
     YUM_t stYUM = {{0}};
     double dTNextBF = 0.0;
     float *pfTimeSectGain = NULL;
+    int iBlockSize = DEF_SIZE_BLOCK;
     int iTotSampsPerBlock = 0;  /* iNumChans * iBlockSize */
     int iDataSizePerBlock = 0;  /* fSampSize * iNumChans * iBlockSize */
     float fStatBW = 0.0;
@@ -88,7 +82,6 @@ int main(int argc, char *argv[])
     long lBytesToProc = 0;
     int iTimeSampsSkip = 0;
     int iTimeSampsToProc = 0;
-    int iBlockSize = DEF_SIZE_BLOCK;
     int iNumReads = 0;
     int iTotNumReads = 0;
     int iReadBlockCount = 0;
@@ -117,17 +110,17 @@ int main(int argc, char *argv[])
     const char *pcProgName = NULL;
     int iNextOpt = 0;
     /* valid short options */
-    const char* const pcOptsShort = "hs:p:b:c:m:inv";
+    const char* const pcOptsShort = "hs:p:n:c:m:iev";
     /* valid long options */
     const struct option stOptsLong[] = {
         { "help",                   0, NULL, 'h' },
-        { "skip",                   1, NULL, 'S' },
-        { "proc",                   1, NULL, 'P' },
-        { "block-size",             1, NULL, 'b' },
+        { "skip",                   1, NULL, 's' },
+        { "proc",                   1, NULL, 'p' },
+        { "nsamp",                  1, NULL, 'n' },
         { "clip-level",             1, NULL, 'c' },
         { "colour-map",             1, NULL, 'm' },
         { "invert",                 0, NULL, 'i' },
-        { "non-interactive",        0, NULL, 'n' },
+        { "non-interactive",        0, NULL, 'e' },
         { "version",                0, NULL, 'v' },
         { NULL,                     0, NULL, 0   }
     };
@@ -146,103 +139,27 @@ int main(int argc, char *argv[])
                 PrintUsage(pcProgName);
                 return YAPP_RET_SUCCESS;
 
-            case 's':   /* -s or --skip-percent */
+            case 's':   /* -s or --skip */
                 /* set option */
-                if ((PROC_SPEC_NOTSEL == iProcSpec)
-                    || (PROC_SPEC_PERCENT == iProcSpec))
-                {
-                    iDataSkipPercent = atoi(optarg);
-                    if (iDataSkipPercent > 100)
-                    {
-                        (void) fprintf(stderr,
-                                       "ERROR: Data skip percentage should be "
-                                       "less than 100!\n");
-                        PrintUsage(pcProgName);
-                        return YAPP_RET_ERROR;
-                    }
-
-                    iProcSpec = PROC_SPEC_PERCENT;
-                }
-                else    /* if the specification mode is time, not percentage */
-                {
-                    (void) fprintf(stderr,
-                                   "ERROR: Data processing specification mode "
-                                   "should be either exclusively percentage or "
-                                   "exclusively time!\n");
-                    PrintUsage(pcProgName);
-                    return YAPP_RET_ERROR;
-                }
+                dDataSkipTime = atof(optarg);
                 break;
 
-            case 'S':   /* -S or --skip-time */
+            case 'p':   /* -p or --proc */
                 /* set option */
-                if ((PROC_SPEC_NOTSEL == iProcSpec)
-                    || (PROC_SPEC_TIME == iProcSpec))
-                {
-                    iDataSkipTime = atoi(optarg);
-                    iProcSpec = PROC_SPEC_TIME;
-                }
-                else    /* if the specification mode is percentage, not time */
-                {
-                    (void) fprintf(stderr,
-                                   "ERROR: Data processing specification mode "
-                                   "should be either exclusively percentage or "
-                                   "exclusively time!\n");
-                    PrintUsage(pcProgName);
-                    return YAPP_RET_ERROR;
-                }
+                dDataProcTime = atof(optarg);
                 break;
 
-            case 'p':   /* -p or --proc-percent */
-                /* set option */
-                if ((PROC_SPEC_NOTSEL == iProcSpec)
-                    || (PROC_SPEC_PERCENT == iProcSpec))
-                {
-                    iDataProcPercent = atoi(optarg);
-                    if (iDataProcPercent > 100)
-                    {
-                        (void) fprintf(stderr,
-                                       "ERROR: Data processing percentage "
-                                       "should be less than 100!\n");
-                        PrintUsage(pcProgName);
-                        return YAPP_RET_ERROR;
-                    }
-
-                    iProcSpec = PROC_SPEC_PERCENT;
-                }
-                else    /* if the specification mode is time, not percentage */
-                {
-                    (void) fprintf(stderr,
-                                   "ERROR: Data processing specification mode "
-                                   "should be either exclusively percentage or "
-                                   "exclusively time!\n");
-                    PrintUsage(pcProgName);
-                    return YAPP_RET_ERROR;
-                }
-                break;
-
-            case 'P':   /* -P or --proc-time */
-                /* set option */
-                if ((PROC_SPEC_NOTSEL == iProcSpec)
-                    || (PROC_SPEC_TIME == iProcSpec))
-                {
-                    iDataProcTime = atoi(optarg);
-                    iProcSpec = PROC_SPEC_TIME;
-                }
-                else    /* if the specification mode is percentage, not time */
-                {
-                    (void) fprintf(stderr,
-                                   "ERROR: Data processing specification mode "
-                                   "should be either exclusively percentage or "
-                                   "exclusively time!\n");
-                    PrintUsage(pcProgName);
-                    return YAPP_RET_ERROR;
-                }
-                break;
-
-            case 'b':   /* -b or --block-size */
+            case 'n':   /* -n or --nsamp */
                 /* set option */
                 iBlockSize = atoi(optarg);
+                /* validate - PGPLOT does not like iBlockSize = 1 */
+                if (iBlockSize < 2)
+                {
+                    (void) fprintf(stderr,
+                                   "ERROR: Number of samples must be > 1!\n");
+                    PrintUsage(pcProgName);
+                    return YAPP_RET_ERROR;
+                }
                 break;
 
             case 'c':   /* -c or --clip-level */
@@ -260,7 +177,7 @@ int main(int argc, char *argv[])
                 iInvCols = YAPP_TRUE;
                 break;
 
-            case 'n':  /* -n or --non-interactive */
+            case 'e':  /* -e or --non-interactive */
                 /* set option */
                 cIsNonInteractive = YAPP_TRUE;
                 break;
@@ -329,61 +246,31 @@ int main(int argc, char *argv[])
     /* copy next beam-flip time */
     dTNextBF = stYUM.dTNextBF;
 
-    /* check which of the data processing specification modes - percentage or
-       time - has been selected by the user, and calculate bytes to skip and
-       read */
-    if (PROC_SPEC_TIME == iProcSpec)
+    /* calculate bytes to skip and read */
+    if (0.0 == dDataProcTime)
     {
-        if (0 == iDataProcTime)
-        {
-            iDataProcTime = stYUM.iTimeSamps * dTSampInSec;
-        }
-
-        /* check if the input time duration is less than the length of the
-           data */
-        if (((double) iDataProcTime) > (stYUM.iTimeSamps * dTSampInSec))
-        {
-            (void) fprintf(stderr,
-                           "ERROR: Input time is longer than length of "
-                           "data!\n");
-            YAPP_CleanUp();
-            return YAPP_RET_ERROR;
-        }
-
-        lBytesToSkip = (long) ((iDataSkipTime * 1000.0 / stYUM.dTSamp)
-                                                        /* number of samples */
-                               * stYUM.iNumChans
-                               * stYUM.fSampSize);
-        lBytesToProc = (long) ((iDataProcTime * 1000.0 / stYUM.dTSamp)
-                                                        /* number of samples */
-                               * stYUM.iNumChans
-                               * stYUM.fSampSize);
-    }
-    else    /* if it is not selected, or percentage is selected, use percentage
-               mode */
-    {
-        lBytesToSkip = (long) (floorf(stYUM.iTimeSamps
-                                     * (((float) iDataSkipPercent) / 100))
-                                                        /* number of samples */
-                               * stYUM.iNumChans
-                               * stYUM.fSampSize);
-        lBytesToProc = (long) (ceilf(stYUM.iTimeSamps
-                                    * (((float) iDataProcPercent) / 100))
-                                                        /* number of samples */
-                               * stYUM.iNumChans
-                               * stYUM.fSampSize);
+        dDataProcTime = stYUM.iTimeSamps * dTSampInSec;
     }
 
-    /* if lBytesToSkip is not a multiple of the block size, make it one */
-    if (((float) lBytesToSkip / iBlockSize) - (lBytesToSkip / iBlockSize) != 0)
+    /* check if the input time duration is less than the length of the
+       data */
+    if (dDataProcTime > (stYUM.iTimeSamps * dTSampInSec))
     {
-        (void) printf("WARNING: Bytes to skip not a multiple of block size! ");
-        lBytesToSkip -= (((float) lBytesToSkip / iBlockSize)
-                         - (lBytesToSkip / iBlockSize)) * iBlockSize;
-        (void) printf("Newly calculated size of data to be skipped: %ld "
-                      "bytes\n",
-                      lBytesToSkip);
+        (void) fprintf(stderr,
+                       "ERROR: Input time is longer than length of "
+                       "data!\n");
+        YAPP_CleanUp();
+        return YAPP_RET_ERROR;
     }
+
+    lBytesToSkip = (long) floor((dDataSkipTime / dTSampInSec)
+                                                    /* number of samples */
+                           * stYUM.iNumChans
+                           * stYUM.fSampSize);
+    lBytesToProc = (long) floor((dDataProcTime / dTSampInSec)
+                                                    /* number of samples */
+                           * stYUM.iNumChans
+                           * stYUM.fSampSize);
 
     if (lBytesToSkip >= stYUM.lDataSizeTotal)
     {
@@ -487,7 +374,9 @@ int main(int argc, char *argv[])
 
     /* allocate memory for the buffer, based on the number of channels and time
        samples */
-    g_pfBuf = (float *) YAPP_Malloc((size_t) stYUM.iNumChans * iBlockSize * stYUM.fSampSize,
+    g_pfBuf = (float *) YAPP_Malloc((size_t) stYUM.iNumChans
+                                    * iBlockSize
+                                    * stYUM.fSampSize,
                                     sizeof(float),
                                     YAPP_FALSE);
     if (NULL == g_pfBuf)
@@ -805,10 +694,11 @@ int main(int argc, char *argv[])
         cpgeras();
         for (i = 0; i < iBlockSize; ++i)
         {
-            g_pfXAxis[i] = (float) (((iReadBlockCount - 1)
-                                     * iBlockSize
-                                     * dTSampInSec)
-                                    + (i * dTSampInSec));
+            g_pfXAxis[i] = (float) (dDataSkipTime
+                                    + (((iReadBlockCount - 1)
+                                        * iBlockSize
+                                        * dTSampInSec)
+                                       + (i * dTSampInSec)));
         }
         if (iFormat != YAPP_FORMAT_DTS_TIM)
         {
@@ -926,11 +816,11 @@ int main(int argc, char *argv[])
  */
 void PrintUsage(const char *pcProgName)
 {
-    (void) printf("Usage: %s [options] <dynamic-spectrum-data-file>\n",
+    (void) printf("Usage: %s [options] <data-file>\n",
                   pcProgName);
     (void) printf("    -h  --help                           ");
     (void) printf("Display this usage information\n");
-    (void) printf("    -S  --skip <time>                    ");
+    (void) printf("    -s  --skip <time>                    ");
     (void) printf("The length of data in seconds, to be\n");
     (void) printf("                                         ");
     (void) printf("skipped\n");
@@ -940,7 +830,7 @@ void PrintUsage(const char *pcProgName)
     (void) printf("processed\n");
     (void) printf("                                         ");
     (void) printf("(default is all)\n");
-    (void) printf("    -b  --block-size <samples>           ");
+    (void) printf("    -n  --nsamp <samples>                ");
     (void) printf("Number of samples read in one block\n");
     (void) printf("                                         ");
     (void) printf("(default is 4096 samples)\n");
@@ -949,14 +839,14 @@ void PrintUsage(const char *pcProgName)
     (void) printf("                                         ");
     (void) printf("clip anything above this level\n");
     (void) printf("    -m  --colour-map <name>              ");
-    (void) printf("MATLAB colour map for plotting\n");
+    (void) printf("Colour map for plotting\n");
     (void) printf("                                         ");
     (void) printf("(default is 'jet')\n");
     (void) printf("    -i  --invert                         ");
     (void) printf("Invert background and foreground\n");
     (void) printf("                                         ");
     (void) printf("colours in plots\n");
-    (void) printf("    -n  --non-interactive                ");
+    (void) printf("    -e  --non-interactive                ");
     (void) printf("Run in non-interactive mode\n");
     (void) printf("    -v  --version                        ");
     (void) printf("Display the version\n");

@@ -122,13 +122,6 @@ enum tagFileFormats
 #define DEF_OUT_FORMAT      YAPP_FORMAT_DTS_DDD
 #define DEF_SIZE_BLOCK      MAX_SIZE_BLOCK  /**< @brief Default block size */
 
-#define DEF_SKIP_PERCENT    0   /**< @brief Default data skip percentage */
-#define DEF_SKIP_TIME       0.0 /**< @brief Default data skip time, in
-                                     seconds */
-#define DEF_PROC_PERCENT    100 /**< @brief Default data processing
-                                     percentage */
-#define DEF_PROC_TIME       0.0 /**< @brief Default data processing time, in
-                                     seconds */
 #define DEF_FOLD_PULSES     1000/**< @brief Default number of pulses to fold */
 /* @} */
 
