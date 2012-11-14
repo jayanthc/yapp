@@ -26,7 +26,6 @@
 /* for PFB */
 #define NUM_TAPS            8           /* number of multiples of g_iNFFT */
 #define FILE_COEFF_PREFIX   "coeff"
-#define FILE_COEFF_DATATYPE "float"
 #define FILE_COEFF_SUFFIX   ".dat"
 
 #define DEF_NUM_SUBBANDS    1       /* NOTE: no support for > 1 */

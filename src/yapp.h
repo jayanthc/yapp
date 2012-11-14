@@ -59,15 +59,13 @@
 #define YAPP_FORMATSTR_DTS_TIM      "tim"
 /* @} */
 
-enum tagDynSpecFormat
+enum tagFileFormats
 {
+    /* dynamic spectrum formats */
     YAPP_FORMAT_SPEC = 0,       /* Desh's specfile format */
-    YAPP_FORMAT_FIL             /* Dunc's filterbank file format */
-};
-
-enum tagDedispTimeSeriesFormat
-{
-    YAPP_FORMAT_DTS_DDD = 0,    /* Desh's dedispersed data format */
+    YAPP_FORMAT_FIL,            /* Dunc's filterbank file format */
+    /* dedispersed time series formats */
+    YAPP_FORMAT_DTS_DDD,        /* Desh's dedispersed data format */
     YAPP_FORMAT_DTS_TIM         /* Dunc's time series format */
 };
 
@@ -123,13 +121,6 @@ enum tagDedispTimeSeriesFormat
 #define DEF_OUT_FORMAT      YAPP_FORMAT_DTS_DDD
 #define DEF_SIZE_BLOCK      MAX_SIZE_BLOCK  /**< @brief Default block size */
 
-#define DEF_SKIP_PERCENT    0   /**< @brief Default data skip percentage */
-#define DEF_SKIP_TIME       0   /**< @brief Default data skip time, in
-                                     seconds */
-#define DEF_PROC_PERCENT    100 /**< @brief Default data processing
-                                     percentage */
-#define DEF_PROC_TIME       0   /**< @brief Default data processing time, in
-                                     seconds */
 /* @} */
 
 /**
@@ -444,9 +435,10 @@ int YAPP_ReadDASCfg(char *pcFileSpec, YUM_t *pstYUM);
  * Read configuration information corresponding to a SIGPROC '.fil' file
  *
  * @param[in]       pcFileSpec          Data filename
+ * @param[in]       iFormat             Data file type
  * @param[out]      pstYUM              YUM structure
  */
-int YAPP_ReadSIGPROCHeader(char *pcFileSpec, YUM_t *pstYUM);
+int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM);
 
 /**
  * Read configuration information corresponding to a SIGPROC '.fil' file, from a separate header file

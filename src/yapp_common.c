@@ -45,6 +45,14 @@ int YAPP_GetFileType(char *pcFile)
     {
         iFormat = YAPP_FORMAT_FIL;
     }
+    else if (0 == strcmp(pcExt, EXT_DEDISPSPEC))
+    {
+        iFormat = YAPP_FORMAT_DTS_DDD;
+    }
+    else if (0 == strcmp(pcExt, EXT_TIM))
+    {
+        iFormat = YAPP_FORMAT_DTS_TIM;
+    }
     else
     {
         (void) fprintf(stderr,
@@ -278,7 +286,8 @@ int YAPP_ReadMetadata(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
             break;
 
         case YAPP_FORMAT_FIL:
-            iRet = YAPP_ReadSIGPROCHeader(pcFileSpec, pstYUM);
+        case YAPP_FORMAT_DTS_TIM:
+            iRet = YAPP_ReadSIGPROCHeader(pcFileSpec, iFormat, pstYUM);
             if (iRet != YAPP_RET_SUCCESS)
             {
                 (void) fprintf(stderr,
@@ -486,7 +495,7 @@ int YAPP_ReadDASCfg(char *pcFileSpec, YUM_t *pstYUM)
     return YAPP_RET_SUCCESS;
 }
 
-int YAPP_ReadSIGPROCHeader(char *pcFileSpec, YUM_t *pstYUM)
+int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
 {
     double dTSampInSec = 0.0;   /* holds sampling time in s */
     char acLabel[LEN_GENSTRING] = {0};
@@ -501,6 +510,8 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, YUM_t *pstYUM)
     double dChanBW = 0.0;
     double dTStart = 0.0;
     int iObsID = 0;
+
+    assert((YAPP_FORMAT_FIL == iFormat) || (YAPP_FORMAT_DTS_TIM == iFormat));
 
     /* open the dynamic spectrum data file for reading */
     g_pFSpec = fopen(pcFileSpec, "r");
@@ -575,6 +586,9 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, YUM_t *pstYUM)
                          1,
                          g_pFSpec);
             pstYUM->iHeaderLen += sizeof(pstYUM->iNumChans);
+            /* set number of good channels to number of channels - no support for
+               SIGPROC ignore files yet */
+            pstYUM->iNumGoodChans = pstYUM->iNumChans;
         }
         else if (0 == strcmp(acLabel, "fch1"))
         {
@@ -798,58 +812,62 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, YUM_t *pstYUM)
        close it */
     g_pFSpec = NULL;
 
-    if (pstYUM->fChanBW < 0.0)
+    if (YAPP_FORMAT_FIL == iFormat)
     {
-        /* make the channel bandwidth positive */
-        pstYUM->fChanBW = fabs(pstYUM->fChanBW);
-        pstYUM->fFMax = fFCh1;
-        pstYUM->fFMin = pstYUM->fFMax - (pstYUM->iNumChans * pstYUM->fChanBW);
-    }
-    else
-    {
-        pstYUM->fFMin = fFCh1;
-        pstYUM->fFMax = pstYUM->fFMin + (pstYUM->iNumChans * pstYUM->fChanBW);
-    }
-    /* calculate bandwidth and centre frequency */
-    pstYUM->fBW = pstYUM->fFMax - pstYUM->fFMin;
-    pstYUM->fFCentre = pstYUM->fFMin + (pstYUM->fBW / 2);
-
-
-    if (YAPP_TRUE == pstYUM->iFlagSplicedData)
-    {
-        /* in spliced data files, the first frequency is always the
-           highest - since we have inverted the array, it is the last
-           frequency */
-        pstYUM->fFMax = pstYUM->pfFreq[pstYUM->iNumChans-1];
-        /* get the lowest frequency */
-        pstYUM->fFMin = pstYUM->pfFreq[0];
-        /* calculate the channel bandwidth */
-        pstYUM->fChanBW = pstYUM->pfFreq[1] - pstYUM->pfFreq[0];
-
-        /* TODO: Number-of-bands calculation not accurate */
-        for (i = 1; i < pstYUM->iNumChans; ++i)
+        if (pstYUM->fChanBW < 0.0)
         {
-            /*if (fabsf(pfFreq[i] - pfFreq[i-1]) > fChanBW)*/
-            /* kludge: */
-            if (fabsf(pstYUM->pfFreq[i] - pstYUM->pfFreq[i-1]) > (2 * pstYUM->fChanBW))
+            pstYUM->cIsBandFlipped = YAPP_TRUE;
+            /* make the channel bandwidth positive */
+            pstYUM->fChanBW = fabs(pstYUM->fChanBW);
+            pstYUM->fFMax = fFCh1;
+            pstYUM->fFMin = pstYUM->fFMax - (pstYUM->iNumChans * pstYUM->fChanBW);
+        }
+        else
+        {
+            pstYUM->cIsBandFlipped = YAPP_FALSE;
+            pstYUM->fFMin = fFCh1;
+            pstYUM->fFMax = pstYUM->fFMin + (pstYUM->iNumChans * pstYUM->fChanBW);
+        }
+        /* calculate bandwidth and centre frequency */
+        pstYUM->fBW = pstYUM->fFMax - pstYUM->fFMin;
+        pstYUM->fFCentre = pstYUM->fFMin + (pstYUM->fBW / 2);
+
+        if (YAPP_TRUE == pstYUM->iFlagSplicedData)
+        {
+            /* in spliced data files, the first frequency is always the
+               highest - since we have inverted the array, it is the last
+               frequency */
+            pstYUM->fFMax = pstYUM->pfFreq[pstYUM->iNumChans-1];
+            /* get the lowest frequency */
+            pstYUM->fFMin = pstYUM->pfFreq[0];
+            /* calculate the channel bandwidth */
+            pstYUM->fChanBW = pstYUM->pfFreq[1] - pstYUM->pfFreq[0];
+
+            /* TODO: Number-of-bands calculation not accurate */
+            for (i = 1; i < pstYUM->iNumChans; ++i)
             {
-                ++pstYUM->iNumBands;
-                if (YAPP_MAX_NUM_BANDS == pstYUM->iNumBands)
+                /*if (fabsf(pfFreq[i] - pfFreq[i-1]) > fChanBW)*/
+                /* kludge: */
+                if (fabsf(pstYUM->pfFreq[i] - pstYUM->pfFreq[i-1]) > (2 * pstYUM->fChanBW))
                 {
-                    (void) printf("WARNING: "
-                                  "Maximum number of bands reached!\n");
-                    break;
+                    ++pstYUM->iNumBands;
+                    if (YAPP_MAX_NUM_BANDS == pstYUM->iNumBands)
+                    {
+                        (void) printf("WARNING: "
+                                      "Maximum number of bands reached!\n");
+                        break;
+                    }
                 }
             }
         }
-    }
-    else
-    {
-        pstYUM->iNumBands = 1;
-    }
+        else
+        {
+            pstYUM->iNumBands = 1;
+        }
 
-    /* TODO: find out the discontinuities and print them as well, also
-             number of spliced bands */
+        /* TODO: find out the discontinuities and print them as well, also
+                 number of spliced bands */
+    }
 
     pstYUM->fSampSize = ((float) pstYUM->iNumBits) / YAPP_BYTE2BIT_FACTOR;
 
@@ -864,11 +882,11 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, YUM_t *pstYUM)
         return YAPP_RET_ERROR;
     }
     pstYUM->lDataSizeTotal = (long) stFileStats.st_size - pstYUM->iHeaderLen;
+    if (YAPP_FORMAT_DTS_TIM == iFormat)
+    {
+        pstYUM->iNumChans = 1;
+    }
     pstYUM->iTimeSamps = (int) (pstYUM->lDataSizeTotal / (pstYUM->iNumChans * pstYUM->fSampSize));
-
-    /* set number of good channels to number of channels - no support for
-       SIGPROC ignore files yet */
-    pstYUM->iNumGoodChans = pstYUM->iNumChans;
 
     return YAPP_RET_SUCCESS;
 }
