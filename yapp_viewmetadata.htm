@@ -1,14 +1,16 @@
-<?xml version="1.0"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
-
-<head>
-<meta http-equiv="Content-Language" content="en-us" />
-<meta http-equiv="Content-Type" content="text/html; charset=windows-1252" />
-<meta name="author" content="Jayanth Chennamangalam" />
-<meta name="description" content="Yet Another Pulsar Processor" />
-<title>Yet Another Pulsar Processor : yapp_viewmetadata</title>
-<link rel="stylesheet" href="css/default.css" type="text/css" />
+<!doctype html>
+<!-- Created by Jayanth Chennamangalam -->
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+    <meta name="author" content="Jayanth Chennamangalam" />
+    <meta name="description" content="Yet Another Pulsar Processor" />
+    <link rel="stylesheet" href="css/default.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Della+Respira" />
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Yanone+Kaffeesatz" />
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Titillium+Web" />
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Ubuntu+Mono" />
+    <title>Yet Another Pulsar Processor | yapp_viewmetadata</title>
 
 <!-- Google Analytics begin -->
 <script type="text/javascript">
@@ -26,107 +28,59 @@
 </script>
 <!-- Google Analytics end -->
 
-</head>
-
-<body>
-
-<div class="main">
-  <table class="main">
-    <tr>
-      <td class="mainLeft">
-        <table>
-          <tr>
-            <td class="title">yapp_viewmetadata</td>
-          </tr>
-          <tr>
-            <td>
-
-
-<!-- man2html begin -->
- <h3>NAME</h3> 
-  
-  yapp_viewmetadata - view metadata/data header/configuration information
-  <h3>SYNOPSIS</h3> 
-   
-   <b>yapp_viewmetadata</b> 
-    
-    [options]
-    <i>dynamic-spectrum-data-file</i> 
-     
-     <h3>DESCRIPTION</h3> 
-      
-      Prints metadata/data header/configuration information to standard output.
-      The supported file formats are DAS '.spec' and SIGPROC '.fil'.
-             
-      <h3>OPTIONS</h3> 
-       
-       <dl> 
-       <dt><b>-h, --help</b></dt><dd> 
-Display a short help text.
-	   </dd>
-       <dt><b>-v, --version</b></dt><dd> 
-Display the version.
-	   </dd>
-       </dl> 
-       <h3>EXAMPLES</h3> 
-        
-        <dl>
-        <dt>yapp_viewmetadata data.fil</dt>
-        <dt>yapp_viewmetadata *.spec</dt>
-        </dl> 
-        <h3>SEE ALSO</h3> 
-         
-         <b><a href="yapp_viewdata.htm">yapp_viewdata</a></b>(1),
-         <b><a href="yapp_ft.htm">yapp_ft</a></b>(1)
-          
-          <h3>AUTHOR</h3> 
-           
-           <dl> 
-           <dt>Written by Jayanth Chennamangalam.
-               <a href="http://jayanthc.github.com/yapp/">http://jayanthc.github.com/yapp/</a></dt>
-           </dl> 
-<!-- man2html end -->
-
-
-            </td>
-          </tr>
-        </table>
-      </td>
-      <td class="mainRight">
-        <table class="buttonBar">
-          <tr>
-            <td><a class="button" href="index.htm">home</a></td>
-          </tr>
-          <tr>
-            <td><a class="button" href="yapp_ft.htm">yapp_ft</a></td>
-          </tr>
-          <tr>
-            <td><a class="button" href="yapp_viewmetadata.htm">yapp_viewmetadata</a></td>
-          </tr>
-          <tr>
-            <td><a class="button" href="yapp_viewdata.htm">yapp_viewdata</a></td>
-          </tr>
-          <tr>
-            <td><a class="button" href="yapp_dedisperse.htm">yapp_dedisperse</a></td>
-          </tr>
-          <tr>
-            <td><a class="button" href="ack.htm">credits</a></td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-    <tr>
-      <td class="mainLeft"></td>
-      <td class="footer">
-      <a href="http://validator.w3.org/check?uri=referer">Valid XHTML 1.0</a>
-      <br />
-      <a href="http://jigsaw.w3.org/css-validator/validator?uri=http://jayanthc.github.com/yapp/css/default.css">Valid CSS 2.1</a>
-      </td>
-    </tr>
-  </table>
-</div>
-
-</body>
-
+  </head>
+  <body>
+    <nav>
+      <ul>
+        <li><a href="index.htm">home</a></li>
+        <li><a href="screenshots.htm">screenshots</a></li>
+        <li><a href="download.htm">download</a></li>
+        <li><a href="doc.htm">documentation</a></li>
+        <li><a href="contact.htm">contact</a></li>
+      </ul>
+    </nav>
+    <header>
+    yapp_viewmetadata
+    </header>
+    <article>
+      <section>
+        <p>As the name indicates, this program is used to display metadata/data
+           header/configuration information associated with a data file. The
+           following file types are supported:</p>
+        <ul>
+          <li>DAS <code>.spec</code> filterbank format</li>
+          <li>SIGPROC <code>.fil</code> filterbank format (including the
+              headerless version, provided a <code>.fhd</code> configuration
+              file is present in the same directory)</li>
+          <li>SIGPROC <code>.tim</code> time series format</li>
+        </ul>
+        <p>Usage:</p> 
+        <code>yapp_viewmetadata [options] <i>data-file</i></code>
+        <p>The options are:</p>
+        <ul>
+          <li><code>-h</code> or <code>--help</code>: Display a short help text.</li>
+	      <li><code>-v</code> or <code>--version</code>: Display the version.</li>
+	   </ul>
+       <p>The data file name may be a composed of standard shell wildcards such
+          as <code>*</code> or <code>?</code>.</p>
+       <p>Examples:</p> 
+       <p>The following displays the metadata for the SIGPROC filterbank file
+          <code>data.fil</code>. If this is a headerless filterbank file, it is
+          expected that a file with metadata information, named <code>data.fhd</code>
+          is present in the same directory as the data file.</p>
+       <code>yapp_viewmetadata data.fil</code>
+       <p>The following displays the metadata for all DAS filterbank files in
+          the current working directory.</p>
+       <code>yapp_viewmetadata *.spec</code>
+       <p>System requirements: Linux/MacOS</p>
+       <p>&nbsp;</p>
+       <p>&nbsp;</p>
+      </section>
+    </article>
+    <footer>
+    YAPP is released under <a href="http://sam.zoy.org/wtfpl/">WTFPLv2</a>:
+    Copy, modify, and share! <a href="ack.htm">Credits</a>.
+    </footer>
+  </body>
 </html>
 

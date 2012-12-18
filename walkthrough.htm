@@ -1,0 +1,102 @@
+<!doctype html>
+<!-- Created by Jayanth Chennamangalam -->
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+    <meta name="author" content="Jayanth Chennamangalam" />
+    <meta name="description" content="Yet Another Pulsar Processor" />
+    <link rel="stylesheet" href="css/default.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Della+Respira" />
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Yanone+Kaffeesatz" />
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Titillium+Web" />
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Ubuntu+Mono" />
+    <title>Yet Another Pulsar Processor | Walkthrough</title>
+
+<!-- Google Analytics begin -->
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-22544628-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+<!-- Google Analytics end -->
+
+  </head>
+  <body>
+    <nav>
+      <ul>
+        <li><a href="index.htm">home</a></li>
+        <li><a href="screenshots.htm">screenshots</a></li>
+        <li><a href="download.htm">download</a></li>
+        <li><a href="doc.htm">documentation</a></li>
+        <li><a href="contact.htm">contact</a></li>
+      </ul>
+    </nav>
+    <header>
+    walkthrough
+    </header>
+    <article>
+      <section>
+        <p>Here is a brief tutorial of how to use YAPP starting from a file
+           containing baseband data. We will be using the sample data file
+           containing a simulated pulsar, named
+           <a href="files/simpulsar.raw">simpulsar.raw</a>. This file contains
+           8-bit, complex, dual-polarization data, assumed to be sampled with a
+           sampling interval of 0.0000000078125 s (corresponding to a bandwidth
+           of 128 MHz).</p>
+        <p><span class="secTitle">Step 1:</span> We will use
+           <a href="yapp_ft.htm">yapp_ft</a> to create a filterbank format file
+           from the raw data. We will also use the PFB option of
+           <a href="yapp_ft.htm">yapp_ft</a>, so first, we need to generate the
+           filter coefficients. We will be performing a 2048-point FFT, with an
+           8-tap PFB. Run <a href="yapp_gencoeff.htm">yapp_gencoeff.py</a> to
+           generate the filter coefficients:</p>
+        <code>yapp_gencoeff.py -n 2048 -t 8 -g</code>
+        <p>Output:</p>
+        <p>The above run would have created a file named
+           <code>coeff_float_8_2048_1.dat</code> in the current working
+           directory. This is the filter coefficients file that will be used by
+           <a href="yapp_ft.htm">yapp_ft</a>. Now, run
+           <a href="yapp_ft.htm">yapp_ft</a> to create the filterbank file. For
+           demonstration purpose, we will run it with graphics turned on, and in
+           non-interactive mode, so that you can see the spectra as they are
+           generated. In normal circumstances, though, it would be faster to
+           run it without graphics.</p>
+        <code>yapp_ft -b -n 2048 -a 1 -t 0.0000000078125 -f -o SimObservatory
+              -r SimPulsar -g -t simpulsar.raw</code>
+        <p>Output:</p>
+        <p>The above run would have created the filterbank file
+           <code>simpulsar.fil</code> in the same directory as the raw data
+           file. We will now check if metadata and data look proper.</p>
+        <code>yapp_viewmetadata simpulsar.fil</code>
+        <p>Output:</p>
+        <code>yapp_viewdata simpulsar.fil</code>
+        <p>Output:</p>
+        <p><span class="secTitle">Step 2:</span> Perform dedispersion. The
+           simulated pulsar has a DM of 10. For demonstration purpose, we will
+           run it with graphics turned on, and in non-interactive mode, so that
+           you can see the dedispersion happening. In normal circumstances,
+           though, it would be faster to run it without graphics.</p>
+        <code>yapp_dedisperse -d 10 -g -t simpulsar.fil</code>
+        <p>Output:</p>
+        <p>The above run would have created the file <code>simpulsar.tim</code>
+           that you can now use with the SIGPROC <code>seek</code> program to
+           search for periodicities.</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+      </section>
+    </article>
+    <footer>
+    YAPP is released under <a href="http://sam.zoy.org/wtfpl/">WTFPLv2</a>:
+    Copy, modify, and share! <a href="ack.htm">Credits</a>.
+    </footer>
+  </body>
+</html>
+

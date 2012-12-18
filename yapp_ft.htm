@@ -1,14 +1,16 @@
-<?xml version="1.0"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
-
-<head>
-<meta http-equiv="Content-Language" content="en-us" />
-<meta http-equiv="Content-Type" content="text/html; charset=windows-1252" />
-<meta name="author" content="Jayanth Chennamangalam" />
-<meta name="description" content="Yet Another Pulsar Processor" />
-<title>Yet Another Pulsar Processor : yapp_ft</title>
-<link rel="stylesheet" href="css/default.css" type="text/css" />
+<!doctype html>
+<!-- Created by Jayanth Chennamangalam -->
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+    <meta name="author" content="Jayanth Chennamangalam" />
+    <meta name="description" content="Yet Another Pulsar Processor" />
+    <link rel="stylesheet" href="css/default.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Della+Respira" />
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Yanone+Kaffeesatz" />
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Titillium+Web" />
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Ubuntu+Mono" />
+    <title>Yet Another Pulsar Processor | yapp_ft</title>
 
 <!-- Google Analytics begin -->
 <script type="text/javascript">
@@ -26,150 +28,89 @@
 </script>
 <!-- Google Analytics end -->
 
-</head>
-
-<body>
-
-<div class="main">
-  <table class="main">
-    <tr>
-      <td class="mainLeft">
-        <table>
-          <tr>
-            <td class="title">yapp_ft</td>
-          </tr>
-          <tr>
-            <td>
-
-
-<!-- man2html begin -->
- <h3>NAME</h3> 
-  
-  yapp_ft - perform Fourier transform and optionally polyphase filtering on baseband data
-  <h3>SYNOPSIS</h3> 
-   
-   <b>yapp_ft</b> 
-    
-    [options]
-    <i>baseband-data-file</i> 
-     
-     <h3>DESCRIPTION</h3> 
-      
-      Performs Fourier transform and optionally polyphase filtering on baseband data.
-      In other words, this is a software spectrometer. The input should be 8-bit, complex, dual-polarization data.
-      The output is written in the headerless SIGPROC '.fil' format.
-
-      <h3>OPTIONS</h3> 
-       
-       <dl> 
-       <dt><b>-h, --help</b></dt><dd> 
-Display a short help text.
-	   </dd>
-       <dt><b>-s, --skip-time</b> <i>time</i></dt><dd> 
-Length of data to be skipped, in seconds (default is 0).
-	   </dd>
-       <dt><b>-p, --proc-time</b> <i>time</i></dt><dd> 
-Length of data to be processed, in seconds (default is all data).
-	   </dd>
-       <dt><b>-b, --pfb</b></dt><dd> 
-Turn polyphase filtering on.
-	   </dd>
-       <dt><b>-n, --nfft</b> <i>N</i></dt><dd> 
-Number of points in FFT (default is 1024).
-	   </dd>
-       <dt><b>-a, --nacc</b> <i>acc-len</i></dt><dd> 
-Number of spectra to be accumulated (default is 1 - no accumulation).
-	   </dd>
-       <dt><b>-l, --tsamp</b> <i>tsamp</i></dt><dd> 
-Sampling time in seconds.
-	   </dd>
-       <dt><b>-f, --fil</b></dt><dd> 
-Output spectra in filterbank format (currently the only format supported).
-	   </dd>
-       <dt><b>-e, --site</b> <i>site-name</i></dt><dd> 
-Observing site name.
-	   </dd>
-       <dt><b>-r, --pulsar</b> <i>psr-name</i></dt><dd> 
-Pulsar name.
-	   </dd>
-       <dt><b>-g, --graphics</b></dt><dd> 
-Turn on plotting.
-	   </dd>
-       <dt><b>-i, --invert</b></dt><dd> 
-Invert background and foreground colours in plots.
-	   </dd>
-       <dt><b>-n, --non-interactive</b></dt><dd> 
-Run in non-interactive mode.
-	   </dd>
-       <dt><b>-v, --version</b></dt><dd> 
-Display the version.
-	   </dd>
-       </dl> 
-       <h3>FILES</h3>
-       <dl>
-<dt>If running with PFB on, this program requires a filter coefficients file to
-be present in the current directory. Filter coefficients files can be created
-using the yapp_gencoeff.py script.</dt>
-       </dl>
-
-       <h3>EXAMPLE</h3> 
-        
-        <dl> 
-        <dt>yapp_ft -b -n 4096 -a 10 -l 0.00000078125 -f -e GBT -r J1921+2153 rawdata.dat</dt>
-        </dl> 
-        <h3>SEE ALSO</h3> 
-         
-         <b><a href="yapp_viewmetadata.htm">yapp_viewmetadata</a></b>(1),
-         <b><a href="yapp_viewdata.htm">yapp_viewdata</a></b>(1)
-          
-          <h3>AUTHOR</h3> 
-           
-           <dl> 
-           <dt>Written by Jayanth Chennamangalam.
-               <a href="http://jayanthc.github.com/yapp/">http://jayanthc.github.com/yapp/</a></dt>
-           </dl> 
-<!-- man2html end -->
-
-
-            </td>
-          </tr>
-        </table>
-      </td>
-      <td class="mainRight">
-        <table class="buttonBar">
-          <tr>
-            <td><a class="button" href="index.htm">home</a></td>
-          </tr>
-          <tr>
-            <td><a class="button" href="yapp_ft.htm">yapp_ft</a></td>
-          </tr>
-          <tr>
-            <td><a class="button" href="yapp_viewmetadata.htm">yapp_viewmetadata</a></td>
-          </tr>
-          <tr>
-            <td><a class="button" href="yapp_viewdata.htm">yapp_viewdata</a></td>
-          </tr>
-          <tr>
-            <td><a class="button" href="yapp_dedisperse.htm">yapp_dedisperse</a></td>
-          </tr>
-          <tr>
-            <td><a class="button" href="ack.htm">credits</a></td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-    <tr>
-      <td class="mainLeft"></td>
-      <td class="footer">
-      <a href="http://validator.w3.org/check?uri=referer">Valid XHTML 1.0</a>
-      <br />
-      <a href="http://jigsaw.w3.org/css-validator/validator?uri=http://jayanthc.github.com/yapp/css/default.css">Valid CSS 2.1</a>
-      </td>
-    </tr>
-  </table>
-</div>
-
-</body>
-
+  </head>
+  <body>
+    <nav>
+      <ul>
+        <li><a href="index.htm">home</a></li>
+        <li><a href="screenshots.htm">screenshots</a></li>
+        <li><a href="download.htm">download</a></li>
+        <li><a href="doc.htm">documentation</a></li>
+        <li><a href="contact.htm">contact</a></li>
+      </ul>
+    </nav>
+    <header>
+    yapp_ft
+    </header>
+    <article>
+      <section>
+        <p>This program performs Fourier transform and optionally polyphase
+           filtering on baseband (raw voltage time series) data. In other words,
+           this is a software spectrometer. The input is expected to be 8-bit,
+           complex, dual-polarization data. The output is written in the
+           headerless SIGPROC <code>.fil</code> format, along with a
+           <code>.fhd</code> configuration file that can be read by
+           <a href="yapp_viewmetadata.htm">yapp_viewmetadata</a> and
+           <a href="yapp_viewdata.htm">yapp_viewdata</a>.</p>
+        <p>If running with PFB on, this program requires a filter coefficients
+           file to be present in the current directory. Filter coefficients
+           files can be created using the <a href="yapp_gencoeff.htm">yapp_gencoeff.py</a>
+           Python script.</p>
+        <p>Usage:</p> 
+        <code>yapp_ft [options] <i>data-file</i></code>
+        <p>The options are:</p>
+        <ul> 
+          <li><code>-h</code> or <code>--help</code>: Display this usage
+              information</li>
+          <li><code>-s</code> or <code>--skip <i>time</i></code>: Length of
+              data to be skipped, in seconds (default is 0 s).</li>
+          <li><code>-p</code> or <code>--proc <i>time</i></code>: Length of
+              data to be processed, in seconds (default is all data).</li>
+          <li><code>-l</code> or <code>--tsamp <i>tsamp</i></code>: Sampling
+              time in seconds.</li>
+          <li><code>-f</code> or <code>--centre-freq <i>freq</i></code>: Centre
+              frequency of the observing band in MHz.</li>
+          <li><code>-b</code> or <code>--pfb</code>: Turn polyphase filtering
+              on.</li>
+          <li><code>-t</code> or <code>--ntaps <i>ntaps</i></code>: Number of
+              taps in the PFB (default is 8).</li>
+          <li><code>-n</code> or <code>--nfft <i>N</i></code>: Number of points
+              in FFT (default is 4096).</li>
+          <li><code>-a</code> or <code>--nacc <i>acc-len</i></code>: Number of
+              spectra to be accumulated (default is 1 - no accumulation).</li>
+          <li><code>-o</code> or <code>--obs-site <i>site-name</i></code>:
+              Observatory name.</li>
+          <li><code>-r</code> or <code>--pulsar <i>psr-name</i></code>: Pulsar
+              name.</li>
+          <li><code>-g</code> or <code>--graphics</code>: Turn on plotting.</li>
+          <li><code>-i</code> or <code>--invert</code>: Invert background and
+              foreground colours in plots (default is white on black).</li>
+          <li><code>-e</code> or <code>--non-interactive</code>: Run in
+              non-interactive mode.</li>
+          <li><code>-v</code> or <code>--version</code>: Display the version.</li>
+        </ul> 
+        <p>The flags <code>-l</code> (or <code>--tsamp</code>) and
+           <code>-f</code> (or <code>--centre-freq</code>) are required
+           arguments.</p> 
+        <p>Example:</p>
+        <p>The following performs an 8-tap polyphase filtering followed by a
+           1024-point Fourier transform on the data in <code>rawdata.dat</code>.
+           The spectra thus produced are accumulated to a length of 10, and the
+           output is written to a headerless SIGPROC filterbank file named
+           <code>rawdata.dat.fil</code>, and metadata is written to a file
+           named <code>rawdata.dat.fhd</code>. The site name (in this case,
+           'GBT') and the pulsar name ('J1921+2153') go into the metadata
+           file.</p>
+        <code>yapp_ft -l 0.00000078125 -f 1420.405751 -b -n 1024 -a 10 -o GBT -r J1921+2153 rawdata.dat</code>
+        <p>System requirements: Linux/MacOS, PGPLOT with C binding, FFTW3</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+      </section>
+    </article>
+    <footer>
+    YAPP is released under <a href="http://sam.zoy.org/wtfpl/">WTFPLv2</a>:
+    Copy, modify, and share! <a href="ack.htm">Credits</a>.
+    </footer>
+  </body>
 </html>
 
