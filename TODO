@@ -11,18 +11,19 @@ yapp_ft:
 
 
 yapp_viewdata:
-1.  BUG: Signal-handling in non-interactive mode causes blocking in cpgclos()
+1.  BUG: Crash when handling 4-bit files.
+2.  BUG: Signal-handling in non-interactive mode causes blocking in cpgclos()
     and crash on kill.
-2.  BUG:
+3.  BUG:
     plotraw -b 62334 a14aa899.spec
     Anything above 62334 (out of 62385) is nan (problem maybe with
     das_spectro_lin).
-3.  BUG: In YAPP_ReadData(), take malloc() outside.
-4.  BUG: Last block of 0833b45.spec not plotting correctly.
-5.  BUG: crash in reading 4bit data
-6.  BUG: Process exactly the amount of time asked for, not at multiples of
+4.  BUG: In YAPP_ReadData(), take malloc() outside.
+5.  BUG: Last block of 0833b45.spec not plotting correctly.
+6.  BUG: crash in reading 4bit data
+7.  BUG: Process exactly the amount of time asked for, not at multiples of
     block size.
-7.  FEATURE: Support user-defined colourmaps.
+8.  FEATURE: Support user-defined colourmaps.
 
 
 yapp_dedisperse:
