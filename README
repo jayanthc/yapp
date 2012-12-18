@@ -1,4 +1,4 @@
-Yet Another Pulsar Processor (YAPP) 1.0-beta
+Yet Another Pulsar Processor (YAPP) 2.0-beta
 -------------------------------------------------------------------------------
 README
 
@@ -13,6 +13,7 @@ The YAPP tools available with this release are:
     yapp_viewdata       : Plots raw dynamic spectrum data to PGPLOT device.
     yapp_ft             : Performs FFT [+ PFB] on 8-bit, complex, dual-pol.
                           baseband data.
+    yapp_dedisperse     : Dedisperses filterbank format data.
 
 The supported file formats for both tools are DAS '.spec' and SIGPROC '.fil'.
 
