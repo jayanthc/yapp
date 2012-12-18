@@ -55,7 +55,7 @@
 /* @{ */
 #define YAPP_FORMATSTR_SPEC         "spec"
 #define YAPP_FORMATSTR_FIL          "fil"
-#define YAPP_FORMATSTR_DTS_DDD      "ddd"
+#define YAPP_FORMATSTR_DTS_DDS      "dds"
 #define YAPP_FORMATSTR_DTS_TIM      "tim"
 /* @} */
 
@@ -65,7 +65,7 @@ enum tagFileFormats
     YAPP_FORMAT_SPEC = 0,       /* Desh's specfile format */
     YAPP_FORMAT_FIL,            /* Dunc's filterbank file format */
     /* dedispersed time series formats */
-    YAPP_FORMAT_DTS_DDD,        /* Desh's dedispersed data format */
+    YAPP_FORMAT_DTS_DDS,        /* Desh's dedispersed data format */
     YAPP_FORMAT_DTS_TIM         /* Dunc's time series format */
 };
 
@@ -117,8 +117,9 @@ enum tagFileFormats
  * @defgroup Defaults Default values
  */
 /* @{ */
+#define DEF_LAW             2.0
 #define DEF_FORMAT          YAPP_FORMAT_SPEC
-#define DEF_OUT_FORMAT      YAPP_FORMAT_DTS_DDD
+#define DEF_OUT_FORMAT      YAPP_FORMAT_DTS_TIM
 #define DEF_SIZE_BLOCK      MAX_SIZE_BLOCK  /**< @brief Default block size */
 
 /* @} */
@@ -465,6 +466,19 @@ int YAPP_ReadData(float *pfBuf,
  * @param[in]   iTimeSamps  Number of time samples that are to be processed
  */
 double YAPP_CalcThresholdInSigmas(int iTimeSamps);
+
+/**
+ * Calculate dispersion delays for correction.
+ *
+ * @param[in]   dDM         DM in pc cm^-3
+ * @param[in]   stYUM       Metadata
+ * @param[in]   fLaw        Dispersion law
+ * @param[out]  piMaxOffset Maximum correction in terms of samples
+ */
+int YAPP_CalcDelays(double dDM,
+                    YUM_t stYUM,
+                    float fLaw,
+                    int* piMaxOffset);
 
 /*
  * The memory allocator

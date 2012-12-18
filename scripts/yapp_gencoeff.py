@@ -24,7 +24,7 @@ def PrintUsage(ProgName):
     print "                               (default is 8)"
 #    print "    -b  --nsubbands <value>    Number of sub-bands in data"
 #    print "                               (default is 1)"
-    print "    -g  --graphics              Turn on graphics"
+    print "    -g  --graphics             Turn on graphics"
     return
 
 # default values

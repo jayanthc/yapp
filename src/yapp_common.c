@@ -47,7 +47,7 @@ int YAPP_GetFileType(char *pcFile)
     }
     else if (0 == strcmp(pcExt, EXT_DEDISPSPEC))
     {
-        iFormat = YAPP_FORMAT_DTS_DDD;
+        iFormat = YAPP_FORMAT_DTS_DDS;
     }
     else if (0 == strcmp(pcExt, EXT_TIM))
     {
@@ -105,7 +105,7 @@ char* YAPP_GetFilenameFromPath(char *pcPath, char *pcExt)
         /* TODO: handle NULL return in caller */
     }
 
-    (void) strncpy(pcFilename, pcPos, (strlen(pcPos) - strlen(pcExt)));
+    (void) strncpy(pcFilename, pcPos, (strlen(pcPos) - strlen(pcExt) + 1));
 
     return pcFilename;
 }
@@ -1142,14 +1142,6 @@ int YAPP_ReadData(float *pfBuf,
         /* copy data from the byte buffer to the float buffer */
         for (i = 0; i < iReadItems; ++i)
         {
-            if (pcBuf[i] >= 0)
-            {
-                pcBuf[i] = 128 - pcBuf[i];
-            }
-            else
-            {
-                pcBuf[i] = 128 + pcBuf[i];
-            }
             pfBuf[i] = (float) pcBuf[i];
         }
     }

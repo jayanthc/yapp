@@ -14,6 +14,8 @@
  *     -l  --tsamp <tsamp>                  Sampling time in s
  *     -f  --centre-freq <freq>             Centre frequency of observing band
  *     -b  --pfb                            Turn PFB on
+ *     -t  --ntaps <ntaps>                  Number of taps in the PFB
+ *                                          (default is 8)
  *     -n  --nfft <nfft>                    Number of points in FFT
  *                                          (default is 1024)
  *     -a  --nacc <acc-len>                 Number of spectra to accumulate
@@ -115,15 +117,16 @@ int main(int argc, char *argv[])
     const char *pcProgName = NULL;
     int iNextOpt = 0;
     /* valid short options */
-    const char* const pcOptsShort = "hs:p:l:f:bn:a:o:r:giev";
+    const char* const pcOptsShort = "hs:p:l:f:bt:n:a:o:r:giev";
     /* valid long options */
     const struct option stOptsLong[] = {
         { "help",                   0, NULL, 'h' },
-        { "skip-time",              1, NULL, 's' },
-        { "proc-time",              1, NULL, 'p' },
+        { "skip",                   1, NULL, 's' },
+        { "proc",                   1, NULL, 'p' },
         { "tsamp",                  1, NULL, 'l' },
         { "centre-freq",            1, NULL, 'f' },
         { "pfb",                    0, NULL, 'b' },
+        { "ntaps",                  1, NULL, 't' },
         { "nfft",                   1, NULL, 'n' },
         { "nacc",                   1, NULL, 'a' },
         { "obs-site",               1, NULL, 'o' }, 
@@ -172,8 +175,11 @@ int main(int argc, char *argv[])
             case 'b':   /* -b or --pfb */
                 /* set option */
                 g_cIsPFBOn = YAPP_TRUE;
-                /* set the number of taps */
-                iNTaps = NUM_TAPS;
+                break;
+
+            case 't':   /* -t or --ntaps */
+                /* set option */
+                iNTaps = atoi(optarg);
                 break;
 
             case 'n':   /* -n or --nfft */
@@ -800,10 +806,6 @@ int InitPFB(int iNTaps, int iNFFT)
     {
         int iFileCoeff = 0;
 
-        /* set number of taps to NUM_TAPS if PFB is on, else number of
-           taps = 1 */
-        iNTaps = NUM_TAPS;
-
         g_pfPFBCoeff = (float *) YAPP_Malloc((size_t) iNTaps * iNFFT,
                                              sizeof(float),
                                              YAPP_FALSE);
@@ -1199,13 +1201,13 @@ void PrintUsage(const char *pcProgName)
                   pcProgName);
     (void) printf("    -h  --help                           ");
     (void) printf("Display this usage information\n");
-    (void) printf("    -s  --skip-time <time>               ");
+    (void) printf("    -s  --skip <time>                    ");
     (void) printf("The length of data in seconds, to be\n");
     (void) printf("                                         ");
     (void) printf("skipped\n");
     (void) printf("                                         ");
     (void) printf("(default is 0 s)\n");
-    (void) printf("    -p  --proc-time <time>               ");
+    (void) printf("    -p  --proc <time>                    ");
     (void) printf("The length of data in seconds, to be\n");
     (void) printf("                                         ");
     (void) printf("processed\n");
@@ -1219,6 +1221,10 @@ void PrintUsage(const char *pcProgName)
     (void) printf("in MHz\n");
     (void) printf("    -b  --pfb                            ");
     (void) printf("Turn PFB on\n");
+    (void) printf("    -t  --ntaps <ntaps>                  ");
+    (void) printf("Number of taps in the PFB\n");
+    (void) printf("                                         ");
+    (void) printf("(default is 8)\n");
     (void) printf("    -n  --nfft <nfft>                    ");
     (void) printf("Number of points in FFT\n");
     (void) printf("                                         ");
