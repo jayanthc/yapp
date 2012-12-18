@@ -1,8 +1,14 @@
 TODO
 ----
 
+all:
+1. popt-ify all programs.
+
+
 yapp_ft:
 1.  BUG: Support non-default number of taps.
+2.  FEATURE: Support single-pol. data.
+3.  FEATURE: Plot in 2D
 
 
 yapp_viewdata:

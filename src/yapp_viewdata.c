@@ -702,11 +702,11 @@ int main(int argc, char *argv[])
         }
         if (iFormat != YAPP_FORMAT_DTS_TIM)
         {
-            pgwrapPlot2D(g_pfPlotBuf, fDataMin, fDataMax,
-                         g_pfXAxis, iBlockSize, dTSampInSec,
-                         g_pfYAxis, stYUM.iNumChans, stYUM.fChanBW,
-                         "Time (s)", "Frequency (MHz)", "Dynamic Spectrum",
-                         iColourMap);
+            Plot2D(g_pfPlotBuf, fDataMin, fDataMax,
+                   g_pfXAxis, iBlockSize, dTSampInSec,
+                   g_pfYAxis, stYUM.iNumChans, stYUM.fChanBW,
+                   "Time (s)", "Frequency (MHz)", "Dynamic Spectrum",
+                   iColourMap);
         }
         else
         {

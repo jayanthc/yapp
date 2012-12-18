@@ -1,0 +1,67 @@
+<!doctype html>
+<!-- Created by Jayanth Chennamangalam -->
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+    <meta name="author" content="Jayanth Chennamangalam" />
+    <meta name="description" content="Yet Another Pulsar Processor" />
+    <link rel="stylesheet" href="css/default.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Della+Respira" />
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Yanone+Kaffeesatz" />
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Titillium+Web" />
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Ubuntu+Mono" />
+    <script src="js/yui.js" type="text/javascript"></script>
+    <title>YAPP User Interface</title>
+
+<!-- Google Analytics begin -->
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-22544628-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+<!-- Google Analytics end -->
+
+  </head>
+  <body>
+    <nav>
+      <ul>
+        <li><a href="index.htm">yapp</a></li>
+        <li><a href="help.htm">help</a></li>
+        <li><a href="about.htm">about</a></li>
+      </ul>
+    </nav>
+    <header>
+    yapp
+    </header>
+    <article>
+      <section>
+        <form>
+          <fieldset>
+            Load data file: <input type="file" id="fileData" onChange="loadFile();" />
+            <legend>Configuration</legend>
+            Skip time (in s): <input type="number" placeholder="0.0" min="0.0" step="0.1" name="skip" /><br />
+            Process time (in s): <input type="number" min="0.0" step="0.1" name="proc" /><br />
+            <label><input type="checkbox">Graphics</label>
+          </fieldset>
+          <fieldset>
+            <legend>Commands</legend>
+          </fieldset>
+        </form>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+      </section>
+    </article>
+    <footer>
+    footer
+    </footer>
+  </body>
+</html>
+

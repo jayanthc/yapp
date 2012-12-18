@@ -1,0 +1,163 @@
+/*
+ * default.css
+ * Default Cascading Style Sheet 3 document for YAPP
+ *
+ * Created by Jayanth Chennamangalam
+ */
+
+body
+{
+    background-color: #FFFFFF;
+    color: #000000;
+    font-family: "Titillium Web", sans-serif;
+    font-size: 12pt;
+    margin: 0px;
+    padding: 0px;
+}
+
+nav
+{
+    position: fixed;
+    z-index: 1;
+    width: 100%;
+    background-color: #2C2C2C;  /* for non-CSS3 browsers */
+    color: #FFFFFF;
+    background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#2C2C2C), to(#4F4F4F));
+    background-image: -webkit-linear-gradient(top, #2C2C2C, #4F4F4F);
+    background-image: -moz-linear-gradient(top, #2C2C2C, #4F4F4F);
+    background-image: -ms-linear-gradient(top, #2C2C2C, #4F4F4F);
+    background-image: -o-linear-gradient(top, #2C2C2C, #4F4F4F);
+    font-family: "Yanone Kaffeesatz", sans-serif;
+    font-size: 24pt;
+}
+    nav ul
+    {
+        margin: 0px;
+        padding: 0px;
+        list-style: none;
+        text-align: left;
+    }
+        nav ul li
+        {
+            display: inline;
+            margin-left: 12px;
+            margin-right: 0px;
+        }
+            nav ul li a
+            {
+                background-color: inherit;
+                color: inherit;
+                text-decoration: none;
+            }
+            nav ul li a:hover
+            {
+                background-color: inherit;
+                color: #9AB8D7;
+            }
+            nav ul li a:active
+            {
+                background-color: inherit;
+                color: #DFAF8F;
+            }
+
+header
+{
+    position: relative;
+    top: 100px;
+    background-color: inherit;
+    color: #000000;
+    font-family: "Della Respira", serif;
+    font-size: 25pt;
+    margin-left: 10%;
+    margin-right: 10%;
+}
+    header span#titleYAPP
+    {
+        font-size: 108pt;
+    }
+    header span#subTitleYAPP
+    {
+        font-size: 19pt;
+    }
+
+article
+{
+    position: relative;
+    top: 100px;
+    background-color: inherit;
+    color: #000000;
+    text-align: justify;
+    margin-left: 10%;
+    margin-right: 10%;
+}
+    article section
+    {
+    }
+    article section span.secTitle
+    {
+        font-weight: bold;
+    }
+    article section ul
+    {
+    }
+        article section ul li
+        {
+        }
+            article section ul li span.reqFlag
+            {
+                text-decoration: underline;
+            }
+    article section a
+    {
+        text-decoration: none;
+        background-color: inherit;
+        color: #705050;
+    }
+    article section a:hover
+    {
+        background-color: inherit;
+        color: #000000;
+    }
+    article section a:active
+    {
+        background-color: inherit;
+        color: #000000;
+    }
+
+footer
+{
+    position: fixed;
+    z-index: 1;
+    bottom: 0px;
+    width: 100%;
+    background-color: #2C2C2C;
+    color: #FFFFFF;
+    text-align: right;
+    margin: 0px;
+    padding: 0px;
+}
+    footer a
+    {
+        text-decoration: none;
+        background-color: inherit;
+        color: #DFAF8F;
+    }
+    footer a:hover
+    {
+        background-color: inherit;
+        color: #FFFFFF;
+    }
+    footer a:active
+    {
+        background-color: inherit;
+        color: #FFFFFF;
+    }
+
+code
+{
+    font-family: "Ubuntu Mono", monospace;
+    letter-spacing: 1pt;
+    background-color: inherit;
+    color: #696969;
+}
+

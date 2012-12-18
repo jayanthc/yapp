@@ -121,8 +121,8 @@ int main(int argc, char *argv[])
     /* valid long options */
     const struct option stOptsLong[] = {
         { "help",                   0, NULL, 'h' },
-        { "skip-time",              1, NULL, 's' },
-        { "proc-time",              1, NULL, 'p' },
+        { "skip",                   1, NULL, 's' },
+        { "proc",                   1, NULL, 'p' },
         { "tsamp",                  1, NULL, 'l' },
         { "centre-freq",            1, NULL, 'f' },
         { "pfb",                    0, NULL, 'b' },
@@ -1201,13 +1201,13 @@ void PrintUsage(const char *pcProgName)
                   pcProgName);
     (void) printf("    -h  --help                           ");
     (void) printf("Display this usage information\n");
-    (void) printf("    -s  --skip-time <time>               ");
+    (void) printf("    -s  --skip <time>                    ");
     (void) printf("The length of data in seconds, to be\n");
     (void) printf("                                         ");
     (void) printf("skipped\n");
     (void) printf("                                         ");
     (void) printf("(default is 0 s)\n");
-    (void) printf("    -p  --proc-time <time>               ");
+    (void) printf("    -p  --proc <time>                    ");
     (void) printf("The length of data in seconds, to be\n");
     (void) printf("                                         ");
     (void) printf("processed\n");

@@ -10,37 +10,39 @@ BUF_0	src/yapp.h	132;"	d
 BUF_1	src/yapp.h	133;"	d
 CHANNEL_COUNT	src/yapp_pulsarsnd.c	22;"	d	file:
 CMAP_AUTUMN	src/colourmap.h	/^    CMAP_AUTUMN = 0,$/;"	e	enum:CMap_e
-CMAP_BLUE	src/colourmap.h	/^    CMAP_BLUE$/;"	e	enum:CMap_e
+CMAP_BLUE	src/colourmap.h	/^    CMAP_BLUE,$/;"	e	enum:CMap_e
 CMAP_BONE	src/colourmap.h	/^    CMAP_BONE,$/;"	e	enum:CMap_e
 CMAP_COOL	src/colourmap.h	/^    CMAP_COOL,$/;"	e	enum:CMap_e
 CMAP_COPPER	src/colourmap.h	/^    CMAP_COPPER,$/;"	e	enum:CMap_e
 CMAP_GRAY	src/colourmap.h	/^    CMAP_GRAY,$/;"	e	enum:CMap_e
+CMAP_GRAY_INV	src/colourmap.h	/^    CMAP_GRAY_INV,$/;"	e	enum:CMap_e
 CMAP_HOT	src/colourmap.h	/^    CMAP_HOT,$/;"	e	enum:CMap_e
 CMAP_JET	src/colourmap.h	/^    CMAP_JET,$/;"	e	enum:CMap_e
 CMAP_LEVELS	src/colourmap.h	30;"	d
 CMAP_PINK	src/colourmap.h	/^    CMAP_PINK,$/;"	e	enum:CMap_e
 CMAP_SPRING	src/colourmap.h	/^    CMAP_SPRING,$/;"	e	enum:CMap_e
-CMAP_STR_AUTUMN	src/colourmap.h	49;"	d
-CMAP_STR_BLUE	src/colourmap.h	60;"	d
-CMAP_STR_BONE	src/colourmap.h	50;"	d
-CMAP_STR_COOL	src/colourmap.h	51;"	d
-CMAP_STR_COPPER	src/colourmap.h	52;"	d
-CMAP_STR_GRAY	src/colourmap.h	53;"	d
-CMAP_STR_HOT	src/colourmap.h	54;"	d
-CMAP_STR_JET	src/colourmap.h	55;"	d
-CMAP_STR_PINK	src/colourmap.h	56;"	d
-CMAP_STR_SPRING	src/colourmap.h	57;"	d
-CMAP_STR_SUMMER	src/colourmap.h	58;"	d
-CMAP_STR_WINTER	src/colourmap.h	59;"	d
+CMAP_STR_AUTUMN	src/colourmap.h	50;"	d
+CMAP_STR_BLUE	src/colourmap.h	51;"	d
+CMAP_STR_BONE	src/colourmap.h	52;"	d
+CMAP_STR_COOL	src/colourmap.h	53;"	d
+CMAP_STR_COPPER	src/colourmap.h	54;"	d
+CMAP_STR_GRAY	src/colourmap.h	55;"	d
+CMAP_STR_GRAY_INV	src/colourmap.h	56;"	d
+CMAP_STR_HOT	src/colourmap.h	57;"	d
+CMAP_STR_JET	src/colourmap.h	58;"	d
+CMAP_STR_PINK	src/colourmap.h	59;"	d
+CMAP_STR_SPRING	src/colourmap.h	60;"	d
+CMAP_STR_SUMMER	src/colourmap.h	61;"	d
+CMAP_STR_WINTER	src/colourmap.h	62;"	d
 CMAP_SUMMER	src/colourmap.h	/^    CMAP_SUMMER,$/;"	e	enum:CMap_e
-CMAP_WINTER	src/colourmap.h	/^    CMAP_WINTER,$/;"	e	enum:CMap_e
+CMAP_WINTER	src/colourmap.h	/^    CMAP_WINTER$/;"	e	enum:CMap_e
 CMap_e	src/colourmap.h	/^typedef enum CMap_e$/;"	g
 CMap_t	src/colourmap.h	/^} CMap_t;$/;"	t	typeref:enum:CMap_e
 CleanUp	src/yapp_ft.c	/^void CleanUp(int iNTaps)$/;"	f
 CopyDataForFFT	src/yapp_ft.c	/^int CopyDataForFFT(int iNFFT)$/;"	f
 DEF_ACC	src/yapp_ft.h	24;"	d
-DEF_CMAP	src/colourmap.h	62;"	d
-DEF_CMAP_STR	src/colourmap.h	63;"	d
+DEF_CMAP	src/colourmap.h	64;"	d
+DEF_CMAP_STR	src/colourmap.h	65;"	d
 DEF_FOLD_PULSES	src/yapp.h	125;"	d
 DEF_FORMAT	src/yapp.h	121;"	d
 DEF_LAW	src/yapp.h	120;"	d
@@ -133,6 +135,7 @@ PLOT_DDS_SUFFIX	src/yapp.h	145;"	d
 PROC_SPEC_NOTSEL	src/yapp.h	213;"	d
 PROC_SPEC_PERCENT	src/yapp.h	215;"	d
 PROC_SPEC_TIME	src/yapp.h	217;"	d
+Plot2D	src/colourmap.c	/^void Plot2D(float* pfBuf, float fDataMin, float fDataMax,$/;"	f
 PrintUsage	src/yapp_dedisp.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	src/yapp_dedisperse.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	src/yapp_fold.c	/^void PrintUsage(const char *pcProgName)$/;"	f
@@ -365,7 +368,6 @@ pfBFTimeSectMean	src/yapp.h	/^    float *pfBFTimeSectMean;$/;"	m	struct:YUM_s
 pfFreq	src/yapp.h	/^    float *pfFreq;      \/* in MHz *\/$/;"	m	struct:YUM_s
 pfcDataX	src/yapp_ft.h	/^    fftwf_complex *pfcDataX;    \/* unpacked pol-X data, g_iNFFT long *\/$/;"	m	struct:tagPFBData
 pfcDataY	src/yapp_ft.h	/^    fftwf_complex *pfcDataY;    \/* unpacked pol-Y data, g_iNFFT long *\/$/;"	m	struct:tagPFBData
-pgwrapPlot2D	src/colourmap.c	/^void pgwrapPlot2D(float* pfBuf, float fDataMin, float fDataMax,$/;"	f
 tagFileFormats	src/yapp.h	/^enum tagFileFormats$/;"	g
 tagObservatory	src/yapp_sigproc.h	/^enum tagObservatory$/;"	g
 tagPFBData	src/yapp_ft.h	/^typedef struct tagPFBData$/;"	s

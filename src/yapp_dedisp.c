@@ -1105,11 +1105,11 @@ int main(int argc, char *argv[])
                 l = ++m;
             }
 
-            pgwrapPlot2D(g_pfPlotBuf, fDataMin, fDataMax,
-                         g_pfXAxis, iBlockSize, dTSampInSec,
-                         g_pfYAxis, iNumChans, fChanBW,
-                         "Time (s)", "Frequency (MHz)", "Before Dedispersion",
-                         iColourMap);
+            Plot2D(g_pfPlotBuf, fDataMin, fDataMax,
+                   g_pfXAxis, iBlockSize, dTSampInSec,
+                   g_pfYAxis, iNumChans, fChanBW,
+                   "Time (s)", "Frequency (MHz)", "Before Dedispersion",
+                   iColourMap);
         }
 
         /* read the next data block, for reading samples that would be
@@ -1361,11 +1361,11 @@ int main(int argc, char *argv[])
                 l = ++m;
             }
 
-            pgwrapPlot2D(g_pfPlotBuf, fDataMin, fDataMax,
-                         g_pfXAxis, iBlockSize, dTSampInSec,
-                         g_pfYAxis, iNumChans, fChanBW,
-                         "Time (s)", "Frequency (MHz)", "After Dedispersion",
-                         iColourMap);
+            Plot2D(g_pfPlotBuf, fDataMin, fDataMax,
+                   g_pfXAxis, iBlockSize, dTSampInSec,
+                   g_pfYAxis, iNumChans, fChanBW,
+                   "Time (s)", "Frequency (MHz)", "After Dedispersion",
+                   iColourMap);
         }
 
         (void) fwrite(g_pfDedispData,
