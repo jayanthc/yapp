@@ -136,8 +136,8 @@ PROC_SPEC_NOTSEL	src/yapp.h	213;"	d
 PROC_SPEC_PERCENT	src/yapp.h	215;"	d
 PROC_SPEC_TIME	src/yapp.h	217;"	d
 Plot2D	src/colourmap.c	/^void Plot2D(float* pfBuf, float fDataMin, float fDataMax,$/;"	f
-PrintUsage	src/yapp_dedisp.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	src/yapp_dedisperse.c	/^void PrintUsage(const char *pcProgName)$/;"	f
+PrintUsage	src/yapp_dedisplaw.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	src/yapp_fold.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	src/yapp_ft.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	src/yapp_pulsarsnd.c	/^void PrintUsage(const char *pcProgName)$/;"	f
@@ -153,20 +153,20 @@ VAR_VER	src/yapp_makever.c	26;"	d	file:
 VER_BUILD_DELIM	src/yapp_makever.c	28;"	d	file:
 VER_BUILD_PREFIX	src/yapp_makever.c	27;"	d	file:
 YAPP_BYTE2BIT_FACTOR	src/yapp.h	81;"	d
-YAPP_CalcDelays	src/yapp_dedisp.c	/^int YAPP_CalcDelays(double dDM,$/;"	f
+YAPP_CalcDelays	src/yapp_dedisperse.c	/^int YAPP_CalcDelays(double dDM,$/;"	f
 YAPP_CalcThresholdInSigmas	src/yapp_common.c	/^double YAPP_CalcThresholdInSigmas(int iTimeSamps)$/;"	f
 YAPP_CleanUp	src/yapp_common.c	/^void YAPP_CleanUp()$/;"	f
-YAPP_CleanUp	src/yapp_dedisperse.c	/^void YAPP_CleanUp()$/;"	f
+YAPP_CleanUp	src/yapp_dedisplaw.c	/^void YAPP_CleanUp()$/;"	f
 YAPP_ERF_ENTRIES	src/yapp.h	202;"	d
 YAPP_FALSE	src/yapp.h	48;"	d
 YAPP_FILE_DELAYS_LIN	src/yapp.h	237;"	d
 YAPP_FILE_DELAYS_OTHER	src/yapp.h	238;"	d
 YAPP_FILE_DELAYS_QUAD	src/yapp.h	236;"	d
-YAPP_FORMATSTR_DTS_DDD	src/yapp.h	58;"	d
+YAPP_FORMATSTR_DTS_DDS	src/yapp.h	58;"	d
 YAPP_FORMATSTR_DTS_TIM	src/yapp.h	59;"	d
 YAPP_FORMATSTR_FIL	src/yapp.h	57;"	d
 YAPP_FORMATSTR_SPEC	src/yapp.h	56;"	d
-YAPP_FORMAT_DTS_DDD	src/yapp.h	/^    YAPP_FORMAT_DTS_DDD,        \/* Desh's dedispersed data format *\/$/;"	e	enum:tagFileFormats
+YAPP_FORMAT_DTS_DDS	src/yapp.h	/^    YAPP_FORMAT_DTS_DDS,        \/* Desh's dedispersed data format *\/$/;"	e	enum:tagFileFormats
 YAPP_FORMAT_DTS_TIM	src/yapp.h	/^    YAPP_FORMAT_DTS_TIM         \/* Dunc's time series format *\/$/;"	e	enum:tagFileFormats
 YAPP_FORMAT_FIL	src/yapp.h	/^    YAPP_FORMAT_FIL,            \/* Dunc's filterbank file format *\/$/;"	e	enum:tagFileFormats
 YAPP_FORMAT_SPEC	src/yapp.h	/^    YAPP_FORMAT_SPEC = 0,       \/* Desh's specfile format *\/$/;"	e	enum:tagFileFormats
@@ -274,61 +274,61 @@ g_acFileData	src/yapp_ft.c	/^char g_acFileData[LEN_GENSTRING] = {0};$/;"	v
 g_apvMemTable	src/yapp_common.c	/^void* g_apvMemTable[YAPP_MAX_MEMTABLE] = {0};$/;"	v
 g_astPFBData	src/yapp_ft.c	/^PFB_DATA g_astPFBData[NUM_TAPS] = {{0}};$/;"	v
 g_cIsPFBOn	src/yapp_ft.c	/^char g_cIsPFBOn = YAPP_FALSE;$/;"	v
-g_iDispPlots	src/yapp_dedisperse.c	/^int g_iDispPlots = YAPP_TRUE;$/;"	v
+g_iDispPlots	src/yapp_dedisplaw.c	/^int g_iDispPlots = YAPP_TRUE;$/;"	v
 g_iFileData	src/yapp_ft.c	/^int g_iFileData = 0;$/;"	v
 g_iMemTableSize	src/yapp_common.c	/^int g_iMemTableSize = 0;$/;"	v
 g_iPFBReadIdx	src/yapp_ft.c	/^int g_iPFBReadIdx = 0;$/;"	v
 g_iPFBWriteIdx	src/yapp_ft.c	/^int g_iPFBWriteIdx = 0;$/;"	v
 g_iPGDev	src/yapp_common.c	/^int g_iPGDev = 0;$/;"	v
 g_pFSpec	src/yapp_common.c	/^FILE *g_pFSpec = NULL;$/;"	v
-g_padBadTimes	src/yapp_dedisp.c	/^double (*g_padBadTimes)[][NUM_BAD_BOUNDS] = NULL;$/;"	v
 g_padBadTimes	src/yapp_dedisperse.c	/^double (*g_padBadTimes)[][NUM_BAD_BOUNDS] = NULL;$/;"	v
-g_pcIsChanGood	src/yapp_dedisp.c	/^char *g_pcIsChanGood = NULL;$/;"	v
+g_padBadTimes	src/yapp_dedisplaw.c	/^double (*g_padBadTimes)[][NUM_BAD_BOUNDS] = NULL;$/;"	v
 g_pcIsChanGood	src/yapp_dedisperse.c	/^char *g_pcIsChanGood = NULL;$/;"	v
-g_pcIsTimeGood	src/yapp_dedisp.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
+g_pcIsChanGood	src/yapp_dedisplaw.c	/^char *g_pcIsChanGood = NULL;$/;"	v
 g_pcIsTimeGood	src/yapp_dedisperse.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
+g_pcIsTimeGood	src/yapp_dedisplaw.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	src/yapp_viewdata.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
-g_pdDM	src/yapp_dedisperse.c	/^double *g_pdDM = NULL;$/;"	v
-g_pdDelayTab	src/yapp_dedisperse.c	/^double *g_pdDelayTab = NULL;$/;"	v
-g_pdMaxDelayTab	src/yapp_dedisperse.c	/^double *g_pdMaxDelayTab = NULL;$/;"	v
+g_pdDM	src/yapp_dedisplaw.c	/^double *g_pdDM = NULL;$/;"	v
+g_pdDelayTab	src/yapp_dedisplaw.c	/^double *g_pdDelayTab = NULL;$/;"	v
+g_pdMaxDelayTab	src/yapp_dedisplaw.c	/^double *g_pdMaxDelayTab = NULL;$/;"	v
 g_pfAccBuf	src/yapp_fold.c	/^float *g_pfAccBuf = NULL;$/;"	v
-g_pfBFGain	src/yapp_dedisp.c	/^float *g_pfBFGain = NULL;$/;"	v
 g_pfBFGain	src/yapp_dedisperse.c	/^float *g_pfBFGain = NULL;$/;"	v
-g_pfBFTimeSectMean	src/yapp_dedisp.c	/^float *g_pfBFTimeSectMean = NULL;$/;"	v
+g_pfBFGain	src/yapp_dedisplaw.c	/^float *g_pfBFGain = NULL;$/;"	v
 g_pfBFTimeSectMean	src/yapp_dedisperse.c	/^float *g_pfBFTimeSectMean = NULL;$/;"	v
+g_pfBFTimeSectMean	src/yapp_dedisplaw.c	/^float *g_pfBFTimeSectMean = NULL;$/;"	v
 g_pfBuf	src/yapp_fold.c	/^float *g_pfBuf = NULL;$/;"	v
 g_pfBuf	src/yapp_viewdata.c	/^float *g_pfBuf = NULL;$/;"	v
-g_pfBuf0	src/yapp_dedisp.c	/^float *g_pfBuf0 = NULL;$/;"	v
 g_pfBuf0	src/yapp_dedisperse.c	/^float *g_pfBuf0 = NULL;$/;"	v
-g_pfBuf1	src/yapp_dedisp.c	/^float *g_pfBuf1 = NULL;$/;"	v
+g_pfBuf0	src/yapp_dedisplaw.c	/^float *g_pfBuf0 = NULL;$/;"	v
 g_pfBuf1	src/yapp_dedisperse.c	/^float *g_pfBuf1 = NULL;$/;"	v
-g_pfDedispDMChans	src/yapp_dedisperse.c	/^float *g_pfDedispDMChans = NULL;$/;"	v
-g_pfDedispData	src/yapp_dedisp.c	/^float *g_pfDedispData = NULL;$/;"	v
+g_pfBuf1	src/yapp_dedisplaw.c	/^float *g_pfBuf1 = NULL;$/;"	v
+g_pfDedispDMChans	src/yapp_dedisplaw.c	/^float *g_pfDedispDMChans = NULL;$/;"	v
 g_pfDedispData	src/yapp_dedisperse.c	/^float *g_pfDedispData = NULL;$/;"	v
+g_pfDedispData	src/yapp_dedisplaw.c	/^float *g_pfDedispData = NULL;$/;"	v
 g_pfPFBCoeff	src/yapp_ft.c	/^float* g_pfPFBCoeff = NULL;$/;"	v
-g_pfPlotBuf	src/yapp_dedisp.c	/^float *g_pfPlotBuf = NULL;$/;"	v
 g_pfPlotBuf	src/yapp_dedisperse.c	/^float *g_pfPlotBuf = NULL;$/;"	v
+g_pfPlotBuf	src/yapp_dedisplaw.c	/^float *g_pfPlotBuf = NULL;$/;"	v
 g_pfPlotBuf	src/yapp_viewdata.c	/^float *g_pfPlotBuf = NULL;$/;"	v
-g_pfPriBufBk	src/yapp_dedisperse.c	/^float *g_pfPriBufBk = NULL;$/;"	v
+g_pfPriBufBk	src/yapp_dedisplaw.c	/^float *g_pfPriBufBk = NULL;$/;"	v
 g_pfSumPow	src/yapp_ft.c	/^float *g_pfSumPow = NULL;$/;"	v
 g_pfSumPowX	src/yapp_ft.c	/^float *g_pfSumPowX = NULL;$/;"	v
 g_pfSumPowY	src/yapp_ft.c	/^float *g_pfSumPowY = NULL;$/;"	v
 g_pfSumStokesIm	src/yapp_ft.c	/^float *g_pfSumStokesIm = NULL;$/;"	v
 g_pfSumStokesRe	src/yapp_ft.c	/^float *g_pfSumStokesRe = NULL;$/;"	v
-g_pfXAxis	src/yapp_dedisp.c	/^float *g_pfXAxis = NULL;$/;"	v
 g_pfXAxis	src/yapp_dedisperse.c	/^float *g_pfXAxis = NULL;$/;"	v
+g_pfXAxis	src/yapp_dedisplaw.c	/^float *g_pfXAxis = NULL;$/;"	v
 g_pfXAxis	src/yapp_fold.c	/^float *g_pfXAxis = NULL;$/;"	v
 g_pfXAxis	src/yapp_ft.c	/^float *g_pfXAxis = NULL;$/;"	v
 g_pfXAxis	src/yapp_viewdata.c	/^float *g_pfXAxis = NULL;$/;"	v
-g_pfYAxis	src/yapp_dedisp.c	/^float *g_pfYAxis = NULL;$/;"	v
+g_pfYAxis	src/yapp_dedisperse.c	/^float *g_pfYAxis = NULL;$/;"	v
 g_pfYAxis	src/yapp_viewdata.c	/^float *g_pfYAxis = NULL;$/;"	v
 g_pfcFFTInX	src/yapp_ft.c	/^fftwf_complex *g_pfcFFTInX = NULL;$/;"	v
 g_pfcFFTInY	src/yapp_ft.c	/^fftwf_complex *g_pfcFFTInY = NULL;$/;"	v
 g_pfcFFTOutX	src/yapp_ft.c	/^fftwf_complex *g_pfcFFTOutX = NULL;$/;"	v
 g_pfcFFTOutY	src/yapp_ft.c	/^fftwf_complex *g_pfcFFTOutY = NULL;$/;"	v
-g_piOffsetTab	src/yapp_dedisp.c	/^int *g_piOffsetTab = NULL;$/;"	v
-g_ppFDedispCfg	src/yapp_dedisperse.c	/^FILE **g_ppFDedispCfg = NULL;$/;"	v
-g_ppFDedispData	src/yapp_dedisperse.c	/^FILE **g_ppFDedispData = NULL;$/;"	v
+g_piOffsetTab	src/yapp_dedisperse.c	/^int *g_piOffsetTab = NULL;$/;"	v
+g_ppFDedispCfg	src/yapp_dedisplaw.c	/^FILE **g_ppFDedispCfg = NULL;$/;"	v
+g_ppFDedispData	src/yapp_dedisplaw.c	/^FILE **g_ppFDedispData = NULL;$/;"	v
 g_stPlanX	src/yapp_ft.c	/^fftwf_plan g_stPlanX = {0};$/;"	v
 g_stPlanY	src/yapp_ft.c	/^fftwf_plan g_stPlanY = {0};$/;"	v
 iBFTimeSects	src/yapp.h	/^    int iBFTimeSects;$/;"	m	struct:YUM_s
@@ -352,8 +352,8 @@ iNumIFs	src/yapp_sigproc.h	/^    int iNumIFs;$/;"	m	struct:tagSIGPROCHeader
 iObsID	src/yapp_sigproc.h	/^    int iObsID;$/;"	m	struct:tagSIGPROCHeader
 iTimeSamps	src/yapp.h	/^    int iTimeSamps;$/;"	m	struct:YUM_s
 lDataSizeTotal	src/yapp.h	/^    long int lDataSizeTotal;$/;"	m	struct:YUM_s
-main	src/yapp_dedisp.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/yapp_dedisperse.c	/^int main(int argc, char *argv[])$/;"	f
+main	src/yapp_dedisplaw.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/yapp_fold.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/yapp_ft.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/yapp_makever.c	/^int main(int argc, char *argv[])$/;"	f

@@ -59,14 +59,14 @@ all: yapp_makever \
 	 yapp_viewdata \
 	 yapp_ft.o \
 	 yapp_ft \
-	 yapp_dedisp.o \
-	 yapp_dedisp \
+	 yapp_dedisperse.o \
+	 yapp_dedisperse \
 	 yapp_fold.o \
 	 yapp_fold \
 	 tags
-#	 yapp_dedisperse.o \
+#	 yapp_dedisplaw.o \
 	 set_colours.o \
-	 yapp_dedisperse \
+	 yapp_dedisplaw \
 	 reorderdds.o \
 	 reorderdds \
 	 yapp_pulsarsnd.o \
@@ -111,11 +111,11 @@ yapp_ft: $(IDIR)/yapp_ft.o $(IDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
 	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -lfftw3f -o $(BINDIR)/$@
 
-yapp_dedisp.o: $(SRCDIR)/yapp_dedisp.c $(SRCDIR)/yapp.h
-	$(CC) $(CFLAGS_C) $(DDEBUG) $(DFC) $(SRCDIR)/yapp_dedisp.c -o $(IDIR)/$@
+yapp_dedisperse.o: $(SRCDIR)/yapp_dedisperse.c $(SRCDIR)/yapp.h
+	$(CC) $(CFLAGS_C) $(DDEBUG) $(DFC) $(SRCDIR)/yapp_dedisperse.c -o $(IDIR)/$@
 
-yapp_dedisp: $(IDIR)/yapp_dedisp.o
-	$(CC) $(IDIR)/yapp_dedisp.o $(IDIR)/yapp_version.o $(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o \
+yapp_dedisperse: $(IDIR)/yapp_dedisperse.o
+	$(CC) $(IDIR)/yapp_dedisperse.o $(IDIR)/yapp_version.o $(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o \
 		$(IDIR)/colourmap.o $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -o $(BINDIR)/$@
 
 yapp_fold.o: $(SRCDIR)/yapp_fold.c $(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h
@@ -135,11 +135,11 @@ set_colours.o: $(SRCDIR)/set_colours_f95.f
 	$(FC) $(FFLAGS) $(SRCDIR)/set_colours_f95.f -o $(IDIR)/$@
 endif
 
-yapp_dedisperse.o: $(SRCDIR)/yapp_dedisperse.c $(SRCDIR)/yapp.h
-	$(CC) $(CFLAGS_C) $(DFC) $(DDEBUG) $(SRCDIR)/yapp_dedisperse.c -o $(IDIR)/$@
+yapp_dedisplaw.o: $(SRCDIR)/yapp_dedisplaw.c $(SRCDIR)/yapp.h
+	$(CC) $(CFLAGS_C) $(DFC) $(DDEBUG) $(SRCDIR)/yapp_dedisplaw.c -o $(IDIR)/$@
 
-yapp_dedisperse: $(IDIR)/yapp_dedisperse.o
-	$(FC) $(IDIR)/yapp_dedisperse.o $(IDIR)/yapp_version.o $(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o \
+yapp_dedisplaw: $(IDIR)/yapp_dedisplaw.o
+	$(FC) $(IDIR)/yapp_dedisplaw.o $(IDIR)/yapp_version.o $(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o \
 		$(IDIR)/set_colours.o $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -o $(BINDIR)/$@
 
 #killrfi.o: $(SRCDIR)/killrfi.c
@@ -193,10 +193,10 @@ clean:
 	$(DELCMD) $(IDIR)/colourmap.o
 	$(DELCMD) $(IDIR)/yapp_viewdata.o
 	$(DELCMD) $(IDIR)/yapp_ft.o
-	$(DELCMD) $(IDIR)/yapp_dedisp.o
+	$(DELCMD) $(IDIR)/yapp_dedisperse.o
 	$(DELCMD) $(IDIR)/yapp_fold.o
 #	$(DELCMD) $(IDIR)/set_colours.o
-#	$(DELCMD) $(IDIR)/yapp_dedisperse.o
+#	$(DELCMD) $(IDIR)/yapp_dedisplaw.o
 #	$(DELCMD) $(IDIR)/reorderdds.o
 #	$(DELCMD) $(IDIR)/yapp_pulsarsnd.o
 #	$(DELCMD) $(IDIR)/killrfi.o

@@ -4,7 +4,7 @@
  * relevant configuration information
  *
  * @verbatim
- * Usage: yapp_viewmetadata [options] <dynamic-spectrum-data-file>
+ * Usage: yapp_viewmetadata [options] <data-file>
  *     -h  --help                           Display this usage information
  *     -v  --version                        Display the version @endverbatim
  *
@@ -189,7 +189,7 @@ int main(int argc, char *argv[])
  */
 void PrintUsage(const char *pcProgName)
 {
-    (void) printf("Usage: %s [options] <dynamic-spectrum-data-file>\n",
+    (void) printf("Usage: %s [options] <data-file>\n",
                   pcProgName);
     (void) printf("    -h  --help                           ");
     (void) printf("Display this usage information\n");

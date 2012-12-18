@@ -6,9 +6,8 @@ all:
 
 
 yapp_ft:
-1.  BUG: Support non-default number of taps.
-2.  FEATURE: Support single-pol. data.
-3.  FEATURE: Plot in 2D
+1.  FEATURE: Support single-pol. data.
+2.  FEATURE: Plot in 2D
 
 
 yapp_viewdata:
@@ -26,9 +25,8 @@ yapp_viewdata:
 7.  FEATURE: Support user-defined colourmaps.
 
 
-yapp_dedisp:
-1.  BUG: if file name is fake.fil, output is fak.tim or fak.dds
-2.  BUG: dedisp: Negative DM dedispersion not correct.
+yapp_dedisperse:
+1.  BUG: dedisp: Negative DM dedispersion not correct.
 
 
 All:
@@ -36,7 +34,7 @@ All:
 
 
 -------------------------------------------------------------------------------
-yapp_dedisperse:
+yapp_dedisplaw:
 1.  BUG: yapp_dedisperse not working properly.
 2.  BUG:
     sps_dedisperse -N 2 -X 2 -n 3 -x 4 -p 10 -o a14aa899.spec

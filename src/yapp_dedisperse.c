@@ -1,41 +1,41 @@
 /**
- * @file yapp_dedisperse.c
- * Program to dedisperse dynamic spectral data for a range of laws (that could
- * include the linear law that corresponds to swept-frequency RFI).
+ * @file yapp_dedisp.c
+ * Program to dedisperse the input signal for the given value of DM.
  *
  * @verbatim
- * Usage: yapp_dedisperse [options] <spec-file>
+ * Usage: yapp_dedisp [options] <data-file>
  *     -h  --help                           Display this usage information
- *     -N  --law-min <limit>                The minimum power law from which
- *                                          search is to be performed
- *     -X  --law-max <limit>                The maximum power law upto which
- *                                          search is to be performed
- *     -w  --law-step <step-size>           Power law step size
- *     -n  --dm-min <limit>                 The minimum DM from which search is
- *                                          to be performed
- *     -x  --dm-max <limit>                 The maximum DM upto which search is
- *                                          to be performed
- *     -s  --data-skip-percent <percentage> The percentage of data to be skipped
- *     -S  --data-skip-time <time>          The length of data in seconds, to be
+ *     -s  --skip <time>                    The length of data in seconds, to be
  *                                          skipped
- *     -p  --data-proc-percent <percentage> The percentage of data to be
- *                                          processed
- *                                          (default is 100)
- *     -P  --data-proc-time <time>          The length of data in seconds, to be
+ *     -p  --proc <time>                    The length of data in seconds, to be
  *                                          processed
  *                                          (default is all)
- *     -b  --block-size <size>              Size of each file read/write in
- *                                          bytes
- *     -o  --no-plots                       Run without displaying plots
- *     -f  --plot-to-file                   Plot to a PostScript file, instead
- *                                          of the screen
+ *     -n  --nsamp <samples>                Number of samples read in one block
+ *                                          (default is 4096 samples)
+ *     -d  --dm <dm>                        DM at which to de-disperse
+ *                                          (default is 10.0)
+ *     -l  --law <law>                      Dispersion law
+ *                                          (default is 2.0)
+ *     -o  --out-format <format>            Output format - 'ddd' or 'tim'
+ *                                          (default is 'tim')
+ *     -g  --graphics                       Turn on plotting
+ *     -m  --colour-map <name>              Colour map for plotting
+ *                                          (default is 'jet')
+ *     -i  --invert                         Invert the background and foreground
+ *                                          colours in plots
+ *     -e  --non-interactive                Run in non-interactive mode
  *     -v  --version                        Display the version @endverbatim
  *
  * @author Jayanth Chennamangalam
  * @date 2008.11.14
  */
 
+/* TODO: 1. ORT & MST radar data reads nan or inf for the last few samples of
+            data*/
+
 #include "yapp.h"
+#include "yapp_sigproc.h"   /* for SIGPROC filterbank file format support */
+#include "colourmap.h"
 
 /**
  * The build version string, maintained in the file version.c, which is
@@ -43,12 +43,15 @@
  */
 extern const char *g_pcVersion;
 
-int g_iDispPlots = YAPP_TRUE;
+/* PGPLOT device ID */
+extern int g_iPGDev;
+
+/* data file */
+extern FILE *g_pFSpec;
 
 /* the following are global only to enable cleaning up in case of abnormal
    termination, such as those triggered by SIGINT or SIGTERM */
-double *g_pdDelayTab = NULL;
-double *g_pdMaxDelayTab = NULL;
+int *g_piOffsetTab = NULL;
 char *g_pcIsChanGood = NULL;
 char *g_pcIsTimeGood = NULL;
 float *g_pfBFTimeSectMean = NULL;
@@ -56,80 +59,55 @@ float *g_pfBFGain = NULL;
 double (*g_padBadTimes)[][NUM_BAD_BOUNDS] = NULL;
 float *g_pfBuf0 = NULL;
 float *g_pfBuf1 = NULL;
-float *g_pfPriBufBk = NULL;
 float *g_pfPlotBuf = NULL;
 float *g_pfDedispData = NULL;
-double *g_pdDM = NULL;
-float *g_pfDedispDMChans = NULL;
-FILE **g_ppFDedispData = NULL;
-FILE **g_ppFDedispCfg = NULL;
 float *g_pfXAxis = NULL;
+float *g_pfYAxis = NULL;
 
 int main(int argc, char *argv[])
 {
-    FILE *pFSpec = NULL;
     FILE *pFCfg = NULL;
+    FILE *pFDedispData = NULL;
     char *pcFileSpec = NULL;
     char acFileCfg[LEN_GENSTRING] = {0};
     char acFileDedisp[LEN_GENSTRING] = {0};
-    char acFileDedispCfg[LEN_GENSTRING] = {0};
-    double dDMMin = 0.0;
-    double dDMMax = 0.0;
-    double dDMNearZero = 0.0;
+    int iFormat = DEF_FORMAT;
+    int iOutputFormat = DEF_OUT_FORMAT;
     char cIsPlotToFile = YAPP_FALSE;
-    double dLawStep = DEF_LAW_STEP;
-    double dLawMin = DEF_LAW_MIN;
-    double dLawMax = DEF_LAW_MAX;
-    double dLaw = DEF_LAW_MIN;
-    int iLinLawIndex = 0;
-    int iDataSkipPercent = DEF_SKIP_PERCENT;
-    int iDataSkipTime = DEF_SKIP_TIME;
-    int iDataProcPercent = DEF_PROC_PERCENT;
-    int iDataProcTime = DEF_PROC_TIME;
-    int iProcSpec = PROC_SPEC_NOTSEL;   /* by default, the processing
-                                           specification is not selected */
-    char cIsMinDMGiven = YAPP_FALSE;
-    char cIsMaxDMGiven = YAPP_FALSE;
-    char cIsMinLawGiven = YAPP_FALSE;
-    char cIsMaxLawGiven = YAPP_FALSE;
+    double dDataSkipTime = 0.0;
+    double dDataProcTime = 0.0;
+    YUM_t stYUM = {{0}};
+    char cIsDMGiven = YAPP_FALSE;
     int iChanGoodness = (int) YAPP_TRUE;
     double dDelay = 0.0;
-    double *pdDMDelay = NULL;
-    double *pdSpecDelay = NULL;
-    double *pdSlope = NULL;
-    double *pdLawMaxDelay = NULL;
     double dDM = 0.0;
+    float fLaw = DEF_LAW;
     float fFMin = 0.0;
     float fFMax = 0.0;
     float fChanBW = 0.0;
-    double dDMStep = 0.0;
     int iMaxOffset = 0;
-    int iNumDMs = 0;
-    int iNumLaws = 0;
     int iNumChans = 0;
+    float fSampSize = 0.0;      /* number of bits that make a sample */
     int iTotSampsPerBlock = 0;  /* iNumChans * iBlockSize */
-    int iDataSizePerBlock = 0;  /* sizeof(float) * iNumChans * iBlockSize */
+    int iDataSizePerBlock = 0;  /* fSampSize * iNumChans * iBlockSize */
     int iNumGoodChans = 0;
     int iEffcNumGoodChans = 0;
-    float *pfDMChan = NULL;
-    char cIsBandFlipped = YAPP_FALSE;
-    float fF1 = 0.0;
-    float fF2 = 0.0;
     float fStatBW = 0.0;
     float fNoiseRMS = 0.0;
     float fThreshold = 0.0;
     float fSNRMin = 0.0;
     double dNumSigmas = 0.0;
+    float fF1 = 0.0;
+    float fF2 = 0.0;
     double dTSamp = 0.0;        /* holds sampling time in ms */
     double dTSampInSec = 0.0;   /* holds sampling time in s */
-    double dMaxDMMaxDelay = 0.0;
-    double *pdFactor = NULL;
+    YAPP_SIGPROC_HEADER stHeader = {{0}};
+    char acLabel[LEN_GENSTRING] = {0};
+    int iLen = 0;
+    float fFCh1 = 0.0;          /* frequency of the first channel */
     int iBytesPerFrame = 0;
-    float fFCentre = 0.0;
-    float fBW = 0.0;
     int iChanBeg = 0;
     int iChanEnd = 0;
-    char acPulsar[LEN_GENSTRING] = {0};
     int iDay = 0;
     int iMonth = 0;
     int iYear = 0;
@@ -146,19 +124,17 @@ int main(int argc, char *argv[])
     int iTimeSect = 0;
     int iBadTimeSect = 0;
     char cIsInBadTimeRange = YAPP_FALSE;
-    double dTimeStart = 0.0;
-    double dTimeStop = 0.0;
     float *pfPriBuf = NULL;
     float *pfSecBuf = NULL;
     float *pfSpectrum = NULL;
     float *pfOffsetSpec = NULL;
     int iPrimaryBuf = BUF_0;
     int iOffset = 0;
-    int iBytesToSkip = 0;
-    int iBytesToProc = 0;
+    long int lBytesToSkip = 0;
+    long int lBytesToProc = 0;
     int iTimeSamps = 0;
     int iTimeSampsSkip = 0;
-    int iTimeSampsProced = 0;
+    int iTimeSampsToProc = 0;
     int iBlockSize = DEF_SIZE_BLOCK;
     int iNumReads = 0;
     int iTotNumReads = 0;
@@ -167,45 +143,44 @@ int main(int argc, char *argv[])
     int iSecBufReadSampCount = 0;   /* iReadBlockCount * iBlockSize */
     char cIsLastBlock = YAPP_FALSE;
     struct stat stFileStats = {0};
+    long int lDataSizeTotal = 0;
     int iRet = YAPP_RET_SUCCESS;
-    int iFlagBW = 0;
-    float afTM[6] = {0.0};
     float fDataMin = 0.0;
     float fDataMax = 0.0;
     int iReadItems = 0;
     char acDev[LEN_GENSTRING] = {0};
-    char acTitle[LEN_GENSTRING] = {0};
     char *pcFilename = NULL;
-    float fColMin = 0.0;
-    float fColMax = 0.0;
-    float fXStep = 0.0;
-    float fYStep = 0.0;
     int iNumSamps = 0;
     int iDiff = 0;
+    float fButX = 0.0;
+    float fButY = 0.0;
+    char cCurChar = 0;
     int i = 0;
     int j = 0;
     int k = 0;
     int l = 0;
     int m = 0;
+    char cHasGraphics = YAPP_FALSE;
+    int iColourMap = DEF_CMAP;
+    int iInvCols = YAPP_FALSE;
+    char cIsNonInteractive = YAPP_FALSE;
     const char *pcProgName = NULL;
     int iNextOpt = 0;
     /* valid short options */
-    const char* const pcOptsShort = "hN:X:w:n:x:s:S:p:P:b:ofv";
+    const char* const pcOptsShort = "hs:p:n:d:l:o:gm:iev";
     /* valid long options */
     const struct option stOptsLong[] = {
         { "help",                   0, NULL, 'h' },
-        { "law-min",                1, NULL, 'N' },
-        { "law-max",                1, NULL, 'X' },
-        { "law-step",               1, NULL, 'w' },
-        { "dm-min-limit",           1, NULL, 'n' },
-        { "dm-max-limit",           1, NULL, 'x' },
-        { "data-skip-percent",      1, NULL, 's' },
-        { "data-skip-time",         1, NULL, 'S' },
-        { "data-proc-percent",      1, NULL, 'p' },
-        { "data-proc-time",         1, NULL, 'P' },
-        { "block-size",             1, NULL, 'b' },
-        { "no-plots",               0, NULL, 'o' },
-        { "plot-to-file",           0, NULL, 'f' },
+        { "skip",                   1, NULL, 's' },
+        { "proc",                   1, NULL, 'p' },
+        { "nsamp",                  1, NULL, 'n' },
+        { "dm",                     1, NULL, 'd' },
+        { "law",                    1, NULL, 'l' },
+        { "out-format",             1, NULL, 'o' },
+        { "graphics",               0, NULL, 'g' },
+        { "colour-map",             1, NULL, 'm' },
+        { "invert",                 0, NULL, 'i' },
+        { "non-interactive",        0, NULL, 'e' },
         { "version",                0, NULL, 'v' },
         { NULL,                     0, NULL, 0   }
     };
@@ -224,142 +199,65 @@ int main(int argc, char *argv[])
                 PrintUsage(pcProgName);
                 return YAPP_RET_SUCCESS;
 
-            case 'N':   /* -N or --law-min */
+            case 's':   /* -s or --skip */
                 /* set option */
-                dLawMin = atof(optarg);
-                cIsMinLawGiven = YAPP_TRUE;
+                dDataSkipTime = atof(optarg);
                 break;
 
-            case 'X':   /* -X or --law-max */
+            case 'p':   /* -p or --proc */
                 /* set option */
-                dLawMax = atof(optarg);
-                cIsMaxLawGiven = YAPP_TRUE;
+                dDataProcTime = atof(optarg);
                 break;
 
-            case 'w':   /* -w or --law-step */
-                /* set option */
-                dLawStep = atof(optarg);
-                break;
-
-            case 'n':   /* -n or --dm-min-limit */
-                /* set option */
-                dDMMin = atof(optarg);
-                cIsMinDMGiven = YAPP_TRUE;
-                break;
-
-            case 'x':   /* -x or --dm-max-limit */
-                /* set option */
-                dDMMax = atof(optarg);
-                cIsMaxDMGiven = YAPP_TRUE;
-                break;
-
-            case 's':   /* -s or --data-skip-percent */
-                /* set option */
-                if ((PROC_SPEC_NOTSEL == iProcSpec)
-                    || (PROC_SPEC_PERCENT == iProcSpec))
-                {
-                    iDataSkipPercent = atoi(optarg);
-                    if (iDataSkipPercent > 100)
-                    {
-                        (void) fprintf(stderr,
-                                       "ERROR: Data skip percentage should be "
-                                       "less than 100!\n");
-                        PrintUsage(pcProgName);
-                        return YAPP_RET_ERROR;
-                    }
-
-                    iProcSpec = PROC_SPEC_PERCENT;
-                }
-                else    /* if the specification mode is time, not percentage */
-                {
-                    (void) fprintf(stderr,
-                                   "ERROR: Data processing specification mode "
-                                   "should be either exclusively percentage or "
-                                   "exclusively time!\n");
-                    PrintUsage(pcProgName);
-                    return YAPP_RET_ERROR;
-                }
-                break;
-
-            case 'S':   /* -S or --data-skip-time */
-                /* set option */
-                if ((PROC_SPEC_NOTSEL == iProcSpec)
-                    || (PROC_SPEC_TIME == iProcSpec))
-                {
-                    iDataSkipTime = atoi(optarg);
-                    iProcSpec = PROC_SPEC_TIME;
-                }
-                else    /* if the specification mode is percentage, not time */
-                {
-                    (void) fprintf(stderr,
-                                   "ERROR: Data processing specification mode "
-                                   "should be either exclusively percentage or "
-                                   "exclusively time!\n");
-                    PrintUsage(pcProgName);
-                    return YAPP_RET_ERROR;
-                }
-                break;
-
-            case 'p':   /* -p or --data-proc-percent */
-                /* set option */
-                if ((PROC_SPEC_NOTSEL == iProcSpec)
-                    || (PROC_SPEC_PERCENT == iProcSpec))
-                {
-                    iDataProcPercent = atoi(optarg);
-                    if (iDataProcPercent > 100)
-                    {
-                        (void) fprintf(stderr,
-                                       "ERROR: Data processing percentage "
-                                       "should be less than 100!\n");
-                        PrintUsage(pcProgName);
-                        return YAPP_RET_ERROR;
-                    }
-
-                    iProcSpec = PROC_SPEC_PERCENT;
-                }
-                else    /* if the specification mode is time, not percentage */
-                {
-                    (void) fprintf(stderr,
-                                   "ERROR: Data processing specification mode "
-                                   "should be either exclusively percentage or "
-                                   "exclusively time!\n");
-                    PrintUsage(pcProgName);
-                    return YAPP_RET_ERROR;
-                }
-                break;
-
-            case 'P':   /* -P or --data-proc-time */
-                /* set option */
-                if ((PROC_SPEC_NOTSEL == iProcSpec)
-                    || (PROC_SPEC_TIME == iProcSpec))
-                {
-                    iDataProcTime = atoi(optarg);
-                    iProcSpec = PROC_SPEC_TIME;
-                }
-                else    /* if the specification mode is percentage, not time */
-                {
-                    (void) fprintf(stderr,
-                                   "ERROR: Data processing specification mode "
-                                   "should be either exclusively percentage or "
-                                   "exclusively time!\n");
-                    PrintUsage(pcProgName);
-                    return YAPP_RET_ERROR;
-                }
-                break;
-
-            case 'b':   /* -b or --block-size */
+            case 'n':   /* -n or --nsamp */
                 /* set option */
                 iBlockSize = atoi(optarg);
                 break;
 
-            case 'o':   /* -o or --no-plots */
+            case 'd':   /* -d or --dm */
                 /* set option */
-                g_iDispPlots = YAPP_FALSE;
+                dDM = atof(optarg);
+                cIsDMGiven = YAPP_TRUE;
                 break;
 
-            case 'f':   /* -f or --plot-to-file */
+            case 'o':   /* -o or --out-format */
                 /* set option */
-                cIsPlotToFile = YAPP_TRUE;
+                if (0 == strcmp(optarg, YAPP_FORMATSTR_DTS_DDS))
+                {
+                    iOutputFormat = YAPP_FORMAT_DTS_DDS;
+                }
+                else if (0 == strcmp(optarg, YAPP_FORMATSTR_DTS_TIM))
+                {
+                    iOutputFormat = YAPP_FORMAT_DTS_TIM;
+                }
+                else
+                {
+                    (void) fprintf(stderr,
+                                   "ERROR: Format should be either 'ddd' or "
+                                   "'tim'!\n");
+                    PrintUsage(pcProgName);
+                    return YAPP_RET_ERROR;
+                }
+                break;
+
+            case 'g':   /* -g or --graphics */
+                /* set option */
+                cHasGraphics = YAPP_TRUE;
+                break;
+
+            case 'm':   /* -m or --colour-map */
+                /* set option */
+                iColourMap = GetColourMapFromName(optarg);
+                break;
+
+            case 'i':  /* -i or --invert */
+                /* set option */
+                iInvCols = YAPP_TRUE;
+                break;
+
+            case 'e':  /* -e or --non-interactive */
+                /* set option */
+                cIsNonInteractive = YAPP_TRUE;
                 break;
 
             case 'v':   /* -v or --version */
@@ -389,20 +287,10 @@ int main(int argc, char *argv[])
         return YAPP_RET_ERROR;
     }
 
-    if (!(cIsMinDMGiven && cIsMaxDMGiven))
+    if (!(cIsDMGiven))
     {
         (void) fprintf(stderr,
-                       "ERROR: Required options not given! Both minimum DM and "
-                       "maximum DM are required.\n");
-        PrintUsage(pcProgName);
-        return YAPP_RET_ERROR;
-    }
-
-    if (!(cIsMinLawGiven && cIsMaxLawGiven))
-    {
-        (void) fprintf(stderr,
-                       "ERROR: Required options not given! Both minimum law "
-                       "and maximum law are required.\n");
+                       "ERROR: Required option not given! DM is required.\n");
         PrintUsage(pcProgName);
         return YAPP_RET_ERROR;
     }
@@ -419,897 +307,116 @@ int main(int argc, char *argv[])
     /* get the input filename */
     pcFileSpec = argv[optind];
 
-    /* NOTE: reading data in Desh's 'spec' file format + associated 'spec_cfg'
-       file format */
-    /* build the 'cfg' file name from the 'spec' file name, and open it */
-    (void) strcpy(acFileCfg, pcFileSpec);
-    (void) strcat(acFileCfg, SUFFIX_CFG);
-    pFCfg = fopen(acFileCfg, "r");
-    if (NULL == pFCfg)
+    /* determine the file type */
+    iFormat = YAPP_GetFileType(pcFileSpec);
+    if (YAPP_RET_ERROR == iFormat)
     {
         (void) fprintf(stderr,
-                       "ERROR: Opening file %s failed! %s.\n",
-                       acFileCfg,
-                       strerror(errno));
+                       "ERROR: File type determination failed!\n");
         return YAPP_RET_ERROR;
     }
 
-    /* read the first few parameters from the 'cfg' file */
-    (void) fscanf(pFCfg,
-                  " %lf %d %f %f %d %d %s %d %d %d %d %d %f %s %lf %lf",
-                  &dTSamp,          /* in ms */
-                  &iBytesPerFrame,  /* iNumChans * sizeof(float) */
-                  &fFCentre,        /* in MHz */
-                  &fBW,             /* in kHz */
-                  &iChanBeg,
-                  &iChanEnd,
-                  acPulsar,
-                  &iDay,
-                  &iMonth,
-                  &iYear,
-                  &iHour,
-                  &iMin,
-                  &fSec,
-                  acSite,
-                  &dTNextBF,        /* in s */
-                  &dTBFInt);        /* in s */
-
-    /* handle negative bandwidths */
-    if (fBW < 0)
+    /* read metadata */
+    iRet = YAPP_ReadMetadata(pcFileSpec, iFormat, &stYUM);
+    if (iRet != YAPP_RET_SUCCESS)
     {
-        fBW = -fBW;
-        cIsBandFlipped = YAPP_TRUE;
+        (void) fprintf(stderr,
+                       "ERROR: Reading metadata failed for file %s!\n",
+                       pcFileSpec);
+        return YAPP_RET_ERROR;
     }
-
-    /* convert the bandwidth to MHz */
-    fBW /= 1000.0;
-
-    /* store a copy of the sampling interval in s */
-    dTSampInSec = dTSamp / 1000.0;
-
-    (void) printf("Field name                        : %s\n", acPulsar);
-    (void) printf("Observing site                    : %s\n", acSite);
-    (void) printf("Date of observation               : %d.%d.%d\n",
-                  iYear,
-                  iMonth,
-                  iDay);
-    (void) printf("Time of observation               : %d:%d:%g\n",
-                  iHour,
-                  iMin,
-                  fSec);
-    (void) printf("Bytes per frame                   : %d\n", iBytesPerFrame);
-    (void) printf("Centre frequency                  : %g MHz\n", fFCentre);
-    (void) printf("Bandwidth                         : %g MHz\n", fBW);
-    if (cIsBandFlipped)
-    {
-        (void) printf("                                    Band flip.\n");
-    }
-    else
-    {
-        (void) printf("                                    No band flip.\n");
-    }
-    (void) printf("Sampling interval                 : %.10g ms\n", dTSamp);
-    (void) printf("First channel index               : %d\n", iChanBeg);
-    (void) printf("Last channel index                : %d\n", iChanEnd);
-
-    /* calculate the number of channels */
-    iNumChans = iChanEnd - iChanBeg + 1;
-    (void) printf("Number of channels                : %d\n", iNumChans);
-
-    /* calculate the channel bandwidth */
-    fChanBW = fBW / iNumChans;  /* in MHz */
-    (void) printf("Channel bandwidth                 : %g MHz\n", fChanBW);
-
-    /* calculate the absolute min and max frequencies */
-    fFMin = fFCentre - (fBW / 2) + (fChanBW / 2);
-    (void) printf("Lowest frequency                  : %g MHz\n", fFMin);
-    fFMax = fFCentre + (fBW / 2) - (fChanBW / 2);
-    (void) printf("Highest frequency                 : %g MHz\n", fFMax);
-
-    g_pcIsChanGood = (char *) malloc(sizeof(char) * iNumChans);
+    dTSamp = stYUM.dTSamp;
+    dTSampInSec = dTSamp * 1e-3;
+    fChanBW = stYUM.fChanBW;
+    iTimeSamps = stYUM.iTimeSamps; 
+    iNumGoodChans = stYUM.iNumGoodChans;
+    fSampSize = stYUM.fSampSize;
+    lDataSizeTotal = stYUM.lDataSizeTotal;
+    fFMax = stYUM.fFMax;
+    fFMin = stYUM.fFMin;
+    pfTimeSectGain = stYUM.pfBFGain;//if DAS
+    //for SIGPROC -->
+    iNumChans = stYUM.iNumChans;//for SIGPROC
+    /* flag all channels as good */
+    g_pcIsChanGood = (char *) YAPP_Malloc((size_t) iNumChans, sizeof(char), YAPP_FALSE);
     if (NULL == g_pcIsChanGood)
     {
-        perror("malloc - g_pcIsChanGood");
+        (void) fprintf(stderr,
+                       "ERROR: Memory allocation failed! %s!\n",
+                       strerror(errno));
         (void) fclose(pFCfg);
         return YAPP_RET_ERROR;
     }
+    /* set all elements to 'YAPP_TRUE' */
+    (void) memset(g_pcIsChanGood, YAPP_TRUE, iNumChans);
+    //<--for SIGPROC
 
-    /* read the channel goodness flags */
-    for (i = 0; i < iNumChans; ++i)
+    iRet = YAPP_CalcDelays(dDM, stYUM, fLaw, &iMaxOffset);
+    if (iRet != YAPP_RET_SUCCESS)
     {
-        (void) fscanf(pFCfg, " %d", &iChanGoodness);
-        g_pcIsChanGood[i] = (char) iChanGoodness;
-        if (g_pcIsChanGood[i])
-        {
-            ++iNumGoodChans;
-        }
-    }
-    (void) printf("Number of good channels           : %d\n", iNumGoodChans);
-
-    (void) printf("First band flip time              : %.10g s\n", dTNextBF);
-    (void) printf("Band flip interval                : %.10g s\n", dTBFInt);
-
-    (void) fscanf(pFCfg, " %d", &iBFTimeSects);
-
-    (void) printf("Number of band flip time sections : %d\n", iBFTimeSects);
-
-    g_pfBFTimeSectMean = (float *) malloc(sizeof(float) * iBFTimeSects);
-    if (NULL == g_pfBFTimeSectMean)
-    {
-        perror("malloc - g_pfBFTimeSectMean");
-        (void) fclose(pFCfg);
+        (void) fprintf(stderr,
+                       "ERROR: Calculating delays failed!\n");
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
-
-    for (i = 0; i < iBFTimeSects; ++i)
-    {
-        (void) fscanf(pFCfg, " %f", &g_pfBFTimeSectMean[i]);
-    }
-
-    g_pfBFGain = (float *) malloc(sizeof(float) * iNumChans * iBFTimeSects);
-    if (NULL == g_pfBFGain)
-    {
-        perror("malloc - g_pfBFGain");
-        (void) fclose(pFCfg);
-        YAPP_CleanUp();
-        return YAPP_RET_ERROR;
-    }
-
-    for (i = 0; i < (iNumChans * iBFTimeSects); ++i)
-    {
-        (void) fscanf(pFCfg, " %f", &g_pfBFGain[i]);
-    }
-    pfTimeSectGain = g_pfBFGain;
-
-    (void) fscanf(pFCfg, " %d", &iNumBadTimes);
-
-    (void) printf("Number of bad time sections       : %d\n", iNumBadTimes);
-
-    g_padBadTimes = (double (*) [][NUM_BAD_BOUNDS]) malloc(sizeof(double)
-                                                           * iNumBadTimes
-                                                           * NUM_BAD_BOUNDS);
-    if (NULL == g_padBadTimes)
-    {
-        perror("malloc - g_padBadTimes");
-        (void) fclose(pFCfg);
-        YAPP_CleanUp();
-        return YAPP_RET_ERROR;
-    }
-
-    for (i = 0; i < iNumBadTimes; ++i)
-    {
-        for (j = 0; j < NUM_BAD_BOUNDS; ++j)
-        {
-            (void) fscanf(pFCfg, " %lf", &((*g_padBadTimes)[i][j]));
-        }
-    }
-
-    (void) fclose(pFCfg);
-
-    /* calculate the DM step size */
-    dDMStep = 1.205e-7 * dTSamp * powf(fFCentre, 3) / fBW;
-    (void) printf("DM step size                      : %.10g cm^-3 pc\n",
-                  dDMStep);
-
-    /* calculate the number of DM steps, based on the user-specified limiting
-       values of DM */
-    if (dDMMin != dDMMax)
-    {
-        /* the addition of dDMStep is to ensure the inclusion of dDMMax in
-           the range of DMs */
-        iNumDMs = (int) ceil((dDMMax - dDMMin + dDMStep) / dDMStep);
-    }
-    else
-    {
-        /* if the upper and lower DM limits are equal, de-disperse only for
-           that DM */
-        iNumDMs = 1;
-    }
-    (void) printf("Number of DM channels             : %d\n", iNumDMs);
-
-    /* allocate memory for the DM array */
-    g_pdDM = (double *) malloc(sizeof(double) * iNumDMs);
-    if (NULL == g_pdDM)
-    {
-        perror("malloc - g_pdDM");
-        YAPP_CleanUp();
-        return YAPP_RET_ERROR;
-    }
-
-    /* fill the array with DM values such that exactly 0 DM is included if
-       dDMMin is negative and dDMMax is positive */
-    if ((dDMMin < 0) && (dDMMax > 0))
-    {
-        dDM = dDMMin;
-        dDMNearZero = dDM;
-        for (i = 0; i < iNumDMs; ++i)
-        {
-            if (fabs(dDM) < fabs(dDMNearZero))
-            {
-                dDMNearZero = dDM;
-            }
-            dDM += dDMStep;
-        }
-        dDMMin = dDMMin - dDMNearZero;
-        (void) printf("Minimum DM updated, to include 0 DM in range.\n");
-        (void) printf("New minimum DM                    : %g\n", dDMMin);
-        dDM = dDMMin;
-        for (i = 0; i < iNumDMs; ++i)
-        {
-            g_pdDM[i] = dDM;
-            dDM += dDMStep;
-        }
-    }
-    else
-    {
-        dDM = dDMMin;
-        for (i = 0; i < iNumDMs; ++i)
-        {
-            g_pdDM[i] = dDM;
-            dDM += dDMStep;
-        }
-    }
-
-    /* calculate the number of law steps, based on the user-specified limiting
-       values of the power law */
-    if (dLawMin != dLawMax)
-    {
-        /* the addition of dLawStep is to ensure the inclusion of dLawMax in
-           the range of laws */
-        iNumLaws = (int) ceil((dLawMax - dLawMin + dLawStep) / dLawStep);
-        ++iNumLaws;     /* include quadratic, for the initial calculation of
-                           delays */
-    }
-    else
-    {
-        /* if the upper and lower law limits are equal, delay-correct only for
-           that law */
-        iNumLaws = 1;
-        ++iNumLaws;     /* include quadratic, for the initial calculation of
-                           delays */
-    }
-
-    /* allocate memory for the delay lookup table - using calloc() so that the
-       zero DM row will automatically be filled with zeroes */
-    g_pdDelayTab = (double *) calloc(iNumLaws * iNumDMs * iNumChans,
-                                     sizeof(double));
-    if (NULL == g_pdDelayTab)
-    {
-        perror("calloc - g_pdDelayTab");
-        YAPP_CleanUp();
-        return YAPP_RET_ERROR;
-    }
-
-    g_pdMaxDelayTab = (double *) malloc(sizeof(double) * iNumLaws * iNumDMs);
-    if (NULL == g_pdDelayTab)
-    {
-        perror("malloc - g_pdMaxDelayTab");
-        YAPP_CleanUp();
-        return YAPP_RET_ERROR;
-    }
-
-    /* calculate quadratic delays */
-    /* NOTE: this calculation is required even if 2.0 is not present in the law
-       range, because delays for other laws are calculated based on the
-       maximum quadratic delays */
-
-#ifdef DEBUG
-    {
-        FILE *pFFileDelaysQuad = NULL;
-        int iDelPlotDMIndex = 0;
-
-        pFFileDelaysQuad = fopen(YAPP_FILE_DELAYS_QUAD, "w");
-        if (NULL == pFFileDelaysQuad)
-        {
-            fprintf(stderr,
-                    "ERROR: Opening file %s failed! %s.\n",
-                    YAPP_FILE_DELAYS_QUAD,
-                    strerror(errno));
-            YAPP_CleanUp();
-            return YAPP_RET_ERROR;
-        }
-#endif
-
-    i = 0;  /* i = 0 for the initial quadratic delay calculation. other laws,
-               including 2.0, is from i = 1 onwards  */
-    dDM = dDMMin;
-    (void) printf("Dedispersing with DMs %.10g to ", dDM);
-    pdDMDelay = g_pdDelayTab + i * iNumDMs * iNumChans;
-    pdLawMaxDelay = g_pdMaxDelayTab + i * iNumDMs;
-    for (j = 0; j < iNumDMs; ++j)
-    {
-        /* NOTE: pdSpecDelay[k] may not be 0 for the highest frequency channel,
-           but the offset samples may be (depending on the sampling rate) */
-        pdSpecDelay = pdDMDelay + j * iNumChans;
-        if (dDM < 0)
-        {
-            if (cIsBandFlipped)
-            {
-                fF1 = fFMax;
-                fF2 = fFMin;
-                for (k = 0; k < iNumChans; ++k)
-                {
-                    pdSpecDelay[k] = -4.148808e6
-                                     * ((1.0 / powf(fF1, 2))
-                                        - (1.0 / powf(fF2, 2)))
-                                     * dDM;     /* in ms */
-
-#ifdef DEBUG
-                    if (j == iDelPlotDMIndex)
-                    {
-                        (void) fprintf(pFFileDelaysQuad,
-                                       "%d %g %d\n",
-                                       k,
-                                       pdSpecDelay[k],
-                                       (int) -(pdSpecDelay[k]/dTSamp));
-                    }
-#endif
-
-                    fF2 += fChanBW;
-                }
-                pdLawMaxDelay[j] = pdSpecDelay[0];
-            }
-            else
-            {
-                fF1 = fFMin;
-                fF2 = fFMax;
-                for (k = iNumChans - 1; k >= 0; --k)
-                {
-                    pdSpecDelay[k] = 4.148808e6
-                                     * ((1.0 / powf(fF1, 2))
-                                        - (1.0 / powf(fF2, 2)))
-                                     * dDM;     /* in ms */
-
-#ifdef DEBUG
-                    if (j == iDelPlotDMIndex)
-                    {
-                        (void) fprintf(pFFileDelaysQuad,
-                                       "%d %g %d\n",
-                                       k,
-                                       pdSpecDelay[k],
-                                       (int) -(pdSpecDelay[k]/dTSamp));
-                    }
-#endif
-
-                    fF2 -= fChanBW;
-                }
-                pdLawMaxDelay[j] = pdSpecDelay[iNumChans-1];
-            }
-        }
-        else
-        {
-            if (cIsBandFlipped)
-            {
-                fF1 = fFMin;
-                fF2 = fFMax;
-                for (k = iNumChans - 1; k >= 0; --k)
-                {
-                    pdSpecDelay[k] = -4.148808e6
-                                     * ((1.0 / powf(fF1, 2))
-                                        - (1.0 / powf(fF2, 2)))
-                                     * dDM;     /* in ms */
-
-#ifdef DEBUG
-                    if (j == iDelPlotDMIndex)
-                    {
-                        (void) fprintf(pFFileDelaysQuad,
-                                       "%d %g %d\n",
-                                       k,
-                                       pdSpecDelay[k],
-                                       (int) -(pdSpecDelay[k]/dTSamp));
-                    }
-#endif
-
-                    fF2 -= fChanBW;
-                }
-                pdLawMaxDelay[j] = pdSpecDelay[iNumChans-1];
-            }
-            else
-            {
-                fF1 = fFMax;
-                fF2 = fFMin;
-                for (k = 0; k < iNumChans; ++k)
-                {
-                    pdSpecDelay[k] = 4.148808e6
-                                     * ((1.0 / powf(fF1, 2))
-                                        - (1.0 / powf(fF2, 2)))
-                                     * dDM;     /* in ms */
-
-#ifdef DEBUG
-                    if (j == iDelPlotDMIndex)
-                    {
-                        (void) fprintf(pFFileDelaysQuad,
-                                       "%d %g %d\n",
-                                       k,
-                                       pdSpecDelay[k],
-                                       (int) -(pdSpecDelay[k]/dTSamp));
-                    }
-#endif
-
-                    fF2 += fChanBW;
-                }
-                pdLawMaxDelay[j] = pdSpecDelay[0];
-            }
-        }
-        dDM += dDMStep;
-    }
-    (void) printf("%.10g...\n", (dDM - dDMStep));
-
-#ifdef DEBUG
-        (void) fclose(pFFileDelaysQuad);
-    }
-#endif
-
-    /* get the maximum delay corresponding to the maximum DM */
-    dMaxDMMaxDelay = pdLawMaxDelay[iNumDMs-1];
-    /* calculate the maximum sample offset from the maximum delay */
-    iMaxOffset = (int) -(dMaxDMMaxDelay / dTSamp);
 
     /* ensure that the block size is at least equivalent to the maximum offset,
        because we don't read beyond the second buffer */
     if (iBlockSize < iMaxOffset)
     {
-        (void) printf("WARNING: Block size is less than the calculated maximum "
-                      "offset! Changing block size to %d.\n",
+        (void) printf("WARNING: Block size is less than the calculated maximum"
+                      " offset! Changing block size to %d.\n",
                       iMaxOffset);
         iBlockSize = iMaxOffset;
     }
 
-    /* allocate memory for the law-specific multiplicative factors */
-    pdFactor = (double *) malloc(sizeof(double) * iNumLaws);
-    if (NULL == pdFactor)
+    /* calculate bytes to skip and read */
+    if (0.0 == dDataProcTime)
     {
-        perror("malloc - pdFactor");
-        YAPP_CleanUp();
-        return YAPP_RET_ERROR;
+        dDataProcTime = iTimeSamps * dTSampInSec;
     }
 
-    /* calculate the multiplicative factor required for determining delays, for
-       other laws, as per the following formula:
-
-       delay(n) = factor * ((1/(f1^law)) - (1/(f2^law))) * DM(n),
-       therefore:
-       factor = delay(n) / (((1/(f1^law)) - (1/(f2^law))) * DM(n)),
-
-       where 'delay(n)' is the delay in ms for DM index n ('DM(n)'), 'f1' and
-       'f2' are the maximum and minimum frequencies in MHz, and 'law' is the
-       absolute value of the dispersion power law */
-    dLaw = dLawMin;
-    for (i = 1; i < iNumLaws; ++i)  /* i = 0 is initial quadratic delay */
-    {
-        /* (dDMMin + (iNumDMs * dDMStep)) is the maximum calculated DM.
-           the choice of dMaxDMMaxDelay and the maximum calculated DM is to
-           ensure less computational error in the factor. */
-        pdFactor[i] = dMaxDMMaxDelay
-                      / (((1.0 / powf(fFMax, dLaw)) - (1.0 / powf(fFMin, dLaw)))
-                         * (dDMMin + ((iNumDMs - 1) * dDMStep)));
-        dLaw += dLawStep;
-    }
-
-    /* calculate the delays for other laws */
-
-#ifdef DEBUG
-    {
-        FILE *pFFileDelaysOther = NULL;
-        double dDelPlotLaw = dLawMin + dLawStep;
-        int iDelPlotDMIndex = 0;
-
-        pFFileDelaysOther = fopen(YAPP_FILE_DELAYS_OTHER, "w");
-        if (NULL == pFFileDelaysOther)
-        {
-            fprintf(stderr,
-                    "ERROR: Opening file %s failed! %s.\n",
-                    YAPP_FILE_DELAYS_OTHER,
-                    strerror(errno));
-            YAPP_CleanUp();
-            return YAPP_RET_ERROR;
-        }
-#endif
-
-    dLaw = dLawMin;
-    for (i = 1; i < iNumLaws; ++i)  /* i = 0 is initial quadratic delay */
-    {
-        if (1.0 == dLaw)
-        {
-            iLinLawIndex = i;
-            dLaw += dLawStep;
-            continue;
-        }
-
-        dDM = dDMMin;
-        pdDMDelay = g_pdDelayTab + i * iNumDMs * iNumChans;
-        pdLawMaxDelay = g_pdMaxDelayTab + i * iNumDMs;
-        for (j = 0; j < iNumDMs; ++j)
-        {
-            pdSpecDelay = pdDMDelay + j * iNumChans;
-            if (dDM < 0)
-            {
-                if (cIsBandFlipped)
-                {
-                    fF1 = fFMax;
-                    fF2 = fFMin;
-                    for (k = 0; k < iNumChans; ++k)
-                    {
-                        pdSpecDelay[k] = pdFactor[i]
-                                         * ((1.0 / powf(fF1, dLaw))
-                                            - (1.0 / powf(fF2, dLaw)))
-                                         * dDM;     /* in ms */
-
-#ifdef DEBUG
-                        if ((dLaw == dDelPlotLaw) && (j == iDelPlotDMIndex))
-                        {
-                            (void) fprintf(pFFileDelaysOther,
-                                           "%d %g %d\n",
-                                           k,
-                                           pdSpecDelay[k],
-                                           (int) -(pdSpecDelay[k]/dTSamp));
-                        }
-#endif
-
-                        fF2 += fChanBW;
-                    }
-                    pdLawMaxDelay[j] = pdSpecDelay[0];
-                }
-                else
-                {
-                    fF1 = fFMin;
-                    fF2 = fFMax;
-                    for (k = iNumChans - 1; k >= 0; --k)
-                    {
-                        pdSpecDelay[k] = -pdFactor[i]
-                                         * ((1.0 / powf(fF1, dLaw))
-                                            - (1.0 / powf(fF2, dLaw)))
-                                         * dDM;     /* in ms */
-
-#ifdef DEBUG
-                        if ((dLaw == dDelPlotLaw) && (j == iDelPlotDMIndex))
-                        {
-                            (void) fprintf(pFFileDelaysOther,
-                                           "%d %g %d\n",
-                                           k,
-                                           pdSpecDelay[k],
-                                           (int) -(pdSpecDelay[k]/dTSamp));
-                        }
-#endif
-
-                        fF2 -= fChanBW;
-                    }
-                    pdLawMaxDelay[j] = pdSpecDelay[iNumChans-1];
-                }
-            }
-            else
-            {
-                if (cIsBandFlipped)
-                {
-                    fF1 = fFMin;
-                    fF2 = fFMax;
-                    for (k = iNumChans - 1; k >= 0; --k)
-                    {
-                        pdSpecDelay[k] = -pdFactor[i]
-                                         * ((1.0 / powf(fF1, dLaw))
-                                            - (1.0 / powf(fF2, dLaw)))
-                                         * dDM;     /* in ms */
-
-#ifdef DEBUG
-                        if ((dLaw == dDelPlotLaw) && (j == iDelPlotDMIndex))
-                        {
-                            (void) fprintf(pFFileDelaysOther,
-                                           "%d %g %d\n",
-                                           k,
-                                           pdSpecDelay[k],
-                                           (int) -(pdSpecDelay[k]/dTSamp));
-                        }
-#endif
-
-                        fF2 -= fChanBW;
-                    }
-                    pdLawMaxDelay[j] = pdSpecDelay[iNumChans-1];
-                }
-                else
-                {
-                    fF1 = fFMax;
-                    fF2 = fFMin;
-                    for (k = 0; k < iNumChans; ++k)
-                    {
-                        pdSpecDelay[k] = pdFactor[i]
-                                         * ((1.0 / powf(fF1, dLaw))
-                                            - (1.0 / powf(fF2, dLaw)))
-                                         * dDM;     /* in ms */
-
-#ifdef DEBUG
-                        if ((dLaw == dDelPlotLaw) && (j == iDelPlotDMIndex))
-                        {
-                            (void) fprintf(pFFileDelaysOther,
-                                           "%d %g %d\n",
-                                           k,
-                                           pdSpecDelay[k],
-                                           (int) -(pdSpecDelay[k]/dTSamp));
-                        }
-#endif
-
-                        fF2 += fChanBW;
-                    }
-                    pdLawMaxDelay[j] = pdSpecDelay[0];
-                }
-            }
-            dDM += dDMStep;
-        }
-        dLaw += dLawStep;
-    }
-
-#ifdef DEBUG
-        (void) fclose(pFFileDelaysOther);
-    }
-#endif
-
-    free(pdFactor);
-
-    /* calculation of linear delays */
-    if (iLinLawIndex != 0)
-    {
-        /* allocate memory for the slope array */
-        pdSlope = (double *) malloc(sizeof(double) * iNumDMs);
-        if (NULL == pdSlope)
-        {
-            perror("malloc - pdSlope");
-            YAPP_CleanUp();
-            return YAPP_RET_ERROR;
-        }
-
-        /* get the maximum quadratic delay for each DM, and calculate the linear
-           slopes */
-        i = 0;  /* quadratic */
-        dDM = dDMMin;
-        pdDMDelay = g_pdDelayTab + i * iNumDMs * iNumChans;
-        for (j = 0; j < iNumDMs; ++j)
-        {
-            pdSpecDelay = pdDMDelay + j * iNumChans;
-            if (dDM < 0)
-            {
-                /* get the maximum quadratic delay */
-                if (cIsBandFlipped)
-                {
-                    dDelay = pdSpecDelay[0];
-                }
-                else
-                {
-                    dDelay = pdSpecDelay[iNumChans-1];
-                }
-                /* calculate slope */
-                pdSlope[j] = ((double) (fFMin - fFMax)) / dDelay;
-            }
-            else
-            {
-                /* get the maximum quadratic delay */
-                if (cIsBandFlipped)
-                {
-                    dDelay = pdSpecDelay[iNumChans-1];
-                }
-                else
-                {
-                    dDelay = pdSpecDelay[0];
-                }
-                /* calculate slope */
-                pdSlope[j] = ((double) (fFMax - fFMin)) / dDelay;
-            }
-            dDM += dDMStep;
-        }
-
-#ifdef DEBUG
-    {
-        FILE *pFFileDelaysLin = NULL;
-        int iDelPlotDMIndex = 0;
-
-        pFFileDelaysLin = fopen(YAPP_FILE_DELAYS_LIN, "w");
-        if (NULL == pFFileDelaysLin)
-        {
-            fprintf(stderr,
-                    "ERROR: Opening file %s failed! %s.\n",
-                    YAPP_FILE_DELAYS_LIN,
-                    strerror(errno));
-            YAPP_CleanUp();
-            return YAPP_RET_ERROR;
-        }
-#endif
-
-        /* calculate linear delays */
-        i = iLinLawIndex;  /* linear */
-        dDM = dDMMin;
-        pdDMDelay = g_pdDelayTab + i * iNumDMs * iNumChans;
-        pdLawMaxDelay = g_pdMaxDelayTab + i * iNumDMs;
-        for (j = 0; j < iNumDMs; ++j)
-        {
-            pdSpecDelay = pdDMDelay + j * iNumChans;
-            if (dDM < 0)
-            {
-                if (cIsBandFlipped)
-                {
-                    for (k = 0; k < iNumChans; ++k)
-                    {
-                        /* these delays are independent of fF1 and fF2, since
-                           they are linear */
-                        pdSpecDelay[k] = -((double) ((iNumChans - k - 1)
-                                                     * fChanBW))
-                                         / pdSlope[j];  /* in ms */
-
-#ifdef DEBUG
-                        if (j == iDelPlotDMIndex)
-                        {
-                            (void) fprintf(pFFileDelaysLin,
-                                           "%d %g %d\n",
-                                           k,
-                                           pdSpecDelay[k],
-                                           (int) -(pdSpecDelay[k]/dTSamp));
-                        }
-#endif
-                    }
-                    pdLawMaxDelay[j] = pdSpecDelay[iNumChans-1];
-                }
-                else
-                {
-                    for (k = iNumChans - 1; k >= 0; --k)
-                    {
-                        /* these delays are independent of fF1 and fF2, since
-                           they are linear */
-                        pdSpecDelay[k] = -((double) (k * fChanBW))
-                                         / pdSlope[j];  /* in ms */
-
-#ifdef DEBUG
-                        if (j == iDelPlotDMIndex)
-                        {
-                            (void) fprintf(pFFileDelaysLin,
-                                           "%d %g %d\n",
-                                           k,
-                                           pdSpecDelay[k],
-                                           (int) -(pdSpecDelay[k]/dTSamp));
-                        }
-#endif
-
-                    }
-                    pdLawMaxDelay[j] = pdSpecDelay[0];
-                }
-            }
-            else
-            {
-                if (cIsBandFlipped)
-                {
-                    for (k = iNumChans - 1; k >= 0; --k)
-                    {
-                        pdSpecDelay[k] = ((double) (k * fChanBW))
-                                         / pdSlope[j];  /* in ms */
-
-#ifdef DEBUG
-                        if (j == iDelPlotDMIndex)
-                        {
-                            (void) fprintf(pFFileDelaysLin,
-                                           "%d %g %d\n",
-                                           k,
-                                           pdSpecDelay[k],
-                                           (int) -(pdSpecDelay[k]/dTSamp));
-                        }
-#endif
-                    }
-                    pdLawMaxDelay[j] = pdSpecDelay[0];
-                }
-                else
-                {
-                    for (k = 0; k < iNumChans; ++k)
-                    {
-                        /* these delays are independent of fF1 and fF2, since
-                           they are linear */
-                        pdSpecDelay[k] = ((double) ((iNumChans - k - 1)
-                                                    * fChanBW))
-                                         / pdSlope[j];  /* in ms */
-
-#ifdef DEBUG
-                        if (j == iDelPlotDMIndex)
-                        {
-                            (void) fprintf(pFFileDelaysLin,
-                                           "%d %g %d\n",
-                                           k,
-                                           pdSpecDelay[k],
-                                           (int) -(pdSpecDelay[k]/dTSamp));
-                        }
-#endif
-
-                    }
-                    pdLawMaxDelay[j] = pdSpecDelay[0];
-                }
-            }
-            dDM += dDMStep;
-        }
-
-        /* no more need for the slope array */
-        free(pdSlope);
-
-#ifdef DEBUG
-        (void) fclose(pFFileDelaysLin);
-    }
-#endif
-
-    }
-
-    iRet = stat(pcFileSpec, &stFileStats);
-    if (iRet != YAPP_RET_SUCCESS)
+    /* check if the input time duration is less than the length of the
+       data */
+    if (dDataProcTime > (iTimeSamps * dTSampInSec))
     {
         (void) fprintf(stderr,
-                       "ERROR: Failed to stat %s: %s!\n",
-                       pcFileSpec,
-                       strerror(errno));
+                       "ERROR: Input time is longer than length of "
+                       "data!\n");
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
 
-    (void) printf("Duration of data in\n");
-    (void) printf("    Bytes                         : %ld\n",
-                  (stFileStats.st_size / iNumChans));
-    iTimeSamps = stFileStats.st_size / (iNumChans * sizeof(float));
-    (void) printf("    Time samples                  : %d\n", iTimeSamps);
-    (void) printf("    Time                          : %g s\n",
-                  (iTimeSamps * dTSampInSec));
+    lBytesToSkip = (long) floor((dDataSkipTime / dTSampInSec)
+                                                    /* number of samples */
+                          * iNumChans
+                          * fSampSize);
+    lBytesToProc = (long) floor((dDataProcTime / dTSampInSec)
+                                                    /* number of samples */
+                          * iNumChans
+                          * fSampSize);
 
-    /* check which of the data processing specification modes - percentage or
-       time - has been selected by the user, and calculate bytes to skip and
-       read */
-    if (PROC_SPEC_TIME == iProcSpec)
-    {
-        /* ensure that the input time duration is less than the length of the
-           data */
-        iTimeSamps = stFileStats.st_size / (iNumChans * sizeof(float));
-        if (((double) iDataProcTime) > (iTimeSamps * dTSampInSec))
-        {
-            (void) fprintf(stderr,
-                           "ERROR: Input time is longer than length of "
-                           "data!\n");
-            YAPP_CleanUp();
-            return YAPP_RET_ERROR;
-        }
-
-        iBytesToSkip = (iDataSkipTime * 1000.0 / dTSamp)
-                                                        /* number of samples */
-                       * iNumChans
-                       * sizeof(float);
-        iBytesToProc = (iDataProcTime * 1000.0 / dTSamp)
-                                                        /* number of samples */
-                       * iNumChans
-                       * sizeof(float);
-    }
-    else    /* if it is not selected, or percentage is selected, use percentage
-               mode */
-    {
-        iTimeSamps = stFileStats.st_size / (iNumChans * sizeof(float));
-        iBytesToSkip = floorf(iTimeSamps * (((float) iDataSkipPercent) / 100))
-                                                        /* number of samples */
-                       * iNumChans
-                       * sizeof(float);
-        iBytesToProc = ceilf(iTimeSamps * (((float) iDataProcPercent) / 100))
-                                                        /* number of samples */
-                       * iNumChans
-                       * sizeof(float);
-    }
-
-    if (iBytesToSkip >= stFileStats.st_size)
+    if (lBytesToSkip >= lDataSizeTotal)
     {
         (void) printf("WARNING: Data to be skipped is greater than or equal to "
-                      "the size of the file! Terminating.\n");
+                      " the size of the file! Terminating.\n");
         YAPP_CleanUp();
         return YAPP_RET_SUCCESS;
     }
 
-    if ((iBytesToSkip + iBytesToProc) > stFileStats.st_size)
+    if ((lBytesToSkip + lBytesToProc) > lDataSizeTotal)
     {
         (void) printf("WARNING: Total data to be read (skipped and processed) "
                       "is more than the size of the file! ");
-        iBytesToProc = stFileStats.st_size - iBytesToSkip;
-        (void) printf("Newly calculated size of data to be processed: %d "
+        lBytesToProc = lDataSizeTotal - lBytesToSkip;
+        (void) printf("Newly calculated size of data to be processed: %ld "
                       "bytes\n",
-                      iBytesToProc);
+                      lBytesToProc);
     }
 
     if (iBlockSize == iMaxOffset)
     {
-        if (iBytesToProc < (iBlockSize * iNumChans * sizeof(float)))
+        if (lBytesToProc < (iBlockSize * iNumChans * sizeof(float)))
         {
             /* if the block size is equivalent to the maximum delay that is to
                be applied, and if the number of bytes to be processed is less
@@ -1320,7 +427,7 @@ int main(int argc, char *argv[])
             (void) printf("WARNING: Amount of data to be processed is less "
                           "than the calculated maximum offset! Will process "
                           "more data than what was requested.\n");
-            iBytesToProc = iBlockSize * iNumChans * sizeof(float);
+            lBytesToProc = iBlockSize * iNumChans * sizeof(float);
         }
     }
     else
@@ -1328,7 +435,7 @@ int main(int argc, char *argv[])
         /* here, iBlockSize > iMaxOffset */
         assert(iBlockSize > iMaxOffset);
 
-        if (iBytesToProc < (iMaxOffset * iNumChans * sizeof(float)))
+        if (lBytesToProc < (iMaxOffset * iNumChans * sizeof(float)))
         {
             /* if the number of bytes to be processed is less than the maximum
                offset, de-dispersion will be affected, as we don't have more
@@ -1337,67 +444,72 @@ int main(int argc, char *argv[])
             (void) printf("WARNING: Amount of data to be processed is less "
                           "than the calculated maximum offset! Will process "
                           "more data than what was requested.\n");
-            iBytesToProc = iMaxOffset * iNumChans *sizeof(float);
+            lBytesToProc = iMaxOffset * iNumChans *sizeof(float);
             (void) printf("WARNING: Amount of data to be processed is less "
                           "than the block size! Adjusting block size "
                           "accordingly.\n");
-            iBlockSize = iBytesToProc / (iNumChans * sizeof(float));
+            iBlockSize = lBytesToProc / (iNumChans * sizeof(float));
         }
         else
         {
-            if (iBytesToProc < (iBlockSize * iNumChans * sizeof(float)))
+            if (lBytesToProc < (iBlockSize * iNumChans * sizeof(float)))
             {
-                /* here, iMaxOffset <=(eqv) iBytesToProc <(eqv) iBlockSize */
+                /* here, iMaxOffset <=(eqv) lBytesToProc <(eqv) iBlockSize */
                 (void) printf("WARNING: Amount of data to be processed is less "
                               "than the block size! Adjusting block size "
                               "accordingly.\n");
-                iBlockSize = iBytesToProc / (iNumChans * sizeof(float));
+                iBlockSize = lBytesToProc / (iNumChans * sizeof(float));
             }
         }
     }
 
     /* since we may have adjusted the number of bytes to be processed, correct
        the number of bytes to be skipped, too */
-    if ((iBytesToSkip + iBytesToProc) > stFileStats.st_size)
+    if ((lBytesToSkip + lBytesToProc) > lDataSizeTotal)
     {
         (void) printf("WARNING: Total data to be read (skipped and processed) "
                       "is more than the size of the file! ");
-        iBytesToSkip = stFileStats.st_size - iBytesToProc;
-        (void) printf("Newly calculated size of data to be skipped: %d bytes\n",
-                      iBytesToSkip);
+        lBytesToSkip = lDataSizeTotal - lBytesToProc;
+        (void) printf("Newly calculated size of data to be skipped: %ld bytes\n",
+                      lBytesToSkip);
     }
 
-    iTimeSampsSkip = iBytesToSkip / (iNumChans * sizeof(float));
-    (void) printf("Skipping %d of %d bytes (%d time samples)...\n",
-                  iBytesToSkip,
-                  (int) stFileStats.st_size,
-                  iTimeSampsSkip);
+    iTimeSampsSkip = (int) (lBytesToSkip / (iNumChans * fSampSize));
+    (void) printf("Skipping\n"
+                  "    %ld of %ld bytes\n"
+                  "    %d of %d time samples\n"
+                  "    %.10g of %.10g seconds\n",
+                  lBytesToSkip,
+                  lDataSizeTotal,
+                  iTimeSampsSkip,
+                  stYUM.iTimeSamps,
+                  (iTimeSampsSkip * dTSampInSec),
+                  (stYUM.iTimeSamps * dTSampInSec));
 
-    iTimeSamps = iBytesToProc / (iNumChans * sizeof(float));
-    iNumReads = (int) ceilf(((float) iTimeSamps) / iBlockSize);
+    iTimeSampsToProc = (int) (lBytesToProc / (iNumChans * fSampSize));
+    iNumReads = (int) floorf(((float) iTimeSampsToProc) / iBlockSize);
     iTotNumReads = iNumReads;
 
     /* optimisation - store some commonly used values in variables */
     iTotSampsPerBlock = iNumChans * iBlockSize;
-    iDataSizePerBlock = sizeof(float) * iTotSampsPerBlock;
+    iDataSizePerBlock = (int) (fSampSize * iTotSampsPerBlock);
 
     (void) printf("Processing\n"
-                  "    %d of %d bytes\n"
-                  "    %d of %ld time samples\n"
+                  "    %ld of %ld bytes\n"
+                  "    %d of %d time samples\n"
                   "    %.10g of %.10g seconds\n"
                   "in %d reads with block size %d time samples...\n",
-                  iBytesToProc,
-                  (int) stFileStats.st_size,
+                  lBytesToProc,
+                  lDataSizeTotal,
+                  iTimeSampsToProc,
                   iTimeSamps,
-                  (stFileStats.st_size / (iNumChans * sizeof(float))),
+                  (iTimeSampsToProc * dTSampInSec),
                   (iTimeSamps * dTSampInSec),
-                  ((stFileStats.st_size / (iNumChans * sizeof(float)))
-                   * dTSampInSec),
                   iNumReads,
                   iBlockSize);
 
     /* calculate the threshold */
-    dNumSigmas = YAPP_CalcThresholdInSigmas(iTimeSamps);
+    dNumSigmas = YAPP_CalcThresholdInSigmas(iTimeSampsToProc);
     if ((double) YAPP_RET_ERROR == dNumSigmas)
     {
         (void) fprintf(stderr, "ERROR: Threshold calculation failed!\n");
@@ -1414,19 +526,23 @@ int main(int argc, char *argv[])
     fSNRMin = fThreshold / fNoiseRMS;
 
     /* allocate memory for the time sample goodness flag array */
-    g_pcIsTimeGood = (char *) malloc(sizeof(char) * iTimeSamps);
+    g_pcIsTimeGood = (char *) YAPP_Malloc((size_t) iTimeSampsToProc,
+                                          sizeof(char),
+                                          YAPP_FALSE);
     if (NULL == g_pcIsTimeGood)
     {
-        perror("malloc - g_pcIsTimeGood");
+        (void) fprintf(stderr,
+                       "ERROR: Memory allocation failed! %s!\n",
+                       strerror(errno));
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
     /* set all elements to 'YAPP_TRUE' */
-    (void) memset(g_pcIsTimeGood, YAPP_TRUE, iTimeSamps);
+    (void) memset(g_pcIsTimeGood, YAPP_TRUE, iTimeSampsToProc);
 
-    /* open the 'spec' file for reading */
-    pFSpec = fopen(pcFileSpec, "r");
-    if (NULL == pFSpec)
+    /* open the dynamic spectrum data file for reading */
+    g_pFSpec = fopen(pcFileSpec, "r");
+    if (NULL == g_pFSpec)
     {
         (void) fprintf(stderr,
                        "ERROR: Opening file %s failed! %s.\n",
@@ -1438,19 +554,27 @@ int main(int argc, char *argv[])
 
     /* allocate memory for the primary and secondary buffers, based on the
        number of channels and time samples */
-    g_pfBuf0 = (float *) malloc(iDataSizePerBlock);
+    g_pfBuf0 = (float *) YAPP_Malloc((size_t) iNumChans * iBlockSize * fSampSize,
+                                     sizeof(float),
+                                     YAPP_FALSE);
     if (NULL == g_pfBuf0)
     {
-        perror("malloc - g_pfBuf0");
-        (void) fclose(pFSpec);
+        (void) fprintf(stderr,
+                       "ERROR: Memory allocation failed! %s!\n",
+                       strerror(errno));
+        (void) fclose(g_pFSpec);
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
-    g_pfBuf1 = (float *) malloc(iDataSizePerBlock);
+    g_pfBuf1 = (float *) YAPP_Malloc((size_t) iNumChans * iBlockSize * fSampSize,
+                                     sizeof(float),
+                                     YAPP_FALSE);
     if (NULL == g_pfBuf1)
     {
-        perror("malloc - g_pfBuf1");
-        (void) fclose(pFSpec);
+        (void) fprintf(stderr,
+                       "ERROR: Memory allocation failed! %s!\n",
+                       strerror(errno));
+        (void) fclose(g_pFSpec);
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
@@ -1461,93 +585,103 @@ int main(int argc, char *argv[])
     }
 
     /* allocate memory for storing the dedispersed data */
-    g_pfDedispData = (float *) malloc(sizeof(float) * iBlockSize);
+    g_pfDedispData = (float *) YAPP_Malloc((size_t) iBlockSize, sizeof(float), YAPP_FALSE);
     if (NULL == g_pfDedispData)
     {
-        perror("malloc - g_pfDedispData");
-        (void) fclose(pFSpec);
+        (void) fprintf(stderr,
+                       "ERROR: Memory allocation failed! %s!\n",
+                       strerror(errno));
+        (void) fclose(g_pFSpec);
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
 
-    /* skip data, if any are to be skipped */
-    (void) fseek(pFSpec, (long) iBytesToSkip, SEEK_SET);
+    if (YAPP_FORMAT_FIL == iFormat)
+    {
+        /* TODO: Need to do this only if the file contains the header */
+        /* skip the header */
+        (void) fseek(g_pFSpec, (long) stYUM.iHeaderLen, SEEK_SET);
+        /* skip data, if any are to be skipped */
+        (void) fseek(g_pFSpec, lBytesToSkip, SEEK_CUR);
+    }
+    else
+    {
+        /* skip data, if any are to be skipped */
+        (void) fseek(g_pFSpec, lBytesToSkip, SEEK_SET);
+    }
 
     /* read the first block of data */
     (void) printf("Reading data block %d.\n", iReadBlockCount);
-    (void) fread(g_pfBuf0, sizeof(float), iTotSampsPerBlock, pFSpec);
+    iReadItems = YAPP_ReadData(g_pfBuf0, fSampSize, iTotSampsPerBlock);
+    if (YAPP_RET_ERROR == iReadItems)
+    {
+        (void) fprintf(stderr, "ERROR: Reading data failed!\n");
+        YAPP_CleanUp();
+        return YAPP_RET_ERROR;
+    }
     pfPriBuf = g_pfBuf0;
     pfSpectrum = g_pfBuf0;
     iPrimaryBuf = BUF_0;
     --iNumReads;
     ++iReadBlockCount;
 
-    /* allocate memory for the primary backup buffer */
-    g_pfPriBufBk = (float *) malloc(iDataSizePerBlock);
-    if (NULL == g_pfPriBufBk)
+//temp
+#if 0
+    if (YAPP_FORMAT_SPEC == iFormat)
     {
-        perror("malloc - g_pfPriBufBk");
-        (void) fclose(pFSpec);
-        YAPP_CleanUp();
-        return YAPP_RET_ERROR;
-    }
-
-    /* flag bad time sections, and if required, normalise within the beam
-       flip time section and perform gain correction */
-    for (i = 0; i < iBlockSize; ++i)
-    {
-        dTNow += dTSampInSec;   /* in s */
-
-        if ((dTNow >= (*g_padBadTimes)[iBadTimeSect][BADTIME_BEG])
-            && (dTNow <= (*g_padBadTimes)[iBadTimeSect][BADTIME_END]))
+        /* flag bad time sections, and if required, normalise within the beam
+           flip time section and perform gain correction */
+        for (i = 0; i < iBlockSize; ++i)
         {
-            cIsInBadTimeRange = YAPP_TRUE;
-            g_pcIsTimeGood[i] = YAPP_FALSE;
-        }
+            dTNow += dTSampInSec;   /* in s */
 
-        if ((YAPP_TRUE == cIsInBadTimeRange)
-            && (dTNow > (*g_padBadTimes)[iBadTimeSect][BADTIME_END]))
-        {
-            cIsInBadTimeRange = YAPP_FALSE;
-            ++iBadTimeSect;
-        }
-
-        /* get the beam flip time section corresponding to this
-           sample */
-        if (dTNow > dTNextBF)
-        {
-            dTNextBF += dTBFInt;
-            if (iTimeSect >= iBFTimeSects)
+            if ((dTNow >= (*g_padBadTimes)[iBadTimeSect][BADTIME_BEG])
+                && (dTNow <= (*g_padBadTimes)[iBadTimeSect][BADTIME_END]))
             {
-                (void) fprintf(stderr,
-                               "ERROR: Beam flip time section anomaly "
-                               "detected!\n");
-                (void) fclose(pFSpec);
-                YAPP_CleanUp();
-                return YAPP_RET_ERROR;
+                cIsInBadTimeRange = YAPP_TRUE;
+                g_pcIsTimeGood[i] = YAPP_FALSE;
             }
-            ++iTimeSect;
-        }
 
-        pfTimeSectGain = g_pfBFGain + iTimeSect * iNumChans;
-        pfSpectrum = pfPriBuf + i * iNumChans;
-        for (j = 0; j < iNumChans; ++j)
-        {
-            if (g_pcIsChanGood[j])
+            if ((YAPP_TRUE == cIsInBadTimeRange)
+                && (dTNow > (*g_padBadTimes)[iBadTimeSect][BADTIME_END]))
             {
-                pfSpectrum[j] = (pfSpectrum[j]
-                                 / g_pfBFTimeSectMean[iTimeSect])
-                                - pfTimeSectGain[j];
+                cIsInBadTimeRange = YAPP_FALSE;
+                ++iBadTimeSect;
             }
-            //temp
-            //else    /* remove bad channels */
-            //{
-            //    pfSpectrum[j] = 0.0;
-            //}
+
+            /* get the beam flip time section corresponding to this
+               sample */
+            if (dTNow > dTNextBF)
+            {
+                dTNextBF += dTBFInt;
+                if (iTimeSect >= iBFTimeSects)
+                {
+                    (void) fprintf(stderr,
+                                   "ERROR: Beam flip time section anomaly "
+                                   "detected!\n");
+                    (void) fclose(g_pFSpec);
+                    YAPP_CleanUp();
+                    return YAPP_RET_ERROR;
+                }
+                ++iTimeSect;
+            }
+
+            pfTimeSectGain = g_pfBFGain + iTimeSect * iNumChans;
+            pfSpectrum = pfPriBuf + i * iNumChans;
+            for (j = 0; j < iNumChans; ++j)
+            {
+                if (g_pcIsChanGood[j])
+                {
+                    pfSpectrum[j] = (pfSpectrum[j]
+                                     / g_pfBFTimeSectMean[iTimeSect])
+                                    - pfTimeSectGain[j];
+                }
+            }
         }
     }
+#endif
 
-    if (g_iDispPlots)
+    if (cHasGraphics)
     {
         /* open the PGPLOT graphics device */
         if (cIsPlotToFile)
@@ -1555,7 +689,6 @@ int main(int argc, char *argv[])
             /* build the name of the PGPLOT device */
             pcFilename = YAPP_GetFilenameFromPath(pcFileSpec, EXT_DYNSPEC);
             (void) strcpy(acDev, pcFilename);
-            free(pcFilename);
             (void) strcat(acDev, PLOT_DDS_SUFFIX);
             (void) strcat(acDev, EXT_PS);
             (void) strcat(acDev, PG_DEV_PS);
@@ -1566,7 +699,7 @@ int main(int argc, char *argv[])
                 (void) fprintf(stderr,
                                "ERROR: Opening graphics device %s failed!\n",
                                acDev);
-                (void) fclose(pFSpec);
+                (void) fclose(g_pFSpec);
                 YAPP_CleanUp();
                 return YAPP_RET_ERROR;
             }
@@ -1580,196 +713,404 @@ int main(int argc, char *argv[])
                 (void) fprintf(stderr,
                                "ERROR: Opening graphics device %s failed!\n",
                                PG_DEV);
-                (void) fclose(pFSpec);
+                (void) fclose(g_pFSpec);
                 YAPP_CleanUp();
                 return YAPP_RET_ERROR;
             }
             cpgask(YAPP_TRUE);
         }
 
-        /* set the background colour to white and the foreground colour to
-           black */
-        cpgscr(0, 1.0, 1.0, 1.0);
-        cpgscr(1, 0.0, 0.0, 0.0);
+       /* set the background colour to white and the foreground colour to
+          black, if user requires so */
+       if (YAPP_TRUE == iInvCols)
+       {
+           cpgscr(0, 1.0, 1.0, 1.0);
+           cpgscr(1, 0.0, 0.0, 0.0);
+       }
 
         /* set up the plot's X-axis */
-        g_pfXAxis = (float *) malloc(sizeof(float) * iBlockSize);
+        g_pfXAxis = (float *) YAPP_Malloc((size_t) iBlockSize, sizeof(float), YAPP_FALSE);
         if (NULL == g_pfXAxis)
         {
-            perror("malloc - g_pfXAxis");
+            (void) fprintf(stderr,
+                           "ERROR: Memory allocation failed! %s!\n",
+                           strerror(errno));
             cpgclos();
-            (void) fclose(pFSpec);
+            (void) fclose(g_pFSpec);
             YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
 
+        /* set up the image plot's Y-axis (frequency) */
+        g_pfYAxis = (float *) YAPP_Malloc((size_t) iNumChans, sizeof(float), YAPP_FALSE);
+        if (NULL == g_pfYAxis)
+        {
+            (void) fprintf(stderr,
+                           "ERROR: Memory allocation failed! %s!\n",
+                           strerror(errno));
+            cpgclos();
+            (void) fclose(g_pFSpec);
+            YAPP_CleanUp();
+            return YAPP_RET_ERROR;
+        }
+        if (stYUM.cIsBandFlipped)
+        {
+            for (i = 0; i < iNumChans; ++i)
+            {
+                g_pfYAxis[i] = fFMax - i * fChanBW;
+            }
+        }
+        else
+        {
+            for (i = 0; i < iNumChans; ++i)
+            {
+                g_pfYAxis[i] = fFMin + i * fChanBW;
+            }
+        }
+
+        #if 0
         /* calculate the tick step sizes */
         fXStep = (int) ((((iBlockSize - 1) * dTSampInSec) - 0)
                         / PG_TICK_STEPS_X);
-        fYStep = (int) ((g_pdDM[0] - g_pdDM[iNumDMs-1]) / PG_TICK_STEPS_Y);
-    }
+        fYStep = (int) ((fFMax - fFMin) / PG_TICK_STEPS_Y);
+        #endif
 
-    /* allocate memory for the two-dimensional dedispersed data array */
-    g_pfDedispDMChans = (float *) calloc((iNumDMs * iBlockSize), sizeof(float));
-    if (NULL == g_pfDedispDMChans)
-    {
-        perror("calloc - g_pfDedispDMChans");
-        (void) fclose(pFSpec);
-        YAPP_CleanUp();
-        return YAPP_RET_ERROR;
-    }
-
-    /* allocate memory for the output file array, with length (iNumLaws - 1).
-       the length is one less than iNumLaws because i = 0 is the initial
-       quadratic delay index, which is not used for anything other than delay
-       calculation for other laws */
-    g_ppFDedispData = (FILE **) malloc(sizeof(FILE) * (iNumLaws - 1));
-    if (NULL == g_ppFDedispData)
-    {
-        perror("malloc - g_ppFDedispData");
-        (void) fclose(pFSpec);
-        YAPP_CleanUp();
-        return YAPP_RET_ERROR;
-    }
-    g_ppFDedispCfg = (FILE **) malloc(sizeof(FILE) * (iNumLaws - 1));
-    if (NULL == g_ppFDedispCfg)
-    {
-        perror("malloc - g_ppFDedispCfg");
-        (void) fclose(pFSpec);
-        YAPP_CleanUp();
-        return YAPP_RET_ERROR;
+        /* allocate memory for the cpgimag() plotting buffer */
+        g_pfPlotBuf = (float *) YAPP_Malloc((size_t) iNumChans * iBlockSize,
+                                            sizeof(float),
+                                            YAPP_FALSE);
+        if (NULL == g_pfPlotBuf)
+        {
+            (void) fprintf(stderr,
+                           "ERROR: Memory allocation failed! %s!\n",
+                           strerror(errno));
+            cpgclos();
+            (void) fclose(g_pFSpec);
+            YAPP_CleanUp();
+            return YAPP_RET_ERROR;
+        }
     }
 
     /* generate dedispersed data file name and config file name from the input
-       file name, for each law */
-    dLaw = dLawMin;
-    for (i = 1; i < iNumLaws; ++i)  /* i = 0 is initial quadratic delay */
+       file name */
+    pcFilename = YAPP_GetFilenameFromPath(pcFileSpec, EXT_DYNSPEC);
+
+    (void) strcpy(acFileDedisp, pcFilename);
+    if (YAPP_FORMAT_DTS_TIM == iOutputFormat)
     {
-        pcFilename = YAPP_GetFilenameFromPath(pcFileSpec, EXT_DYNSPEC);
-        (void) sprintf(acFileDedisp, "%s_%g", pcFilename, dLaw);
+        (void) strcat(acFileDedisp, EXT_TIM);
+    }
+    else
+    {
         (void) strcat(acFileDedisp, EXT_DEDISPSPEC);
+    }
 
-        g_ppFDedispData[i-1] = fopen(acFileDedisp, "w");
-        if (NULL == g_ppFDedispData[i-1])
+    pFDedispData = fopen(acFileDedisp, "w");
+    if (NULL == pFDedispData)
+    {
+        fprintf(stderr,
+                "ERROR: Opening file %s failed! %s.\n",
+                acFileDedisp,
+                strerror(errno));
+        (void) fclose(g_pFSpec);
+        YAPP_CleanUp();
+        return YAPP_RET_ERROR;
+    }
+
+    /* add header for .tim file format */
+    if (YAPP_FORMAT_DTS_TIM == iOutputFormat)
+    {
+        /* write the parameters to the header section of the file */
+        /* start with the 'HEADER_START' label */
+        iLen = strlen("HEADER_START");
+        (void) fwrite(&iLen, sizeof(iLen), 1, pFDedispData);
+        (void) strcpy(acLabel, "HEADER_START");
+        (void) fwrite(acLabel, sizeof(char), iLen, pFDedispData);
+
+        /* write the rest of the header */
+        /* write source name */
+        /* write field label length */
+        iLen = strlen("source_name");
+        (void) fwrite(&iLen, sizeof(iLen), 1, pFDedispData);
+        /* write field label */
+        (void) strcpy(acLabel, "source_name");
+        (void) fwrite(acLabel, sizeof(char), iLen, pFDedispData);
+        (void) strncpy(stHeader.acPulsar, stYUM.acPulsar, MAX_LEN_PSRNAME); 
+        iLen = strlen(stHeader.acPulsar);
+        (void) fwrite(&iLen, sizeof(iLen), 1, pFDedispData);
+        (void) fwrite(stHeader.acPulsar, sizeof(char), iLen, pFDedispData);
+
+        /* write data type */
+        iLen = strlen("data_type");
+        (void) fwrite(&iLen, sizeof(iLen), 1, pFDedispData);
+        (void) strcpy(acLabel, "data_type");
+        (void) fwrite(acLabel, sizeof(char), iLen, pFDedispData);
+        /* set the data type to 'time series (topocentric)' */
+        stHeader.iDataTypeID = 2;
+        (void) fwrite(&stHeader.iDataTypeID,
+                      sizeof(stHeader.iDataTypeID),
+                      1,
+                      pFDedispData);
+
+        //TODO: check if we need this
+        /* write number of channels */
+        iLen = strlen("nchans");
+        (void) fwrite(&iLen, sizeof(iLen), 1, pFDedispData);
+        (void) strcpy(acLabel, "nchans");
+        (void) fwrite(acLabel, sizeof(char), iLen, pFDedispData);
+        /* set the number of channels to 1 */
+        stHeader.iNumChans = 1;
+        (void) fwrite(&stHeader.iNumChans,
+                      sizeof(stHeader.iNumChans),
+                      1,
+                      pFDedispData);
+
+        //TODO: check if we need this
+        /* write frequency of first channel */
+        iLen = strlen("fch1");
+        (void) fwrite(&iLen, sizeof(iLen), 1, pFDedispData);
+        (void) strcpy(acLabel, "fch1");
+        (void) fwrite(acLabel, sizeof(char), iLen, pFDedispData);
+        if (stYUM.fChanBW < 0.0)
         {
-            fprintf(stderr,
-                    "ERROR: Opening file %s failed! %s.\n",
-                    acFileDedisp,
-                    strerror(errno));
-            (void) fclose(pFSpec);
-            return YAPP_RET_ERROR;
+            stHeader.dFChan1 = (double) stYUM.fFMax;
         }
-
-        (void) sprintf(acFileDedispCfg, "%s_%g", pcFilename, dLaw);
-        (void) strcat(acFileDedispCfg, EXT_DEDISPSPECCFG);
-
-        free(pcFilename);
-
-        g_ppFDedispCfg[i-1] = fopen(acFileDedispCfg, "w");
-        if (NULL == g_ppFDedispCfg[i-1])
+        else
         {
-            fprintf(stderr,
-                    "ERROR: Opening file %s failed! %s.\n",
-                    acFileDedispCfg,
-                    strerror(errno));
-            for (j = 1; j < i; ++j)
-            {
-                (void) fclose(g_ppFDedispData[j-1]);
-            }
-            (void) fclose(pFSpec);
-            return YAPP_RET_ERROR;
+            stHeader.dFChan1 = (double) stYUM.fFMin;
         }
+        (void) fwrite(&stHeader.dFChan1,
+                      sizeof(stHeader.dFChan1),
+                      1,
+                      pFDedispData);
 
-        dTimeStart = (iBytesToSkip / (iNumChans * sizeof(float)))
-                                                        /* number of samples */
-                     * dTSampInSec;
-        dTimeStop = ((iBytesToSkip + iBytesToProc)
-                     / (iNumChans * sizeof(float)))     /* number of samples */
-                    * dTSampInSec;
-        iTimeSampsProced = ((dTimeStop - dTimeStart) * 1000.0) / dTSamp;
+        /* write number of bits per sample */
+        iLen = strlen("nbits");
+        (void) fwrite(&iLen, sizeof(iLen), 1, pFDedispData);
+        (void) strcpy(acLabel, "nbits");
+        (void) fwrite(acLabel, sizeof(char), iLen, pFDedispData);
+        /* set the number of bits per sample to 32 */
+        stHeader.iNumBits = YAPP_SAMPSIZE_32;
+        (void) fwrite(&stHeader.iNumBits,
+                      sizeof(stHeader.iNumBits),
+                      1,
+                      pFDedispData);
 
-        /* write to the .cfg file */
-        /* NOTE: this config file format conforms to that expected by
-           sl_bl_stat_n_search */
-        (void) fprintf(g_ppFDedispCfg[i-1], "%g %g\n", fFMin, fFMax);
-        (void) fprintf(g_ppFDedispCfg[i-1],
-                       "%.10g %.10g\n",
-                       dTimeStart,
-                       dTimeStop);
-        (void) fprintf(g_ppFDedispCfg[i-1],
-                       "%.10g %.10g\n",
-                       dDMMin,
-                       (dDMMin + ((iNumDMs - 1) * dDMStep)));
-        (void) fprintf(g_ppFDedispCfg[i-1],
-                       "%d %d\n",
-                       iNumDMs,
-                       iTimeSampsProced);
-        (void) fprintf(g_ppFDedispCfg[i-1],
-                       "%.10g %.10g\n",
-                       dTSampInSec,
-                       dDMStep);
-        {
+        /* write number of IFs */
+        iLen = strlen("nifs");
+        (void) fwrite(&iLen, sizeof(iLen), 1, pFDedispData);
+        (void) strcpy(acLabel, "nifs");
+        (void) fwrite(acLabel, sizeof(char), iLen, pFDedispData);
+        stHeader.iNumIFs = stYUM.iNumIFs;
+        (void) fwrite(&stHeader.iNumIFs,
+                      sizeof(stHeader.iNumIFs),
+                      1,
+                      pFDedispData);
+
+        /* write sampling time in seconds */
+        iLen = strlen("tsamp");
+        (void) fwrite(&iLen, sizeof(iLen), 1, pFDedispData);
+        (void) strcpy(acLabel, "tsamp");
+        (void) fwrite(acLabel, sizeof(char), iLen, pFDedispData);
+        stHeader.dTSamp = stYUM.dTSamp * 1e-3;  /* in s */
+        (void) fwrite(&stHeader.dTSamp,
+                      sizeof(stHeader.dTSamp),
+                      1,
+                      pFDedispData);
+
+        /* write timestamp of first sample (MJD) */
+        iLen = strlen("tstart");
+        (void) fwrite(&iLen, sizeof(iLen), 1, pFDedispData);
+        (void) strcpy(acLabel, "tstart");
+        (void) fwrite(acLabel, sizeof(char), iLen, pFDedispData);
         //temp
-        //int iNewReads = iTimeSampsProced / 64;
-        //(void) fprintf(g_ppFDedispCfg[i-1],
-        //        "%d %d\n", iNewReads, 64);
-        (void) fprintf(g_ppFDedispCfg[i-1],
-                "%d %d\n", iTotNumReads, iBlockSize);
-        }
-        (void) fprintf(g_ppFDedispCfg[i-1],
-                       "%g %.10g\n",
-                       fNoiseRMS,
-                       dNumSigmas);
-        (void) fprintf(g_ppFDedispCfg[i-1],
-                       "%s %s %s\n",
-                       acPulsar,
-                       acPulsar,
-                       acFileDedisp);
-        {
-        //temp
-        //int iNew = (iBlockSize * iNumDMs * iTotNumReads) / 8192;
-        //(void) fprintf(g_ppFDedispCfg[i-1],
-        //               "%d %d\n",
-        //               8192,
-        //               iNew);
-        (void) fprintf(g_ppFDedispCfg[i-1],
-                       "%d %d\n",
-                       iBlockSize,
-                       (iTotNumReads * iNumDMs));
-        }
-        (void) fprintf(g_ppFDedispCfg[i-1], "%s\n", "./");
-        (void) fprintf(g_ppFDedispCfg[i-1], "%.10g ", g_pdDM[0]);
-        for (j = 1; j < iNumDMs; ++j)
-        {
-            (void) fprintf(g_ppFDedispCfg[i-1], "%.10g ", g_pdDM[j]);
-            if (0 == (j % 6))
-            {
-                (void) fprintf(g_ppFDedispCfg[i-1], "\n");
-            }
-        }
-        (void) fprintf(g_ppFDedispCfg[i-1], "\n");
-        (void) fclose(g_ppFDedispCfg[i-1]);
+        stHeader.dTStart = (double) 56219;
+        (void) fwrite(&stHeader.dTStart,
+                      sizeof(stHeader.dTStart),
+                      1,
+                      pFDedispData);
 
-        dLaw += dLawStep;
+        /* write telescope ID */
+        iLen = strlen("telescope_id");
+        (void) fwrite(&iLen, sizeof(iLen), 1, pFDedispData);
+        (void) strcpy(acLabel, "telescope_id");
+        (void) fwrite(acLabel, sizeof(char), iLen, pFDedispData);
+        //temp
+        stHeader.iObsID = 0;    /* 'unknown type' in SIGPROC */
+        (void) fwrite(&stHeader.iObsID,
+                      sizeof(stHeader.iObsID),
+                      1,
+                      pFDedispData);
+
+        /* write backend ID */
+        iLen = strlen("machine_id");
+        (void) fwrite(&iLen, sizeof(iLen), 1, pFDedispData);
+        (void) strcpy(acLabel, "machine_id");
+        (void) fwrite(acLabel, sizeof(char), iLen, pFDedispData);
+        //temp
+        stHeader.iBackendID = 0;    /* 'unknown type' in SIGPROC */
+        (void) fwrite(&stHeader.iBackendID,
+                      sizeof(stHeader.iBackendID),
+                      1,
+                      pFDedispData);
+
+        /* write source RA (J2000) */
+        iLen = strlen("src_raj");
+        (void) fwrite(&iLen, sizeof(iLen), 1, pFDedispData);
+        (void) strcpy(acLabel, "src_raj");
+        (void) fwrite(acLabel, sizeof(char), iLen, pFDedispData);
+        (void) fwrite(&stHeader.dSourceRA,
+                      sizeof(stHeader.dSourceRA),
+                      1,
+                      pFDedispData);
+
+        /* write source declination (J2000) */
+        iLen = strlen("src_dej");
+        (void) fwrite(&iLen, sizeof(iLen), 1, pFDedispData);
+        (void) strcpy(acLabel, "src_dej");
+        (void) fwrite(acLabel, sizeof(char), iLen, pFDedispData);
+        (void) fwrite(&stHeader.dSourceDec,
+                      sizeof(stHeader.dSourceDec), 1, pFDedispData);
+
+        /* write azimuth start */
+        iLen = strlen("az_start");
+        (void) fwrite(&iLen, sizeof(iLen), 1, pFDedispData);
+        (void) strcpy(acLabel, "az_start");
+        (void) fwrite(acLabel, sizeof(char), iLen, pFDedispData);
+        (void) fwrite(&stHeader.dAzStart,
+                      sizeof(stHeader.dAzStart),
+                      1,
+                      pFDedispData);
+
+        /* write ZA start */
+        iLen = strlen("za_start");
+        (void) fwrite(&iLen, sizeof(iLen), 1, pFDedispData);
+        (void) strcpy(acLabel, "za_start");
+        (void) fwrite(acLabel, sizeof(char), iLen, pFDedispData);
+        (void) fwrite(&stHeader.dZAStart,
+                      sizeof(stHeader.dZAStart),
+                      1,
+                      pFDedispData);
+
+        //TODO: check if we need this
+        /* write reference DM */
+        iLen = strlen("refdm");
+        (void) fwrite(&iLen, sizeof(iLen), 1, pFDedispData);
+        (void) strcpy(acLabel, "refdm");
+        (void) fwrite(acLabel, sizeof(char), iLen, pFDedispData);
+        /* set the DM */
+        stHeader.dDM = dDM;
+        (void) fwrite(&stHeader.dDM, sizeof(stHeader.dDM), 1, pFDedispData);
+
+        /* write barycentric flag */
+        iLen = strlen("barycentric");
+        (void) fwrite(&iLen, sizeof(iLen), 1, pFDedispData);
+        (void) strcpy(acLabel, "barycentric");
+        (void) fwrite(acLabel, sizeof(char), iLen, pFDedispData);
+        //temp
+        stHeader.iFlagBary = 0;
+        (void) fwrite(&stHeader.iFlagBary,
+                      sizeof(stHeader.iFlagBary),
+                      1,
+                      pFDedispData);
+
+        /* write header end tag */
+        iLen = strlen("HEADER_END");
+        (void) fwrite(&iLen, sizeof(iLen), 1, pFDedispData);
+        (void) strcpy(acLabel, "HEADER_END");
+        (void) fwrite(acLabel, sizeof(char), iLen, pFDedispData);
     }
 
     /* set up the plots */
-    if (g_iDispPlots)
+    if (cHasGraphics)
     {
-        cpgsubp(1, (iNumLaws - 1));
-
-        afTM[0] = 1;
-        afTM[1] = 1;
-        afTM[3] = 1;
-        afTM[5] = 1;
+        cpgsubp(1, 3);
+        cpgsch(1.8);
     }
 
-    /* for each power law, disperse the data for different values of
-       (psuedo-)DMs */
+    /* dedisperse the data */
     while (iNumReads >= 0)
     {
         /* for optimisation - calculate ((iReadBlockCount - 1) * iBlockSize) */
         iReadSmpCount = (iReadBlockCount - 1) * iBlockSize;
+
+        if (cHasGraphics)
+        {
+            /* common for all panels */
+            for (i = 0; i < iBlockSize; ++i)
+            {
+                g_pfXAxis[i] = (iReadSmpCount * dTSampInSec)
+                               + (i * dTSampInSec);
+            }
+
+            cpgpanl(1, 1);
+            /* erase just before plotting, to reduce flicker */
+            cpgeras();
+
+            pfSpectrum = pfPriBuf;
+            fDataMin = pfSpectrum[0];
+            fDataMax = pfSpectrum[0];
+            for (j = 0; j < iBlockSize; ++j)
+            {
+                pfSpectrum = pfPriBuf + j * iNumChans;
+                for (k = 0; k < iNumChans; ++k)
+                {
+                    if (pfSpectrum[k] < fDataMin)
+                    {
+                        fDataMin = pfSpectrum[k];
+                    }
+                    if (pfSpectrum[k] > fDataMax)
+                    {
+                        fDataMax = pfSpectrum[k];
+                    }
+                }
+            }
+
+            (void) printf("Minimum value of data             : %g\n", fDataMin);
+            (void) printf("Maximum value of data             : %g\n", fDataMax);
+
+            #if 0
+            if (-fThreshold > fDataMin)
+            {
+                fColMin = -fThreshold;
+            }
+            else
+            {
+                fColMin = fDataMin;
+            }
+            if (fThreshold < fDataMax)
+            {
+                fColMax = fThreshold;
+            }
+            else
+            {
+                fColMax = fDataMax;
+            }
+            #endif
+
+            /* get the transpose of the two-dimensional array */
+            k = 0;
+            l = 0;
+            m = 0;
+            for (i = 0; i < iBlockSize; ++i)
+            {
+                pfSpectrum = pfPriBuf + i * iNumChans;
+                for (j = 0; j < iNumChans; ++j)
+                {
+                    g_pfPlotBuf[l] = pfSpectrum[j];
+                    l = m + k * iBlockSize;
+                    ++k;
+                }
+                k = 0;
+                l = ++m;
+            }
+
+            Plot2D(g_pfPlotBuf, fDataMin, fDataMax,
+                   g_pfXAxis, iBlockSize, dTSampInSec,
+                   g_pfYAxis, iNumChans, fChanBW,
+                   "Time (s)", "Frequency (MHz)", "Before Dedispersion",
+                   iColourMap);
+        }
 
         /* read the next data block, for reading samples that would be
            shifted in */
@@ -1778,28 +1119,27 @@ int main(int argc, char *argv[])
             (void) printf("Reading data block %d.\n", iReadBlockCount);
             if (BUF_0 == iPrimaryBuf)
             {
-                iReadItems = fread(g_pfBuf1,
-                                   sizeof(float),
-                                   iTotSampsPerBlock,
-                                   pFSpec);
+                iReadItems = YAPP_ReadData(g_pfBuf1,
+                                           fSampSize,
+                                           iTotSampsPerBlock);
                 pfSecBuf = g_pfBuf1;
             }
             else
             {
-                iReadItems = fread(g_pfBuf0,
-                                   sizeof(float),
-                                   iTotSampsPerBlock,
-                                   pFSpec);
+                iReadItems = YAPP_ReadData(g_pfBuf0,
+                                           fSampSize,
+                                           iTotSampsPerBlock);
                 pfSecBuf = g_pfBuf0;
             }
-            if (ferror(pFSpec))
+            if (ferror(g_pFSpec))
             {
                 (void) fprintf(stderr, "ERROR: File read failed!\n");
-                for (i = 1; i < iNumLaws; ++i)
+                if (cHasGraphics)
                 {
-                    (void) fclose(g_ppFDedispData[i-1]);
+                    cpgclos();
                 }
-                (void) fclose(pFSpec);
+                (void) fclose(pFDedispData);
+                (void) fclose(g_pFSpec);
                 YAPP_CleanUp();
                 return YAPP_RET_ERROR;
             }
@@ -1831,311 +1171,318 @@ int main(int argc, char *argv[])
                first buffer */
             iSecBufReadSampCount = iReadBlockCount * iBlockSize;
 
-            /* flag bad time sections, and if required, normalise within
-               the beam flip time section and perform gain correction */
-            for (i = 0; i < iNumSamps; ++i)
+            //temp
+            #if 0
+            if (YAPP_FORMAT_SPEC == iFormat)
             {
-                dTNow += dTSampInSec;   /* in s */
-
-                if ((dTNow >= (*g_padBadTimes)[iBadTimeSect][BADTIME_BEG])
-                    && (dTNow
-                        <= (*g_padBadTimes)[iBadTimeSect][BADTIME_END]))
+                /* flag bad time sections, and if required, normalise within
+                   the beam flip time section and perform gain correction */
+                for (i = 0; i < iNumSamps; ++i)
                 {
-                    cIsInBadTimeRange = YAPP_TRUE;
-                    g_pcIsTimeGood[iSecBufReadSampCount+i] = YAPP_FALSE;
-                }
+                    dTNow += dTSampInSec;   /* in s */
 
-                if ((YAPP_TRUE == cIsInBadTimeRange)
-                    && (dTNow
-                        > (*g_padBadTimes)[iBadTimeSect][BADTIME_END]))
-                {
-                    cIsInBadTimeRange = YAPP_FALSE;
-                    ++iBadTimeSect;
-                }
-
-                /* get the beam flip time section corresponding to this
-                   sample */
-                if (dTNow > dTNextBF)
-                {
-                    dTNextBF += dTBFInt;
-                    if (iTimeSect >= iBFTimeSects)
+                    if ((dTNow >= (*g_padBadTimes)[iBadTimeSect][BADTIME_BEG])
+                        && (dTNow
+                            <= (*g_padBadTimes)[iBadTimeSect][BADTIME_END]))
                     {
-                        (void) fprintf(stderr,
-                                       "ERROR: Beam flip time section anomaly "
-                                       "detected!\n");
-                        for (j = 1; j < iNumLaws; ++j)
+                        cIsInBadTimeRange = YAPP_TRUE;
+                        g_pcIsTimeGood[iSecBufReadSampCount+i] = YAPP_FALSE;
+                    }
+
+                    if ((YAPP_TRUE == cIsInBadTimeRange)
+                        && (dTNow
+                            > (*g_padBadTimes)[iBadTimeSect][BADTIME_END]))
+                    {
+                        cIsInBadTimeRange = YAPP_FALSE;
+                        ++iBadTimeSect;
+                    }
+
+                    /* get the beam flip time section corresponding to this
+                       sample */
+                    if (dTNow > dTNextBF)
+                    {
+                        dTNextBF += dTBFInt;
+                        if (iTimeSect >= iBFTimeSects)
                         {
-                            (void) fclose(g_ppFDedispData[j-1]);
+                            (void) fprintf(stderr,
+                                           "ERROR: Beam flip time section "
+                                           "anomaly detected!\n");
+                            if (cHasGraphics)
+                            {
+                                cpgclos();
+                            }
+                            (void) fclose(pFDedispData);
+                            (void) fclose(g_pFSpec);
+                            YAPP_CleanUp();
+                            return YAPP_RET_ERROR;
                         }
-                        (void) fclose(pFSpec);
-                        YAPP_CleanUp();
-                        return YAPP_RET_ERROR;
+                        ++iTimeSect;
                     }
-                    ++iTimeSect;
-                }
 
-                pfTimeSectGain = g_pfBFGain + iTimeSect * iNumChans;
-                pfSpectrum = pfSecBuf + i * iNumChans;
-                for (j = 0; j < iNumChans; ++j)
-                {
-                    if (g_pcIsChanGood[j])
+                    pfTimeSectGain = g_pfBFGain + iTimeSect * iNumChans;
+                    pfSpectrum = pfSecBuf + i * iNumChans;
+                    for (j = 0; j < iNumChans; ++j)
                     {
-                        pfSpectrum[j] = (pfSpectrum[j]
-                                         / g_pfBFTimeSectMean[iTimeSect])
-                                        - pfTimeSectGain[j];
+                        if (g_pcIsChanGood[j])
+                        {
+                            pfSpectrum[j] = (pfSpectrum[j]
+                                             / g_pfBFTimeSectMean[iTimeSect])
+                                            - pfTimeSectGain[j];
+                        }
                     }
-                    //temp
-                    //else    /* remove bad channels */
-                    //{
-                    //    pfSpectrum[j] = 0.0;
-                    //}
                 }
             }
+            #endif
         }
 
         (void) printf("Processing data block %d.\n", (iReadBlockCount - 1));
 
-        /* back-up the primary buffer, because it will be modified */
-        (void) memcpy(g_pfPriBufBk,
-                      pfPriBuf,
-                      iDataSizePerBlock);
+        /* clear the g_pfDedispData array */
+        (void) memset(g_pfDedispData,
+                      '\0',
+                      (sizeof(float) * iBlockSize));
 
-        for (i = 1; i < iNumLaws; ++i)  /* i = 0 is initial quadratic delay */
+        for (k = 0; k < iBlockSize; ++k)
         {
-            pdDMDelay = g_pdDelayTab + i * iNumDMs * iNumChans;
-            for (j = 0; j < iNumDMs; ++j)
+            pfSpectrum = pfPriBuf + k * iNumChans;
+            for (l = 0; l < iNumChans; ++l)
             {
-                pfDMChan = g_pfDedispDMChans + j * iBlockSize;
-
-                /* clear the g_pfDedispData array */
-                (void) memset(g_pfDedispData,
-                              '\0',
-                              (sizeof(float) * iBlockSize));
-
-                /* perform delay correction */
-                pdSpecDelay = pdDMDelay + j * iNumChans;
-                for (k = 0; k < iBlockSize; ++k)
+                if (g_pcIsChanGood[l])
                 {
-                    pfSpectrum = pfPriBuf + k * iNumChans;
-                    for (l = 0; l < iNumChans; ++l)
+                    /* get the offset for the corresponding DM and frequency
+                       channel from the offset table */
+                    iOffset = g_piOffsetTab[l];
+                    /* apply the delay - shift all time samples up */
+                    if ((k + iOffset) >= iBlockSize)
                     {
-                        if (g_pcIsChanGood[l])
+                        if (!(cIsLastBlock))
                         {
-                            /* get the delay for the corresponding DM and
-                               frequency channel from the delay table */
-                            dDelay = pdSpecDelay[l];
-                            /* calculate the sample number offset from
-                               the delay */
-                            iOffset = (int) -(dDelay / dTSamp);
-
-                            /* apply the delay - shift all time samples
-                               up */
-                            if ((k + iOffset) >= iBlockSize)
+                            m = k + iOffset - iBlockSize;
+                            pfOffsetSpec = pfSecBuf + m * iNumChans;
+                            pfSpectrum[l] = pfOffsetSpec[l];
+                            if (g_pcIsTimeGood[iReadSmpCount+k+iOffset])
                             {
-                                /* index crosses over to the next block */
-                                if (!(cIsLastBlock))
-                                {
-                                    /* local index in the next block */
-                                    m = k + iOffset - iBlockSize;
-                                    pfOffsetSpec = pfSecBuf + m * iNumChans;
-                                    pfSpectrum[l] = pfOffsetSpec[l];
-                                    if (g_pcIsTimeGood[iReadSmpCount+k+iOffset])
-                                    {
-                                        g_pfDedispData[k] += pfSpectrum[l];
-                                        ++iEffcNumGoodChans;
-                                    }
-                                    //temp
-                                    //else
-                                    //{
-                                    //    g_pfDedispData[k] += fNoiseRMS;
-                                    //    ++iEffcNumGoodChans;
-                                    //}
-                                }
-                                //temp
-                                //else
-                                //{
-                                //    pfSpectrum[l] = 0.0;
-                                //}
-                            }
-                            else
-                            {
-                                /* index remains within the same block */
-                                pfOffsetSpec = pfPriBuf
-                                               + (k + iOffset) * iNumChans;
-                                pfSpectrum[l] = pfOffsetSpec[l];
-                                if (g_pcIsTimeGood[iReadSmpCount+k+iOffset])
-                                {
-                                    g_pfDedispData[k] += pfSpectrum[l];
-                                    ++iEffcNumGoodChans;
-                                }
-                                //temp
-                                //else
-                                //{
-                                //    g_pfDedispData[k] += fNoiseRMS;
-                                //    ++iEffcNumGoodChans;
-                                //}
+                                g_pfDedispData[k] += pfSpectrum[l];
+                                ++iEffcNumGoodChans;
                             }
                         }
                     }
-
-                    /* get the average over all the good channels */
-                    if (iEffcNumGoodChans != 0)
-                    {
-                        g_pfDedispData[k] /= iEffcNumGoodChans;
-                    }
                     else
                     {
-                        //temp
-                        g_pfDedispData[k] = 0.0;
-                        //g_pfDedispData[k] = fNoiseRMS;
+                        pfOffsetSpec = pfPriBuf
+                                       + (k + iOffset) * iNumChans;
+                        pfSpectrum[l] = pfOffsetSpec[l];
+                        if (g_pcIsTimeGood[iReadSmpCount+k+iOffset])
+                        {
+                            g_pfDedispData[k] += pfSpectrum[l];
+                            ++iEffcNumGoodChans;
+                        }
                     }
-
-                    pfDMChan[k] = g_pfDedispData[k] / fNoiseRMS;
-                    //temp
-                    //pfDMChan[k] = g_pfDedispData[k];
-
-                    /* reset the effective number of good channels */
-                    iEffcNumGoodChans = 0;
                 }
-
-                /* copy the backed-up primary buffer back to the main primary
-                   buffer, for the next shift iteration */
-                (void) memcpy(pfPriBuf,
-                              g_pfPriBufBk,
-                              iDataSizePerBlock);
             }
 
-            if (g_iDispPlots)
+            /* get the average over all the good channels */
+            if (iEffcNumGoodChans != 0)
             {
-                /* time vs. DM channel map */
-                cpgpanl(1, i);
+                g_pfDedispData[k] /= iEffcNumGoodChans;
+            }
+            else
+            {
+                g_pfDedispData[k] = 0.0;
+            }
 
-                /* find out the min and max if this is the first block */
-                if (1 == iReadBlockCount)
+            g_pfDedispData[k] /= fNoiseRMS;
+
+            /* reset the effective number of good channels */
+            iEffcNumGoodChans = 0;
+        }
+
+        if (cHasGraphics)
+        {
+            cpgpanl(1, 2);
+            /* erase just before plotting, to reduce flicker */
+            cpgeras();
+
+            pfSpectrum = pfPriBuf;
+            fDataMin = pfSpectrum[0];
+            fDataMax = pfSpectrum[0];
+            for (j = 0; j < iBlockSize; ++j)
+            {
+                pfSpectrum = pfPriBuf + j * iNumChans;
+                for (k = 0; k < iNumChans; ++k)
                 {
-                    pfDMChan = g_pfDedispDMChans;
-                    fDataMin = pfDMChan[0];
-                    fDataMax = pfDMChan[0];
-                    for (j = 0; j < iNumDMs; ++j)
+                    if (pfSpectrum[k] < fDataMin)
                     {
-                        pfDMChan = g_pfDedispDMChans + j * iBlockSize;
-                        for (k = 0; k < iBlockSize; ++k)
+                        fDataMin = pfSpectrum[k];
+                    }
+                    if (pfSpectrum[k] > fDataMax)
+                    {
+                        fDataMax = pfSpectrum[k];
+                    }
+                }
+            }
+
+            (void) printf("Minimum value of data             : %g\n", fDataMin);
+            (void) printf("Maximum value of data             : %g\n", fDataMax);
+
+            #if 0
+            if (-fThreshold > fDataMin)
+            {
+                fColMin = -fThreshold;
+            }
+            else
+            {
+                fColMin = fDataMin;
+            }
+            if (fThreshold < fDataMax)
+            {
+                fColMax = fThreshold;
+            }
+            else
+            {
+                fColMax = fDataMax;
+            }
+            #endif
+
+            /* get the transpose of the two-dimensional array */
+            k = 0;
+            l = 0;
+            m = 0;
+            for (i = 0; i < iBlockSize; ++i)
+            {
+                pfSpectrum = pfPriBuf + i * iNumChans;
+                for (j = 0; j < iNumChans; ++j)
+                {
+                    g_pfPlotBuf[l] = pfSpectrum[j];
+                    l = m + k * iBlockSize;
+                    ++k;
+                }
+                k = 0;
+                l = ++m;
+            }
+
+            Plot2D(g_pfPlotBuf, fDataMin, fDataMax,
+                   g_pfXAxis, iBlockSize, dTSampInSec,
+                   g_pfYAxis, iNumChans, fChanBW,
+                   "Time (s)", "Frequency (MHz)", "After Dedispersion",
+                   iColourMap);
+        }
+
+        (void) fwrite(g_pfDedispData,
+                      sizeof(float),
+                      iBlockSize,
+                      pFDedispData);
+
+        if (cHasGraphics)
+        {
+            cpgpanl(1, 3);
+            /* erase just before plotting, to reduce flicker */
+            cpgeras();
+
+            fDataMin = g_pfDedispData[0];
+            fDataMax = g_pfDedispData[0];
+            for (l = 0; l < iBlockSize; ++l)
+            {
+                if (g_pfDedispData[l] < fDataMin)
+                {
+                    fDataMin = g_pfDedispData[l];
+                }
+                if (g_pfDedispData[l] > fDataMax)
+                {
+                    fDataMax = g_pfDedispData[l];
+                }
+            }
+
+            (void) printf("Minimum value of data             : %g\n", fDataMin);
+            (void) printf("Maximum value of data             : %g\n", fDataMax);
+
+            cpgsvp(PG_VP_ML, PG_VP_MR, PG_VP_MB, PG_VP_MT);
+
+            cpgswin(g_pfXAxis[0], g_pfXAxis[iBlockSize-1], fDataMin, fDataMax);
+            cpgbox("BCNST", 0.0, 0, "BCNST", 0.0, 0);
+            cpglab("Time (s)", "Total Power", "Dedipsersed Time Series");
+            cpgsci(PG_CI_PLOT);
+            cpgline(iBlockSize, g_pfXAxis, g_pfDedispData);
+            cpgsci(PG_CI_DEF);
+
+            if (!(cIsLastBlock))
+            {
+                if (!(cIsNonInteractive))
+                {
+                    /* draw the 'next' and 'exit' buttons */
+                    cpgsvp(PG_VP_BUT_ML, PG_VP_BUT_MR, PG_VP_BUT_MB, PG_VP_BUT_MT);
+                    cpgswin(PG_BUT_L, PG_BUT_R, PG_BUT_B, PG_BUT_T);
+                    cpgsci(PG_BUT_FILLCOL); /* set the fill colour */
+                    cpgrect(PG_BUTNEXT_L, PG_BUTNEXT_R, PG_BUTNEXT_B, PG_BUTNEXT_T);
+                    cpgrect(PG_BUTEXIT_L, PG_BUTEXIT_R, PG_BUTEXIT_B, PG_BUTEXIT_T);
+                    cpgsci(0);  /* set colour index to white */
+                    cpgtext(PG_BUTNEXT_TEXT_L, PG_BUTNEXT_TEXT_B, "Next");
+                    cpgtext(PG_BUTEXIT_TEXT_L, PG_BUTEXIT_TEXT_B, "Exit");
+
+                    fButX = (PG_BUTNEXT_R - PG_BUTNEXT_L) / 2;
+                    fButY = (PG_BUTNEXT_T - PG_BUTNEXT_B) / 2;
+
+                    while (YAPP_TRUE)
+                    {
+                        iRet = cpgcurs(&fButX, &fButY, &cCurChar);
+                        if (0 == iRet)
                         {
-                            if (pfDMChan[k] < fDataMin)
-                            {
-                                fDataMin = pfDMChan[k];
-                            }
-                            if (pfDMChan[k] > fDataMax)
-                            {
-                                fDataMax = pfDMChan[k];
-                            }
+                            (void) fprintf(stderr,
+                                           "WARNING: "
+                                           "Reading cursor parameters failed!\n");
+                            break;
+                        }
+
+                        if (((fButX >= PG_BUTNEXT_L) && (fButX <= PG_BUTNEXT_R))
+                            && ((fButY >= PG_BUTNEXT_B) && (fButY <= PG_BUTNEXT_T)))
+                        {
+                            /* animate button click */
+                            cpgsci(PG_BUT_FILLCOL);
+                            cpgtext(PG_BUTNEXT_TEXT_L, PG_BUTNEXT_TEXT_B, "Next");
+                            cpgsci(0);  /* set colour index to white */
+                            cpgtext(PG_BUTNEXT_CL_TEXT_L, PG_BUTNEXT_CL_TEXT_B, "Next");
+                            (void) usleep(PG_BUT_CL_SLEEP);
+                            cpgsci(PG_BUT_FILLCOL); /* set colour index to fill
+                                                       colour */
+                            cpgtext(PG_BUTNEXT_CL_TEXT_L, PG_BUTNEXT_CL_TEXT_B, "Next");
+                            cpgsci(0);  /* set colour index to white */
+                            cpgtext(PG_BUTNEXT_TEXT_L, PG_BUTNEXT_TEXT_B, "Next");
+                            cpgsci(1);  /* reset colour index to black */
+                            (void) usleep(PG_BUT_CL_SLEEP);
+
+                            break;
+                        }
+                        else if (((fButX >= PG_BUTEXIT_L) && (fButX <= PG_BUTEXIT_R))
+                            && ((fButY >= PG_BUTEXIT_B) && (fButY <= PG_BUTEXIT_T)))
+                        {
+                            /* animate button click */
+                            cpgsci(PG_BUT_FILLCOL);
+                            cpgtext(PG_BUTEXIT_TEXT_L, PG_BUTEXIT_TEXT_B, "Exit");
+                            cpgsci(0);  /* set colour index to white */
+                            cpgtext(PG_BUTEXIT_CL_TEXT_L, PG_BUTEXIT_CL_TEXT_B, "Exit");
+                            (void) usleep(PG_BUT_CL_SLEEP);
+                            cpgsci(PG_BUT_FILLCOL); /* set colour index to fill
+                                                       colour */
+                            cpgtext(PG_BUTEXIT_CL_TEXT_L, PG_BUTEXIT_CL_TEXT_B, "Exit");
+                            cpgsci(0);  /* set colour index to white */
+                            cpgtext(PG_BUTEXIT_TEXT_L, PG_BUTEXIT_TEXT_B, "Exit");
+                            cpgsci(1);  /* reset colour index to black */
+                            (void) usleep(PG_BUT_CL_SLEEP);
+
+                            cpgclos();
+                            (void) fclose(pFDedispData);
+                            (void) fclose(g_pFSpec);
+                            g_pFSpec = NULL;
+                            YAPP_CleanUp();
+                            return YAPP_RET_SUCCESS;
                         }
                     }
-
-                    (void) printf("Minimum value of data             : %g\n",
-                                  fDataMin);
-                    (void) printf("Maximum value of data             : %g\n",
-                                  fDataMax);
-
-                    if (-fThreshold > fDataMin)
-                    {
-                        fColMin = -fThreshold;
-                    }
-                    else
-                    {
-                        fColMin = fDataMin;
-                    }
-                    if (fThreshold < fDataMax)
-                    {
-                        fColMax = fThreshold;
-                    }
-                    else
-                    {
-                        fColMax = fDataMax;
-                    }
-
-                    iFlagBW = YAPP_FALSE;
-
-                    #ifdef _FC_F77_    /* if using Fortran 77 compiler */
-                    set_colours__(&iFlagBW, &fColMin, &fColMax);
-                    #else           /* for Fortran 95 */
-                    set_colours_(&iFlagBW, &fColMin, &fColMax);
-                    #endif
-                    /* DEV:
-                    SetColourMap(iFlagBW, fColMin, fColMax); */
-                }
-
-                cpgsvp(PG_VP_ML, PG_VP_MR, PG_VP_MB, PG_VP_MT);
-                /* NOTE: due to limitations of PGPLOT, will plot only
-                   (iNumDMs - 2) DM channels */
-                cpgswin(1, (iBlockSize - 2), 1, (iNumDMs - 2));
-                if ((iNumLaws - 1) != 1)
-                {
-                    cpgsch(PG_CH_SCALEFACTOR * (float)((iNumLaws - 1)/2));
                 }
                 else
                 {
-                    cpgsch(PG_CH_SCALEFACTOR * (float) (iNumLaws - 1));
+                    /* pause before erasing */
+                    (void) usleep(PG_PLOT_SLEEP);
                 }
-                cpgbox("C", 0.0, 0, "C", 0.0, 0);
-                for (j = 0; j < iBlockSize; ++j)
-                {
-                    g_pfXAxis[j] = (iReadSmpCount * dTSampInSec)
-                                   + (j * dTSampInSec);
-                }
-                cpgaxis("N",
-                        1, 1,
-                        (iBlockSize - 2), 1,
-                        g_pfXAxis[1], g_pfXAxis[iBlockSize-2],
-                        fXStep,
-                        0,
-                        0.0,
-                        0.4,
-                        1.0,
-                        0.8,
-                        0);
-                cpgaxis("N",
-                        1, 1,
-                        1, (iNumDMs - 2),
-                        g_pdDM[1], g_pdDM[iNumDMs-2],
-                        fYStep,
-                        0,
-                        0.4,
-                        0.0,
-                        1.0,
-                        -0.8,
-                        0);
-                (void) sprintf(acTitle,
-                               "\\gn\\u-%g\\d",
-                               (dLawMin + (i - 1) * dLawStep));
-                cpglab("Time (s)", "DM (cm\\u-3\\d pc)", acTitle);
-                cpgimag(g_pfDedispDMChans,
-                        iBlockSize,
-                        iNumDMs,
-                        1,
-                        (iBlockSize- 2),
-                        1,
-                        (iNumDMs - 2),
-                        fDataMin,
-                        fDataMax,
-                        afTM);
-                cpgwedg("RI", 1.0, 5.0, fDataMin, fDataMax, "");
-            }
-
-            /* write the de-dispersed data to a file, to be pushed through
-               the matched filtering program, to generate a list of
-               candidates */
-            (void) fwrite(g_pfDedispDMChans,
-                          sizeof(float),
-                          (iNumDMs * iBlockSize),
-                          g_ppFDedispData[i-1]);
-        }
-
-        if (g_iDispPlots)
-        {
-            if (!(cIsLastBlock))
-            {
-                cpgpage();
             }
         }
 
@@ -2160,111 +1507,17 @@ int main(int argc, char *argv[])
 
     (void) printf("DONE!\n");
 
-    if (g_iDispPlots)
+    if (cHasGraphics)
     {
         cpgclos();
     }
 
-    for (i = 1; i < iNumLaws; ++i)
-    {
-        (void) fclose(g_ppFDedispData[i-1]);
-    }
-    (void) fclose(pFSpec);
+    (void) fclose(pFDedispData);
+    (void) fclose(g_pFSpec);
+    g_pFSpec = NULL;
     YAPP_CleanUp();
 
     return YAPP_RET_SUCCESS;
-}
-
-/*
- * Cleans up all allocated memory
- */
-void YAPP_CleanUp()
-{
-    if (g_ppFDedispCfg != NULL)
-    {
-        free(g_ppFDedispCfg);
-        g_ppFDedispCfg = NULL;
-    }
-    if (g_ppFDedispData != NULL)
-    {
-        free(g_ppFDedispData);
-        g_ppFDedispData = NULL;
-    }
-    if (g_pfDedispDMChans != NULL)
-    {
-        free(g_pfDedispDMChans);
-        g_pfDedispDMChans = NULL;
-    }
-    if (g_iDispPlots)
-    {
-        if (g_pfXAxis != NULL)
-        {
-            free(g_pfXAxis);
-            g_pfXAxis = NULL;
-        }
-    }
-    if (g_pfPriBufBk != NULL)
-    {
-        free(g_pfPriBufBk);
-        g_pfPriBufBk = NULL;
-    }
-    if (g_pfDedispData != NULL)
-    {
-        free(g_pfDedispData);
-        g_pfDedispData = NULL;
-    }
-    if (g_pfBuf1 != NULL)
-    {
-        free(g_pfBuf1);
-        g_pfBuf1 = NULL;
-    }
-    if (g_pfBuf0 != NULL)
-    {
-        free(g_pfBuf0);
-        g_pfBuf0 = NULL;
-    }
-    if (g_pcIsTimeGood != NULL)
-    {
-        free(g_pcIsTimeGood);
-        g_pcIsTimeGood = NULL;
-    }
-    if (g_pdMaxDelayTab != NULL)
-    {
-        free(g_pdMaxDelayTab);
-        g_pdMaxDelayTab = NULL;
-    }
-    if (g_pdDelayTab != NULL)
-    {
-        free(g_pdDelayTab);
-        g_pdDelayTab = NULL;
-    }
-    if (g_pdDM != NULL)
-    {
-        free(g_pdDM);
-        g_pdDM = NULL;
-    }
-    if (g_padBadTimes != NULL)
-    {
-        free(g_padBadTimes);
-        g_padBadTimes = NULL;
-    }
-    if (g_pfBFGain != NULL)
-    {
-        free(g_pfBFGain);
-        g_pfBFGain = NULL;
-    }
-    if (g_pfBFTimeSectMean != NULL)
-    {
-        free(g_pfBFTimeSectMean);
-        g_pfBFTimeSectMean = NULL;
-    }
-    if (g_pcIsChanGood != NULL)
-    {
-        free(g_pcIsChanGood);
-        g_pcIsChanGood = NULL;
-    }
-
-    return;
 }
 
 /*
@@ -2272,54 +1525,194 @@ void YAPP_CleanUp()
  */
 void PrintUsage(const char *pcProgName)
 {
-    (void) printf("Usage: %s [options] <spec-file>\n", pcProgName);
+    (void) printf("Usage: %s [options] <data-file>\n",
+                  pcProgName);
     (void) printf("    -h  --help                           ");
     (void) printf("Display this usage information\n");
-    (void) printf("    -N  --law-min <limit>                ");
-    (void) printf("The minimum power law from which search\n");
-    (void) printf("                                         ");
-    (void) printf("is to be performed\n");
-    (void) printf("    -X  --law-max <limit>                ");
-    (void) printf("The maximum power law upto which search\n");
-    (void) printf("                                         ");
-    (void) printf("is to be performed\n");
-    (void) printf("    -w  --law-step <step-size>           ");
-    (void) printf("Power law step size\n");
-    (void) printf("    -n  --dm-min <limit>                 ");
-    (void) printf("The minimum DM from which search is to\n");
-    (void) printf("                                         ");
-    (void) printf("be performed\n");
-    (void) printf("    -x  --dm-max <limit>                 ");
-    (void) printf("The maximum DM upto which search is to\n");
-    (void) printf("                                         ");
-    (void) printf("be performed\n");
-    (void) printf("    -s  --data-skip-percent <percentage> ");
-    (void) printf("The percentage of data to be skipped\n");
-    (void) printf("    -S  --data-skip-time <time>          ");
+    (void) printf("    -s  --skip <time>                    ");
     (void) printf("The length of data in seconds, to be\n");
     (void) printf("                                         ");
     (void) printf("skipped\n");
-    (void) printf("    -p  --data-proc-percent <percentage> ");
-    (void) printf("The percentage of data to be processed\n");
-    (void) printf("                                         ");
-    (void) printf("(default is 100)\n");
-    (void) printf("    -P  --data-proc-time <time>          ");
+    (void) printf("    -p  --proc <time>                    ");
     (void) printf("The length of data in seconds, to be\n");
     (void) printf("                                         ");
     (void) printf("processed\n");
     (void) printf("                                         ");
     (void) printf("(default is all)\n");
-    (void) printf("    -b  --block-size <size>              ");
-    (void) printf("Size of each file read/write in bytes\n");
-    (void) printf("    -o  --no-plots                       ");
-    (void) printf("Run without displaying plots\n");
-    (void) printf("    -f  --plot-to-file                   ");
-    (void) printf("Plot to a PostScript file, instead of\n");
+    (void) printf("    -n  --nsamp <samples>                ");
+    (void) printf("Number of samples read in one block\n");
     (void) printf("                                         ");
-    (void) printf("the screen\n");
+    (void) printf("(default is 4096 samples)\n");
+    (void) printf("    -d  --dm <dm>                        ");
+    (void) printf("DM at which to de-disperse\n");
+    (void) printf("                                         ");
+    (void) printf("(default is 10.0)\n");
+    (void) printf("    -l  --law <law>                      ");
+    (void) printf("Dispersion law\n");
+    (void) printf("                                         ");
+    (void) printf("(default is 2.0)\n");
+    (void) printf("    -o  --out-format <format>            ");
+    (void) printf("Output format - 'ddd' or 'tim'\n");
+    (void) printf("                                         ");
+    (void) printf("(default is 'tim')\n");
+    (void) printf("    -g  --graphics                       ");
+    (void) printf("Turn on plotting\n");
+    (void) printf("    -m  --colour-map <name>              ");
+    (void) printf("Colour map for plotting\n");
+    (void) printf("                                         ");
+    (void) printf("(default is 'jet')\n");
+    (void) printf("    -i  --invert                         ");
+    (void) printf("Invert the background and foreground\n");
+    (void) printf("                                         ");
+    (void) printf("colours in plots\n");
+    (void) printf("    -e  --non-interactive                ");
+    (void) printf("Run in non-interactive mode\n");
     (void) printf("    -v  --version                        ");
     (void) printf("Display the version\n");
 
     return;
+}
+
+int YAPP_CalcDelays(double dDM,
+                    YUM_t stYUM,
+                    float fLaw,
+                    int* piMaxOffset)
+{
+    int i = 0;
+    float fF1 = 0.0;
+    float fF2 = 0.0;
+    double dDelay = 0.0;
+
+    g_piOffsetTab = (int *) YAPP_Malloc((size_t) stYUM.iNumChans,
+                                        sizeof(int),
+                                        YAPP_FALSE);
+    if (NULL == g_piOffsetTab)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Memory allocation failed! %s!\n",
+                       strerror(errno));
+        YAPP_CleanUp();
+        return YAPP_RET_ERROR;
+    }
+
+    /* calculate quadratic delays */
+    /* NOTE: delay may not be 0 for the highest frequency channel,
+       but the offset samples may be (depending on the sampling rate) */
+    //TODO: should be - and adjust the mjd according to infinite freq.
+#ifdef DEBUG
+    {
+        FILE *pFFileDelaysQuad = NULL;
+
+        pFFileDelaysQuad = fopen(YAPP_FILE_DELAYS_QUAD, "w");
+        if (NULL == pFFileDelaysQuad)
+        {
+            fprintf(stderr,
+                    "ERROR: Opening file %s failed! %s.\n",
+                    YAPP_FILE_DELAYS_QUAD,
+                    strerror(errno));
+            YAPP_CleanUp();
+            return YAPP_RET_ERROR;
+        }
+#endif
+    if (dDM < 0)
+    {
+        if (stYUM.cIsBandFlipped)
+        {
+            fF1 = stYUM.fFMax;
+            fF2 = stYUM.fFMax;
+            for (i = stYUM.iNumChans - 1; i >= 0; --i)
+            {
+                dDelay = (double) -4.148741601e6
+                         * (((double) 1.0 / pow(fF1, fLaw))
+                            - ((double) 1.0 / pow(fF2, fLaw)))
+                         * dDM;    /* in ms */
+                g_piOffsetTab[i] = (int) (dDelay / stYUM.dTSamp);
+#ifdef DEBUG
+                (void) fprintf(pFFileDelaysQuad,
+                               "%d %g %d\n",
+                               i,
+                               dDelay,
+                               g_piOffsetTab[i]);
+#endif
+                fF2 -= stYUM.fChanBW;
+            }
+            *piMaxOffset = g_piOffsetTab[0];
+        }
+        else
+        {
+            fF1 = stYUM.fFMax;
+            fF2 = stYUM.fFMax;
+            for (i = 0; i < stYUM.iNumChans; ++i)
+            {
+                dDelay = (double) -4.148741601e6
+                         * (((double) 1.0 / pow(fF1, fLaw))
+                            - ((double) 1.0 / pow(fF2, fLaw)))
+                         * dDM;    /* in ms */
+                g_piOffsetTab[i] = (int) (dDelay / stYUM.dTSamp);
+#ifdef DEBUG
+                (void) fprintf(pFFileDelaysQuad,
+                               "%d %g %d\n",
+                               i,
+                               dDelay,
+                               g_piOffsetTab[i]);
+#endif
+                fF2 -= stYUM.fChanBW;
+            }
+            *piMaxOffset = g_piOffsetTab[stYUM.iNumChans-1];
+        }
+    }
+    else
+    {
+        if (stYUM.cIsBandFlipped)
+        {
+            fF1 = stYUM.fFMax;
+            fF2 = stYUM.fFMax;
+            for (i = 0; i < stYUM.iNumChans; ++i)
+            {
+                dDelay = (double) -4.148741601e6
+                         * (((double) 1.0 / pow(fF1, fLaw))
+                            - ((double) 1.0 / pow(fF2, fLaw)))
+                         * dDM;    /* in ms */
+                g_piOffsetTab[i] = (int) (dDelay / stYUM.dTSamp);
+#ifdef DEBUG
+                (void) fprintf(pFFileDelaysQuad,
+                               "%d %g %d\n",
+                               i,
+                               dDelay,
+                               g_piOffsetTab[i]);
+#endif
+                fF2 -= stYUM.fChanBW;
+            }
+            *piMaxOffset = g_piOffsetTab[stYUM.iNumChans-1];
+        }
+        else
+        {
+            fF1 = stYUM.fFMax;
+            fF2 = stYUM.fFMax;
+            for (i = stYUM.iNumChans - 1; i >= 0; --i)
+            {
+                dDelay = (double) -4.148741601e6
+                         * (((double) 1.0 / pow(fF1, fLaw))
+                            - ((double) 1.0 / pow(fF2, fLaw)))
+                         * dDM;    /* in ms */
+                g_piOffsetTab[i] = (int) (dDelay / stYUM.dTSamp);
+#ifdef DEBUG
+                (void) fprintf(pFFileDelaysQuad,
+                               "%d %g %d\n",
+                               i,
+                               dDelay,
+                               g_piOffsetTab[i]);
+#endif
+                fF2 -= stYUM.fChanBW;
+            }
+            *piMaxOffset = g_piOffsetTab[0];
+        }
+    }
+#ifdef DEBUG
+        (void) fclose(pFFileDelaysQuad);
+    }
+#endif
+
+    return YAPP_RET_SUCCESS;
 }
 

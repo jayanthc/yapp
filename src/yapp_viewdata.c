@@ -3,7 +3,7 @@
  * Program to plot raw dynamic spectrum data.
  *
  * @verbatim
- * Usage: yapp_viewdata [options] <dynamic-spectrum-data-file>
+ * Usage: yapp_viewdata [options] <data-file>
  *     -h  --help                           Display this usage information
  *     -s  --skip <time>                    The length of data in seconds, to be
  *                                          skipped

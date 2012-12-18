@@ -1,34 +1,33 @@
 .\#
 .\# Yet Another Pulsar Processor Commands
-.\# yapp_viewdata Manual Page
+.\# yapp_dedisperse Manual Page
 .\#
-.\# Created by Jayanth Chennamangalam on 2011.03.20
+.\# Created by Jayanth Chennamangalam on 2012.12.18
 .\#
 
-.TH YAPP_VIEWDATA 1 "2012-12-18" "YAPP 2.0-beta" \
+.TH YAPP_DEDISPERSE 1 "2012-12-18" "YAPP 2.0-beta" \
 "Yet Another Pulsar Processor"
 
 
 .SH NAME
-yapp_viewdata \- view raw dynamic spectrum data
+yapp_dedisperse \- dedisperse dynamic spectrum data
 
 
 .SH SYNOPSIS
-.B yapp_viewdata
+.B yapp_dedisperse
 [options]
 .I data-file
 
 
 .SH DESCRIPTION
-This program displays data using a PGPLOT device. The following file types \
-are supported:
+Dedisperses filterbank format data. Supports flipped-band data, as well as \
+non-quadratic dispersion correction. The following file types are supported:
 .P
 1. DAS .spec filterbank format
 .br
 2. SIGPROC .fil filterbank format (including the headerless version, provided \
 a .fhd configuration file is present in the same directory)
-.br
-3. SIGPROC .tim time series format
+
 
 .SH OPTIONS
 .TP
@@ -44,8 +43,17 @@ Length of data to be processed, in seconds (default is all data).
 .B \-n, --nsamp \fIsamples
 Number of time samples read in one block (default is 4096 samples).
 .TP
-.B \-c, --clip-level \fIlevel
-Number of sigmas above threshold; will clip anything above this level.
+.B \-d, --dm \fIdm
+DM at which to dedisperse (default is 0.0).
+.TP
+.B \-l, --law \fIlaw
+Dispersion law (default is 2.0).
+.TP
+.B \-o, --out-format \fIformat
+Output format - 'dds' or 'tim' (default is 'tim').
+.TP
+.B \-g, --graphics
+Turn on plotting.
 .TP
 .B \-m, --colour-map \fIname
 Colour map for plotting. Supports some of the standard MATLAB colour maps, \
@@ -65,16 +73,17 @@ Display the version.
 
 .SH EXAMPLE
 .TP
-This run displays the contents of the SIGPROC filterbank file data.fil, with \
-8192 time samples per plot, and using the 'copper' colour map.
+Dedisperse the data in data.fil with a DM of 13.2952, with graphics turned \
+on, and in non-interactive mode. The output is written to data.tim.
 .TP
-yapp_viewdata -n 8192 -m copper data.fil
+yapp_dedisperse -d 13.2952 -g -e data.fil
 
 
 .SH SEE ALSO
 .BR yapp_viewmetadata (1),
+.BR yapp_viewdata (1),
 .BR yapp_ft (1),
-.BR yapp_dedisperse (1)
+.BR yapp_gencoeff.py (1)
 
 
 .SH AUTHOR

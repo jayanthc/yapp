@@ -5,7 +5,7 @@
 .\# Created by Jayanth Chennamangalam on 2010.09.23
 .\#
 
-.TH YAPP_VIEWMETADATA 1 "2012-10-14" "YAPP 1.1-beta" \
+.TH YAPP_VIEWMETADATA 1 "2012-12-18" "YAPP 2.0-beta" \
 "Yet Another Pulsar Processor"
 
 
@@ -16,12 +16,20 @@ yapp_viewmetadata \- view metadata/data header/configuration information
 .SH SYNOPSIS
 .B yapp_viewmetadata
 [options]
-.I dynamic-spectrum-data-file
+.I data-file
 
 
 .SH DESCRIPTION
-Prints metadata/data header/configuration information to standard output. The \
-supported file formats are DAS '.spec' and SIGPROC '.fil'.
+As the name indicates, this program is used to display metadata/data \
+header/configuration information associated with a data file. The following \
+file types are supported:
+.P
+1. DAS .spec filterbank format
+.br
+2. SIGPROC .fil filterbank format (including the headerless version, provided \
+a .fhd configuration file is present in the same directory)
+.br
+3. SIGPROC .tim time series format
 
 
 .SH OPTIONS
@@ -32,16 +40,30 @@ Display a short help text.
 .B \-v, --version
 Display the version.
 
+.TP
+The data file name may be a composed of standard shell wildcards such as * or \
+?.
+
 
 .SH EXAMPLES
 .TP
+The following displays the metadata for the SIGPROC filterbank file data.fil. \
+If this is a headerless filterbank file, it is expected that a file with \
+metadata information, named data.fhd is present in the same directory as the \
+data file.
+.TP
 yapp_viewmetadata data.fil
+.TP
+The following displays the metadata for all DAS filterbank files in the \
+current working directory.
+.TP
 yapp_viewmetadata *.spec
 
 
 .SH SEE ALSO
 .BR yapp_viewdata (1),
-.BR yapp_ft (1)
+.BR yapp_ft (1),
+.BR yapp_dedisperse (1)
 
 
 .SH AUTHOR

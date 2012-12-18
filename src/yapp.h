@@ -55,7 +55,7 @@
 /* @{ */
 #define YAPP_FORMATSTR_SPEC         "spec"
 #define YAPP_FORMATSTR_FIL          "fil"
-#define YAPP_FORMATSTR_DTS_DDD      "ddd"
+#define YAPP_FORMATSTR_DTS_DDS      "dds"
 #define YAPP_FORMATSTR_DTS_TIM      "tim"
 /* @} */
 
@@ -65,7 +65,7 @@ enum tagFileFormats
     YAPP_FORMAT_SPEC = 0,       /* Desh's specfile format */
     YAPP_FORMAT_FIL,            /* Dunc's filterbank file format */
     /* dedispersed time series formats */
-    YAPP_FORMAT_DTS_DDD,        /* Desh's dedispersed data format */
+    YAPP_FORMAT_DTS_DDS,        /* Desh's dedispersed data format */
     YAPP_FORMAT_DTS_TIM         /* Dunc's time series format */
 };
 
@@ -119,7 +119,7 @@ enum tagFileFormats
 /* @{ */
 #define DEF_LAW             2.0
 #define DEF_FORMAT          YAPP_FORMAT_SPEC
-#define DEF_OUT_FORMAT      YAPP_FORMAT_DTS_DDD
+#define DEF_OUT_FORMAT      YAPP_FORMAT_DTS_TIM
 #define DEF_SIZE_BLOCK      MAX_SIZE_BLOCK  /**< @brief Default block size */
 
 #define DEF_FOLD_PULSES     1000/**< @brief Default number of pulses to fold */
