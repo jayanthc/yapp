@@ -8,6 +8,8 @@ all:
 yapp_ft:
 1.  FEATURE: Support single-pol. data.
 2.  FEATURE: Plot in 2D
+3.  FEATURE: Add GPU acceleration.
+4.  FEATURE: Add time series Fourier transform.
 
 
 yapp_viewdata:
