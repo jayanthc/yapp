@@ -229,6 +229,7 @@ int main(int argc, char *argv[])
                        "ERROR: File type determination failed!\n");
         return YAPP_RET_ERROR;
     }
+    /* TODO: check if this is a valid file type */
 
     /* read metadata */
     iRet = YAPP_ReadMetadata(pcFileSpec, iFormat, &stYUM);

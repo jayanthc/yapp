@@ -29,6 +29,7 @@ int YAPP_GetFileType(char *pcFile)
     char *pcExt = NULL;
     int iFormat = YAPP_RET_ERROR; 
 
+    /* TODO: check if this is actually at the end */
     pcExt = strrchr(pcFile, '.');
     if (NULL == pcExt)
     {
@@ -37,7 +38,11 @@ int YAPP_GetFileType(char *pcFile)
                        pcFile);
         return YAPP_RET_ERROR;
     }
-    if (0 == strcmp(pcExt, EXT_DYNSPEC))
+    if (0 == strcmp(pcExt, EXT_RAW))
+    {
+        iFormat = YAPP_FORMAT_RAW;
+    }
+    else if (0 == strcmp(pcExt, EXT_DYNSPEC))
     {
         iFormat = YAPP_FORMAT_SPEC;
     }
@@ -1390,6 +1395,31 @@ int YAPP_ReadData(float *pfBuf,
 
     return iReadItems;
 }
+
+
+/*
+ * Smooth data
+ */
+int YAPP_Smooth(float* pfInBuf,
+                int iBlockSize,
+                int iSampsPerWin,
+                float* pfOutBuf)
+{
+    int i = 0;
+    int j = 0;
+
+    for (i = 0; i < (iBlockSize - iSampsPerWin); ++i)
+    {
+        for (j = 0; j < iSampsPerWin; ++j)
+        {
+            pfOutBuf[i] += pfInBuf[i+j];
+        }
+        pfOutBuf[i] /= iSampsPerWin;
+    }
+
+    return YAPP_RET_SUCCESS;
+}
+
 
 /*
  * The memory allocator

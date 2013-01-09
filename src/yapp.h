@@ -53,6 +53,7 @@
  * @defgroup YAPPFormat Data format strings.
  */
 /* @{ */
+#define YAPP_FORMATSTR_RAW          "raw"
 #define YAPP_FORMATSTR_SPEC         "spec"
 #define YAPP_FORMATSTR_FIL          "fil"
 #define YAPP_FORMATSTR_DTS_DDS      "dds"
@@ -63,6 +64,7 @@ enum tagFileFormats
 {
     /* dynamic spectrum formats */
     YAPP_FORMAT_SPEC = 0,       /* Desh's specfile format */
+    YAPP_FORMAT_RAW,            /* raw voltages (baseband data) */
     YAPP_FORMAT_FIL,            /* Dunc's filterbank file format */
     /* dedispersed time series formats */
     YAPP_FORMAT_DTS_DDS,        /* Desh's dedispersed data format */
@@ -80,6 +82,7 @@ enum tagFileFormats
 /* number of bits in a byte */
 #define YAPP_BYTE2BIT_FACTOR        8
 
+#define EXT_RAW                     ".raw"
 #define EXT_DYNSPEC                 ".spec"
 #define EXT_DEDISPSPEC              ".dds"
 #define EXT_DEDISPSPECCFG           ".cfg"
@@ -480,6 +483,14 @@ int YAPP_CalcDelays(double dDM,
                     YUM_t stYUM,
                     float fLaw,
                     int* piMaxOffset);
+
+/*
+ * Smooth data
+ */
+int YAPP_Smooth(float* pfInBuf,
+                int iBlockSize,
+                int iSampsPerWin,
+                float* pfOutBuf);
 
 /*
  * The memory allocator
