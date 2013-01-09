@@ -258,6 +258,7 @@ dTBFInt	src/yapp.h	/^    double dTBFInt;         \/* in s *\/$/;"	m	struct:YUM_s
 dTNextBF	src/yapp.h	/^    double dTNextBF;        \/* in s *\/$/;"	m	struct:YUM_s
 dTSamp	src/yapp.h	/^    double dTSamp;          \/* in ms *\/$/;"	m	struct:YUM_s
 dTSamp	src/yapp_sigproc.h	/^    double dTSamp;      \/* in seconds *\/$/;"	m	struct:tagSIGPROCHeader
+dTStart	src/yapp.h	/^    double dTStart;     \/* in MJD *\/$/;"	m	struct:YUM_s
 dTStart	src/yapp_sigproc.h	/^    double dTStart;     \/* in MJD *\/$/;"	m	struct:tagSIGPROCHeader
 dZAStart	src/yapp.h	/^    double dZAStart;$/;"	m	struct:YUM_s
 dZAStart	src/yapp_sigproc.h	/^    double dZAStart;$/;"	m	struct:tagSIGPROCHeader

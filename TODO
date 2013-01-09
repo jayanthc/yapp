@@ -27,7 +27,8 @@ yapp_viewdata:
 
 
 yapp_dedisperse:
-1.  BUG: dedisp: Negative DM dedispersion not correct.
+1.  BUG: Output file name improper for .spec files.
+2.  BUG: dedisp: Negative DM dedispersion not correct.
 
 
 All:

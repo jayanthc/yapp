@@ -281,7 +281,7 @@ typedef struct YUM_s
     char cIsBandFlipped;
     int iFlagSplicedData;
     int iHeaderLen;
-    /* TODO: add timestamp of obs - MJD/otherwise */
+    double dTStart;     /* in MJD */
     float fSampSize;
 
 #if 0
