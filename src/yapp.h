@@ -88,6 +88,8 @@ enum tagFileFormats
 #define EXT_FHD                     ".fhd"
 #define EXT_TIM                     ".tim"
 
+#define INFIX_SMOOTHED              "smoothed"
+
 #define SUFFIX_CFG                  "_cfg"
 
 #define LEN_GENSTRING       256 /**< @brief Length of a generic string */
@@ -122,6 +124,7 @@ enum tagFileFormats
 #define DEF_OUT_FORMAT      YAPP_FORMAT_DTS_TIM
 #define DEF_SIZE_BLOCK      MAX_SIZE_BLOCK  /**< @brief Default block size */
 
+#define DEF_WINDOWS         1000/**< @brief Default number of windows */
 /* @} */
 
 /**
@@ -147,12 +150,13 @@ enum tagFileFormats
  * @defgroup PlotMargins PGPLOT viewport margins
  */
 /* @{ */
-#define PG_VP_ML            0.12    /**< @brief Left margin */
-#define PG_VP_MR            0.88    /**< @brief Right margin */
-#define PG_VP_MB            0.12    /**< @brief Bottom margin */
-#define PG_VP_MT            0.88    /**< @brief Top margin */
-#define PG_VP_MW            0.12    /**< @brief Margin width */
+#define PG_VP_ML            0.04    /**< @brief Left margin */
+#define PG_VP_MR            0.99    /**< @brief Right margin */
+#define PG_VP_MB            0.14    /**< @brief Bottom margin */
+#define PG_VP_MT            0.90    /**< @brief Top margin */
 /* @} */
+
+#define PG_CH               1.5
 
 #define PG_CH_SCALEFACTOR   1.4
 
@@ -160,8 +164,8 @@ enum tagFileFormats
 #define PG_TICK_STEPS_Y     5       /**< @brief tick marks on the y-axis */
 
 #define PG_VP_BUT_ML    0.86    /**< @brief Button left margin */
-#define PG_VP_BUT_MR    0.98    /**< @brief Button right margin */
-#define PG_VP_BUT_MB    0.02    /**< @brief Button bottom margin */
+#define PG_VP_BUT_MR    1.00    /**< @brief Button right margin */
+#define PG_VP_BUT_MB    0.00    /**< @brief Button bottom margin */
 #define PG_VP_BUT_MT    0.06    /**< @brief Button top margin */
 
 #define PG_BUT_L                0.00
@@ -173,19 +177,19 @@ enum tagFileFormats
 #define PG_BUTNEXT_R            0.48
 #define PG_BUTNEXT_B            0.00
 #define PG_BUTNEXT_T            1.00
-#define PG_BUTNEXT_TEXT_L       0.08
-#define PG_BUTNEXT_TEXT_B       0.30
-#define PG_BUTNEXT_CL_TEXT_L    0.10
-#define PG_BUTNEXT_CL_TEXT_B    0.26
+#define PG_BUTNEXT_TEXT_L       0.12
+#define PG_BUTNEXT_TEXT_B       0.36
+#define PG_BUTNEXT_CL_TEXT_L    0.14
+#define PG_BUTNEXT_CL_TEXT_B    0.32
 
 #define PG_BUTEXIT_L            0.52
 #define PG_BUTEXIT_R            1.00
 #define PG_BUTEXIT_B            0.00
 #define PG_BUTEXIT_T            1.00
-#define PG_BUTEXIT_TEXT_L       0.58
-#define PG_BUTEXIT_TEXT_B       0.30
-#define PG_BUTEXIT_CL_TEXT_L    0.60
-#define PG_BUTEXIT_CL_TEXT_B    0.26
+#define PG_BUTEXIT_TEXT_L       0.64
+#define PG_BUTEXIT_TEXT_B       0.36
+#define PG_BUTEXIT_CL_TEXT_L    0.66
+#define PG_BUTEXIT_CL_TEXT_B    0.32
 
 #define PG_BUT_FILLCOL          1
 #define PG_BUT_CL_SLEEP         100000  /* in microseconds, 100 ms */
@@ -280,7 +284,7 @@ typedef struct YUM_s
     char cIsBandFlipped;
     int iFlagSplicedData;
     int iHeaderLen;
-    /* TODO: add timestamp of obs - MJD/otherwise */
+    double dTStart;     /* in MJD */
     float fSampSize;
 
 #if 0
@@ -480,6 +484,20 @@ int YAPP_CalcDelays(double dDM,
                     float fLaw,
                     int* piMaxOffset);
 
+/**
+ * Smooth data
+ * @param[in]   pfInBuf         Input buffer
+ * @param[in]   iBlockSize      Number of samples in input buffer
+ * @param[in]   iSampsPerWin    Number of samples in window
+ * @param[out]  pfOutBuf        Output buffer
+ */
+int YAPP_Smooth(float* pfInBuf,
+                int iBlockSize,
+                int iSampsPerWin,
+                float* pfOutBuf);
+
+float YAPP_CalcMean(float *pfBuf, int iLength);
+float YAPP_CalcRMS(float *pfBuf, int iLength, float fMean);
 /*
  * The memory allocator
  */

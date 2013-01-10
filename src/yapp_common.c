@@ -93,7 +93,7 @@ char* YAPP_GetFilenameFromPath(char *pcPath, char *pcExt)
     }
 
     /* allocate memory for the filename */
-    pcFilename = (char *) YAPP_Malloc((strlen(pcPos) - strlen(pcExt) + 1),
+    pcFilename = (char *) YAPP_Malloc((strlen(pcPos) - strlen(pcExt) + 2),
                                       sizeof(char),
                                       YAPP_TRUE);
     if (NULL == pcFilename)
@@ -109,6 +109,7 @@ char* YAPP_GetFilenameFromPath(char *pcPath, char *pcExt)
 
     return pcFilename;
 }
+
 
 /*
  * Extracts the filename from a given path, with the extension
@@ -154,6 +155,7 @@ char* YAPP_GetFilenameWithExtFromPath(char *pcPath)
 
     return pcFilename;
 }
+
 
 /*
  * Calculates the threshold in terms of standard deviation.
@@ -212,6 +214,7 @@ double YAPP_CalcThresholdInSigmas(int iTimeSamps)
     return dNumSigmas;
 }
 
+
 /*
  * Retrieves the observatory name from its ID
  */
@@ -265,6 +268,7 @@ int YAPP_GetObsNameFromID(int iObsID, char *pcObs)
     return YAPP_RET_SUCCESS;
 }
 
+
 /*
  * Reads metadata from file
  */
@@ -305,6 +309,7 @@ int YAPP_ReadMetadata(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
 
     return YAPP_RET_SUCCESS;
 }
+
 
 int YAPP_ReadDASCfg(char *pcFileSpec, YUM_t *pstYUM)
 {
@@ -494,6 +499,7 @@ int YAPP_ReadDASCfg(char *pcFileSpec, YUM_t *pstYUM)
 
     return YAPP_RET_SUCCESS;
 }
+
 
 int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
 {
@@ -891,6 +897,7 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
     return YAPP_RET_SUCCESS;
 }
 
+
 int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM)
 {
     FILE* pFHdr = NULL;
@@ -1080,6 +1087,7 @@ int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM)
     return YAPP_RET_SUCCESS;
 }
 
+
 /*
  * Read one block of data from disk
  */
@@ -1164,6 +1172,68 @@ int YAPP_ReadData(float *pfBuf,
     return iReadItems;
 }
 
+
+/*
+ * Smooth data
+ */
+int YAPP_Smooth(float* pfInBuf,
+                int iBlockSize,
+                int iSampsPerWin,
+                float* pfOutBuf)
+{
+    int i = 0;
+    int j = 0;
+
+    for (i = 0; i < (iBlockSize - (iSampsPerWin - 1)); ++i)
+    {
+        for (j = 0; j < iSampsPerWin; ++j)
+        {
+            pfOutBuf[i] += pfInBuf[i+j];
+        }
+        pfOutBuf[i] /= iSampsPerWin;
+    }
+
+    return YAPP_RET_SUCCESS;
+}
+
+
+/*
+ * Calculate signal mean
+ */
+float YAPP_CalcMean(float *pfBuf, int iLength)
+{
+    float fMean = 0.0;
+    int i = 0;
+
+    for (i = 0; i < iLength; ++i)
+    {
+        fMean += pfBuf[i];
+    }
+    fMean /= iLength;
+
+    return fMean;
+}
+
+
+/*
+ * Calculate signal standard deviation
+ */
+float YAPP_CalcRMS(float *pfBuf, int iLength, float fMean)
+{
+    float fRMS = 0.0;
+    int i = 0;
+
+    for (i = 0; i < iLength; ++i)
+    {
+        fRMS += powf((pfBuf[i] - fMean), 2);
+    }
+    fRMS /= (iLength - 1);
+    fRMS = sqrtf(fRMS);
+
+    return fRMS;
+}
+
+
 /*
  * The memory allocator
  */
@@ -1202,6 +1272,7 @@ void* YAPP_Malloc(size_t iNumItems, size_t iSize, int iZero)
     return pvMem;
 }
 
+
 /*
  * The garbage collector - frees all pointers in the memory allocation table
  */
@@ -1239,6 +1310,7 @@ void YAPP_CleanUp()
     return;
 }
 
+
 /*
  * Registers handlers for SIGTERM and CTRL+C
  */
@@ -1271,6 +1343,7 @@ int YAPP_RegisterSignalHandlers()
 
     return YAPP_RET_SUCCESS;
 }
+
 
 /*
  * Catches SIGTERM and CTRL+C and cleans up before exiting
