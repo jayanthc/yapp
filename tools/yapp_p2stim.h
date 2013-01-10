@@ -1,22 +1,15 @@
+/**
+ * @file yapp_p2stim.h
+ * Header file for yapp_p2stim
+ *
+ * @author Jayanth Chennamangalam
+ * @date 2012.12.18
+ */
+
 #ifndef __P2STIM_H__
 #define __P2STIM_H__
 
-#define _GNU_SOURCE
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-
-#define MAX_LEN_PSRNAME     12      /* Example: J1748-2446AI*/
-
-#include "yapp_sigproc.h"
-
-#define LEN_GENSTRING       256
-#define SIZE_BUF            1048576 /* 1 MB */
+#define SIZE_BUF    1048576     /* 1 MB */
 
 int GetMetadata(FILE *pFInf, YAPP_SIGPROC_HEADER *pstHeader);
 int WriteMetadata(FILE *pFTim, YAPP_SIGPROC_HEADER stHeader);
