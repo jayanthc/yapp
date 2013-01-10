@@ -95,8 +95,6 @@ int main(int argc, char *argv[])
     float fDataMax = 0.0;
     float fColMin = 0.0;
     float fColMax = 0.0;
-    float fXStep = 0.0;
-    float fYStep = 0.0;
     float fButX = 0.0;
     float fButY = 0.0;
     char cCurChar = 0;
@@ -1087,9 +1085,6 @@ int DoPFB(int iNTaps, int iNFFT)
     int j = 0;
     int k = 0;
     int iCoeffStartIdx = 0;
-    float *pfIn = NULL;
-    signed char *pcCoeff = NULL;
-    float *pfOut = NULL;
 
     /* reset memory */
     (void) memset(g_pfcFFTInX, '\0', iNFFT * sizeof(fftwf_complex));

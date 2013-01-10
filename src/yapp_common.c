@@ -902,18 +902,9 @@ int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM)
 {
     FILE* pFHdr = NULL;
     char acFileHeader[LEN_GENSTRING] = {0};
-    char acTemp[LEN_GENSTRING] = {0};
     size_t iLen = 0;
-    double dFChan = 0.0;
     struct stat stFileStats = {0};
     int iRet = YAPP_RET_SUCCESS;
-    int i = 0;
-    int iDataTypeID = 0;
-    double dFChan1 = 0.0;
-    float fFCh1 = 0.0;
-    double dChanBW = 0.0;
-    double dTStart = 0.0;
-    int iObsID = 0;
     char *pcExt = NULL;
     char *pcVal = NULL;
     char* pcLine = NULL;
