@@ -10,7 +10,7 @@
     <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Yanone+Kaffeesatz" />
     <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Titillium+Web" />
     <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Ubuntu+Mono" />
-    <title>Yet Another Pulsar Processor | Documentation</title>
+    <title>Yet Another Pulsar Processor | yapp_smooth</title>
 
 <!-- Google Analytics begin -->
 <script type="text/javascript">
@@ -40,22 +40,39 @@
       </ul>
     </nav>
     <header>
-    documentation
+    yapp_smooth
     </header>
     <article>
       <section>
+        <p>Smoothes dedispersed time series data using a boxcar window (moving
+           average smoothing). The data file should be in the SIGPROC
+           <code>.tim</code> format.</p>
+        <p>Usage:</p> 
+        <code>yapp_smooth [options] <i>data-file</i></code>
         <ul>
-          <li><a href="yapp_common.htm">Common options</a></li>
-          <li><a href="yapp_viewmetadata.htm">yapp_viewmetadata</a></li>
-          <li><a href="yapp_viewdata.htm">yapp_viewdata</a></li>
-          <li><a href="yapp_ft.htm">yapp_ft</a></li>
-          <li><a href="yapp_gencoeff.htm">yapp_gencoeff.py</a></li>
-          <li><a href="yapp_dedisperse.htm">yapp_dedisperse</a></li>
-          <li><a href="yapp_smooth.htm">yapp_smooth</a></li>
-          <li><a href="https://github.com/jayanthc/yapp/issues">Known bugs</a></li>
-        </ul>
-        <p>&nbsp;</p>
-        <p>&nbsp;</p>
+          <li><code>-h</code> or <code>--help</code>: Display this usage
+              information.</li>
+          <li><code>-s</code> or <code>--skip <i>time</i></code>: Length of
+              data to be skipped, in seconds (default is 0 s).</li>
+          <li><code>-p</code> or <code>--proc <i>time</i></code>: Length of
+              data to be processed, in seconds (default is all data).</li>
+          <li><code>-w</code> or <code>--width <i>width</i></code>:
+              Width of the boxcar window in milliseconds (default is 1 ms).</li>
+          <li><code>-g</code> or <code>--graphics</code>: Turn on plotting.</li>
+          <li><code>-i</code> or <code>--invert</code>: Invert background and
+              foreground colours in plots (default is white on black).</li>
+          <li><code>-e</code> or <code>--non-interactive</code>: Run in
+              non-interactive mode.</li>
+          <li><code>-v</code> or <code>--version</code>: Display the version.</li>
+       </ul>
+       <p>Example:</p>
+       <p>Smoothes the data in <code>data.tim</code> with a boxcar window of
+          width 2.5 ms, with graphics turned on, and in non-interactive mode.
+          The output is written to <code>data.smoothed2.5.tim</code>.</p>
+       <code>yapp_smooth -w 2.5 -g -e data.tim</code>
+       <p>System requirements: Linux/MacOS, PGPLOT with C binding</p>
+       <p>&nbsp;</p>
+       <p>&nbsp;</p>
       </section>
     </article>
     <footer>
