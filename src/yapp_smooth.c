@@ -3,7 +3,7 @@
  * Program to smooth (low-pass filter) dedispersed time series data.
  *
  * @verbatim
- * Usage: yapp_fold [options] <time-series-data-file>
+ * Usage: yapp_smooth [options] <data-file>
  *     -h  --help                           Display this usage information
  *     -s  --skip <time>                    The length of data in seconds, to be
  *                                          skipped
@@ -20,7 +20,7 @@
  *     -v  --version                        Display the version @endverbatim
  *
  * @author Jayanth Chennamangalam
- * @date 2012.10.23
+ * @date 2013.01.08
  */
 
 #include "yapp.h"
@@ -248,16 +248,9 @@ int main(int argc, char *argv[])
 
     /* compute the block size - a large multiple of iSampsPerWin */
     iBlockSize = DEF_WINDOWS * iSampsPerWin;
-
-    /* if lBytesToSkip is not a multiple of the block size, make it one */
-    if (((float) lBytesToSkip / iBlockSize) - (lBytesToSkip / iBlockSize) != 0)
+    if (iBlockSize > MAX_SIZE_BLOCK)
     {
-        (void) printf("WARNING: Bytes to skip not a multiple of block size! ");
-        lBytesToSkip -= (((float) lBytesToSkip / iBlockSize)
-                         - (lBytesToSkip / iBlockSize)) * iBlockSize;
-        (void) printf("Newly calculated size of data to be skipped: %ld "
-                      "bytes\n",
-                      lBytesToSkip);
+        iBlockSize = MAX_SIZE_BLOCK;
     }
 
     if (lBytesToSkip >= stYUM.lDataSizeTotal)
@@ -539,7 +532,7 @@ int main(int argc, char *argv[])
                     g_pfXAxis[iBlockSize-1],
                     fColMin,
                     fColMax);
-            cpglab("Time (s)", "", "");
+            cpglab("Time (s)", "", "Before Smoothing");
             cpgbox("BCNST", 0.0, 0, "BCNST", 0.0, 0);
             cpgsci(PG_CI_PLOT);
             cpgline(iBlockSize, g_pfXAxis, g_pfBuf);
@@ -586,7 +579,7 @@ int main(int argc, char *argv[])
                     g_pfXAxis[iProcBlockSize-1],
                     fColMin,
                     fColMax);
-            cpglab("Time (s)", "", "");
+            cpglab("Time (s)", "", "After Smoothing");
             cpgbox("BCNST", 0.0, 0, "BCNST", 0.0, 0);
             cpgsci(PG_CI_PLOT);
             cpgline(iProcBlockSize, g_pfXAxis, g_pfOutBuf);

@@ -142,7 +142,6 @@ int main(int argc, char *argv[])
     int iReadSmpCount = 0;         /* (iReadBlockCount - 1) * iBlockSize */
     int iSecBufReadSampCount = 0;   /* iReadBlockCount * iBlockSize */
     char cIsLastBlock = YAPP_FALSE;
-    struct stat stFileStats = {0};
     long int lDataSizeTotal = 0;
     int iRet = YAPP_RET_SUCCESS;
     float fDataMin = 0.0;

@@ -19,11 +19,10 @@
  * @defgroup PlotMargins PGPLOT viewport margins
  */
 /* @{ */
-#define PG_VP_ML            0.12    /**< @brief Left margin */
-#define PG_VP_MR            0.88    /**< @brief Right margin */
-#define PG_VP_MB            0.12    /**< @brief Bottom margin */
-#define PG_VP_MT            0.88    /**< @brief Top margin */
-#define PG_VP_MW            0.12    /**< @brief Margin width */
+#define PG_VP_ML            0.04    /**< @brief Left margin */
+#define PG_VP_MR            0.99    /**< @brief Right margin */
+#define PG_VP_MB            0.14    /**< @brief Bottom margin */
+#define PG_VP_MT            0.90    /**< @brief Top margin */
 /* @} */
 
 #define LEN_GENSTRING       256

@@ -110,7 +110,7 @@ enum tagFileFormats
 
 /* TODO: If the size of a block is less than the maximum delay, dedispersion (at
    best the plots) doesn't happen properly */
-#define MAX_SIZE_BLOCK      4096    /**< @brief Maximum data read size */
+#define MAX_SIZE_BLOCK      65536   /**< @brief Maximum data read size */
 
 #define MAX_SNR_BINS        50      /**< @brief Number of SNR bins */
 #define MAX_PNUM_BINS       50
@@ -125,7 +125,7 @@ enum tagFileFormats
 #define DEF_LAW             2.0
 #define DEF_FORMAT          YAPP_FORMAT_SPEC
 #define DEF_OUT_FORMAT      YAPP_FORMAT_DTS_TIM
-#define DEF_SIZE_BLOCK      MAX_SIZE_BLOCK  /**< @brief Default block size */
+#define DEF_SIZE_BLOCK      4096    /**< @brief Default block size */
 
 #define DEF_WINDOWS         1000/**< @brief Default number of windows */
 

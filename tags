@@ -18,22 +18,22 @@ CMAP_GRAY	src/colourmap.h	/^    CMAP_GRAY,$/;"	e	enum:CMap_e
 CMAP_GRAY_INV	src/colourmap.h	/^    CMAP_GRAY_INV,$/;"	e	enum:CMap_e
 CMAP_HOT	src/colourmap.h	/^    CMAP_HOT,$/;"	e	enum:CMap_e
 CMAP_JET	src/colourmap.h	/^    CMAP_JET,$/;"	e	enum:CMap_e
-CMAP_LEVELS	src/colourmap.h	30;"	d
+CMAP_LEVELS	src/colourmap.h	29;"	d
 CMAP_PINK	src/colourmap.h	/^    CMAP_PINK,$/;"	e	enum:CMap_e
 CMAP_SPRING	src/colourmap.h	/^    CMAP_SPRING,$/;"	e	enum:CMap_e
-CMAP_STR_AUTUMN	src/colourmap.h	50;"	d
-CMAP_STR_BLUE	src/colourmap.h	51;"	d
-CMAP_STR_BONE	src/colourmap.h	52;"	d
-CMAP_STR_COOL	src/colourmap.h	53;"	d
-CMAP_STR_COPPER	src/colourmap.h	54;"	d
-CMAP_STR_GRAY	src/colourmap.h	55;"	d
-CMAP_STR_GRAY_INV	src/colourmap.h	56;"	d
-CMAP_STR_HOT	src/colourmap.h	57;"	d
-CMAP_STR_JET	src/colourmap.h	58;"	d
-CMAP_STR_PINK	src/colourmap.h	59;"	d
-CMAP_STR_SPRING	src/colourmap.h	60;"	d
-CMAP_STR_SUMMER	src/colourmap.h	61;"	d
-CMAP_STR_WINTER	src/colourmap.h	62;"	d
+CMAP_STR_AUTUMN	src/colourmap.h	49;"	d
+CMAP_STR_BLUE	src/colourmap.h	50;"	d
+CMAP_STR_BONE	src/colourmap.h	51;"	d
+CMAP_STR_COOL	src/colourmap.h	52;"	d
+CMAP_STR_COPPER	src/colourmap.h	53;"	d
+CMAP_STR_GRAY	src/colourmap.h	54;"	d
+CMAP_STR_GRAY_INV	src/colourmap.h	55;"	d
+CMAP_STR_HOT	src/colourmap.h	56;"	d
+CMAP_STR_JET	src/colourmap.h	57;"	d
+CMAP_STR_PINK	src/colourmap.h	58;"	d
+CMAP_STR_SPRING	src/colourmap.h	59;"	d
+CMAP_STR_SUMMER	src/colourmap.h	60;"	d
+CMAP_STR_WINTER	src/colourmap.h	61;"	d
 CMAP_SUMMER	src/colourmap.h	/^    CMAP_SUMMER,$/;"	e	enum:CMap_e
 CMAP_WINTER	src/colourmap.h	/^    CMAP_WINTER$/;"	e	enum:CMap_e
 CMap_e	src/colourmap.h	/^typedef enum CMap_e$/;"	g
@@ -41,8 +41,8 @@ CMap_t	src/colourmap.h	/^} CMap_t;$/;"	t	typeref:enum:CMap_e
 CleanUp	src/yapp_ft.c	/^void CleanUp(int iNTaps)$/;"	f
 CopyDataForFFT	src/yapp_ft.c	/^int CopyDataForFFT(int iNFFT)$/;"	f
 DEF_ACC	src/yapp_ft.h	24;"	d
-DEF_CMAP	src/colourmap.h	64;"	d
-DEF_CMAP_STR	src/colourmap.h	65;"	d
+DEF_CMAP	src/colourmap.h	63;"	d
+DEF_CMAP_STR	src/colourmap.h	64;"	d
 DEF_FOLD_PULSES	src/yapp.h	132;"	d
 DEF_FORMAT	src/yapp.h	126;"	d
 DEF_LAW	src/yapp.h	125;"	d
@@ -75,7 +75,7 @@ GetColourMapFromName	src/colourmap.c	/^int GetColourMapFromName(char *pcCMapName
 GetLatestTimestamp	src/yapp_makever.c	/^time_t GetLatestTimestamp()$/;"	f
 INFIX_SMOOTHED	src/yapp.h	94;"	d
 InitPFB	src/yapp_ft.c	/^int InitPFB(int iNTaps, int iNFFT)$/;"	f
-LEN_GENSTRING	src/colourmap.h	29;"	d
+LEN_GENSTRING	src/colourmap.h	28;"	d
 LEN_GENSTRING	src/yapp.h	98;"	d
 MAX_LEN_GENSTRING	src/yapp_makever.c	22;"	d	file:
 MAX_LEN_PSRNAME	src/yapp.h	118;"	d
@@ -85,7 +85,7 @@ MAX_SNR_BINS	src/yapp.h	115;"	d
 MIN_THRES_IN_SIGMA	src/yapp.h	215;"	d
 NUM_BAD_BOUNDS	src/yapp.h	104;"	d
 NUM_BYTES_PER_SAMP	src/yapp_ft.h	17;"	d
-NUM_CMAPS	src/colourmap.h	31;"	d
+NUM_CMAPS	src/colourmap.h	30;"	d
 NUM_TAPS	src/yapp_ft.h	18;"	d
 NUM_TAPS	src/yapp_ft.h	27;"	d
 PATH_ERF_LOOKUP	src/yapp.h	207;"	d
@@ -133,7 +133,6 @@ PG_VP_MR	src/colourmap.h	23;"	d
 PG_VP_MR	src/yapp.h	159;"	d
 PG_VP_MT	src/colourmap.h	25;"	d
 PG_VP_MT	src/yapp.h	161;"	d
-PG_VP_MW	src/colourmap.h	26;"	d
 PLOT_DDS_SUFFIX	src/yapp.h	152;"	d
 PROC_SPEC_NOTSEL	src/yapp.h	221;"	d
 PROC_SPEC_PERCENT	src/yapp.h	223;"	d

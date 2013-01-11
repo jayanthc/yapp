@@ -895,11 +895,10 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
         return YAPP_RET_ERROR;
     }
     pstYUM->lDataSizeTotal = (long) stFileStats.st_size - pstYUM->iHeaderLen;
-    /* TODO: may not be needed */
-    /*if (YAPP_FORMAT_DTS_TIM == iFormat)
+    if (YAPP_FORMAT_DTS_TIM == iFormat)
     {
         pstYUM->iNumChans = 1;
-    }*/
+    }
     pstYUM->iTimeSamps = (int) (pstYUM->lDataSizeTotal / (pstYUM->iNumChans * pstYUM->fSampSize));
 
     return YAPP_RET_SUCCESS;
