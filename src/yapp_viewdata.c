@@ -229,6 +229,14 @@ int main(int argc, char *argv[])
                        "ERROR: File type determination failed!\n");
         return YAPP_RET_ERROR;
     }
+    if (!((YAPP_FORMAT_FIL == iFormat)
+          || (YAPP_FORMAT_SPEC == iFormat)
+          || (YAPP_FORMAT_DTS_TIM == iFormat)))
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Invalid file type!\n");
+        return YAPP_RET_ERROR;
+    }
 
     /* read metadata */
     iRet = YAPP_ReadMetadata(pcFileSpec, iFormat, &stYUM);
@@ -390,7 +398,7 @@ int main(int argc, char *argv[])
         cIsLastBlock = YAPP_TRUE;
     }
 
-    if (YAPP_FORMAT_FIL == iFormat)
+    if ((YAPP_FORMAT_FIL == iFormat) || (YAPP_FORMAT_DTS_TIM == iFormat))
     {
         /* TODO: Need to do this only if the file contains the header */
         /* skip the header */
