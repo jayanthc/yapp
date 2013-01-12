@@ -136,6 +136,14 @@ int main(int argc, char *argv[])
             case 'w':   /* -w or --width */
                 /* set option */
                 fWidth = atof(optarg);
+                if (fWidth > 1) /* 1 ms */
+                {
+                    fprintf(stderr,
+                            "WARNING: The chosen boxcar width may suppress "
+                            "pulsars with periods greater %g ms in the "
+                            "smoothed data!\n",
+                            fWidth);
+                }
                 break;
 
             case 'g':   /* -g or --graphics */
