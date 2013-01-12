@@ -1023,7 +1023,7 @@ void Plot2D(float* pfBuf, float fDataMin, float fDataMax,
     afTM[4] = 0;
 
     /* set the viewport margins, in normalised device co-ordinates */
-    cpgsvp(PG_VP_ML, PG_VP_MR, PG_VP_MB, PG_VP_MT);
+    cpgsvp(PG_2D_VP_ML, PG_2D_VP_MR, PG_2D_VP_MB, PG_2D_VP_MT);
     /* set the window boundaries in world co-ordinates */
     cpgswin(pfX[0], pfX[iLenX-1], pfY[0], pfY[iLenY-1]);
     /* set the colour map */

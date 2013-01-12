@@ -90,6 +90,10 @@ NUM_TAPS	src/yapp_ft.h	18;"	d
 NUM_TAPS	src/yapp_ft.h	27;"	d
 PATH_ERF_LOOKUP	src/yapp.h	207;"	d
 PFB_DATA	src/yapp_ft.h	/^} PFB_DATA;$/;"	t	typeref:struct:tagPFBData
+PG_2D_VP_MB	src/colourmap.h	24;"	d
+PG_2D_VP_ML	src/colourmap.h	22;"	d
+PG_2D_VP_MR	src/colourmap.h	23;"	d
+PG_2D_VP_MT	src/colourmap.h	25;"	d
 PG_BUTEXIT_B	src/yapp.h	192;"	d
 PG_BUTEXIT_CL_TEXT_B	src/yapp.h	197;"	d
 PG_BUTEXIT_CL_TEXT_L	src/yapp.h	196;"	d
@@ -125,13 +129,9 @@ PG_VP_BUT_MB	src/yapp.h	173;"	d
 PG_VP_BUT_ML	src/yapp.h	171;"	d
 PG_VP_BUT_MR	src/yapp.h	172;"	d
 PG_VP_BUT_MT	src/yapp.h	174;"	d
-PG_VP_MB	src/colourmap.h	24;"	d
 PG_VP_MB	src/yapp.h	160;"	d
-PG_VP_ML	src/colourmap.h	22;"	d
 PG_VP_ML	src/yapp.h	158;"	d
-PG_VP_MR	src/colourmap.h	23;"	d
 PG_VP_MR	src/yapp.h	159;"	d
-PG_VP_MT	src/colourmap.h	25;"	d
 PG_VP_MT	src/yapp.h	161;"	d
 PLOT_DDS_SUFFIX	src/yapp.h	152;"	d
 PROC_SPEC_NOTSEL	src/yapp.h	221;"	d

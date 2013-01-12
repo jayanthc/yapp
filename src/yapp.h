@@ -155,23 +155,23 @@ enum tagFileFormats
  * @defgroup PlotMargins PGPLOT viewport margins
  */
 /* @{ */
-#define PG_VP_ML            0.04    /**< @brief Left margin */
-#define PG_VP_MR            0.99    /**< @brief Right margin */
-#define PG_VP_MB            0.14    /**< @brief Bottom margin */
-#define PG_VP_MT            0.90    /**< @brief Top margin */
+#define PG_VP_ML                0.06    /**< @brief Left margin */
+#define PG_VP_MR                0.98    /**< @brief Right margin */
+#define PG_VP_MB                0.14    /**< @brief Bottom margin */
+#define PG_VP_MT                0.90    /**< @brief Top margin */
 /* @} */
 
-#define PG_CH               1.5
+#define PG_CH                   1.5
 
-#define PG_CH_SCALEFACTOR   1.4
+#define PG_CH_SCALEFACTOR       1.4
 
-#define PG_TICK_STEPS_X     10      /**< @brief tick marks on the x-axis */
-#define PG_TICK_STEPS_Y     5       /**< @brief tick marks on the y-axis */
+#define PG_TICK_STEPS_X         10      /**< @brief tick marks on the x-axis */
+#define PG_TICK_STEPS_Y         5       /**< @brief tick marks on the y-axis */
 
-#define PG_VP_BUT_ML    0.86    /**< @brief Button left margin */
-#define PG_VP_BUT_MR    1.00    /**< @brief Button right margin */
-#define PG_VP_BUT_MB    0.00    /**< @brief Button bottom margin */
-#define PG_VP_BUT_MT    0.06    /**< @brief Button top margin */
+#define PG_VP_BUT_ML            0.86    /**< @brief Button left margin */
+#define PG_VP_BUT_MR            1.00    /**< @brief Button right margin */
+#define PG_VP_BUT_MB            0.00    /**< @brief Button bottom margin */
+#define PG_VP_BUT_MT            0.06    /**< @brief Button top margin */
 
 #define PG_BUT_L                0.00
 #define PG_BUT_R                1.00

@@ -340,16 +340,16 @@ int main(int argc, char *argv[])
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
-    //if (iFormat != YAPP_FORMAT_DTS_TIM)
+    if (iFormat != YAPP_FORMAT_DTS_TIM)
     {
         fStatBW = stYUM.iNumGoodChans * stYUM.fChanBW;  /* in MHz */
         (void) printf("Usable bandwidth                  : %g MHz\n", fStatBW);
         fNoiseRMS = 1.0 / sqrt(fStatBW * stYUM.dTSamp * 1e3);
         (void) printf("Expected noise RMS                : %g\n", fNoiseRMS);
-        fThreshold = (float) (dNumSigmas * fNoiseRMS);
-        (void) printf("Threshold                         : %g\n", fThreshold);
-        /* calculate the minimum SNR */
-        fSNRMin = fThreshold / fNoiseRMS;
+        //fThreshold = (float) (dNumSigmas * fNoiseRMS);
+        //(void) printf("Threshold                         : %g\n", fThreshold);
+        ///* calculate the minimum SNR */
+        //fSNRMin = fThreshold / fNoiseRMS;
     }
 
     /* allocate memory for the time sample goodness flag array */
@@ -434,6 +434,9 @@ int main(int argc, char *argv[])
         cpgscr(1, 0.0, 0.0, 0.0);
     }
 
+    /* set character height */
+    //cpgsch(PG_CH);
+
     /* set up the plot's X-axis */
     g_pfXAxis = (float *) YAPP_Malloc(iBlockSize,
                                       sizeof(float),
@@ -480,7 +483,7 @@ int main(int argc, char *argv[])
     /* calculate the tick step sizes */
     fXStep = (int) ((((iBlockSize - 1) * dTSampInSec) - 0)
                     / PG_TICK_STEPS_X);
-    if (iFormat != YAPP_FORMAT_DTS_TIM)
+    if (YAPP_FORMAT_FIL == iFormat)
     {
         if (YAPP_TRUE == stYUM.iFlagSplicedData)
         {
@@ -536,6 +539,7 @@ int main(int argc, char *argv[])
            all other blocks */
         iNumSamps = iReadItems / stYUM.iNumChans;
 
+        #if 0
         if (YAPP_FORMAT_SPEC == iFormat)
         {
             /* flag bad time sections, and if required, normalise within the
@@ -635,6 +639,7 @@ int main(int argc, char *argv[])
                 }
             }
         }
+        #endif
 
         fDataMin = pfSpectrum[0];
         fDataMax = pfSpectrum[0];
@@ -661,25 +666,27 @@ int main(int argc, char *argv[])
                       fDataMax);
         #endif
 
-        if (-fThreshold > fDataMin)
-        {
-            fColMin = -fThreshold;
-        }
-        else
-        {
-            fColMin = fDataMin;
-        }
-        if (fThreshold < fDataMax)
-        {
-            fColMax = fThreshold;
-        }
-        else
-        {
-            fColMax = fDataMax;
-        }
-
         if (iFormat != YAPP_FORMAT_DTS_TIM)
         {
+            #if 0
+            if (-fThreshold > fDataMin)
+            {
+                fColMin = -fThreshold;
+            }
+            else
+            {
+                fColMin = fDataMin;
+            }
+            if (fThreshold < fDataMax)
+            {
+                fColMax = fThreshold;
+            }
+            else
+            {
+                fColMax = fDataMax;
+            }
+            #endif
+
             /* get the transpose of the two-dimensional array */
             i = 0;
             j = 0;
@@ -721,9 +728,9 @@ int main(int argc, char *argv[])
             cpgsvp(PG_VP_ML, PG_VP_MR, PG_VP_MB, PG_VP_MT);
             cpgswin(g_pfXAxis[0],
                     g_pfXAxis[iBlockSize-1],
-                    fColMin,
-                    fColMax);
-            cpglab("Time (s)", "Total Power", "Time Series");
+                    fDataMin,
+                    fDataMax);
+            cpglab("Time (s)", "", "Time Series");
             cpgbox("BCNST", 0.0, 0, "BCNST", 0.0, 0);
             cpgsci(PG_CI_PLOT);
             cpgline(iBlockSize, g_pfXAxis, g_pfBuf);

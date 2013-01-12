@@ -1523,6 +1523,7 @@ void YAPP_CleanUp()
         }
     }
 
+    #if 0
     /* close PGPLOT device, if open */
     if (g_iPGDev > 0)
     {
@@ -1531,6 +1532,7 @@ void YAPP_CleanUp()
         /*cpgclos();*/
         g_iPGDev = 0;
     }
+    #endif
 
     /* close data file, if open */
     if (g_pFSpec != NULL)
