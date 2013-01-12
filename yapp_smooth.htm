@@ -47,6 +47,11 @@
         <p>Smoothes dedispersed time series data using a boxcar window (moving
            average smoothing). The data file should be in the SIGPROC
            <code>.tim</code> format.</p>
+        <p>Smoothing is a low-pass filtering operation, so one should be
+           careful not to over-smooth the data as this may lead to fast pulsars
+           being filtered out. As a rule of thumb, if you would like to see a
+           pulsar of spin period X ms, the boxcar window width should be
+           &lt; X ms.</p>
         <p>Usage:</p> 
         <code>yapp_smooth [options] <i>data-file</i></code>
         <ul>
