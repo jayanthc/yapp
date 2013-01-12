@@ -495,10 +495,6 @@ int main(int argc, char *argv[])
     (void) printf("Usable bandwidth                  : %g MHz\n", fStatBW);
     fNoiseRMS = 1.0 / sqrt(fStatBW * dTSamp * 1e3);
     (void) printf("Expected noise RMS                : %g\n", fNoiseRMS);
-    fThreshold = (float) (dNumSigmas * fNoiseRMS);
-    (void) printf("Threshold                         : %g\n", fThreshold);
-    /* calculate the minimum SNR */
-    fSNRMin = fThreshold / fNoiseRMS;
 
     /* allocate memory for the time sample goodness flag array */
     g_pcIsTimeGood = (char *) YAPP_Malloc((size_t) iTimeSampsToProc,
@@ -586,7 +582,8 @@ int main(int argc, char *argv[])
     }
 
     /* read the first block of data */
-    (void) printf("Reading data block %d.\n", iReadBlockCount);
+    (void) printf("Reading data block %d.", iReadBlockCount);
+    (void) fflush(stdout);
     iReadItems = YAPP_ReadData(g_pfBuf0, fSampSize, iTotSampsPerBlock);
     if (YAPP_RET_ERROR == iReadItems)
     {
@@ -1000,7 +997,7 @@ int main(int argc, char *argv[])
     if (cHasGraphics)
     {
         cpgsubp(1, 3);
-        cpgsch(1.8);
+        cpgsch(PG_CH);
     }
 
     /* dedisperse the data */
@@ -1041,8 +1038,10 @@ int main(int argc, char *argv[])
                 }
             }
 
+            #ifdef DEBUG
             (void) printf("Minimum value of data             : %g\n", fDataMin);
             (void) printf("Maximum value of data             : %g\n", fDataMax);
+            #endif
 
             #if 0
             if (-fThreshold > fDataMin)
@@ -1091,7 +1090,8 @@ int main(int argc, char *argv[])
            shifted in */
         if (!(cIsLastBlock))
         {
-            (void) printf("Reading data block %d.\n", iReadBlockCount);
+            (void) printf("\rReading data block %d.", iReadBlockCount);
+            (void) fflush(stdout);
             if (BUF_0 == iPrimaryBuf)
             {
                 iReadItems = YAPP_ReadData(g_pfBuf1,
@@ -1210,8 +1210,6 @@ int main(int argc, char *argv[])
             #endif
         }
 
-        (void) printf("Processing data block %d.\n", (iReadBlockCount - 1));
-
         /* clear the g_pfDedispData array */
         (void) memset(g_pfDedispData,
                       '\0',
@@ -1297,8 +1295,10 @@ int main(int argc, char *argv[])
                 }
             }
 
+            #ifdef DEBUG
             (void) printf("Minimum value of data             : %g\n", fDataMin);
             (void) printf("Maximum value of data             : %g\n", fDataMax);
+            #endif
 
             #if 0
             if (-fThreshold > fDataMin)
@@ -1368,10 +1368,12 @@ int main(int argc, char *argv[])
                 }
             }
 
+            #ifdef DEBUG
             (void) printf("Minimum value of data             : %g\n", fDataMin);
             (void) printf("Maximum value of data             : %g\n", fDataMax);
+            #endif
 
-            cpgsvp(PG_VP_ML, PG_VP_MR, PG_VP_MB, PG_VP_MT);
+            cpgsvp(PG_2D_VP_ML, PG_2D_VP_MR, PG_2D_VP_MB, PG_2D_VP_MT);
 
             cpgswin(g_pfXAxis[0], g_pfXAxis[iBlockSize-1], fDataMin, fDataMax);
             cpgbox("BCNST", 0.0, 0, "BCNST", 0.0, 0);
