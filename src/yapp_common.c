@@ -1417,6 +1417,7 @@ int YAPP_Smooth(float* pfInBuf,
     int i = 0;
     int j = 0;
 
+    /* TODO: go from i - (w/2) to i + (w/2) instead of i to i + w */
     for (i = 0; i < (iBlockSize - (iSampsPerWin - 1)); ++i)
     {
         for (j = 0; j < iSampsPerWin; ++j)

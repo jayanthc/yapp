@@ -161,7 +161,9 @@ enum tagFileFormats
 #define PG_VP_MT                0.90    /**< @brief Top margin */
 /* @} */
 
-#define PG_CH                   1.5
+#define PG_CH                   1.0     /**< @brief Default character height */
+#define PG_CH_2P                1.5     /**< @brief Character height for two panels */
+#define PG_CH_3P                1.5     /**< @brief Character height for three panels */
 
 #define PG_CH_SCALEFACTOR       1.4
 
