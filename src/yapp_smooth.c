@@ -399,7 +399,7 @@ int main(int argc, char *argv[])
         }
 
         cpgsubp(1, 2);
-        cpgsch(PG_CH);
+        cpgsch(PG_CH_2P);
 
         /* set up the plot's X-axis */
         g_pfXAxis = (float *) YAPP_Malloc(iBlockSize,

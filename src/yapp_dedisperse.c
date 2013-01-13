@@ -91,8 +91,6 @@ int main(int argc, char *argv[])
     int iEffcNumGoodChans = 0;
     float fStatBW = 0.0;
     float fNoiseRMS = 0.0;
-    float fThreshold = 0.0;
-    float fSNRMin = 0.0;
     double dNumSigmas = 0.0;
     double dTSamp = 0.0;        /* holds sampling time in ms */
     double dTSampInSec = 0.0;   /* holds sampling time in s */
@@ -290,6 +288,12 @@ int main(int argc, char *argv[])
                        "ERROR: File type determination failed!\n");
         return YAPP_RET_ERROR;
     }
+    if (!((YAPP_FORMAT_FIL == iFormat) || (YAPP_FORMAT_SPEC == iFormat)))
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Invalid file type!\n");
+        return YAPP_RET_ERROR;
+    }
 
     /* read metadata */
     iRet = YAPP_ReadMetadata(pcFileSpec, iFormat, &stYUM);
@@ -301,7 +305,8 @@ int main(int argc, char *argv[])
         return YAPP_RET_ERROR;
     }
     dTSamp = stYUM.dTSamp;
-    dTSampInSec = dTSamp * 1e-3;
+    /* convert sampling interval to seconds */
+    dTSampInSec = stYUM.dTSamp / 1e3;
     fChanBW = stYUM.fChanBW;
     iTimeSamps = stYUM.iTimeSamps; 
     iNumGoodChans = stYUM.iNumGoodChans;
@@ -309,9 +314,9 @@ int main(int argc, char *argv[])
     lDataSizeTotal = stYUM.lDataSizeTotal;
     fFMax = stYUM.fFMax;
     fFMin = stYUM.fFMin;
-    pfTimeSectGain = stYUM.pfBFGain;//if DAS
+    pfTimeSectGain = stYUM.pfBFGain;    /* for .spec */
     //for SIGPROC -->
-    iNumChans = stYUM.iNumChans;//for SIGPROC
+    iNumChans = stYUM.iNumChans;
     /* flag all channels as good */
     g_pcIsChanGood = (char *) YAPP_Malloc((size_t) iNumChans, sizeof(char), YAPP_FALSE);
     if (NULL == g_pcIsChanGood)
@@ -596,62 +601,6 @@ int main(int argc, char *argv[])
     iPrimaryBuf = BUF_0;
     --iNumReads;
     ++iReadBlockCount;
-
-//temp
-#if 0
-    if (YAPP_FORMAT_SPEC == iFormat)
-    {
-        /* flag bad time sections, and if required, normalise within the beam
-           flip time section and perform gain correction */
-        for (i = 0; i < iBlockSize; ++i)
-        {
-            dTNow += dTSampInSec;   /* in s */
-
-            if ((dTNow >= (*g_padBadTimes)[iBadTimeSect][BADTIME_BEG])
-                && (dTNow <= (*g_padBadTimes)[iBadTimeSect][BADTIME_END]))
-            {
-                cIsInBadTimeRange = YAPP_TRUE;
-                g_pcIsTimeGood[i] = YAPP_FALSE;
-            }
-
-            if ((YAPP_TRUE == cIsInBadTimeRange)
-                && (dTNow > (*g_padBadTimes)[iBadTimeSect][BADTIME_END]))
-            {
-                cIsInBadTimeRange = YAPP_FALSE;
-                ++iBadTimeSect;
-            }
-
-            /* get the beam flip time section corresponding to this
-               sample */
-            if (dTNow > dTNextBF)
-            {
-                dTNextBF += dTBFInt;
-                if (iTimeSect >= iBFTimeSects)
-                {
-                    (void) fprintf(stderr,
-                                   "ERROR: Beam flip time section anomaly "
-                                   "detected!\n");
-                    (void) fclose(g_pFSpec);
-                    YAPP_CleanUp();
-                    return YAPP_RET_ERROR;
-                }
-                ++iTimeSect;
-            }
-
-            pfTimeSectGain = g_pfBFGain + iTimeSect * iNumChans;
-            pfSpectrum = pfPriBuf + i * iNumChans;
-            for (j = 0; j < iNumChans; ++j)
-            {
-                if (g_pcIsChanGood[j])
-                {
-                    pfSpectrum[j] = (pfSpectrum[j]
-                                     / g_pfBFTimeSectMean[iTimeSect])
-                                    - pfTimeSectGain[j];
-                }
-            }
-        }
-    }
-#endif
 
     if (cHasGraphics)
     {
@@ -997,7 +946,7 @@ int main(int argc, char *argv[])
     if (cHasGraphics)
     {
         cpgsubp(1, 3);
-        cpgsch(PG_CH);
+        cpgsch(PG_CH_3P);
     }
 
     /* dedisperse the data */
@@ -1039,27 +988,10 @@ int main(int argc, char *argv[])
             }
 
             #ifdef DEBUG
-            (void) printf("Minimum value of data             : %g\n", fDataMin);
-            (void) printf("Maximum value of data             : %g\n", fDataMax);
-            #endif
-
-            #if 0
-            if (-fThreshold > fDataMin)
-            {
-                fColMin = -fThreshold;
-            }
-            else
-            {
-                fColMin = fDataMin;
-            }
-            if (fThreshold < fDataMax)
-            {
-                fColMax = fThreshold;
-            }
-            else
-            {
-                fColMax = fDataMax;
-            }
+            (void) printf("Minimum value of data             : %g\n",
+                          fDataMin);
+            (void) printf("Maximum value of data             : %g\n",
+                          fDataMax);
             #endif
 
             /* get the transpose of the two-dimensional array */
@@ -1145,69 +1077,6 @@ int main(int argc, char *argv[])
             /* get the actual count of read samples, inclusive of those in the
                first buffer */
             iSecBufReadSampCount = iReadBlockCount * iBlockSize;
-
-            //temp
-            #if 0
-            if (YAPP_FORMAT_SPEC == iFormat)
-            {
-                /* flag bad time sections, and if required, normalise within
-                   the beam flip time section and perform gain correction */
-                for (i = 0; i < iNumSamps; ++i)
-                {
-                    dTNow += dTSampInSec;   /* in s */
-
-                    if ((dTNow >= (*g_padBadTimes)[iBadTimeSect][BADTIME_BEG])
-                        && (dTNow
-                            <= (*g_padBadTimes)[iBadTimeSect][BADTIME_END]))
-                    {
-                        cIsInBadTimeRange = YAPP_TRUE;
-                        g_pcIsTimeGood[iSecBufReadSampCount+i] = YAPP_FALSE;
-                    }
-
-                    if ((YAPP_TRUE == cIsInBadTimeRange)
-                        && (dTNow
-                            > (*g_padBadTimes)[iBadTimeSect][BADTIME_END]))
-                    {
-                        cIsInBadTimeRange = YAPP_FALSE;
-                        ++iBadTimeSect;
-                    }
-
-                    /* get the beam flip time section corresponding to this
-                       sample */
-                    if (dTNow > dTNextBF)
-                    {
-                        dTNextBF += dTBFInt;
-                        if (iTimeSect >= iBFTimeSects)
-                        {
-                            (void) fprintf(stderr,
-                                           "ERROR: Beam flip time section "
-                                           "anomaly detected!\n");
-                            if (cHasGraphics)
-                            {
-                                cpgclos();
-                            }
-                            (void) fclose(pFDedispData);
-                            (void) fclose(g_pFSpec);
-                            YAPP_CleanUp();
-                            return YAPP_RET_ERROR;
-                        }
-                        ++iTimeSect;
-                    }
-
-                    pfTimeSectGain = g_pfBFGain + iTimeSect * iNumChans;
-                    pfSpectrum = pfSecBuf + i * iNumChans;
-                    for (j = 0; j < iNumChans; ++j)
-                    {
-                        if (g_pcIsChanGood[j])
-                        {
-                            pfSpectrum[j] = (pfSpectrum[j]
-                                             / g_pfBFTimeSectMean[iTimeSect])
-                                            - pfTimeSectGain[j];
-                        }
-                    }
-                }
-            }
-            #endif
         }
 
         /* clear the g_pfDedispData array */
@@ -1296,27 +1165,10 @@ int main(int argc, char *argv[])
             }
 
             #ifdef DEBUG
-            (void) printf("Minimum value of data             : %g\n", fDataMin);
-            (void) printf("Maximum value of data             : %g\n", fDataMax);
-            #endif
-
-            #if 0
-            if (-fThreshold > fDataMin)
-            {
-                fColMin = -fThreshold;
-            }
-            else
-            {
-                fColMin = fDataMin;
-            }
-            if (fThreshold < fDataMax)
-            {
-                fColMax = fThreshold;
-            }
-            else
-            {
-                fColMax = fDataMax;
-            }
+            (void) printf("Minimum value of data             : %g\n",
+                          fDataMin);
+            (void) printf("Maximum value of data             : %g\n",
+                          fDataMax);
             #endif
 
             /* get the transpose of the two-dimensional array */
@@ -1369,8 +1221,10 @@ int main(int argc, char *argv[])
             }
 
             #ifdef DEBUG
-            (void) printf("Minimum value of data             : %g\n", fDataMin);
-            (void) printf("Maximum value of data             : %g\n", fDataMax);
+            (void) printf("Minimum value of data             : %g\n",
+                          fDataMin);
+            (void) printf("Maximum value of data             : %g\n",
+                          fDataMax);
             #endif
 
             cpgsvp(PG_2D_VP_ML, PG_2D_VP_MR, PG_2D_VP_MB, PG_2D_VP_MT);

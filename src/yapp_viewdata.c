@@ -67,8 +67,6 @@ int main(int argc, char *argv[])
     int iDataSizePerBlock = 0;  /* fSampSize * iNumChans * iBlockSize */
     float fStatBW = 0.0;
     float fNoiseRMS = 0.0;
-    float fThreshold = 0.0;
-    float fSNRMin = 0.0;
     float fClipLevel = 0.0;
     double dNumSigmas = 0.0;
     double dTSampInSec = 0.0;   /* holds sampling time in s */
@@ -90,8 +88,6 @@ int main(int argc, char *argv[])
     float fDataMin = 0.0;
     float fDataMax = 0.0;
     int iReadItems = 0;
-    float fColMin = 0.0;
-    float fColMax = 0.0;
     float fXStep = 0.0;
     float fYStep = 0.0;
     float fButX = 0.0;
@@ -346,10 +342,6 @@ int main(int argc, char *argv[])
         (void) printf("Usable bandwidth                  : %g MHz\n", fStatBW);
         fNoiseRMS = 1.0 / sqrt(fStatBW * stYUM.dTSamp * 1e3);
         (void) printf("Expected noise RMS                : %g\n", fNoiseRMS);
-        fThreshold = (float) (dNumSigmas * fNoiseRMS);
-        (void) printf("Threshold                         : %g\n", fThreshold);
-        /* calculate the minimum SNR */
-        fSNRMin = fThreshold / fNoiseRMS;
     }
 
     /* allocate memory for the time sample goodness flag array */
@@ -433,6 +425,9 @@ int main(int argc, char *argv[])
         cpgscr(0, 1.0, 1.0, 1.0);
         cpgscr(1, 0.0, 0.0, 0.0);
     }
+
+    /* set character height */
+    cpgsch(PG_CH);
 
     /* set up the plot's X-axis */
     g_pfXAxis = (float *) YAPP_Malloc(iBlockSize,
@@ -542,13 +537,11 @@ int main(int argc, char *argv[])
                beam flip time section and perform gain correction */
             for (i = 0; i < iNumSamps; ++i)
             {
-                dTNow += dTSampInSec;   /* in s */
-
                 if ((dTNow >= (*stYUM.padBadTimes)[iBadTimeSect][BADTIME_BEG])
                     && (dTNow <= (*stYUM.padBadTimes)[iBadTimeSect][BADTIME_END]))
                 {
                     cIsInBadTimeRange = YAPP_TRUE;
-                    g_pcIsTimeGood[(iReadBlockCount-1)*iBlockSize+i]
+                    g_pcIsTimeGood[((iReadBlockCount-1)*iBlockSize)+i]
                         = YAPP_FALSE;
                 }
 
@@ -565,6 +558,7 @@ int main(int argc, char *argv[])
                 {
                     dTNextBF += stYUM.dTBFInt;
 
+                    ++iTimeSect;
                     if (iTimeSect >= stYUM.iBFTimeSects)
                     {
                         (void) fprintf(stderr,
@@ -573,10 +567,9 @@ int main(int argc, char *argv[])
                         YAPP_CleanUp();
                         return YAPP_RET_ERROR;
                     }
-                    ++iTimeSect;
                 }
 
-                pfTimeSectGain = stYUM.pfBFGain + iTimeSect * stYUM.iNumChans;
+                pfTimeSectGain = stYUM.pfBFGain + (iTimeSect * stYUM.iNumChans);
                 pfSpectrum = g_pfBuf + i * stYUM.iNumChans;
                 for (j = 0; j < stYUM.iNumChans; ++j)
                 {
@@ -607,6 +600,8 @@ int main(int argc, char *argv[])
                         pfSpectrum[j] = 0.0;
                     }
                 }
+
+                dTNow += dTSampInSec;   /* in s */
             }
         }
         else if (YAPP_FORMAT_FIL == iFormat)
@@ -663,25 +658,6 @@ int main(int argc, char *argv[])
 
         if (iFormat != YAPP_FORMAT_DTS_TIM)
         {
-            #if 0
-            if (-fThreshold > fDataMin)
-            {
-                fColMin = -fThreshold;
-            }
-            else
-            {
-                fColMin = fDataMin;
-            }
-            if (fThreshold < fDataMax)
-            {
-                fColMax = fThreshold;
-            }
-            else
-            {
-                fColMax = fDataMax;
-            }
-            #endif
-
             /* get the transpose of the two-dimensional array */
             i = 0;
             j = 0;
