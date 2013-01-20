@@ -1406,6 +1406,7 @@ int YAPP_ReadData(float *pfBuf,
 }
 
 
+#if 0
 /*
  * Smooth data
  */
@@ -1425,6 +1426,53 @@ int YAPP_Smooth(float* pfInBuf,
             pfOutBuf[i] += pfInBuf[i+j];
         }
         pfOutBuf[i] /= iSampsPerWin;
+    }
+
+    return YAPP_RET_SUCCESS;
+}
+#else
+/*
+ * Smooth data
+ */
+int YAPP_Smooth(float* pfInBuf,
+                int iBlockSize,
+                int iSampsPerWin,
+                int iOffset,
+                float* pfOutBuf)
+{
+    int i = 0;
+    int j = 0;
+    int iLow = -(iSampsPerWin / 2);
+    int iHigh = (0 == (iSampsPerWin % 2)) ? (iSampsPerWin / 2) + 1 : iSampsPerWin / 2;
+
+    for (i = iOffset; i < (iBlockSize - (iSampsPerWin - 1)); ++i)
+    {
+        for (j = iLow; j < iHigh; ++j)
+        {
+            pfOutBuf[i] += pfInBuf[i+j];
+        }
+        pfOutBuf[i] /= iSampsPerWin;
+    }
+
+    return YAPP_RET_SUCCESS;
+}
+#endif
+
+
+/*
+ * Baseline-subtract data
+ */
+int YAPP_BaselineSubtract(float* pfInBuf,
+                          int iBlockSize,
+                          float* pfOutBuf)
+{
+    int i = 0;
+    float fMean = 0.0;
+
+    fMean = YAPP_CalcMean(pfInBuf, iBlockSize);
+    for (i = 0; i < iBlockSize; ++i)
+    {
+        pfOutBuf[i] = pfInBuf[i] - fMean;
     }
 
     return YAPP_RET_SUCCESS;

@@ -63,6 +63,8 @@ all: yapp_makever \
 	 yapp_dedisperse \
 	 yapp_smooth.o \
 	 yapp_smooth \
+	 yapp_basesub.o \
+	 yapp_basesub \
 	 yapp_fold.o \
 	 yapp_fold \
 	 tags
@@ -124,6 +126,13 @@ yapp_smooth.o: $(SRCDIR)/yapp_smooth.c $(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h
 	$(CC) $(CFLAGS_C) $(DDEBUG) $< -o $(IDIR)/$@
 
 yapp_smooth: $(IDIR)/yapp_smooth.o $(IDIR)/yapp_version.o \
+	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
+	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -o $(BINDIR)/$@
+
+yapp_basesub.o: $(SRCDIR)/yapp_basesub.c $(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h
+	$(CC) $(CFLAGS_C) $(DDEBUG) $< -o $(IDIR)/$@
+
+yapp_basesub: $(IDIR)/yapp_basesub.o $(IDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
 	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -o $(BINDIR)/$@
 
@@ -204,6 +213,7 @@ clean:
 	$(DELCMD) $(IDIR)/yapp_ft.o
 	$(DELCMD) $(IDIR)/yapp_dedisperse.o
 	$(DELCMD) $(IDIR)/yapp_smooth.o
+	$(DELCMD) $(IDIR)/yapp_basesub.o
 	$(DELCMD) $(IDIR)/yapp_fold.o
 #	$(DELCMD) $(IDIR)/set_colours.o
 #	$(DELCMD) $(IDIR)/yapp_dedisplaw.o

@@ -491,6 +491,7 @@ int YAPP_CalcDelays(double dDM,
                     float fLaw,
                     int* piMaxOffset);
 
+#if 0
 /**
  * Smooth data
  * @param[in]   pfInBuf         Input buffer
@@ -502,6 +503,31 @@ int YAPP_Smooth(float* pfInBuf,
                 int iBlockSize,
                 int iSampsPerWin,
                 float* pfOutBuf);
+#else
+/**
+ * Smooth data
+ * @param[in]   pfInBuf         Input buffer
+ * @param[in]   iBlockSize      Number of samples in input buffer
+ * @param[in]   iSampsPerWin    Number of samples in window
+ * @param[in]   iOffset         Offset from the beginning of the buffer
+ * @param[out]  pfOutBuf        Output buffer
+ */
+int YAPP_Smooth(float* pfInBuf,
+                int iBlockSize,
+                int iSampsPerWin,
+                int iOffset,
+                float* pfOutBuf);
+#endif
+
+/**
+ * Baseline-subtract data
+ * @param[in]   pfInBuf         Input buffer
+ * @param[in]   iBlockSize      Number of samples in input buffer
+ * @param[out]  pfOutBuf        Output buffer
+ */
+int YAPP_BaselineSubtract(float* pfInBuf,
+                          int iBlockSize,
+                          float* pfOutBuf);
 
 float YAPP_CalcMean(float *pfBuf, int iLength);
 float YAPP_CalcRMS(float *pfBuf, int iLength, float fMean);

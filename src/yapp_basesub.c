@@ -1,9 +1,9 @@
 /*
- * @file yapp_smooth.c
- * Program to smooth (low-pass filter) dedispersed time series data.
+ * @file yapp_basesub.c
+ * Program to baseline-subtract dedispersed time series data.
  *
  * @verbatim
- * Usage: yapp_smooth [options] <data-file>
+ * Usage: yapp_basesub [options] <data-file>
  *     -h  --help                           Display this usage information
  *     -s  --skip <time>                    The length of data in seconds, to be
  *                                          skipped
@@ -11,8 +11,8 @@
  *     -p  --proc <time>                    The length of data in seconds, to be
  *                                          processed
  *                                          (default is all)
- *     -w  --width <width>                  Width of boxcar window in milliseconds
- *                                          (default is 1 ms)
+ *     -w  --width <width>                  Width of window in seconds
+ *                                          (default is 60 s)
  *     -g  --graphics                       Turn on plotting
  *     -i  --invert                         Invert the background and foreground
  *                                          colours in plots
@@ -62,11 +62,10 @@ int main(int argc, char *argv[])
     int iTimeSampsSkip = 0;
     int iTimeSampsToProc = 0;
     int iBlockSize = 0;
-    int iProcBlockSize = 0;
     int iNumReads = 0;
     int iTotNumReads = 0;
     int iReadBlockCount = 0;
-    float fWidth = 1.0; /* in ms */
+    float fWidth = 60.0; /* in s */
     char cIsLastBlock = YAPP_FALSE;
     int iRet = YAPP_RET_SUCCESS;
     float fDataMin = 0.0;
@@ -78,18 +77,16 @@ int main(int argc, char *argv[])
     float fButY = 0.0;
     char cCurChar = 0;
     int iNumSamps = 0;
-    int iSampsPerWin = 0;
-    int iOffset = 0;
     int iDiff = 0;
     int i = 0;
     float fMeanOrig = 0.0;
     float fRMSOrig = 0.0;
     float fMeanOrigAll = 0.0;
     float fRMSOrigAll = 0.0;
-    float fMeanSmoothed = 0.0;
-    float fRMSSmoothed = 0.0;
-    float fMeanSmoothedAll = 0.0;
-    float fRMSSmoothedAll = 0.0;
+    float fMeanBaseSubed = 0.0;
+    float fRMSBaseSubed = 0.0;
+    float fMeanBaseSubedAll = 0.0;
+    float fRMSBaseSubedAll = 0.0;
     char cHasGraphics = YAPP_FALSE;
     int iInvCols = YAPP_FALSE;
     char cIsNonInteractive = YAPP_FALSE;
@@ -137,13 +134,11 @@ int main(int argc, char *argv[])
             case 'w':   /* -w or --width */
                 /* set option */
                 fWidth = atof(optarg);
-                if (fWidth > 1) /* 1 ms */
+                if (fWidth < 10) /* 10 s */
                 {
                     fprintf(stderr,
-                            "WARNING: The chosen boxcar width may suppress "
-                            "pulsars with periods greater %g ms in the "
-                            "smoothed data!\n",
-                            fWidth);
+                            "WARNING: The chosen width may suppress "
+                            "pulsars in the baseline-subtracted data!\n");
                 }
                 break;
 
@@ -252,13 +247,11 @@ int main(int argc, char *argv[])
                                                     /* number of samples */
                            * stYUM.fSampSize);
 
-    /* calculate the number of samples in one boxcar window */
-    iSampsPerWin = (int) round(fWidth / stYUM.dTSamp);
-
-    /* compute the block size - a large multiple of iSampsPerWin */
-    iBlockSize = DEF_WINDOWS * iSampsPerWin;
+    /* calculate the number of samples in one window */
+    iBlockSize = (int) round((fWidth * 1e3) / stYUM.dTSamp);
     if (iBlockSize > MAX_SIZE_BLOCK)
     {
+        (void) printf("WARNING!!\n");
         iBlockSize = MAX_SIZE_BLOCK;
     }
 
@@ -293,11 +286,8 @@ int main(int argc, char *argv[])
                   (stYUM.iTimeSamps * dTSampInSec));
 
     iTimeSampsToProc = (int) (lBytesToProc / (stYUM.fSampSize));
-    /* calculate the actual number of samples that will be processed in one
-       iteration */
-    iProcBlockSize = iBlockSize - (iSampsPerWin - 1);
     /* based on actual processed blocks, rather than read blocks */
-    iNumReads = (int) ceilf(((float) iTimeSampsToProc) / iProcBlockSize);
+    iNumReads = (int) ceilf(((float) iTimeSampsToProc) / iBlockSize);
     iTotNumReads = iNumReads;
 
     /* optimisation - store some commonly used values in variables */
@@ -316,9 +306,7 @@ int main(int argc, char *argv[])
                   (iTimeSampsToProc * dTSampInSec),
                   (stYUM.iTimeSamps * dTSampInSec),
                   iNumReads,
-                  iProcBlockSize);
-
-    (void) printf("Boxcar window width is %d time samples.\n", iSampsPerWin);
+                  iBlockSize);
 
     /* open the time series data file for reading */
     g_pFSpec = fopen(pcFileData, "r");
@@ -418,7 +406,7 @@ int main(int argc, char *argv[])
     }
 
     /* allocate memory for the accumulation buffer */
-    g_pfOutBuf = (float *) YAPP_Malloc((size_t) iProcBlockSize,
+    g_pfOutBuf = (float *) YAPP_Malloc((size_t) iBlockSize,
                                        sizeof(float),
                                        YAPP_TRUE);
     if (NULL == g_pfOutBuf)
@@ -465,50 +453,30 @@ int main(int argc, char *argv[])
            all other blocks */
         iNumSamps = iReadItems;
 
-        /* smooth data */
-        (void) memset(g_pfOutBuf, '\0', (sizeof(float) * iProcBlockSize));
-        #if 0
-        (void) YAPP_Smooth(g_pfBuf, iNumSamps, iSampsPerWin, g_pfOutBuf);
-        #else
-        if (1 == iReadBlockCount)
-        {
-            iOffset = 0;
-        }
-        else
-        {
-            iOffset = iSampsPerWin / 2;
-        }
-        (void) YAPP_Smooth(g_pfBuf, iNumSamps, iSampsPerWin, iOffset, g_pfOutBuf);
-        #endif
-        /* write smoothed data to file */
+        /* baseline-subtract data */
+        (void) YAPP_BaselineSubtract(g_pfBuf, iNumSamps, g_pfOutBuf);
+        /* write baseline-subtracted data to file */
         (void) fwrite(g_pfOutBuf,
                       sizeof(float),
-                      (long) (iNumSamps - (iSampsPerWin - 1)),
+                      (long) iNumSamps,
                       pFOut);
 
         /* calculate statistics */
         /* original signal */
-        fMeanOrig = YAPP_CalcMean(g_pfBuf, iNumSamps - (iSampsPerWin - 1));
+        fMeanOrig = YAPP_CalcMean(g_pfBuf, iNumSamps);
         fMeanOrigAll += fMeanOrig;
-        fRMSOrig = YAPP_CalcRMS(g_pfBuf,
-                                iNumSamps - (iSampsPerWin - 1),
-                                fMeanOrig);
+        fRMSOrig = YAPP_CalcRMS(g_pfBuf, iNumSamps, fMeanOrig);
         fRMSOrig *= fRMSOrig;
-        fRMSOrig *= (iNumSamps - (iSampsPerWin - 1) - 1);
+        fRMSOrig *= (iNumSamps - 1);
         fRMSOrigAll += fRMSOrig;
 
-        /* smoothed signal */
-        fMeanSmoothed = YAPP_CalcMean(g_pfOutBuf, iNumSamps - (iSampsPerWin - 1));
-        fMeanSmoothedAll += fMeanSmoothed;
-        fRMSSmoothed = YAPP_CalcRMS(g_pfOutBuf,
-                                    iNumSamps - (iSampsPerWin - 1),
-                                    fMeanSmoothed);
-        fRMSSmoothed *= fRMSSmoothed;
-        fRMSSmoothed *= (iNumSamps - (iSampsPerWin - 1) - 1);
-        fRMSSmoothedAll += fRMSSmoothed;
-
-        /* set the file position to rewind by (iSampsPerWin - 1) samples */
-        (void) fseek(g_pFSpec, -((iSampsPerWin - 1) * sizeof(float)), SEEK_CUR);
+        /* baseline-subtracted signal */
+        fMeanBaseSubed = YAPP_CalcMean(g_pfOutBuf, iNumSamps);
+        fMeanBaseSubedAll += fMeanBaseSubed;
+        fRMSBaseSubed = YAPP_CalcRMS(g_pfOutBuf, iNumSamps, fMeanBaseSubed);
+        fRMSBaseSubed *= fRMSBaseSubed;
+        fRMSBaseSubed *= (iNumSamps - 1);
+        fRMSBaseSubedAll += fRMSBaseSubed;
 
         if (cHasGraphics)
         {
@@ -543,7 +511,7 @@ int main(int argc, char *argv[])
             {
                 g_pfXAxis[i] = (float) (dDataSkipTime
                                         + (((iReadBlockCount - 1)
-                                            * iProcBlockSize
+                                            * iBlockSize
                                             * dTSampInSec)
                                            + (i * dTSampInSec)));
             }
@@ -553,7 +521,7 @@ int main(int argc, char *argv[])
                     g_pfXAxis[iBlockSize-1],
                     fColMin,
                     fColMax);
-            cpglab("Time (s)", "", "Before Smoothing");
+            cpglab("Time (s)", "", "Before Baseline-Subtracting");
             cpgbox("BCNST", 0.0, 0, "BCNST", 0.0, 0);
             cpgsci(PG_CI_PLOT);
             cpgline(iBlockSize, g_pfXAxis, g_pfBuf);
@@ -561,7 +529,7 @@ int main(int argc, char *argv[])
 
             fDataMin = g_pfOutBuf[0];
             fDataMax = g_pfOutBuf[0];
-            for (i = 0; i < (iNumSamps - (iSampsPerWin - 1)); ++i)
+            for (i = 0; i < iNumSamps; ++i)
             {
                 if (g_pfOutBuf[i] < fDataMin)
                 {
@@ -586,24 +554,24 @@ int main(int argc, char *argv[])
             cpgpanl(1, 2);
             /* erase just before plotting, to reduce flicker */
             cpgeras();
-            for (i = 0; i < iProcBlockSize; ++i)
+            for (i = 0; i < iBlockSize; ++i)
             {
                 g_pfXAxis[i] = (float) (dDataSkipTime
                                         + (((iReadBlockCount - 1)
-                                            * iProcBlockSize
+                                            * iBlockSize
                                             * dTSampInSec)
                                            + (i * dTSampInSec)));
             }
 
             cpgsvp(PG_VP_ML, PG_VP_MR, PG_VP_MB, PG_VP_MT);
             cpgswin(g_pfXAxis[0],
-                    g_pfXAxis[iProcBlockSize-1],
+                    g_pfXAxis[iBlockSize-1],
                     fColMin,
                     fColMax);
-            cpglab("Time (s)", "", "After Smoothing");
+            cpglab("Time (s)", "", "After Baseline-Subtracting");
             cpgbox("BCNST", 0.0, 0, "BCNST", 0.0, 0);
             cpgsci(PG_CI_PLOT);
-            cpgline(iProcBlockSize, g_pfXAxis, g_pfOutBuf);
+            cpgline(iBlockSize, g_pfXAxis, g_pfOutBuf);
             cpgsci(PG_CI_DEF);
 
             if (!(cIsLastBlock))
@@ -694,15 +662,15 @@ int main(int argc, char *argv[])
 
     /* print statistics */
     fMeanOrigAll /= iReadBlockCount;
-    fRMSOrigAll /= (stYUM.iTimeSamps - (iSampsPerWin - 1) - 1);
+    fRMSOrigAll /= (stYUM.iTimeSamps - 1);
     fRMSOrigAll = sqrtf(fRMSOrigAll);
     (void) printf("Original signal mean = %g\n", fMeanOrigAll);
     (void) printf("Original signal RMS = %g\n", fRMSOrigAll);
-    fMeanSmoothedAll /= iReadBlockCount;
-    fRMSSmoothedAll /= (stYUM.iTimeSamps - (iSampsPerWin - 1) - 1);
-    fRMSSmoothedAll = sqrtf(fRMSSmoothedAll);
-    (void) printf("Smoothed signal mean = %g\n", fMeanSmoothedAll);
-    (void) printf("Smoothed signal RMS = %g\n", fRMSSmoothedAll);
+    fMeanBaseSubedAll /= iReadBlockCount;
+    fRMSBaseSubedAll /= (stYUM.iTimeSamps - 1);
+    fRMSBaseSubedAll = sqrtf(fRMSBaseSubedAll);
+    (void) printf("Baseline-subtracted signal mean = %g\n", fMeanBaseSubedAll);
+    (void) printf("Baseline-subtracted signal RMS = %g\n", fRMSBaseSubedAll);
 
     (void) fclose(pFOut);
     YAPP_CleanUp();
@@ -715,7 +683,7 @@ int main(int argc, char *argv[])
  */
 void PrintUsage(const char *pcProgName)
 {
-    (void) printf("Usage: %s [options] <time-series-data-file>\n",
+    (void) printf("Usage: %s [options] <data-file>\n",
                   pcProgName);
     (void) printf("    -h  --help                           ");
     (void) printf("Display this usage information\n");
@@ -732,9 +700,9 @@ void PrintUsage(const char *pcProgName)
     (void) printf("                                         ");
     (void) printf("(default is all)\n");
     (void) printf("    -w  --width                          ");
-    (void) printf("Width of boxcar window in milliseconds\n");
+    (void) printf("Width of window in seconds\n");
     (void) printf("                                         ");
-    (void) printf("(default is 1 ms)\n");
+    (void) printf("(default is 60 s)\n");
     (void) printf("    -g  --graphics                       ");
     (void) printf("Turn on plotting\n");
     (void) printf("    -i  --invert                         ");
