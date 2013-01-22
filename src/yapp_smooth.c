@@ -302,7 +302,7 @@ int main(int argc, char *argv[])
     iTimeSampsToProc = (int) (lBytesToProc / (stYUM.fSampSize));
     /* calculate the actual number of samples that will be processed in one
        iteration */
-    iOutBlockSize = iBlockSize - iSampsPerWin;
+    iOutBlockSize = iBlockSize - (iSampsPerWin - 1);
     /* based on actual processed blocks, rather than read blocks */
     iNumReads = (int) ceilf(((float) iTimeSampsToProc) / iOutBlockSize);
     iTotNumReads = iNumReads;
@@ -489,32 +489,32 @@ int main(int argc, char *argv[])
         /* write smoothed data to file */
         (void) fwrite(g_pfOutBuf,
                       sizeof(float),
-                      (long) (iNumSamps - iSampsPerWin),
+                      (long) (iNumSamps - (iSampsPerWin - 1)),
                       pFOut);
 
         /* calculate statistics */
         /* original signal */
-        fMeanOrig = YAPP_CalcMean(g_pfBuf, iNumSamps - iSampsPerWin);
+        fMeanOrig = YAPP_CalcMean(g_pfBuf, iNumSamps - (iSampsPerWin - 1));
         fMeanOrigAll += fMeanOrig;
         fRMSOrig = YAPP_CalcRMS(g_pfBuf,
-                                iNumSamps - iSampsPerWin,
+                                iNumSamps - (iSampsPerWin - 1),
                                 fMeanOrig);
         fRMSOrig *= fRMSOrig;
-        fRMSOrig *= (iNumSamps - iSampsPerWin - 1);
+        fRMSOrig *= (iNumSamps - (iSampsPerWin - 1) - 1);
         fRMSOrigAll += fRMSOrig;
 
         /* smoothed signal */
-        fMeanSmoothed = YAPP_CalcMean(g_pfOutBuf, iNumSamps - iSampsPerWin);
+        fMeanSmoothed = YAPP_CalcMean(g_pfOutBuf, iNumSamps - (iSampsPerWin - 1));
         fMeanSmoothedAll += fMeanSmoothed;
         fRMSSmoothed = YAPP_CalcRMS(g_pfOutBuf,
-                                    iNumSamps - iSampsPerWin,
+                                    iNumSamps - (iSampsPerWin - 1),
                                     fMeanSmoothed);
         fRMSSmoothed *= fRMSSmoothed;
-        fRMSSmoothed *= (iNumSamps - iSampsPerWin - 1);
+        fRMSSmoothed *= (iNumSamps - (iSampsPerWin - 1) - 1);
         fRMSSmoothedAll += fRMSSmoothed;
 
-        /* set the file position to rewind by iSampsPerWin samples */
-        (void) fseek(g_pFSpec, -(iSampsPerWin * sizeof(float)), SEEK_CUR);
+        /* set the file position to rewind by (iSampsPerWin - 1) samples */
+        (void) fseek(g_pFSpec, -((iSampsPerWin - 1) * sizeof(float)), SEEK_CUR);
 
         if (cHasGraphics)
         {
@@ -567,7 +567,7 @@ int main(int argc, char *argv[])
 
             fDataMin = g_pfOutBuf[0];
             fDataMax = g_pfOutBuf[0];
-            for (i = 0; i < (iNumSamps - iSampsPerWin); ++i)
+            for (i = 0; i < (iNumSamps - (iSampsPerWin - 1)); ++i)
             {
                 if (g_pfOutBuf[i] < fDataMin)
                 {
@@ -707,12 +707,12 @@ int main(int argc, char *argv[])
 
     /* print statistics */
     fMeanOrigAll /= iReadBlockCount;
-    fRMSOrigAll /= (stYUM.iTimeSamps - iSampsPerWin - 1);
+    fRMSOrigAll /= (stYUM.iTimeSamps - (iSampsPerWin - 1) - 1);
     fRMSOrigAll = sqrtf(fRMSOrigAll);
     (void) printf("Original signal mean = %g\n", fMeanOrigAll);
     (void) printf("Original signal RMS = %g\n", fRMSOrigAll);
     fMeanSmoothedAll /= iReadBlockCount;
-    fRMSSmoothedAll /= (stYUM.iTimeSamps - iSampsPerWin - 1);
+    fRMSSmoothedAll /= (stYUM.iTimeSamps - (iSampsPerWin - 1) - 1);
     fRMSSmoothedAll = sqrtf(fRMSSmoothedAll);
     (void) printf("Smoothed signal mean = %g\n", fMeanSmoothedAll);
     (void) printf("Smoothed signal RMS = %g\n", fRMSSmoothedAll);
