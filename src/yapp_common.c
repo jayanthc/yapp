@@ -1437,21 +1437,33 @@ int YAPP_Smooth(float* pfInBuf,
 int YAPP_Smooth(float* pfInBuf,
                 int iBlockSize,
                 int iSampsPerWin,
-                int iOffset,
                 float* pfOutBuf)
 {
     int i = 0;
     int j = 0;
+    int k = 0;
     int iLow = -(iSampsPerWin / 2);
-    int iHigh = (0 == (iSampsPerWin % 2)) ? (iSampsPerWin / 2) + 1 : iSampsPerWin / 2;
+    int iHigh = iSampsPerWin / 2;
+    #if 0
+    static char cIsFirst = YAPP_TRUE;
 
-    for (i = iOffset; i < (iBlockSize - (iSampsPerWin - 1)); ++i)
+    if (cIsFirst)
     {
-        for (j = iLow; j < iHigh; ++j)
+        for (k = 0; k < -iLow; ++k)
         {
-            pfOutBuf[i] += pfInBuf[i+j];
+            pfOutBuf[k] = pfInBuf[k];
         }
-        pfOutBuf[i] /= iSampsPerWin;
+        cIsFirst = YAPP_FALSE;
+    }
+    #endif
+    for (i = -iLow; i < (iBlockSize + iLow); ++i)
+    {
+        for (j = iLow; j <= iHigh; ++j)
+        {
+            pfOutBuf[k] += pfInBuf[i+j];
+        }
+        pfOutBuf[k] /= iSampsPerWin;
+        ++k;
     }
 
     return YAPP_RET_SUCCESS;

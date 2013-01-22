@@ -62,7 +62,7 @@ int main(int argc, char *argv[])
     int iTimeSampsSkip = 0;
     int iTimeSampsToProc = 0;
     int iBlockSize = 0;
-    int iProcBlockSize = 0;
+    int iOutBlockSize = 0;
     int iNumReads = 0;
     int iTotNumReads = 0;
     int iReadBlockCount = 0;
@@ -72,16 +72,14 @@ int main(int argc, char *argv[])
     float fDataMin = 0.0;
     float fDataMax = 0.0;
     int iReadItems = 0;
-    float fColMin = 0.0;
-    float fColMax = 0.0;
     float fButX = 0.0;
     float fButY = 0.0;
     char cCurChar = 0;
     int iNumSamps = 0;
     int iSampsPerWin = 0;
-    int iOffset = 0;
     int iDiff = 0;
     int i = 0;
+    char cIsFirst = YAPP_TRUE;
     float fMeanOrig = 0.0;
     float fRMSOrig = 0.0;
     float fMeanOrigAll = 0.0;
@@ -254,6 +252,15 @@ int main(int argc, char *argv[])
 
     /* calculate the number of samples in one boxcar window */
     iSampsPerWin = (int) round(fWidth / stYUM.dTSamp);
+    /* make the number of samples odd */
+    if (0 == (iSampsPerWin % 2))
+    {
+        iSampsPerWin += 1;
+        (void) fprintf(stderr,
+                       "WARNING: Number of samples in one window modified to "
+                       "be odd, new boxcar window width is %g ms.\n",
+                       stYUM.dTSamp * iSampsPerWin);
+    }
 
     /* compute the block size - a large multiple of iSampsPerWin */
     iBlockSize = DEF_WINDOWS * iSampsPerWin;
@@ -295,9 +302,9 @@ int main(int argc, char *argv[])
     iTimeSampsToProc = (int) (lBytesToProc / (stYUM.fSampSize));
     /* calculate the actual number of samples that will be processed in one
        iteration */
-    iProcBlockSize = iBlockSize - (iSampsPerWin - 1);
+    iOutBlockSize = iBlockSize - iSampsPerWin;
     /* based on actual processed blocks, rather than read blocks */
-    iNumReads = (int) ceilf(((float) iTimeSampsToProc) / iProcBlockSize);
+    iNumReads = (int) ceilf(((float) iTimeSampsToProc) / iOutBlockSize);
     iTotNumReads = iNumReads;
 
     /* optimisation - store some commonly used values in variables */
@@ -316,7 +323,7 @@ int main(int argc, char *argv[])
                   (iTimeSampsToProc * dTSampInSec),
                   (stYUM.iTimeSamps * dTSampInSec),
                   iNumReads,
-                  iProcBlockSize);
+                  iOutBlockSize);
 
     (void) printf("Boxcar window width is %d time samples.\n", iSampsPerWin);
 
@@ -418,7 +425,7 @@ int main(int argc, char *argv[])
     }
 
     /* allocate memory for the accumulation buffer */
-    g_pfOutBuf = (float *) YAPP_Malloc((size_t) iProcBlockSize,
+    g_pfOutBuf = (float *) YAPP_Malloc((size_t) iOutBlockSize,
                                        sizeof(float),
                                        YAPP_TRUE);
     if (NULL == g_pfOutBuf)
@@ -465,64 +472,66 @@ int main(int argc, char *argv[])
            all other blocks */
         iNumSamps = iReadItems;
 
+        if (cIsFirst)
+        {
+            /* copy first (iSampsPerWin / 2) time samples to the output */
+            (void) memcpy(g_pfOutBuf, g_pfBuf, (iSampsPerWin / 2) * sizeof(float));
+            (void) fwrite(g_pfOutBuf,
+                          sizeof(float),
+                          (long) (iSampsPerWin / 2),
+                          pFOut);
+            cIsFirst = YAPP_FALSE;
+        }
+
         /* smooth data */
-        (void) memset(g_pfOutBuf, '\0', (sizeof(float) * iProcBlockSize));
-        #if 0
+        (void) memset(g_pfOutBuf, '\0', (sizeof(float) * iOutBlockSize));
         (void) YAPP_Smooth(g_pfBuf, iNumSamps, iSampsPerWin, g_pfOutBuf);
-        #else
-        if (1 == iReadBlockCount)
-        {
-            iOffset = 0;
-        }
-        else
-        {
-            iOffset = iSampsPerWin / 2;
-        }
-        (void) YAPP_Smooth(g_pfBuf, iNumSamps, iSampsPerWin, iOffset, g_pfOutBuf);
-        #endif
         /* write smoothed data to file */
         (void) fwrite(g_pfOutBuf,
                       sizeof(float),
-                      (long) (iNumSamps - (iSampsPerWin - 1)),
+                      (long) (iNumSamps - iSampsPerWin),
                       pFOut);
 
         /* calculate statistics */
         /* original signal */
-        fMeanOrig = YAPP_CalcMean(g_pfBuf, iNumSamps - (iSampsPerWin - 1));
+        fMeanOrig = YAPP_CalcMean(g_pfBuf, iNumSamps - iSampsPerWin);
         fMeanOrigAll += fMeanOrig;
         fRMSOrig = YAPP_CalcRMS(g_pfBuf,
-                                iNumSamps - (iSampsPerWin - 1),
+                                iNumSamps - iSampsPerWin,
                                 fMeanOrig);
         fRMSOrig *= fRMSOrig;
-        fRMSOrig *= (iNumSamps - (iSampsPerWin - 1) - 1);
+        fRMSOrig *= (iNumSamps - iSampsPerWin - 1);
         fRMSOrigAll += fRMSOrig;
 
         /* smoothed signal */
-        fMeanSmoothed = YAPP_CalcMean(g_pfOutBuf, iNumSamps - (iSampsPerWin - 1));
+        fMeanSmoothed = YAPP_CalcMean(g_pfOutBuf, iNumSamps - iSampsPerWin);
         fMeanSmoothedAll += fMeanSmoothed;
         fRMSSmoothed = YAPP_CalcRMS(g_pfOutBuf,
-                                    iNumSamps - (iSampsPerWin - 1),
+                                    iNumSamps - iSampsPerWin,
                                     fMeanSmoothed);
         fRMSSmoothed *= fRMSSmoothed;
-        fRMSSmoothed *= (iNumSamps - (iSampsPerWin - 1) - 1);
+        fRMSSmoothed *= (iNumSamps - iSampsPerWin - 1);
         fRMSSmoothedAll += fRMSSmoothed;
 
-        /* set the file position to rewind by (iSampsPerWin - 1) samples */
-        (void) fseek(g_pFSpec, -((iSampsPerWin - 1) * sizeof(float)), SEEK_CUR);
+        /* set the file position to rewind by iSampsPerWin samples */
+        (void) fseek(g_pFSpec, -(iSampsPerWin * sizeof(float)), SEEK_CUR);
 
         if (cHasGraphics)
         {
-            fDataMin = g_pfBuf[0];
-            fDataMax = g_pfBuf[0];
-            for (i = 0; i < iBlockSize; ++i)
+            /* use a separate plotting buffer so that the x-axes for both
+               before and after plots are equivalent */
+            float* pfPlotBuf = g_pfBuf + (iSampsPerWin / 2);
+            fDataMin = pfPlotBuf[0];
+            fDataMax = pfPlotBuf[0];
+            for (i = 0; i < iOutBlockSize; ++i)
             {
-                if (g_pfBuf[i] < fDataMin)
+                if (pfPlotBuf[i] < fDataMin)
                 {
-                    fDataMin = g_pfBuf[i];
+                    fDataMin = pfPlotBuf[i];
                 }
-                if (g_pfBuf[i] > fDataMax)
+                if (pfPlotBuf[i] > fDataMax)
                 {
-                    fDataMax = g_pfBuf[i];
+                    fDataMax = pfPlotBuf[i];
                 }
             }
 
@@ -533,35 +542,32 @@ int main(int argc, char *argv[])
                           fDataMax);
             #endif
 
-            fColMin = fDataMin;
-            fColMax = fDataMax;
-
             cpgpanl(1, 1);
             /* erase just before plotting, to reduce flicker */
             cpgeras();
-            for (i = 0; i < iBlockSize; ++i)
+            for (i = 0; i < iOutBlockSize; ++i)
             {
                 g_pfXAxis[i] = (float) (dDataSkipTime
                                         + (((iReadBlockCount - 1)
-                                            * iProcBlockSize
+                                            * iOutBlockSize
                                             * dTSampInSec)
                                            + (i * dTSampInSec)));
             }
 
             cpgsvp(PG_VP_ML, PG_VP_MR, PG_VP_MB, PG_VP_MT);
             cpgswin(g_pfXAxis[0],
-                    g_pfXAxis[iBlockSize-1],
-                    fColMin,
-                    fColMax);
+                    g_pfXAxis[iOutBlockSize-1],
+                    fDataMin,
+                    fDataMax);
             cpglab("Time (s)", "", "Before Smoothing");
             cpgbox("BCNST", 0.0, 0, "BCNST", 0.0, 0);
             cpgsci(PG_CI_PLOT);
-            cpgline(iBlockSize, g_pfXAxis, g_pfBuf);
+            cpgline(iOutBlockSize, g_pfXAxis, pfPlotBuf);
             cpgsci(PG_CI_DEF);
 
             fDataMin = g_pfOutBuf[0];
             fDataMax = g_pfOutBuf[0];
-            for (i = 0; i < (iNumSamps - (iSampsPerWin - 1)); ++i)
+            for (i = 0; i < (iNumSamps - iSampsPerWin); ++i)
             {
                 if (g_pfOutBuf[i] < fDataMin)
                 {
@@ -580,30 +586,27 @@ int main(int argc, char *argv[])
                           fDataMax);
             #endif
 
-            fColMin = fDataMin;
-            fColMax = fDataMax;
-
             cpgpanl(1, 2);
             /* erase just before plotting, to reduce flicker */
             cpgeras();
-            for (i = 0; i < iProcBlockSize; ++i)
+            for (i = 0; i < iOutBlockSize; ++i)
             {
                 g_pfXAxis[i] = (float) (dDataSkipTime
                                         + (((iReadBlockCount - 1)
-                                            * iProcBlockSize
+                                            * iOutBlockSize
                                             * dTSampInSec)
                                            + (i * dTSampInSec)));
             }
 
             cpgsvp(PG_VP_ML, PG_VP_MR, PG_VP_MB, PG_VP_MT);
             cpgswin(g_pfXAxis[0],
-                    g_pfXAxis[iProcBlockSize-1],
-                    fColMin,
-                    fColMax);
+                    g_pfXAxis[iOutBlockSize-1],
+                    fDataMin,
+                    fDataMax);
             cpglab("Time (s)", "", "After Smoothing");
             cpgbox("BCNST", 0.0, 0, "BCNST", 0.0, 0);
             cpgsci(PG_CI_PLOT);
-            cpgline(iProcBlockSize, g_pfXAxis, g_pfOutBuf);
+            cpgline(iOutBlockSize, g_pfXAxis, g_pfOutBuf);
             cpgsci(PG_CI_DEF);
 
             if (!(cIsLastBlock))
@@ -692,14 +695,24 @@ int main(int argc, char *argv[])
 
     (void) printf("DONE!\n");
 
+    /* copy last (iSampsPerWin / 2) time samples to the output */
+    (void) memset(g_pfOutBuf, '\0', (sizeof(float) * iOutBlockSize));
+    (void) memcpy(g_pfOutBuf,
+                  g_pfBuf + iNumSamps - (iSampsPerWin / 2),
+                  (iSampsPerWin / 2) * sizeof(float));
+    (void) fwrite(g_pfOutBuf,
+                  sizeof(float),
+                  (long) (iSampsPerWin / 2),
+                  pFOut);
+
     /* print statistics */
     fMeanOrigAll /= iReadBlockCount;
-    fRMSOrigAll /= (stYUM.iTimeSamps - (iSampsPerWin - 1) - 1);
+    fRMSOrigAll /= (stYUM.iTimeSamps - iSampsPerWin - 1);
     fRMSOrigAll = sqrtf(fRMSOrigAll);
     (void) printf("Original signal mean = %g\n", fMeanOrigAll);
     (void) printf("Original signal RMS = %g\n", fRMSOrigAll);
     fMeanSmoothedAll /= iReadBlockCount;
-    fRMSSmoothedAll /= (stYUM.iTimeSamps - (iSampsPerWin - 1) - 1);
+    fRMSSmoothedAll /= (stYUM.iTimeSamps - iSampsPerWin - 1);
     fRMSSmoothedAll = sqrtf(fRMSSmoothedAll);
     (void) printf("Smoothed signal mean = %g\n", fMeanSmoothedAll);
     (void) printf("Smoothed signal RMS = %g\n", fRMSSmoothedAll);

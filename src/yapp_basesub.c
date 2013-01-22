@@ -344,7 +344,7 @@ int main(int argc, char *argv[])
     (void) sprintf(acFileOut,
                    "%s%s%g%s",
                    pcFileOut,
-                   INFIX_SMOOTHED,
+                   INFIX_BASESUBED,
                    fWidth,
                    EXT_TIM);
     pFOut = fopen(acFileOut, "w");
