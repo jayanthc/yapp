@@ -13,8 +13,8 @@
  */
 
 #include "yapp.h"
-#include "yapp_p2stim.h"
 #include "yapp_sigproc.h"   /* for SIGPROC filterbank file format support */
+#include "yapp_p2stim.h"
 
 /**
  * The build version string, maintained in the file version.c, which is
@@ -33,10 +33,71 @@ int main(int argc, char *argv[])
     YAPP_SIGPROC_HEADER stHeader = {{0}};
     int iRet = EXIT_SUCCESS;
 
-    /* get the input filename */
-    pcFileData = argv[1];
+    const char *pcProgName = NULL;
+    int iNextOpt = 0;
+    /* valid short options */
+    const char* const pcOptsShort = "hv";
+    /* valid long options */
+    const struct option stOptsLong[] = {
+        { "help",                   0, NULL, 'h' },
+        { "version",                0, NULL, 'v' },
+        { NULL,                     0, NULL, 0   }
+    };
 
-    pcFilename = GetFilenameFromPath(pcFileData, ".dat");
+    /* get the filename of the program from the argument list */
+    pcProgName = argv[0];
+
+    /* parse the input */
+    do
+    {
+        iNextOpt = getopt_long(argc, argv, pcOptsShort, stOptsLong, NULL);
+        switch (iNextOpt)
+        {
+            case 'h':   /* -h or --help */
+                /* print usage info and terminate */
+                PrintUsage(pcProgName);
+                return YAPP_RET_SUCCESS;
+
+            case 'v':   /* -v or --version */
+                /* display the version */
+                (void) printf("%s\n", g_pcVersion);
+                return YAPP_RET_SUCCESS;
+
+            case '?':   /* user specified an invalid option */
+                /* print usage info and terminate with error */
+                (void) fprintf(stderr, "ERROR: Invalid option!\n");
+                PrintUsage(pcProgName);
+                return YAPP_RET_ERROR;
+
+            case -1:    /* done with options */
+                break;
+
+            default:    /* unexpected */
+                assert(0);
+        }
+    } while (iNextOpt != -1);
+
+    /* no arguments */
+    if (argc <= optind)
+    {
+        (void) fprintf(stderr, "ERROR: Input file not specified!\n");
+        PrintUsage(pcProgName);
+        return YAPP_RET_ERROR;
+    }
+
+    /* register the signal-handling function */
+    iRet = YAPP_RegisterSignalHandlers();
+    if (iRet != YAPP_RET_SUCCESS)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Handler registration failed!\n");
+        return YAPP_RET_ERROR;
+    }
+
+    /* get the input filename */
+    pcFileData = argv[optind];
+
+    pcFilename = YAPP_GetFilenameFromPath(pcFileData, ".dat");
 
     /* build the header file name and open the file */
     (void) strcpy(acFileInf, pcFilename);
@@ -577,44 +638,18 @@ int CopyData(char *pcFileData, FILE *pFTim)
     return EXIT_SUCCESS;
 }
 
-char* GetFilenameFromPath(char *pcPath, char *pcExt)
+/*
+ * Prints usage information
+ */
+void PrintUsage(const char *pcProgName)
 {
-    char *pcPos = NULL;
-    char *pcPosPrev = NULL;
-    char *pcFilename = NULL;
-    int iSlashCount = 0;
+    (void) printf("Usage: %s [options] <data-file>\n",
+                  pcProgName);
+    (void) printf("    -h  --help                           ");
+    (void) printf("Display this usage information\n");
+    (void) printf("    -v  --version                        ");
+    (void) printf("Display the version\n");
 
-    /* extract the non-extension part of the input file */
-    pcPos = pcPath;
-#if 0
-    do
-    {
-        pcPosPrev = pcPos;
-        pcPos = strstr((pcPos + 1), "/");
-        ++iSlashCount;
-    }
-    while (pcPos != NULL);
-    --iSlashCount;
-    pcPos = pcPosPrev + 1;
-    if (0 == iSlashCount)   /* there was no slash */
-    {
-        pcPos = pcPath;
-    }
-#endif
-
-    /* allocate memory for the filename */
-    pcFilename = (char *) malloc((strlen(pcPos) - strlen(pcExt) + 1) * sizeof(char));
-    if (NULL == pcFilename)
-    {
-        (void) fprintf(stderr,
-                       "ERROR: Memory allocation for filename failed! %s!\n",
-                       strerror(errno));
-        return NULL;
-        /* TODO: handle NULL return in caller */
-    }
-
-    (void) strncpy(pcFilename, pcPos, (strlen(pcPos) - strlen(pcExt)));
-
-    return pcFilename;
+    return;
 }
 

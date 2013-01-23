@@ -361,7 +361,7 @@ int main(int argc, char *argv[])
     /* open the time series data file for reading */
     pcFileOut = YAPP_GetFilenameFromPath(pcFileData, EXT_TIM);
     (void) sprintf(acFileOut,
-                   "%s%s%g%s",
+                   "%s_%s%gms%s",
                    pcFileOut,
                    INFIX_SMOOTHED,
                    fWidth,
@@ -728,7 +728,7 @@ int main(int argc, char *argv[])
  */
 void PrintUsage(const char *pcProgName)
 {
-    (void) printf("Usage: %s [options] <time-series-data-file>\n",
+    (void) printf("Usage: %s [options] <data-file>\n",
                   pcProgName);
     (void) printf("    -h  --help                           ");
     (void) printf("Display this usage information\n");

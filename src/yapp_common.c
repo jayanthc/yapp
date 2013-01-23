@@ -98,9 +98,7 @@ char* YAPP_GetFilenameFromPath(char *pcPath, char *pcExt)
     }
 
     /* allocate memory for the filename */
-    /* TODO: check this: added 1 for '\0' (valgrind memory error) */
-    pcFilename = (char *) YAPP_Malloc((strlen(pcPos) - strlen(pcExt) + 2),
-    /*pcFilename = (char *) YAPP_Malloc((strlen(pcPos) - strlen(pcExt) + 1),*/
+    pcFilename = (char *) YAPP_Malloc((strlen(pcPos) - strlen(pcExt) + 1),
                                       sizeof(char),
                                       YAPP_TRUE);
     if (NULL == pcFilename)
@@ -112,7 +110,7 @@ char* YAPP_GetFilenameFromPath(char *pcPath, char *pcExt)
         /* TODO: handle NULL return in caller */
     }
 
-    (void) strncpy(pcFilename, pcPos, (strlen(pcPos) - strlen(pcExt) + 1));
+    (void) strncpy(pcFilename, pcPos, (strlen(pcPos) - strlen(pcExt)));
 
     return pcFilename;
 }
@@ -1390,7 +1388,7 @@ int YAPP_ReadData(float *pfBuf,
     {
         /* 4-bit/0.5-byte data */
         /* copy data from the byte buffer to the float buffer */
-        for (i = 0; i < (int) (iReadItems * fSampSize); ++i)
+        for (i = 0; i < iReadItems; ++i)
         {
             /* copy lower 4 bits */
             pfBuf[2*i] = pcBuf[i] & 0x0F;

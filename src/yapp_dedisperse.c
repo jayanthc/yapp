@@ -781,7 +781,6 @@ int main(int argc, char *argv[])
     /* generate dedispersed data file name and config file name from the input
        file name */
     pcFilename = YAPP_GetFilenameFromPath(pcFileSpec, EXT_DYNSPEC);
-
     (void) strcpy(acFileDedisp, pcFilename);
     if (YAPP_FORMAT_DTS_TIM == iOutputFormat)
     {

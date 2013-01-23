@@ -37,6 +37,7 @@ LFLAGS_SNDFILE = -lsndfile
 
 # directories
 SRCDIR = src
+TOOLSDIR = tools
 MANDIR = man
 IDIR = src
 BINDIR = bin
@@ -67,6 +68,8 @@ all: yapp_makever \
 	 yapp_basesub \
 	 yapp_fold.o \
 	 yapp_fold \
+	 yapp_p2stim.o \
+	 yapp_p2stim \
 	 tags
 #	 yapp_dedisplaw.o \
 	 set_colours.o \
@@ -143,6 +146,13 @@ yapp_fold: $(IDIR)/yapp_fold.o $(IDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
 	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -o $(BINDIR)/$@
 
+yapp_p2stim.o: $(TOOLSDIR)/yapp_p2stim.c $(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h
+	$(CC) $(CFLAGS_C) -I$(SRCDIR) $(DDEBUG) $< -o $(TOOLSDIR)/$@
+
+yapp_p2stim: $(TOOLSDIR)/yapp_p2stim.o $(SRCDIR)/yapp_version.o \
+	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
+	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -o $(BINDIR)/$@
+
 ifeq ($(FC), g77)
 DFC = -D_FC_F77_
 set_colours.o: $(SRCDIR)/set_colours.f
@@ -215,6 +225,7 @@ clean:
 	$(DELCMD) $(IDIR)/yapp_smooth.o
 	$(DELCMD) $(IDIR)/yapp_basesub.o
 	$(DELCMD) $(IDIR)/yapp_fold.o
+	$(DELCMD) $(TOOLSDIR)/yapp_p2stim.o
 #	$(DELCMD) $(IDIR)/set_colours.o
 #	$(DELCMD) $(IDIR)/yapp_dedisplaw.o
 #	$(DELCMD) $(IDIR)/reorderdds.o

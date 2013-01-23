@@ -71,8 +71,6 @@ int main(int argc, char *argv[])
     float fDataMin = 0.0;
     float fDataMax = 0.0;
     int iReadItems = 0;
-    float fColMin = 0.0;
-    float fColMax = 0.0;
     float fButX = 0.0;
     float fButY = 0.0;
     char cCurChar = 0;
@@ -342,7 +340,7 @@ int main(int argc, char *argv[])
     /* open the time series data file for reading */
     pcFileOut = YAPP_GetFilenameFromPath(pcFileData, EXT_TIM);
     (void) sprintf(acFileOut,
-                   "%s%s%g%s",
+                   "%s_%s%gs%s",
                    pcFileOut,
                    INFIX_BASESUBED,
                    fWidth,
@@ -501,9 +499,6 @@ int main(int argc, char *argv[])
                           fDataMax);
             #endif
 
-            fColMin = fDataMin;
-            fColMax = fDataMax;
-
             cpgpanl(1, 1);
             /* erase just before plotting, to reduce flicker */
             cpgeras();
@@ -519,8 +514,8 @@ int main(int argc, char *argv[])
             cpgsvp(PG_VP_ML, PG_VP_MR, PG_VP_MB, PG_VP_MT);
             cpgswin(g_pfXAxis[0],
                     g_pfXAxis[iBlockSize-1],
-                    fColMin,
-                    fColMax);
+                    fDataMin,
+                    fDataMax);
             cpglab("Time (s)", "", "Before Baseline-Subtracting");
             cpgbox("BCNST", 0.0, 0, "BCNST", 0.0, 0);
             cpgsci(PG_CI_PLOT);
@@ -548,9 +543,6 @@ int main(int argc, char *argv[])
                           fDataMax);
             #endif
 
-            fColMin = fDataMin;
-            fColMax = fDataMax;
-
             cpgpanl(1, 2);
             /* erase just before plotting, to reduce flicker */
             cpgeras();
@@ -566,8 +558,8 @@ int main(int argc, char *argv[])
             cpgsvp(PG_VP_ML, PG_VP_MR, PG_VP_MB, PG_VP_MT);
             cpgswin(g_pfXAxis[0],
                     g_pfXAxis[iBlockSize-1],
-                    fColMin,
-                    fColMax);
+                    fDataMin,
+                    fDataMax);
             cpglab("Time (s)", "", "After Baseline-Subtracting");
             cpgbox("BCNST", 0.0, 0, "BCNST", 0.0, 0);
             cpgsci(PG_CI_PLOT);

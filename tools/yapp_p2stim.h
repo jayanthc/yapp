@@ -9,7 +9,7 @@
 #ifndef __P2STIM_H__
 #define __P2STIM_H__
 
-#define SIZE_BUF    1048576     /* 1 MB */
+#define SIZE_BUF    1048576 /* 1 MB */
 
 int GetMetadata(FILE *pFInf, YAPP_SIGPROC_HEADER *pstHeader);
 int WriteMetadata(FILE *pFTim, YAPP_SIGPROC_HEADER stHeader);
