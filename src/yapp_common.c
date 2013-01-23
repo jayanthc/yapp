@@ -1316,7 +1316,6 @@ int YAPP_ReadData(float *pfBuf,
         /* allocate memory for the byte buffer, based on the total number of
            samples per block (= number of channels * number of time samples per
            block) */
-        //pcBuf = (char *) malloc((int) (iTotSampsPerBlock * fSampSize));
         pcBuf = (char *) YAPP_Malloc((int) (iTotSampsPerBlock * fSampSize),
                                      sizeof(char),
                                      YAPP_FALSE);
@@ -1405,9 +1404,6 @@ int YAPP_ReadData(float *pfBuf,
             pfBuf[(2*i)+1] = (pcBuf[i] & 0xF0) >> 4;
         }
     }
-
-    /* free the byte buffer */
-    //free(pcBuf);
 
     return iReadItems;
 }

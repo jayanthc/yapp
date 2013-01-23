@@ -345,7 +345,7 @@ int main(int argc, char *argv[])
     if ((lBytesToSkip + lBytesToProc) > lDataSizeTotal)
     {
         (void) printf("WARNING: Total data to be read (skipped and processed) "
-                      "%d, %d is more than the size of the file! ",
+                      "%ld, %ld is more than the size of the file! ",
                        lBytesToSkip, lBytesToProc);
         lBytesToProc = lDataSizeTotal - lBytesToSkip;
         (void) printf("Newly calculated size of data to be processed: %ld "

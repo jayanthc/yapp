@@ -703,6 +703,14 @@ int main(int argc, char *argv[])
             }
 
             /* erase the previous x-axis */
+            if (!cIsFirst && !cIsNonInteractive)   /* kludge */
+            {
+                cpgsvp(PG_2D_VP_ML, PG_2D_VP_MR, PG_2D_VP_MB, PG_2D_VP_MT);
+                cpgswin(g_pfXAxisOld[0],
+                        g_pfXAxisOld[iBlockSize-1],
+                        g_pfYAxis[0],
+                        g_pfYAxis[stYUM.iNumChans-1]);
+            }
             cpgsci(0);      /* background */
             cpgaxis("N",
                     g_pfXAxisOld[0], g_pfYAxis[0],
@@ -754,7 +762,7 @@ int main(int argc, char *argv[])
                 cpgsci(PG_BUT_FILLCOL); /* set the fill colour */
                 cpgrect(PG_BUTNEXT_L, PG_BUTNEXT_R, PG_BUTNEXT_B, PG_BUTNEXT_T);
                 cpgrect(PG_BUTEXIT_L, PG_BUTEXIT_R, PG_BUTEXIT_B, PG_BUTEXIT_T);
-                cpgsci(0);  /* set colour index to white */
+                cpgsci(0);  /* set colour index to background */
                 cpgtext(PG_BUTNEXT_TEXT_L, PG_BUTNEXT_TEXT_B, "Next");
                 cpgtext(PG_BUTEXIT_TEXT_L, PG_BUTEXIT_TEXT_B, "Exit");
 
@@ -786,7 +794,7 @@ int main(int argc, char *argv[])
                         cpgtext(PG_BUTNEXT_CL_TEXT_L, PG_BUTNEXT_CL_TEXT_B, "Next");
                         cpgsci(0);  /* set colour index to white */
                         cpgtext(PG_BUTNEXT_TEXT_L, PG_BUTNEXT_TEXT_B, "Next");
-                        cpgsci(1);  /* reset colour index to black */
+                        cpgsci(PG_CI_DEF);  /* reset colour index to black */
                         (void) usleep(PG_BUT_CL_SLEEP);
 
                         break;
@@ -805,7 +813,7 @@ int main(int argc, char *argv[])
                         cpgtext(PG_BUTEXIT_CL_TEXT_L, PG_BUTEXIT_CL_TEXT_B, "Exit");
                         cpgsci(0);  /* set colour index to white */
                         cpgtext(PG_BUTEXIT_TEXT_L, PG_BUTEXIT_TEXT_B, "Exit");
-                        cpgsci(1);  /* reset colour index to black */
+                        cpgsci(PG_CI_DEF);  /* reset colour index to black */
                         (void) usleep(PG_BUT_CL_SLEEP);
 
                         cpgclos();
