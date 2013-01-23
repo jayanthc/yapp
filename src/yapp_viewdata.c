@@ -26,7 +26,8 @@
  * @date 2008.11.14
  */
 
-/* TODO: 1. ORT & MST radar data reads nan or inf for the last few samples of
+/* TODO: 1. ORT: beam flip time section anomaly for last block
+& MST radar data reads nan or inf for the last few samples of
             data*/
 
 #include "yapp.h"
@@ -51,6 +52,7 @@ char *g_pcIsTimeGood = NULL;
 float *g_pfBuf = NULL;
 float *g_pfPlotBuf = NULL;
 float *g_pfXAxis = NULL;
+float *g_pfXAxisOld = NULL;
 float *g_pfYAxis = NULL;
 
 int main(int argc, char *argv[])
@@ -87,6 +89,9 @@ int main(int argc, char *argv[])
     int iRet = YAPP_RET_SUCCESS;
     float fDataMin = 0.0;
     float fDataMax = 0.0;
+    float fDataMinOld = 0.0;
+    float fDataMaxOld = 0.0;
+    char cIsFirst = YAPP_TRUE;
     int iReadItems = 0;
     float fXStep = 0.0;
     float fYStep = 0.0;
@@ -375,8 +380,7 @@ int main(int argc, char *argv[])
     /* allocate memory for the buffer, based on the number of channels and time
        samples */
     g_pfBuf = (float *) YAPP_Malloc((size_t) stYUM.iNumChans
-                                    * iBlockSize
-                                    * stYUM.fSampSize,
+                                    * iBlockSize,
                                     sizeof(float),
                                     YAPP_FALSE);
     if (NULL == g_pfBuf)
@@ -434,6 +438,17 @@ int main(int argc, char *argv[])
                                       sizeof(float),
                                       YAPP_FALSE);
     if (NULL == g_pfXAxis)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Memory allocation for X-axis failed! %s!\n",
+                       strerror(errno));
+        YAPP_CleanUp();
+        return YAPP_RET_ERROR;
+    }
+    g_pfXAxisOld = (float *) YAPP_Malloc(iBlockSize,
+                                      sizeof(float),
+                                      YAPP_FALSE);
+    if (NULL == g_pfXAxisOld)
     {
         (void) fprintf(stderr,
                        "ERROR: Memory allocation for X-axis failed! %s!\n",
@@ -631,6 +646,8 @@ int main(int argc, char *argv[])
             }
         }
 
+        fDataMinOld = fDataMin;
+        fDataMaxOld = fDataMax;
         fDataMin = pfSpectrum[0];
         fDataMax = pfSpectrum[0];
         for (j = 0; j < iBlockSize; ++j)
@@ -656,6 +673,16 @@ int main(int argc, char *argv[])
                       fDataMax);
         #endif
 
+        for (i = 0; i < iBlockSize; ++i)
+        {
+            g_pfXAxisOld[i] = g_pfXAxis[i];
+            g_pfXAxis[i] = (float) (dDataSkipTime
+                                    + (((iReadBlockCount - 1)
+                                        * iBlockSize
+                                        * dTSampInSec)
+                                       + (i * dTSampInSec)));
+        }
+
         if (iFormat != YAPP_FORMAT_DTS_TIM)
         {
             /* get the transpose of the two-dimensional array */
@@ -674,20 +701,27 @@ int main(int argc, char *argv[])
                 i = 0;
                 j = ++k;
             }
-        }
 
-        /* erase just before plotting, to reduce flicker */
-        cpgeras();
-        for (i = 0; i < iBlockSize; ++i)
-        {
-            g_pfXAxis[i] = (float) (dDataSkipTime
-                                    + (((iReadBlockCount - 1)
-                                        * iBlockSize
-                                        * dTSampInSec)
-                                       + (i * dTSampInSec)));
-        }
-        if (iFormat != YAPP_FORMAT_DTS_TIM)
-        {
+            /* erase the previous x-axis */
+            cpgsci(0);      /* background */
+            cpgaxis("N",
+                    g_pfXAxisOld[0], g_pfYAxis[0],
+                    g_pfXAxisOld[iBlockSize-1], g_pfYAxis[0],
+                    g_pfXAxisOld[0], g_pfXAxisOld[iBlockSize-1],
+                    0.0,
+                    0,
+                    0.5,
+                    0.0,
+                    0.5,
+                    0.5,
+                    0);
+            cpgbox("CST", 0.0, 0, "CST", 0.0, 0);
+            if (!cIsFirst)
+            {
+                cpgwedg("RI", 1.0, 5.0, fDataMinOld, fDataMaxOld, "");
+            }
+            cIsFirst = YAPP_FALSE;
+            cpgsci(PG_CI_DEF);
             Plot2D(g_pfPlotBuf, fDataMin, fDataMax,
                    g_pfXAxis, iBlockSize, dTSampInSec,
                    g_pfYAxis, stYUM.iNumChans, stYUM.fChanBW,
@@ -696,6 +730,8 @@ int main(int argc, char *argv[])
         }
         else
         {
+            /* erase just before plotting, to reduce flicker */
+            cpgeras();
             cpgsvp(PG_VP_ML, PG_VP_MR, PG_VP_MB, PG_VP_MT);
             cpgswin(g_pfXAxis[0],
                     g_pfXAxis[iBlockSize-1],
@@ -772,6 +808,7 @@ int main(int argc, char *argv[])
                         cpgsci(1);  /* reset colour index to black */
                         (void) usleep(PG_BUT_CL_SLEEP);
 
+                        cpgclos();
                         YAPP_CleanUp();
                         return YAPP_RET_SUCCESS;
                     }
@@ -792,6 +829,7 @@ int main(int argc, char *argv[])
 
     (void) printf("DONE!\n");
 
+    cpgclos();
     YAPP_CleanUp();
 
     return YAPP_RET_SUCCESS;

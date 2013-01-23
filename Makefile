@@ -68,8 +68,8 @@ all: yapp_makever \
 	 yapp_basesub \
 	 yapp_fold.o \
 	 yapp_fold \
-	 yapp_p2stim.o \
-	 yapp_p2stim \
+	 yapp_dat2tim.o \
+	 yapp_dat2tim \
 	 tags
 #	 yapp_dedisplaw.o \
 	 set_colours.o \
@@ -104,7 +104,7 @@ yapp_viewmetadata: $(IDIR)/yapp_viewmetadata.o $(IDIR)/yapp_version.o \
 colourmap.o: $(SRCDIR)/colourmap.c $(SRCDIR)/colourmap.h
 	$(CC) $(CFLAGS_C) $< -o $(IDIR)/$@
 
-yapp_viewdata.o: $(SRCDIR)/yapp_viewdata.c $(SRCDIR)/yapp.h
+yapp_viewdata.o: $(SRCDIR)/yapp_viewdata.c $(SRCDIR)/yapp.h $(SRCDIR)/yapp_erflookup.c
 	$(CC) $(CFLAGS_C) $(DDEBUG) $< -o $(IDIR)/$@
 
 yapp_viewdata: $(IDIR)/yapp_viewdata.o $(IDIR)/yapp_version.o \
@@ -146,10 +146,10 @@ yapp_fold: $(IDIR)/yapp_fold.o $(IDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
 	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -o $(BINDIR)/$@
 
-yapp_p2stim.o: $(TOOLSDIR)/yapp_p2stim.c $(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h
+yapp_dat2tim.o: $(TOOLSDIR)/yapp_dat2tim.c $(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h
 	$(CC) $(CFLAGS_C) -I$(SRCDIR) $(DDEBUG) $< -o $(TOOLSDIR)/$@
 
-yapp_p2stim: $(TOOLSDIR)/yapp_p2stim.o $(SRCDIR)/yapp_version.o \
+yapp_dat2tim: $(TOOLSDIR)/yapp_dat2tim.o $(SRCDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
 	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -o $(BINDIR)/$@
 
@@ -200,7 +200,7 @@ yapp_pulsarsnd: $(IDIR)/yapp_pulsarsnd.o
 #		-o $(BINDIR)/$@
 
 # create the tags file
-tags: $(SRCDIR)/yapp*.* $(SRCDIR)/colourmap*
+tags: $(SRCDIR)/yapp*.* $(SRCDIR)/colourmap* $(TOOLSDIR)/yapp*.*
 	ctags $^
 
 # install the man pages
@@ -225,7 +225,7 @@ clean:
 	$(DELCMD) $(IDIR)/yapp_smooth.o
 	$(DELCMD) $(IDIR)/yapp_basesub.o
 	$(DELCMD) $(IDIR)/yapp_fold.o
-	$(DELCMD) $(TOOLSDIR)/yapp_p2stim.o
+	$(DELCMD) $(TOOLSDIR)/yapp_dat2tim.o
 #	$(DELCMD) $(IDIR)/set_colours.o
 #	$(DELCMD) $(IDIR)/yapp_dedisplaw.o
 #	$(DELCMD) $(IDIR)/reorderdds.o

@@ -10,7 +10,7 @@
 
 #include "yapp.h"
 
-/*  ERR(X/SQRT(2))        X/SQRT(2)            ( X ) */
+/*  ERF(X/SQRT(2))        X/SQRT(2)            ( X ) */
 const double g_aadErfLookup[YAPP_ERF_ENTRIES][3] = {
     { 0.000000001000, 0.000000000000, 0.000000000000 },
     { 0.007978758799, 0.007071067812, 0.010000000000 },

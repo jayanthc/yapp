@@ -1,5 +1,5 @@
 /*
- * @file yapp_p2stim.c
+ * @file yapp_dat2tim.c
  * Program to convert dedispersed time series data from PRESTO .dat to SIGPROC
  * .tim format.
  *
@@ -14,7 +14,7 @@
 
 #include "yapp.h"
 #include "yapp_sigproc.h"   /* for SIGPROC filterbank file format support */
-#include "yapp_p2stim.h"
+#include "yapp_dat2tim.h"
 
 /**
  * The build version string, maintained in the file version.c, which is

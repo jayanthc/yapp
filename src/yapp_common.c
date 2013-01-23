@@ -1304,21 +1304,30 @@ int YAPP_ReadData(float *pfBuf,
                   float fSampSize,
                   int iTotSampsPerBlock)
 {
-    char *pcBuf = NULL;
+    static char cIsFirst = YAPP_TRUE;
+    static char *pcBuf = NULL;
     char *pcCur = NULL;
     int iReadItems = 0;
     int i = 0;
     short int sSample = 0;
 
-    /* allocate memory for the byte buffer, based on the total number of samples
-       per block (= number of channels * number of time samples per block) */
-    pcBuf = (char *) malloc((int) (iTotSampsPerBlock * fSampSize));
-    if (NULL == pcBuf)
+    if (cIsFirst)
     {
-        (void) fprintf(stderr,
-                       "ERROR: Memory allocation failed for buffer! %s!\n",
-                       strerror(errno));
-        return YAPP_RET_ERROR;
+        /* allocate memory for the byte buffer, based on the total number of
+           samples per block (= number of channels * number of time samples per
+           block) */
+        //pcBuf = (char *) malloc((int) (iTotSampsPerBlock * fSampSize));
+        pcBuf = (char *) YAPP_Malloc((int) (iTotSampsPerBlock * fSampSize),
+                                     sizeof(char),
+                                     YAPP_FALSE);
+        if (NULL == pcBuf)
+        {
+            (void) fprintf(stderr,
+                           "ERROR: Memory allocation failed for buffer! %s!\n",
+                           strerror(errno));
+            return YAPP_RET_ERROR;
+        }
+        cIsFirst = YAPP_FALSE;
     }
 
     /* read data into the byte buffer */
@@ -1388,7 +1397,7 @@ int YAPP_ReadData(float *pfBuf,
     {
         /* 4-bit/0.5-byte data */
         /* copy data from the byte buffer to the float buffer */
-        for (i = 0; i < iReadItems; ++i)
+        for (i = 0; i < (iReadItems / 2); ++i)
         {
             /* copy lower 4 bits */
             pfBuf[2*i] = pcBuf[i] & 0x0F;
@@ -1398,7 +1407,7 @@ int YAPP_ReadData(float *pfBuf,
     }
 
     /* free the byte buffer */
-    free(pcBuf);
+    //free(pcBuf);
 
     return iReadItems;
 }
