@@ -39,8 +39,9 @@ extern FILE *g_pFSpec;
 /* the following are global only to enable cleaning up in case of abnormal
    termination, such as those triggered by SIGINT or SIGTERM */
 float *g_pfBuf = NULL;
-float *g_pfAccBuf = NULL;
-float *g_pfXAxis = NULL;
+float *g_pfProfBuf = NULL;
+double *g_pdPhase = NULL;
+float *g_pfPhase = NULL;
 
 int main(int argc, char *argv[])
 {
@@ -80,7 +81,10 @@ int main(int argc, char *argv[])
     char cCurChar = 0;
     int iNumSamps = 0;
     double dPeriod = 0.0;
+    double dPhase = 0.0;
+    double dPhaseStep = 0.0;
     int iSampsPerPeriod = 0;
+    int iSampCount = 0;
     int iDiff = 0;
     int i = 0;
     int j = 0;
@@ -206,14 +210,12 @@ int main(int argc, char *argv[])
     {
         dDataProcTime = stYUM.iTimeSamps * dTSampInSec;
     }
-
     /* check if the input time duration is less than the length of the
        data */
-    if (dDataProcTime > (stYUM.iTimeSamps * dTSampInSec))
+    else if (dDataProcTime > (stYUM.iTimeSamps * dTSampInSec))
     {
         (void) fprintf(stderr,
-                       "ERROR: Input time is longer than length of "
-                       "data!\n");
+                       "ERROR: Input time is longer than length of data!\n");
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
@@ -231,6 +233,7 @@ int main(int argc, char *argv[])
 
     /* compute the block size - a large multiple of iSampsPerPeriod */
     iBlockSize = DEF_FOLD_PULSES * iSampsPerPeriod;
+    //iBlockSize = 2 * iSampsPerPeriod;
 
     /* if lBytesToSkip is not a multiple of the block size, make it one */
     if (((float) lBytesToSkip / iBlockSize) - (lBytesToSkip / iBlockSize) != 0)
@@ -274,7 +277,14 @@ int main(int argc, char *argv[])
                   (stYUM.iTimeSamps * dTSampInSec));
 
     iTimeSampsToProc = (int) (lBytesToProc / (stYUM.fSampSize));
-    iNumReads = (int) floorf(((float) iTimeSampsToProc) / iBlockSize);
+    if (iTimeSampsToProc <= iBlockSize)
+    {
+        iNumReads = 1;
+    }
+    else
+    {
+        iNumReads = (int) floorf(((float) iTimeSampsToProc) / iBlockSize);
+    }
     iTotNumReads = iNumReads;
 
     /* optimisation - store some commonly used values in variables */
@@ -359,28 +369,44 @@ int main(int argc, char *argv[])
         cpgscr(1, 0.0, 0.0, 0.0);
     }
 
-    /* set up the plot's X-axis */
-    g_pfXAxis = (float *) YAPP_Malloc(iSampsPerPeriod,
-                                      sizeof(float),
+    /* the phase array */
+    g_pdPhase = (double *) YAPP_Malloc(iSampsPerPeriod,
+                                      sizeof(double),
                                       YAPP_FALSE);
-    if (NULL == g_pfXAxis)
+    if (NULL == g_pdPhase)
     {
         (void) fprintf(stderr,
-                       "ERROR: Memory allocation for X-axis failed! %s!\n",
+                       "ERROR: Memory allocation for phase array failed! "
+                       "%s!\n",
+                       strerror(errno));
+        YAPP_CleanUp();
+        return YAPP_RET_ERROR;
+    }
+    /* set up the plot's X-axis */
+    g_pfPhase = (float *) YAPP_Malloc(iSampsPerPeriod,
+                                      sizeof(float),
+                                      YAPP_FALSE);
+    if (NULL == g_pfPhase)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Memory allocation for phase plot array failed! "
+                       "%s!\n",
                        strerror(errno));
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
     for (i = 0; i < iSampsPerPeriod; ++i)
     {
-        g_pfXAxis[i] = (float) i;
+        g_pdPhase[i] = (double) i * (stYUM.dTSamp / dPeriod);
+        g_pfPhase[i] = (float) g_pdPhase[i];
     }
+    dPhaseStep = g_pdPhase[1] - g_pdPhase[0];
 
     /* allocate memory for the accumulation buffer */
-    g_pfAccBuf = (float *) YAPP_Malloc(iSampsPerPeriod,
+    g_pfProfBuf = (float *) YAPP_Malloc(iSampsPerPeriod,
                                        sizeof(float),
                                        YAPP_TRUE);
-    if (NULL == g_pfAccBuf)
+    if (NULL == g_pfProfBuf)
     {
         (void) fprintf(stderr,
                        "ERROR: Memory allocation for plot buffer failed! "
@@ -423,25 +449,44 @@ int main(int argc, char *argv[])
         iNumSamps = iReadItems;
 
         /* fold data */
-        for (i = 0; i < iSampsPerPeriod; ++i)
+        for (i = 0; i < iNumSamps; ++i)
         {
-            for (j = i; j < iBlockSize; j += iSampsPerPeriod)
+            /* compute the phase */
+            dPhase = (double) iSampCount * (stYUM.dTSamp / dPeriod);
+            dPhase = dPhase - floor(dPhase);
+            //printf("%f\n", dPhase);
+            /* check for matching phase bin */
+            for (j = 0; j < iSampsPerPeriod; ++j)
             {
-                g_pfAccBuf[i] += g_pfBuf[j];
+                if (fabs(g_pdPhase[j] - dPhase) <= (dPhaseStep / 2))
+                {
+                    g_pfProfBuf[j] += g_pfBuf[i];
+                    break;
+                }
             }
+            ++iSampCount;
         }
 
-        fDataMin = g_pfAccBuf[0];
-        fDataMax = g_pfAccBuf[0];
         for (i = 0; i < iSampsPerPeriod; ++i)
         {
-            if (g_pfAccBuf[i] < fDataMin)
+       //     g_pfProfBuf[i] /= DEF_FOLD_PULSES;
+        }
+
+        //temp
+        //printf("%f\n", g_pfProfBuf[0]);
+        g_pfProfBuf[0] = g_pfProfBuf[1];
+
+        fDataMin = g_pfProfBuf[0];
+        fDataMax = g_pfProfBuf[0];
+        for (i = 0; i < iSampsPerPeriod; ++i)
+        {
+            if (g_pfProfBuf[i] < fDataMin)
             {
-                fDataMin = g_pfAccBuf[i];
+                fDataMin = g_pfProfBuf[i];
             }
-            if (g_pfAccBuf[i] > fDataMax)
+            if (g_pfProfBuf[i] > fDataMax)
             {
-                fDataMax = g_pfAccBuf[i];
+                fDataMax = g_pfProfBuf[i];
             }
         }
 
@@ -459,14 +504,14 @@ int main(int argc, char *argv[])
         cpgeras();
 
         cpgsvp(PG_VP_ML, PG_VP_MR, PG_VP_MB, PG_VP_MT);
-        cpgswin(g_pfXAxis[0],
-                g_pfXAxis[iSampsPerPeriod-1],
+        cpgswin(g_pfPhase[0],
+                g_pfPhase[iSampsPerPeriod-1],
                 fColMin,
                 fColMax);
         cpglab("Bins", "Accumulated Power", "Folded Profile");
         cpgbox("BCNST", 0.0, 0, "BCNST", 0.0, 0);
         cpgsci(PG_CI_PLOT);
-        cpgline(iSampsPerPeriod, g_pfXAxis, g_pfAccBuf);
+        cpgline(iSampsPerPeriod, g_pfPhase, g_pfProfBuf);
         cpgsci(PG_CI_DEF);
 
         if (!(cIsLastBlock))
