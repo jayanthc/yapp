@@ -112,6 +112,8 @@ enum tagFileFormats
 /* TODO: If the size of a block is less than the maximum delay, dedispersion (at
    best the plots) doesn't happen properly */
 #define MAX_SIZE_BLOCK      65536   /**< @brief Maximum data read size */
+/* TODO: make memory estimation proper */
+#define MAX_SIZE_BLOCK_BASESUB  262144 /**< @brief Maximum data read size */
 
 #define MAX_SNR_BINS        50      /**< @brief Number of SNR bins */
 #define MAX_PNUM_BINS       50
@@ -129,6 +131,7 @@ enum tagFileFormats
 #define DEF_SIZE_BLOCK      4096    /**< @brief Default block size */
 
 #define DEF_WINDOWS         1000/**< @brief Default number of windows */
+#define DEF_WINDOWS_BASESUB 10  /**< @brief Default number of windows */
 
 #define DEF_FOLD_PULSES     1000/**< @brief Default number of pulses to fold */
 /* @} */
@@ -503,16 +506,6 @@ int YAPP_Smooth(float* pfInBuf,
                 int iBlockSize,
                 int iSampsPerWin,
                 float* pfOutBuf);
-
-/**
- * Baseline-subtract data
- * @param[in]   pfInBuf         Input buffer
- * @param[in]   iBlockSize      Number of samples in input buffer
- * @param[out]  pfOutBuf        Output buffer
- */
-int YAPP_BaselineSubtract(float* pfInBuf,
-                          int iBlockSize,
-                          float* pfOutBuf);
 
 float YAPP_CalcMean(float *pfBuf, int iLength);
 float YAPP_CalcRMS(float *pfBuf, int iLength, float fMean);

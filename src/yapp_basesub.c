@@ -62,6 +62,7 @@ int main(int argc, char *argv[])
     int iTimeSampsSkip = 0;
     int iTimeSampsToProc = 0;
     int iBlockSize = 0;
+    int iOutBlockSize = 0;
     int iNumReads = 0;
     int iTotNumReads = 0;
     int iReadBlockCount = 0;
@@ -75,8 +76,10 @@ int main(int argc, char *argv[])
     float fButY = 0.0;
     char cCurChar = 0;
     int iNumSamps = 0;
+    int iSampsPerWin = 0;
     int iDiff = 0;
     int i = 0;
+    float fMean = 0.0;
     float fMeanOrig = 0.0;
     float fRMSOrig = 0.0;
     float fMeanOrigAll = 0.0;
@@ -246,11 +249,21 @@ int main(int argc, char *argv[])
                            * stYUM.fSampSize);
 
     /* calculate the number of samples in one window */
-    iBlockSize = (int) round((fWidth * 1e3) / stYUM.dTSamp);
-    if (iBlockSize > MAX_SIZE_BLOCK)
+    iSampsPerWin = (int) round((fWidth * 1e3) / stYUM.dTSamp);
+    if ((DEF_WINDOWS_BASESUB * iSampsPerWin) > MAX_SIZE_BLOCK_BASESUB)
     {
-        (void) printf("WARNING!!\n");
-        iBlockSize = MAX_SIZE_BLOCK;
+        iSampsPerWin = (int) ((float) MAX_SIZE_BLOCK_BASESUB) / DEF_WINDOWS_BASESUB;
+        (void) printf("WARNING: Samples per window greater than maximum block "
+                      "size. Resizing window to %d samples, equivalent to "
+                      "%g s.\n",
+                      iSampsPerWin,
+                      iSampsPerWin * dTSampInSec);
+    }
+    /* compute the block size - a large multiple of iSampsPerWin */
+    iBlockSize = DEF_WINDOWS_BASESUB * iSampsPerWin;
+    if (iBlockSize > MAX_SIZE_BLOCK_BASESUB)
+    {
+        iBlockSize = MAX_SIZE_BLOCK_BASESUB;
     }
 
     if (lBytesToSkip >= stYUM.lDataSizeTotal)
@@ -284,8 +297,11 @@ int main(int argc, char *argv[])
                   (stYUM.iTimeSamps * dTSampInSec));
 
     iTimeSampsToProc = (int) (lBytesToProc / (stYUM.fSampSize));
+    /* calculate the actual number of samples that will be processed in one
+       iteration */
+    iOutBlockSize = iBlockSize - (iSampsPerWin - 1);
     /* based on actual processed blocks, rather than read blocks */
-    iNumReads = (int) ceilf(((float) iTimeSampsToProc) / iBlockSize);
+    iNumReads = (int) ceilf(((float) iTimeSampsToProc) / iOutBlockSize);
     iTotNumReads = iNumReads;
 
     /* optimisation - store some commonly used values in variables */
@@ -304,7 +320,9 @@ int main(int argc, char *argv[])
                   (iTimeSampsToProc * dTSampInSec),
                   (stYUM.iTimeSamps * dTSampInSec),
                   iNumReads,
-                  iBlockSize);
+                  iOutBlockSize);
+
+    (void) printf("Boxcar window width is %d time samples.\n", iSampsPerWin);
 
     /* open the time series data file for reading */
     g_pFSpec = fopen(pcFileData, "r");
@@ -404,7 +422,7 @@ int main(int argc, char *argv[])
     }
 
     /* allocate memory for the accumulation buffer */
-    g_pfOutBuf = (float *) YAPP_Malloc((size_t) iBlockSize,
+    g_pfOutBuf = (float *) YAPP_Malloc((size_t) iOutBlockSize,
                                        sizeof(float),
                                        YAPP_TRUE);
     if (NULL == g_pfOutBuf)
@@ -451,36 +469,49 @@ int main(int argc, char *argv[])
            all other blocks */
         iNumSamps = iReadItems;
 
-        /* baseline-subtract data */
-        (void) YAPP_BaselineSubtract(g_pfBuf, iNumSamps, g_pfOutBuf);
+        /* baseline-subtract (moving-average-subtract) data */
+        (void) memset(g_pfOutBuf, '\0', (sizeof(float) * iOutBlockSize));
+        for (i = 0; i < (iNumSamps - (iSampsPerWin - 1)); ++i)
+        {
+            fMean = YAPP_CalcMean((g_pfBuf + i), iSampsPerWin);
+            g_pfOutBuf[i] = g_pfBuf[i] - fMean;
+        }
+
         /* write baseline-subtracted data to file */
         (void) fwrite(g_pfOutBuf,
                       sizeof(float),
-                      (long) iNumSamps,
+                      (long) (iNumSamps - (iSampsPerWin - 1)),
                       pFOut);
 
         /* calculate statistics */
         /* original signal */
-        fMeanOrig = YAPP_CalcMean(g_pfBuf, iNumSamps);
+        fMeanOrig = YAPP_CalcMean(g_pfBuf, iNumSamps - (iSampsPerWin - 1));
         fMeanOrigAll += fMeanOrig;
-        fRMSOrig = YAPP_CalcRMS(g_pfBuf, iNumSamps, fMeanOrig);
+        fRMSOrig = YAPP_CalcRMS(g_pfBuf,
+                                iNumSamps - (iSampsPerWin - 1),
+                                fMeanOrig);
         fRMSOrig *= fRMSOrig;
-        fRMSOrig *= (iNumSamps - 1);
+        fRMSOrig *= (iNumSamps - (iSampsPerWin - 1) - 1);
         fRMSOrigAll += fRMSOrig;
 
         /* baseline-subtracted signal */
-        fMeanBaseSubed = YAPP_CalcMean(g_pfOutBuf, iNumSamps);
+        fMeanBaseSubed = YAPP_CalcMean(g_pfOutBuf, iNumSamps - (iSampsPerWin - 1));
         fMeanBaseSubedAll += fMeanBaseSubed;
-        fRMSBaseSubed = YAPP_CalcRMS(g_pfOutBuf, iNumSamps, fMeanBaseSubed);
+        fRMSBaseSubed = YAPP_CalcRMS(g_pfOutBuf,
+                                     iNumSamps - (iSampsPerWin - 1), 
+                                     fMeanBaseSubed);
         fRMSBaseSubed *= fRMSBaseSubed;
-        fRMSBaseSubed *= (iNumSamps - 1);
+        fRMSBaseSubed *= (iNumSamps - (iSampsPerWin - 1) - 1);
         fRMSBaseSubedAll += fRMSBaseSubed;
+
+        /* set the file position to rewind by (iSampsPerWin - 1) samples */
+        (void) fseek(g_pFSpec, -((iSampsPerWin - 1) * sizeof(float)), SEEK_CUR);
 
         if (cHasGraphics)
         {
             fDataMin = g_pfBuf[0];
             fDataMax = g_pfBuf[0];
-            for (i = 0; i < iBlockSize; ++i)
+            for (i = 0; i < iOutBlockSize; ++i)
             {
                 if (g_pfBuf[i] < fDataMin)
                 {
@@ -502,29 +533,29 @@ int main(int argc, char *argv[])
             cpgpanl(1, 1);
             /* erase just before plotting, to reduce flicker */
             cpgeras();
-            for (i = 0; i < iBlockSize; ++i)
+            for (i = 0; i < iOutBlockSize; ++i)
             {
                 g_pfXAxis[i] = (float) (dDataSkipTime
                                         + (((iReadBlockCount - 1)
-                                            * iBlockSize
+                                            * iOutBlockSize
                                             * dTSampInSec)
                                            + (i * dTSampInSec)));
             }
 
             cpgsvp(PG_VP_ML, PG_VP_MR, PG_VP_MB, PG_VP_MT);
             cpgswin(g_pfXAxis[0],
-                    g_pfXAxis[iBlockSize-1],
+                    g_pfXAxis[iOutBlockSize-1],
                     fDataMin,
                     fDataMax);
             cpglab("Time (s)", "", "Before Baseline-Subtracting");
             cpgbox("BCNST", 0.0, 0, "BCNST", 0.0, 0);
             cpgsci(PG_CI_PLOT);
-            cpgline(iBlockSize, g_pfXAxis, g_pfBuf);
+            cpgline(iOutBlockSize, g_pfXAxis, g_pfBuf);
             cpgsci(PG_CI_DEF);
 
             fDataMin = g_pfOutBuf[0];
             fDataMax = g_pfOutBuf[0];
-            for (i = 0; i < iNumSamps; ++i)
+            for (i = 0; i < (iNumSamps - (iSampsPerWin - 1)); ++i)
             {
                 if (g_pfOutBuf[i] < fDataMin)
                 {
@@ -546,24 +577,24 @@ int main(int argc, char *argv[])
             cpgpanl(1, 2);
             /* erase just before plotting, to reduce flicker */
             cpgeras();
-            for (i = 0; i < iBlockSize; ++i)
+            for (i = 0; i < iOutBlockSize; ++i)
             {
                 g_pfXAxis[i] = (float) (dDataSkipTime
                                         + (((iReadBlockCount - 1)
-                                            * iBlockSize
+                                            * iOutBlockSize
                                             * dTSampInSec)
                                            + (i * dTSampInSec)));
             }
 
             cpgsvp(PG_VP_ML, PG_VP_MR, PG_VP_MB, PG_VP_MT);
             cpgswin(g_pfXAxis[0],
-                    g_pfXAxis[iBlockSize-1],
+                    g_pfXAxis[iOutBlockSize-1],
                     fDataMin,
                     fDataMax);
             cpglab("Time (s)", "", "After Baseline-Subtracting");
             cpgbox("BCNST", 0.0, 0, "BCNST", 0.0, 0);
             cpgsci(PG_CI_PLOT);
-            cpgline(iBlockSize, g_pfXAxis, g_pfOutBuf);
+            cpgline(iOutBlockSize, g_pfXAxis, g_pfOutBuf);
             cpgsci(PG_CI_DEF);
 
             if (!(cIsLastBlock))
@@ -654,12 +685,12 @@ int main(int argc, char *argv[])
 
     /* print statistics */
     fMeanOrigAll /= iReadBlockCount;
-    fRMSOrigAll /= (stYUM.iTimeSamps - 1);
+    fRMSOrigAll /= (stYUM.iTimeSamps - (iSampsPerWin - 1) - 1);
     fRMSOrigAll = sqrtf(fRMSOrigAll);
     (void) printf("Original signal mean = %g\n", fMeanOrigAll);
     (void) printf("Original signal RMS = %g\n", fRMSOrigAll);
     fMeanBaseSubedAll /= iReadBlockCount;
-    fRMSBaseSubedAll /= (stYUM.iTimeSamps - 1);
+    fRMSBaseSubedAll /= (stYUM.iTimeSamps - (iSampsPerWin - 1) - 1);
     fRMSBaseSubedAll = sqrtf(fRMSBaseSubedAll);
     (void) printf("Baseline-subtracted signal mean = %g\n", fMeanBaseSubedAll);
     (void) printf("Baseline-subtracted signal RMS = %g\n", fRMSBaseSubedAll);

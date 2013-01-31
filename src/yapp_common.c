@@ -1438,26 +1438,6 @@ int YAPP_Smooth(float* pfInBuf,
 
 
 /*
- * Baseline-subtract data
- */
-int YAPP_BaselineSubtract(float* pfInBuf,
-                          int iBlockSize,
-                          float* pfOutBuf)
-{
-    int i = 0;
-    float fMean = 0.0;
-
-    fMean = YAPP_CalcMean(pfInBuf, iBlockSize);
-    for (i = 0; i < iBlockSize; ++i)
-    {
-        pfOutBuf[i] = pfInBuf[i] - fMean;
-    }
-
-    return YAPP_RET_SUCCESS;
-}
-
-
-/*
  * Calculate signal mean
  */
 float YAPP_CalcMean(float *pfBuf, int iLength)

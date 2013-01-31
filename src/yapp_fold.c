@@ -84,7 +84,7 @@ int main(int argc, char *argv[])
     double dPhase = 0.0;
     double dPhaseStep = 0.0;
     int iSampsPerPeriod = 0;
-    int iSampCount = 0;
+    long int lSampCount = 0;
     int iDiff = 0;
     int i = 0;
     int j = 0;
@@ -232,8 +232,8 @@ int main(int argc, char *argv[])
     /* TODO: this is dynamic */
 
     /* compute the block size - a large multiple of iSampsPerPeriod */
-    iBlockSize = DEF_FOLD_PULSES * iSampsPerPeriod;
-    //iBlockSize = 2 * iSampsPerPeriod;
+    //iBlockSize = DEF_FOLD_PULSES * iSampsPerPeriod;
+    iBlockSize = 7 * iSampsPerPeriod;
 
     /* if lBytesToSkip is not a multiple of the block size, make it one */
     if (((float) lBytesToSkip / iBlockSize) - (lBytesToSkip / iBlockSize) != 0)
@@ -400,7 +400,7 @@ int main(int argc, char *argv[])
         g_pdPhase[i] = (double) i * (stYUM.dTSamp / dPeriod);
         g_pfPhase[i] = (float) g_pdPhase[i];
     }
-    dPhaseStep = g_pdPhase[1] - g_pdPhase[0];
+    dPhaseStep = g_pdPhase[1];
 
     /* allocate memory for the accumulation buffer */
     g_pfProfBuf = (float *) YAPP_Malloc(iSampsPerPeriod,
@@ -447,34 +447,70 @@ int main(int argc, char *argv[])
            be iBlockSize for the last block, and should be iBlockSize for
            all other blocks */
         iNumSamps = iReadItems;
-
+////////
+#if 0
+        fColMin = 0.0;
+        fColMax = 6e4;
+        cpgsvp(PG_VP_ML, PG_VP_MR, PG_VP_MB, PG_VP_MT);
+        cpgswin(g_pfPhase[0],
+                g_pfPhase[iSampsPerPeriod-1],
+                fColMin,
+                fColMax);
+        cpglab("Bins", "Accumulated Power", "Folded Profile");
+        cpgbox("BCNST", 0.0, 0, "BCNST", 0.0, 0);
+        cpgsci(PG_CI_PLOT);
+        float fTemp[iSampsPerPeriod];
+        int k = 0;
+        static int pulsecount = 0;
+#endif
+//////////
         /* fold data */
         for (i = 0; i < iNumSamps; ++i)
         {
             /* compute the phase */
-            dPhase = (double) iSampCount * (stYUM.dTSamp / dPeriod);
+            dPhase = (double) lSampCount * (stYUM.dTSamp / dPeriod);
             dPhase = dPhase - floor(dPhase);
-            //printf("%f\n", dPhase);
             /* check for matching phase bin */
+            int x = 0;
             for (j = 0; j < iSampsPerPeriod; ++j)
             {
-                if (fabs(g_pdPhase[j] - dPhase) <= (dPhaseStep / 2))
+                if (fabs(dPhase - g_pdPhase[j]) <= (dPhaseStep / 2))
                 {
+                    //printf("%ld, %f, %f\n", lSampCount, dPhase, g_pdPhase[j]);
                     g_pfProfBuf[j] += g_pfBuf[i];
+                    ++x;
                     break;
                 }
             }
-            ++iSampCount;
+            if (0 == x)
+            {
+                //printf("%ld, %f, %f\n", lSampCount, dPhase, g_pdPhase[0]);
+                g_pfProfBuf[0] += g_pfBuf[i];
+            }
+            #if 0
+            fTemp[k++] = g_pfBuf[i] + (pulsecount * 1e3);
+            if (k == iSampsPerPeriod)
+            {
+                cpgline(iSampsPerPeriod, g_pfPhase, fTemp);
+                k = 0;
+                ++pulsecount;
+            }
+            #endif
+            ++lSampCount;
         }
 
         for (i = 0; i < iSampsPerPeriod; ++i)
         {
        //     g_pfProfBuf[i] /= DEF_FOLD_PULSES;
         }
-
+//////////
+#if 0
+        cpgsci(PG_CI_DEF);
+#endif
+////////////
         //temp
         //printf("%f\n", g_pfProfBuf[0]);
-        g_pfProfBuf[0] = g_pfProfBuf[1];
+        //g_pfProfBuf[0] = g_pfProfBuf[1];
 
         fDataMin = g_pfProfBuf[0];
         fDataMax = g_pfProfBuf[0];
