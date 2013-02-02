@@ -529,7 +529,7 @@ int main(int argc, char *argv[])
 
     /* allocate memory for the primary and secondary buffers, based on the
        number of channels and time samples */
-    g_pfBuf0 = (float *) YAPP_Malloc((size_t) iNumChans * iBlockSize * fSampSize,
+    g_pfBuf0 = (float *) YAPP_Malloc((size_t) iNumChans * iBlockSize,
                                      sizeof(float),
                                      YAPP_FALSE);
     if (NULL == g_pfBuf0)
@@ -541,7 +541,7 @@ int main(int argc, char *argv[])
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
-    g_pfBuf1 = (float *) YAPP_Malloc((size_t) iNumChans * iBlockSize * fSampSize,
+    g_pfBuf1 = (float *) YAPP_Malloc((size_t) iNumChans * iBlockSize,
                                      sizeof(float),
                                      YAPP_FALSE);
     if (NULL == g_pfBuf1)
@@ -713,7 +713,14 @@ int main(int argc, char *argv[])
 
     /* generate dedispersed data file name and config file name from the input
        file name */
-    pcFilename = YAPP_GetFilenameFromPath(pcFileSpec, EXT_DYNSPEC);
+    if (YAPP_FORMAT_FIL == iFormat)
+    {
+        pcFilename = YAPP_GetFilenameFromPath(pcFileSpec, EXT_FIL);
+    }
+    else
+    {
+        pcFilename = YAPP_GetFilenameFromPath(pcFileSpec, EXT_DYNSPEC);
+    }
     (void) strcpy(acFileDedisp, pcFilename);
     if (YAPP_FORMAT_DTS_TIM == iOutputFormat)
     {
