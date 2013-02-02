@@ -232,8 +232,8 @@ int main(int argc, char *argv[])
     /* TODO: this is dynamic */
 
     /* compute the block size - a large multiple of iSampsPerPeriod */
-    //iBlockSize = DEF_FOLD_PULSES * iSampsPerPeriod;
-    iBlockSize = 7 * iSampsPerPeriod;
+    iBlockSize = DEF_FOLD_PULSES * iSampsPerPeriod;
+    //iBlockSize = 7 * iSampsPerPeriod;
 
     /* if lBytesToSkip is not a multiple of the block size, make it one */
     if (((float) lBytesToSkip / iBlockSize) - (lBytesToSkip / iBlockSize) != 0)
@@ -510,7 +510,7 @@ int main(int argc, char *argv[])
 ////////////
         //temp
         //printf("%f\n", g_pfProfBuf[0]);
-        //g_pfProfBuf[0] = g_pfProfBuf[1];
+        g_pfProfBuf[0] = g_pfProfBuf[1];
 
         fDataMin = g_pfProfBuf[0];
         fDataMax = g_pfProfBuf[0];
