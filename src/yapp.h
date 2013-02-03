@@ -125,6 +125,7 @@ enum tagFileFormats
 #define DEF_SIZE_BLOCK      4096    /**< @brief Default block size */
 
 #define DEF_WINDOWS         1000/**< @brief Default number of windows */
+#define DEF_FOLD_PULSES     1000/**< @brief Default number of pulses to fold */
 /* @} */
 
 /**

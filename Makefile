@@ -61,7 +61,9 @@ all: yapp_makever \
 	 yapp_dedisperse.o \
 	 yapp_dedisperse \
 	 yapp_smooth.o \
-	 yapp_smooth
+	 yapp_smooth \
+	 yapp_fold.o \
+	 yapp_fold
 
 yapp_makever: $(SRCDIR)/yapp_makever.c
 	$(CC) $(CFLAGS_L) $< -o $(IDIR)/$@
@@ -116,6 +118,13 @@ yapp_smooth: $(IDIR)/yapp_smooth.o $(IDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
 	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -o $(BINDIR)/$@
 
+yapp_fold.o: $(SRCDIR)/yapp_fold.c $(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h
+	$(CC) $(CFLAGS_C) $(DDEBUG) $< -o $(IDIR)/$@
+
+yapp_fold: $(IDIR)/yapp_fold.o $(IDIR)/yapp_version.o \
+	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
+	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -o $(BINDIR)/$@
+
 # install the man pages
 install:
 	@echo Copying binaries...
@@ -136,4 +145,5 @@ clean:
 	$(DELCMD) $(IDIR)/yapp_ft.o
 	$(DELCMD) $(IDIR)/yapp_dedisperse.o
 	$(DELCMD) $(IDIR)/yapp_smooth.o
+	$(DELCMD) $(IDIR)/yapp_fold.o
 

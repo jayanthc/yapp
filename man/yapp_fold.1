@@ -1,0 +1,74 @@
+.\#
+.\# Yet Another Pulsar Processor Commands
+.\# yapp_fold Manual Page
+.\#
+.\# Created by Jayanth Chennamangalam on 2013.02.02
+.\#
+
+.TH YAPP_FOLD 1 "2013-02-02" "YAPP 2.1-beta" \
+"Yet Another Pulsar Processor"
+
+
+.SH NAME
+yapp_fold \- fold dedispersed time series data
+
+
+.SH SYNOPSIS
+.B yapp_fold
+[options]
+.I data-file
+
+
+.SH DESCRIPTION
+Folds dedispersed time series data at the given period, and displays the \
+folded profile in a PGPLOT window. The data file should be in the \
+SIGPROC .tim format. This program does not create any output file.
+
+
+.SH OPTIONS
+.TP
+.B \-h, --help
+Display a short help text.
+.TP
+.B \-s, --skip \fItime
+Length of data to be skipped, in seconds (default is 0).
+.TP
+.B \-p, --proc \fItime
+Length of data to be processed, in seconds (default is all data).
+.TP
+.B \-t, --period \fIperiod
+Folding period in milliseconds.
+.TP
+.B \-i, --invert
+Invert background and foreground colours in plots.
+.TP
+.B \-e, --non-interactive
+Run in non-interactive mode.
+.TP
+.B \-v, --version
+Display the version.
+
+
+.TP
+The flag \-t (or --period) is a required argument.
+
+
+.SH EXAMPLE
+.TP
+Folds the data in data.tim with a period of 89.3 ms, in interactive mode.
+.TP
+yapp_fold -t 89.3 data.tim
+
+
+.SH SEE ALSO
+.BR yapp_viewmetadata (1),
+.BR yapp_viewdata (1),
+.BR yapp_ft (1),
+.BR yapp_dedisperse (1),
+.BR yapp_smooth (1)
+
+
+.SH AUTHOR
+.TP 
+Written by Jayanth Chennamangalam. http://jayanthc.github.com/yapp/
+
