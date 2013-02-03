@@ -1,4 +1,4 @@
-Yet Another Pulsar Processor (YAPP) 2.1-beta
+Yet Another Pulsar Processor (YAPP) 2.2-beta
 -------------------------------------------------------------------------------
 README
 
@@ -15,8 +15,11 @@ The YAPP tools available with this release are:
                           baseband data.
     yapp_dedisperse     : Dedisperses filterbank format data.
     yapp_smooth         : Boxcar-smoothes dedispersed time series data
+    yapp_fold           : Folds dedispersed time series data and plots folded
+                          profile to PGPLOT device.
 
-The supported file formats for both tools are DAS '.spec' and SIGPROC '.fil'.
+The supported file formats are are DAS '.spec', SIGPROC '.fil', and SIGPROC
+'.tim'.
 
 System requirements: Linux/Mac OS, PGPLOT with C binding
 
