@@ -469,7 +469,6 @@ int main(int argc, char *argv[])
             j = dPhase * iSampsPerPeriod;
             g_pfProfBuf[j] += (((g_pfBuf[i] - fMeanNoise) / fRMSNoise)
                                / DEF_FOLD_PULSES);
-            g_pfProfBuf[j] += g_pfBuf[i];
             ++lSampCount;
         }
 
@@ -607,7 +606,7 @@ int main(int argc, char *argv[])
  */
 void PrintUsage(const char *pcProgName)
 {
-    (void) printf("Usage: %s [options] <time-series-data-file>\n",
+    (void) printf("Usage: %s [options] <data-file>\n",
                   pcProgName);
     (void) printf("    -h  --help                           ");
     (void) printf("Display this usage information\n");
