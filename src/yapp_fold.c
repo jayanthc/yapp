@@ -11,7 +11,7 @@
  *     -p  --proc <time>                    The length of data in seconds, to be
  *                                          processed
  *                                          (default is all)
- *     -t  --period                         Folding period in milliseconds
+ *     -t  --period <period>                Folding period in milliseconds
  *     -i  --invert                         Invert the background and foreground
  *                                          colours in plots
  *     -e  --non-interactive                Run in non-interactive mode
@@ -170,6 +170,14 @@ int main(int argc, char *argv[])
     if (argc <= optind)
     {
         (void) fprintf(stderr, "ERROR: Input file not specified!\n");
+        PrintUsage(pcProgName);
+        return YAPP_RET_ERROR;
+    }
+
+    /* user input validation */
+    if (0.0 == dPeriod)
+    {
+        (void) fprintf(stderr, "ERROR: Folding period not specified!\n");
         PrintUsage(pcProgName);
         return YAPP_RET_ERROR;
     }
@@ -615,7 +623,7 @@ void PrintUsage(const char *pcProgName)
     (void) printf("processed\n");
     (void) printf("                                         ");
     (void) printf("(default is all)\n");
-    (void) printf("    -t  --period                         ");
+    (void) printf("    -t  --period <period>                ");
     (void) printf("Folding period in milliseconds\n");
     (void) printf("    -i  --invert                         ");
     (void) printf("Invert background and foreground\n");
