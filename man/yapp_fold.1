@@ -5,12 +5,12 @@
 .\# Created by Jayanth Chennamangalam on 2013.02.02
 .\#
 
-.TH YAPP_FOLD 1 "2013-02-02" "YAPP 2.2-beta" \
+.TH YAPP_FOLD 1 "2013-02-03" "YAPP 2.2-beta" \
 "Yet Another Pulsar Processor"
 
 
 .SH NAME
-yapp_fold \- fold dedispersed time series data
+yapp_fold \- fold filterbank and dedispersed time series data
 
 
 .SH SYNOPSIS
@@ -20,9 +20,17 @@ yapp_fold \- fold dedispersed time series data
 
 
 .SH DESCRIPTION
-Folds dedispersed time series data at the given period, and displays the \
-folded profile in a PGPLOT window. The data file should be in the \
-SIGPROC .tim format. This program does not create any output file.
+Folds filterbank and dedispersed time series data at the given period, and \
+displays the folded profile in a PGPLOT window. The following file types are \
+supported:
+.P
+1. DAS .spec filterbank format
+.br
+2. SIGPROC .fil filterbank format (including the headerless version, provided \
+a .fhd configuration file is present in the same directory)
+.br
+3. SIGPROC .tim time series format
+This program does not create any output file.
 
 
 .SH OPTIONS
