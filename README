@@ -11,12 +11,12 @@ The YAPP tools available with this release are:
     yapp_viewmetadata   : Prints metadata/data header/configuration information
                           to standard output.
     yapp_viewdata       : Plots data to PGPLOT device.
-    yapp_ft             : Performs FFT [+ PFB] on 8-bit, complex, dual-pol.
+    yapp_ft             : Performs [PFB +] FFT on 8-bit, complex, dual-pol.
                           baseband data.
     yapp_dedisperse     : Dedisperses filterbank format data.
     yapp_smooth         : Boxcar-smoothes dedispersed time series data
-    yapp_fold           : Folds dedispersed time series data and plots folded
-                          profile to PGPLOT device.
+    yapp_fold           : Folds filterbank and dedispersed time series data and
+                          plots folded profile to PGPLOT device.
 
 The supported file formats are are DAS '.spec', SIGPROC '.fil', and SIGPROC
 '.tim'.
