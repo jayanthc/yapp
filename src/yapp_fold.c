@@ -13,6 +13,8 @@
  *                                          processed
  *                                          (default is all)
  *     -t  --period <period>                Folding period in milliseconds
+ *     -m  --colour-map <name>              Colour map for plotting
+ *                                          (default is 'jet')
  *     -i  --invert                         Invert the background and foreground
  *                                          colours in plots
  *     -e  --non-interactive                Run in non-interactive mode
@@ -40,12 +42,12 @@ extern FILE *g_pFSpec;
 
 /* the following are global only to enable cleaning up in case of abnormal
    termination, such as those triggered by SIGINT or SIGTERM */
+char *g_pcIsTimeGood = NULL;
 float *g_pfBuf = NULL;
 float *g_pfProfBuf = NULL;
 float *g_pfPlotBuf = NULL;
 double *g_pdPhase = NULL;
 float *g_pfPhase = NULL;
-float *g_pfXAxis = NULL;
 float *g_pfYAxis = NULL;
 
 int main(int argc, char *argv[])
@@ -55,6 +57,9 @@ int main(int argc, char *argv[])
     double dDataSkipTime = 0.0;
     double dDataProcTime = 0.0;
     YUM_t stYUM = {{0}};
+    double dTNextBF = 0.0;
+    float *pfTimeSectGain = NULL;
+    int iBlockSize = DEF_SIZE_BLOCK;
     int iTotSampsPerBlock = 0;  /* iNumChans * iBlockSize */
     int iDataSizePerBlock = 0;  /* fSampSize * iNumChans * iBlockSize */
     float fStatBW = 0.0;
@@ -65,11 +70,12 @@ int main(int argc, char *argv[])
     double dTSampInSec = 0.0;   /* holds sampling time in s */
     double dTNow = 0.0;
     int iTimeSect = 0;
+    int iBadTimeSect = 0;
+    char cIsInBadTimeRange = YAPP_FALSE;
     long lBytesToSkip = 0;
     long lBytesToProc = 0;
     int iTimeSampsSkip = 0;
     int iTimeSampsToProc = 0;
-    int iBlockSize = 0;
     int iNumReads = 0;
     int iTotNumReads = 0;
     int iReadBlockCount = 0;
@@ -104,7 +110,7 @@ int main(int argc, char *argv[])
     const char *pcProgName = NULL;
     int iNextOpt = 0;
     /* valid short options */
-    const char* const pcOptsShort = "hs:p:t:iev";
+    const char* const pcOptsShort = "hs:p:t:m:iev";
     /* valid long options */
     const struct option stOptsLong[] = {
         { "help",                   0, NULL, 'h' },
@@ -217,9 +223,9 @@ int main(int argc, char *argv[])
                        "ERROR: File type determination failed!\n");
         return YAPP_RET_ERROR;
     }
-    if (!((iFormat == YAPP_FORMAT_DTS_TIM)
-          || (YAPP_FORMAT_FIL == iFormat)
-          || (YAPP_FORMAT_SPEC == iFormat)))
+    if (!((YAPP_FORMAT_FIL == iFormat)
+          || (YAPP_FORMAT_SPEC == iFormat)
+          || (YAPP_FORMAT_DTS_TIM == iFormat)))
     {
         (void) fprintf(stderr,
                        "ERROR: Invalid file type!\n");
@@ -239,6 +245,10 @@ int main(int argc, char *argv[])
     /* convert sampling interval to seconds */
     dTSampInSec = stYUM.dTSamp / 1e3;
 
+    /* copy next beam-flip time */
+    dTNextBF = stYUM.dTNextBF;
+
+    /* calculate bytes to skip and read */
     if (0.0 == dDataProcTime)
     {
         dDataProcTime = stYUM.iTimeSamps * dTSampInSec;
@@ -343,7 +353,39 @@ int main(int argc, char *argv[])
                   iNumReads,
                   iBlockSize);
 
-    /* open the time series data file for reading */
+    /* calculate the threshold */
+    dNumSigmas = YAPP_CalcThresholdInSigmas(iTimeSampsToProc);
+    if ((double) YAPP_RET_ERROR == dNumSigmas)
+    {
+        (void) fprintf(stderr, "ERROR: Threshold calculation failed!\n");
+        YAPP_CleanUp();
+        return YAPP_RET_ERROR;
+    }
+    if ((iFormat != YAPP_FORMAT_DTS_TIM) || (iFormat != YAPP_FORMAT_DTS_DDS))
+    {
+        fStatBW = stYUM.iNumGoodChans * stYUM.fChanBW;  /* in MHz */
+        (void) printf("Usable bandwidth                  : %g MHz\n", fStatBW);
+        fNoiseRMS = 1.0 / sqrt(fStatBW * stYUM.dTSamp * 1e3);
+        (void) printf("Expected noise RMS                : %g\n", fNoiseRMS);
+    }
+
+    /* allocate memory for the time sample goodness flag array */
+    g_pcIsTimeGood = (char *) YAPP_Malloc(iTimeSampsToProc,
+                                          sizeof(char),
+                                          YAPP_FALSE);
+    if (NULL == g_pcIsTimeGood)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Memory allocation for time sample goodness "
+                       "flag array failed! %s!\n",
+                       strerror(errno));
+        YAPP_CleanUp();
+        return YAPP_RET_ERROR;
+    }
+    /* set all elements to 'YAPP_TRUE' */
+    (void) memset(g_pcIsTimeGood, YAPP_TRUE, iTimeSampsToProc);
+
+    /* open the data file for reading */
     g_pFSpec = fopen(pcFileData, "r");
     if (NULL == g_pFSpec)
     {
@@ -374,7 +416,7 @@ int main(int argc, char *argv[])
         cIsLastBlock = YAPP_TRUE;
     }
 
-    if ((YAPP_FORMAT_DTS_TIM == iFormat) || (YAPP_FORMAT_FIL == iFormat))
+    if ((YAPP_FORMAT_FIL == iFormat) || (YAPP_FORMAT_DTS_TIM == iFormat))
     {
         /* TODO: Need to do this only if the file contains the header */
         /* skip the header */
@@ -406,6 +448,9 @@ int main(int argc, char *argv[])
         cpgscr(0, 1.0, 1.0, 1.0);
         cpgscr(1, 0.0, 0.0, 0.0);
     }
+
+    /* set character height */
+    cpgsch(PG_CH);
 
     /* the phase array */
     g_pdPhase = (double *) YAPP_Malloc(iSampsPerPeriod,
@@ -442,23 +487,6 @@ int main(int argc, char *argv[])
     }
     dPhaseStep = g_pdPhase[1];
 
-    g_pfXAxis = (float *) YAPP_Malloc(iSampsPerPeriod * DEF_FOLD_PULSES,
-                                      sizeof(float),
-                                      YAPP_FALSE);
-    if (NULL == g_pfXAxis)
-    {
-        (void) fprintf(stderr,
-                       "ERROR: Memory allocation for phase plot array failed! "
-                       "%s!\n",
-                       strerror(errno));
-        cpgclos();
-        YAPP_CleanUp();
-        return YAPP_RET_ERROR;
-    }
-    for (i = 0; i < DEF_FOLD_PULSES * iSampsPerPeriod; ++i)
-    {
-        g_pfXAxis[i] = i;
-    }
     if (YAPP_FORMAT_DTS_TIM == iFormat)
     {
         /* allocate memory for the accumulation buffer */
@@ -547,7 +575,7 @@ int main(int argc, char *argv[])
 
         if (iReadItems < iTotSampsPerBlock)
         {
-            iDiff = iBlockSize - iReadItems;
+            iDiff = (stYUM.iNumChans * iBlockSize) - iReadItems;
 
             /* reset remaining elements to '\0' */
             (void) memset((g_pfBuf + iReadItems),
@@ -559,6 +587,64 @@ int main(int argc, char *argv[])
            be iBlockSize for the last block, and should be iBlockSize for
            all other blocks */
         iNumSamps = iReadItems / stYUM.iNumChans;
+
+        if (YAPP_FORMAT_SPEC == iFormat)
+        {
+            /* flag bad time sections, and if required, normalise within the
+               beam flip time section and perform gain correction */
+            for (i = 0; i < iNumSamps; ++i)
+            {
+                if ((dTNow >= (*stYUM.padBadTimes)[iBadTimeSect][BADTIME_BEG])
+                    && (dTNow <= (*stYUM.padBadTimes)[iBadTimeSect][BADTIME_END]))
+                {
+                    cIsInBadTimeRange = YAPP_TRUE;
+                    g_pcIsTimeGood[((iReadBlockCount-1)*iBlockSize)+i]
+                        = YAPP_FALSE;
+                }
+
+                if ((YAPP_TRUE == cIsInBadTimeRange)
+                    && (dTNow > (*stYUM.padBadTimes)[iBadTimeSect][BADTIME_END]))
+                {
+                    cIsInBadTimeRange = YAPP_FALSE;
+                    ++iBadTimeSect;
+                }
+
+                /* get the beam flip time section corresponding to this
+                   sample */
+                if (dTNow > dTNextBF)
+                {
+                    dTNextBF += stYUM.dTBFInt;
+
+                    ++iTimeSect;
+                    if (iTimeSect >= stYUM.iBFTimeSects)
+                    {
+                        (void) fprintf(stderr,
+                                       "ERROR: Beam flip time section anomaly "
+                                       "detected!\n");
+                        YAPP_CleanUp();
+                        return YAPP_RET_ERROR;
+                    }
+                }
+
+                pfTimeSectGain = stYUM.pfBFGain + (iTimeSect * stYUM.iNumChans);
+                pfSpectrum = g_pfBuf + i * stYUM.iNumChans;
+                for (j = 0; j < stYUM.iNumChans; ++j)
+                {
+                    if (stYUM.pcIsChanGood[j])
+                    {
+                        pfSpectrum[j] = (pfSpectrum[j]
+                                         / stYUM.pfBFTimeSectMean[iTimeSect])
+                                        - pfTimeSectGain[j];
+                    }
+                    else    /* remove bad channels */
+                    {
+                        pfSpectrum[j] = 0.0;
+                    }
+                }
+
+                dTNow += dTSampInSec;   /* in s */
+            }
+        }
 
         if (YAPP_FORMAT_DTS_TIM == iFormat)
         {
@@ -604,13 +690,6 @@ int main(int argc, char *argv[])
             }
         }
 
-        #ifdef DEBUG
-        (void) printf("Minimum value of data             : %g\n",
-                      fDataMin);
-        (void) printf("Maximum value of data             : %g\n",
-                      fDataMax);
-        #endif
-
         /* erase just before plotting, to reduce flicker */
         cpgeras();
         if (YAPP_FORMAT_DTS_TIM == iFormat)
@@ -628,6 +707,13 @@ int main(int argc, char *argv[])
                     fDataMax = g_pfProfBuf[i];
                 }
             }
+
+            #ifdef DEBUG
+            (void) printf("Minimum value of data             : %g\n",
+                          fDataMin);
+            (void) printf("Maximum value of data             : %g\n",
+                          fDataMax);
+            #endif
 
             cpgsvp(PG_VP_ML, PG_VP_MR, PG_VP_MB, PG_VP_MT);
             cpgswin(g_pfPhase[0],
@@ -659,6 +745,13 @@ int main(int argc, char *argv[])
                     }
                 }
             }
+
+            #ifdef DEBUG
+            (void) printf("Minimum value of data             : %g\n",
+                          fDataMin);
+            (void) printf("Maximum value of data             : %g\n",
+                          fDataMax);
+            #endif
 
             /* get the transpose of the two-dimensional array */
             k = 0;
@@ -694,7 +787,7 @@ int main(int argc, char *argv[])
                 cpgsci(PG_BUT_FILLCOL); /* set the fill colour */
                 cpgrect(PG_BUTNEXT_L, PG_BUTNEXT_R, PG_BUTNEXT_B, PG_BUTNEXT_T);
                 cpgrect(PG_BUTEXIT_L, PG_BUTEXIT_R, PG_BUTEXIT_B, PG_BUTEXIT_T);
-                cpgsci(0);  /* set colour index to white */
+                cpgsci(0);  /* set colour index to background */
                 cpgtext(PG_BUTNEXT_TEXT_L, PG_BUTNEXT_TEXT_B, "Next");
                 cpgtext(PG_BUTEXIT_TEXT_L, PG_BUTEXIT_TEXT_B, "Exit");
 
@@ -726,7 +819,7 @@ int main(int argc, char *argv[])
                         cpgtext(PG_BUTNEXT_CL_TEXT_L, PG_BUTNEXT_CL_TEXT_B, "Next");
                         cpgsci(0);  /* set colour index to white */
                         cpgtext(PG_BUTNEXT_TEXT_L, PG_BUTNEXT_TEXT_B, "Next");
-                        cpgsci(1);  /* reset colour index to black */
+                        cpgsci(PG_CI_DEF);  /* reset colour index to black */
                         (void) usleep(PG_BUT_CL_SLEEP);
 
                         break;
@@ -745,7 +838,7 @@ int main(int argc, char *argv[])
                         cpgtext(PG_BUTEXIT_CL_TEXT_L, PG_BUTEXIT_CL_TEXT_B, "Exit");
                         cpgsci(0);  /* set colour index to white */
                         cpgtext(PG_BUTEXIT_TEXT_L, PG_BUTEXIT_TEXT_B, "Exit");
-                        cpgsci(1);  /* reset colour index to black */
+                        cpgsci(PG_CI_DEF);  /* reset colour index to black */
                         (void) usleep(PG_BUT_CL_SLEEP);
 
                         cpgclos();
@@ -798,6 +891,10 @@ void PrintUsage(const char *pcProgName)
     (void) printf("(default is all)\n");
     (void) printf("    -t  --period <period>                ");
     (void) printf("Folding period in milliseconds\n");
+    (void) printf("    -m  --colour-map <name>              ");
+    (void) printf("Colour map for plotting\n");
+    (void) printf("                                         ");
+    (void) printf("(default is 'jet')\n");
     (void) printf("    -i  --invert                         ");
     (void) printf("Invert background and foreground\n");
     (void) printf("                                         ");
