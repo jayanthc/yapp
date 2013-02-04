@@ -143,7 +143,7 @@ yapp_fold.o: $(SRCDIR)/yapp_fold.c $(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h
 	$(CC) $(CFLAGS_C) $(DDEBUG) $< -o $(IDIR)/$@
 
 yapp_fold: $(IDIR)/yapp_fold.o $(IDIR)/yapp_version.o \
-	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
+	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o $(IDIR)/colourmap.o
 	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -o $(BINDIR)/$@
 
 yapp_dat2tim.o: $(TOOLSDIR)/yapp_dat2tim.c $(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h

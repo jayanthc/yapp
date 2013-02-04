@@ -341,7 +341,7 @@ int main(int argc, char *argv[])
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
-    if (iFormat != YAPP_FORMAT_DTS_TIM)
+    if ((iFormat != YAPP_FORMAT_DTS_TIM) || (iFormat != YAPP_FORMAT_DTS_DDS))
     {
         fStatBW = stYUM.iNumGoodChans * stYUM.fChanBW;  /* in MHz */
         (void) printf("Usable bandwidth                  : %g MHz\n", fStatBW);
@@ -457,7 +457,7 @@ int main(int argc, char *argv[])
         return YAPP_RET_ERROR;
     }
 
-    if (iFormat != YAPP_FORMAT_DTS_TIM)
+    if ((iFormat != YAPP_FORMAT_DTS_TIM) || (iFormat != YAPP_FORMAT_DTS_DDS))
     {
         /* set up the image plot's Y-axis (frequency) */
         g_pfYAxis = (float *) YAPP_Malloc(stYUM.iNumChans,
@@ -683,7 +683,7 @@ int main(int argc, char *argv[])
                                        + (i * dTSampInSec)));
         }
 
-        if (iFormat != YAPP_FORMAT_DTS_TIM)
+        if ((iFormat != YAPP_FORMAT_DTS_TIM) || (iFormat != YAPP_FORMAT_DTS_DDS))
         {
             /* get the transpose of the two-dimensional array */
             i = 0;

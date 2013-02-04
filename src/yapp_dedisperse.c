@@ -16,7 +16,7 @@
  *                                          (default is 10.0)
  *     -l  --law <law>                      Dispersion law
  *                                          (default is 2.0)
- *     -o  --out-format <format>            Output format - 'ddd' or 'tim'
+ *     -o  --out-format <format>            Output format - 'dds' or 'tim'
  *                                          (default is 'tim')
  *     -g  --graphics                       Turn on plotting
  *     -m  --colour-map <name>              Colour map for plotting
@@ -211,7 +211,7 @@ int main(int argc, char *argv[])
                 else
                 {
                     (void) fprintf(stderr,
-                                   "ERROR: Format should be either 'ddd' or "
+                                   "ERROR: Format should be either 'dds' or "
                                    "'tim'!\n");
                     PrintUsage(pcProgName);
                     return YAPP_RET_ERROR;
@@ -1526,7 +1526,7 @@ void PrintUsage(const char *pcProgName)
     (void) printf("                                         ");
     (void) printf("(default is 2.0)\n");
     (void) printf("    -o  --out-format <format>            ");
-    (void) printf("Output format - 'ddd' or 'tim'\n");
+    (void) printf("Output format - 'dds' or 'tim'\n");
     (void) printf("                                         ");
     (void) printf("(default is 'tim')\n");
     (void) printf("    -g  --graphics                       ");
