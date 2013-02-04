@@ -90,7 +90,7 @@ yapp_viewmetadata: $(IDIR)/yapp_viewmetadata.o $(IDIR)/yapp_version.o \
 colourmap.o: $(SRCDIR)/colourmap.c $(SRCDIR)/colourmap.h
 	$(CC) $(CFLAGS_C) $< -o $(IDIR)/$@
 
-yapp_viewdata.o: $(SRCDIR)/yapp_viewdata.c $(SRCDIR)/yapp.h
+yapp_viewdata.o: $(SRCDIR)/yapp_viewdata.c $(SRCDIR)/yapp.h $(SRCDIR)/yapp_erflookup.c
 	$(CC) $(CFLAGS_C) $(DDEBUG) $< -o $(IDIR)/$@
 
 yapp_viewdata: $(IDIR)/yapp_viewdata.o $(IDIR)/yapp_version.o \
@@ -122,7 +122,7 @@ yapp_fold.o: $(SRCDIR)/yapp_fold.c $(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h
 	$(CC) $(CFLAGS_C) $(DDEBUG) $< -o $(IDIR)/$@
 
 yapp_fold: $(IDIR)/yapp_fold.o $(IDIR)/yapp_version.o \
-	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
+	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o $(IDIR)/colourmap.o
 	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -o $(BINDIR)/$@
 
 # install the man pages

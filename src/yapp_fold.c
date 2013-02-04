@@ -1,9 +1,10 @@
 /*
  * @file yapp_fold.c
- * Program to fold time series data at a specified period.
+ * Program to fold filterbank or dedispersed time series data at a specified
+ *  period.
  *
  * @verbatim
- * Usage: yapp_fold [options] <time-series-data-file>
+ * Usage: yapp_fold [options] <data-file>
  *     -h  --help                           Display this usage information
  *     -s  --skip <time>                    The length of data in seconds, to be
  *                                          skipped
@@ -23,6 +24,7 @@
 
 #include "yapp.h"
 #include "yapp_sigproc.h"   /* for SIGPROC filterbank file format support */
+#include "colourmap.h"
 
 /**
  * The build version string, maintained in the file version.c, which is
@@ -40,8 +42,11 @@ extern FILE *g_pFSpec;
    termination, such as those triggered by SIGINT or SIGTERM */
 float *g_pfBuf = NULL;
 float *g_pfProfBuf = NULL;
+float *g_pfPlotBuf = NULL;
 double *g_pdPhase = NULL;
 float *g_pfPhase = NULL;
+float *g_pfXAxis = NULL;
+float *g_pfYAxis = NULL;
 
 int main(int argc, char *argv[])
 {
@@ -50,8 +55,8 @@ int main(int argc, char *argv[])
     double dDataSkipTime = 0.0;
     double dDataProcTime = 0.0;
     YUM_t stYUM = {{0}};
-    int iTotSampsPerBlock = 0;  /* iBlockSize */
-    int iDataSizePerBlock = 0;  /* fSampSize * iBlockSize */
+    int iTotSampsPerBlock = 0;  /* iNumChans * iBlockSize */
+    int iDataSizePerBlock = 0;  /* fSampSize * iNumChans * iBlockSize */
     float fStatBW = 0.0;
     float fNoiseRMS = 0.0;
     float fThreshold = 0.0;
@@ -73,8 +78,6 @@ int main(int argc, char *argv[])
     float fDataMin = 0.0;
     float fDataMax = 0.0;
     int iReadItems = 0;
-    float fColMin = 0.0;
-    float fColMax = 0.0;
     float fXStep = 0.0;
     float fButX = 0.0;
     float fButY = 0.0;
@@ -90,6 +93,12 @@ int main(int argc, char *argv[])
     int iDiff = 0;
     int i = 0;
     int j = 0;
+    int k = 0;
+    int l = 0;
+    int m = 0;
+    float *pfSpectrum = NULL;
+    float *pfProfSpec = NULL;
+    int iColourMap = DEF_CMAP;
     int iInvCols = YAPP_FALSE;
     char cIsNonInteractive = YAPP_FALSE;
     const char *pcProgName = NULL;
@@ -102,6 +111,7 @@ int main(int argc, char *argv[])
         { "skip",                   1, NULL, 's' },
         { "proc",                   1, NULL, 'p' },
         { "period",                 1, NULL, 't' },
+        { "colour-map",             1, NULL, 'm' },
         { "invert",                 0, NULL, 'i' },
         { "non-interactive",        0, NULL, 'e' },
         { "version",                0, NULL, 'v' },
@@ -135,6 +145,11 @@ int main(int argc, char *argv[])
             case 't':   /* -t or --period */
                 /* set option */
                 dPeriod = atof(optarg);
+                break;
+
+            case 'm':   /* -m or --colour-map */
+                /* set option */
+                iColourMap = GetColourMapFromName(optarg);
                 break;
 
             case 'i':  /* -i or --invert */
@@ -202,6 +217,14 @@ int main(int argc, char *argv[])
                        "ERROR: File type determination failed!\n");
         return YAPP_RET_ERROR;
     }
+    if (!((iFormat == YAPP_FORMAT_DTS_TIM)
+          || (YAPP_FORMAT_FIL == iFormat)
+          || (YAPP_FORMAT_SPEC == iFormat)))
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Invalid file type!\n");
+        return YAPP_RET_ERROR;
+    }
 
     /* read metadata */
     iRet = YAPP_ReadMetadata(pcFileData, iFormat, &stYUM);
@@ -232,9 +255,11 @@ int main(int argc, char *argv[])
 
     lBytesToSkip = (long) floor((dDataSkipTime / dTSampInSec)
                                                     /* number of samples */
+                           * stYUM.iNumChans
                            * stYUM.fSampSize);
     lBytesToProc = (long) floor((dDataProcTime / dTSampInSec)
                                                     /* number of samples */
+                           * stYUM.iNumChans
                            * stYUM.fSampSize);
 
     /* calculate the number of bins in one profile */
@@ -242,6 +267,11 @@ int main(int argc, char *argv[])
 
     /* compute the block size - a large multiple of iSampsPerPeriod */
     iBlockSize = DEF_FOLD_PULSES * iSampsPerPeriod;
+    if (iBlockSize > MAX_SIZE_BLOCK)
+    {
+        int iNumFold = MAX_SIZE_BLOCK / iSampsPerPeriod;
+        iBlockSize = iNumFold * iSampsPerPeriod;
+    }
 
     /* if lBytesToSkip is not a multiple of the block size, make it one */
     if (((float) lBytesToSkip / iBlockSize) - (lBytesToSkip / iBlockSize) != 0)
@@ -272,7 +302,7 @@ int main(int argc, char *argv[])
                       lBytesToProc);
     }
 
-    iTimeSampsSkip = (int) (lBytesToSkip / (stYUM.fSampSize));
+    iTimeSampsSkip = (int) (lBytesToSkip / (stYUM.iNumChans * stYUM.fSampSize));
     (void) printf("Skipping\n"
                   "    %ld of %ld bytes\n"
                   "    %d of %d time samples\n"
@@ -284,7 +314,7 @@ int main(int argc, char *argv[])
                   (iTimeSampsSkip * dTSampInSec),
                   (stYUM.iTimeSamps * dTSampInSec));
 
-    iTimeSampsToProc = (int) (lBytesToProc / (stYUM.fSampSize));
+    iTimeSampsToProc = (int) (lBytesToProc / (stYUM.iNumChans * stYUM.fSampSize));
     if (iTimeSampsToProc <= iBlockSize)
     {
         iNumReads = 1;
@@ -296,7 +326,7 @@ int main(int argc, char *argv[])
     iTotNumReads = iNumReads;
 
     /* optimisation - store some commonly used values in variables */
-    iTotSampsPerBlock = iBlockSize;
+    iTotSampsPerBlock = stYUM.iNumChans * iBlockSize;
     iDataSizePerBlock = (int) (stYUM.fSampSize * iTotSampsPerBlock);
 
     (void) printf("Processing\n"
@@ -327,13 +357,13 @@ int main(int argc, char *argv[])
 
     /* allocate memory for the buffer, based on the number of channels and time
        samples */
-    g_pfBuf = (float *) YAPP_Malloc((size_t) iBlockSize * stYUM.fSampSize,
+    g_pfBuf = (float *) YAPP_Malloc((size_t) stYUM.iNumChans * iBlockSize,
                                     sizeof(float),
                                     YAPP_FALSE);
     if (NULL == g_pfBuf)
     {
         (void) fprintf(stderr,
-                       "ERROR: Memory allocation for buffer failed! %s!\n",
+                       "ERROR: Memory allocation failed! %s!\n",
                        strerror(errno));
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
@@ -344,7 +374,7 @@ int main(int argc, char *argv[])
         cIsLastBlock = YAPP_TRUE;
     }
 
-    if (YAPP_FORMAT_DTS_TIM == iFormat)
+    if ((YAPP_FORMAT_DTS_TIM == iFormat) || (YAPP_FORMAT_FIL == iFormat))
     {
         /* TODO: Need to do this only if the file contains the header */
         /* skip the header */
@@ -387,6 +417,7 @@ int main(int argc, char *argv[])
                        "ERROR: Memory allocation for phase array failed! "
                        "%s!\n",
                        strerror(errno));
+        cpgclos();
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
@@ -400,6 +431,7 @@ int main(int argc, char *argv[])
                        "ERROR: Memory allocation for phase plot array failed! "
                        "%s!\n",
                        strerror(errno));
+        cpgclos();
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
@@ -410,18 +442,90 @@ int main(int argc, char *argv[])
     }
     dPhaseStep = g_pdPhase[1];
 
-    /* allocate memory for the accumulation buffer */
-    g_pfProfBuf = (float *) YAPP_Malloc(iSampsPerPeriod,
-                                       sizeof(float),
-                                       YAPP_TRUE);
-    if (NULL == g_pfProfBuf)
+    g_pfXAxis = (float *) YAPP_Malloc(iSampsPerPeriod * DEF_FOLD_PULSES,
+                                      sizeof(float),
+                                      YAPP_FALSE);
+    if (NULL == g_pfXAxis)
     {
         (void) fprintf(stderr,
-                       "ERROR: Memory allocation for plot buffer failed! "
+                       "ERROR: Memory allocation for phase plot array failed! "
                        "%s!\n",
                        strerror(errno));
+        cpgclos();
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
+    }
+    for (i = 0; i < DEF_FOLD_PULSES * iSampsPerPeriod; ++i)
+    {
+        g_pfXAxis[i] = i;
+    }
+    if (YAPP_FORMAT_DTS_TIM == iFormat)
+    {
+        /* allocate memory for the accumulation buffer */
+        g_pfProfBuf = (float *) YAPP_Malloc(iSampsPerPeriod,
+                                           sizeof(float),
+                                           YAPP_TRUE);
+        if (NULL == g_pfProfBuf)
+        {
+            (void) fprintf(stderr,
+                           "ERROR: Memory allocation for plot buffer failed! "
+                           "%s!\n",
+                           strerror(errno));
+            YAPP_CleanUp();
+            return YAPP_RET_ERROR;
+        }
+    }
+    else
+    {
+        g_pfProfBuf = (float *) YAPP_Malloc((size_t) stYUM.iNumChans * iSampsPerPeriod,
+                                            sizeof(float),
+                                            YAPP_TRUE);
+        if (NULL == g_pfProfBuf)
+        {
+            (void) fprintf(stderr,
+                           "ERROR: Memory allocation for plot buffer failed! "
+                           "%s!\n",
+                           strerror(errno));
+            YAPP_CleanUp();
+            return YAPP_RET_ERROR;
+        }
+        g_pfPlotBuf = (float *) YAPP_Malloc((size_t) stYUM.iNumChans * iSampsPerPeriod,
+                                            sizeof(float),
+                                            YAPP_FALSE);
+        if (NULL == g_pfPlotBuf)
+        {
+            (void) fprintf(stderr,
+                           "ERROR: Memory allocation for plot buffer failed! "
+                           "%s!\n",
+                           strerror(errno));
+            YAPP_CleanUp();
+            return YAPP_RET_ERROR;
+        }
+        g_pfYAxis = (float *) YAPP_Malloc(stYUM.iNumChans,
+                                         sizeof(float),
+                                         YAPP_FALSE);
+        if (NULL == g_pfYAxis)
+        {
+            (void) fprintf(stderr,
+                           "ERROR: Memory allocation for Y-axis failed! %s!\n",
+                           strerror(errno));
+            YAPP_CleanUp();
+            return YAPP_RET_ERROR;
+        }
+        if (stYUM.cIsBandFlipped)
+        {
+            for (i = 0; i < stYUM.iNumChans; ++i)
+            {
+                g_pfYAxis[i] = stYUM.fFMax - i * stYUM.fChanBW;
+            }
+        }
+        else
+        {
+            for (i = 0; i < stYUM.iNumChans; ++i)
+            {
+                g_pfYAxis[i] = stYUM.fFMin + i * stYUM.fChanBW;
+            }
+        }
     }
 
     while (iNumReads > 0)
@@ -454,35 +558,49 @@ int main(int argc, char *argv[])
         /* calculate the number of time samples in the block - this may not
            be iBlockSize for the last block, and should be iBlockSize for
            all other blocks */
-        iNumSamps = iReadItems;
+        iNumSamps = iReadItems / stYUM.iNumChans;
 
-        fMeanNoise = YAPP_CalcMean(g_pfBuf, iNumSamps);
-        fRMSNoise = YAPP_CalcRMS(g_pfBuf, iNumSamps, fMeanNoise);
-
-        /* fold data */
-        for (i = 0; i < iNumSamps; ++i)
+        if (YAPP_FORMAT_DTS_TIM == iFormat)
         {
-            /* compute the phase */
-            dPhase = (double) lSampCount * (stYUM.dTSamp / dPeriod);
-            dPhase = dPhase - floor(dPhase);
-            /* compute the index into the profile array */
-            j = dPhase * iSampsPerPeriod;
-            g_pfProfBuf[j] += (((g_pfBuf[i] - fMeanNoise) / fRMSNoise)
-                               / DEF_FOLD_PULSES);
-            ++lSampCount;
-        }
+            fMeanNoise = YAPP_CalcMean(g_pfBuf, iNumSamps);
+            fRMSNoise = YAPP_CalcRMS(g_pfBuf, iNumSamps, fMeanNoise);
 
-        fDataMin = g_pfProfBuf[0];
-        fDataMax = g_pfProfBuf[0];
-        for (i = 0; i < iSampsPerPeriod; ++i)
-        {
-            if (g_pfProfBuf[i] < fDataMin)
+            /* fold data */
+            for (i = 0; i < iNumSamps; ++i)
             {
-                fDataMin = g_pfProfBuf[i];
+                /* compute the phase */
+                dPhase = (double) lSampCount * (stYUM.dTSamp / dPeriod);
+                dPhase = dPhase - floor(dPhase);
+                /* compute the index into the profile array */
+                j = dPhase * iSampsPerPeriod;
+                g_pfProfBuf[j] += (((g_pfBuf[i] - fMeanNoise) / fRMSNoise)
+                                   / DEF_FOLD_PULSES);
+                ++lSampCount;
             }
-            if (g_pfProfBuf[i] > fDataMax)
+        }
+        else
+        {
+            fMeanNoise = YAPP_CalcMean(g_pfBuf, iNumSamps * stYUM.iNumChans);
+            fRMSNoise = YAPP_CalcRMS(g_pfBuf,
+                                     iNumSamps * stYUM.iNumChans,
+                                     fMeanNoise);
+
+            /* fold data */
+            for (i = 0; i < iNumSamps; ++i)
             {
-                fDataMax = g_pfProfBuf[i];
+                /* compute the phase */
+                dPhase = (double) lSampCount * (stYUM.dTSamp / dPeriod);
+                dPhase = dPhase - floor(dPhase);
+                /* compute the index into the profile array */
+                j = dPhase * iSampsPerPeriod;
+                pfSpectrum = g_pfBuf + i * stYUM.iNumChans;
+                pfProfSpec = g_pfProfBuf + j * stYUM.iNumChans;
+                for (k = 0; k < stYUM.iNumChans; ++k)
+                {
+                    pfProfSpec[k] += (((pfSpectrum[k] - fMeanNoise) / fRMSNoise)
+                                      / DEF_FOLD_PULSES);
+                }
+                ++lSampCount;
             }
         }
 
@@ -493,22 +611,84 @@ int main(int argc, char *argv[])
                       fDataMax);
         #endif
 
-        fColMin = fDataMin;
-        fColMax = fDataMax;
-
         /* erase just before plotting, to reduce flicker */
         cpgeras();
+        if (YAPP_FORMAT_DTS_TIM == iFormat)
+        {
+            fDataMin = g_pfProfBuf[0];
+            fDataMax = g_pfProfBuf[0];
+            for (i = 0; i < (iSampsPerPeriod * stYUM.iNumChans); ++i)
+            {
+                if (g_pfProfBuf[i] < fDataMin)
+                {
+                    fDataMin = g_pfProfBuf[i];
+                }
+                if (g_pfProfBuf[i] > fDataMax)
+                {
+                    fDataMax = g_pfProfBuf[i];
+                }
+            }
 
-        cpgsvp(PG_VP_ML, PG_VP_MR, PG_VP_MB, PG_VP_MT);
-        cpgswin(g_pfPhase[0],
-                g_pfPhase[iSampsPerPeriod-1],
-                fColMin,
-                fColMax);
-        cpglab("Phase", "Power (arbitrary units)", "Folded Profile");
-        cpgbox("BCNST", 0.0, 0, "BCNST", 0.0, 0);
-        cpgsci(PG_CI_PLOT);
-        cpgline(iSampsPerPeriod, g_pfPhase, g_pfProfBuf);
-        cpgsci(PG_CI_DEF);
+        #ifdef DEBUG
+        (void) printf("Minimum value of data             : %g\n",
+                      fDataMin);
+        (void) printf("Maximum value of data             : %g\n",
+                      fDataMax);
+        #endif
+            cpgsvp(PG_VP_ML, PG_VP_MR, PG_VP_MB, PG_VP_MT);
+            cpgswin(g_pfPhase[0],
+                    g_pfPhase[iSampsPerPeriod-1],
+                    fDataMin,
+                    fDataMax);
+            cpglab("Phase", "Power (arbitrary units)", "Folded Profile");
+            cpgbox("BCNST", 0.0, 0, "BCNST", 0.0, 0);
+            cpgsci(PG_CI_PLOT);
+            cpgline(iSampsPerPeriod, g_pfPhase, g_pfProfBuf);
+            cpgsci(PG_CI_DEF);
+        }
+        else
+        {
+            fDataMin = g_pfProfBuf[0];
+            fDataMax = g_pfProfBuf[0];
+            for (i = 0; i < iSampsPerPeriod; ++i)
+            {
+                pfProfSpec = g_pfProfBuf + i * stYUM.iNumChans;
+                for (j = 0; j < stYUM.iNumChans; ++j)
+                {
+                    if (pfProfSpec[j] < fDataMin)
+                    {
+                        fDataMin = pfProfSpec[j];
+                    }
+                    if (pfProfSpec[j] > fDataMax)
+                    {
+                        fDataMax = pfProfSpec[j];
+                    }
+                }
+            }
+
+            /* get the transpose of the two-dimensional array */
+            k = 0;
+            l = 0;
+            m = 0;
+            for (i = 0; i < iSampsPerPeriod; ++i)
+            {
+                pfProfSpec = g_pfProfBuf + i * stYUM.iNumChans;
+                for (j = 0; j < stYUM.iNumChans; ++j)
+                {
+                    g_pfPlotBuf[l] = pfProfSpec[j];
+                    l = m + k * iSampsPerPeriod;
+                    ++k;
+                }
+                k = 0;
+                l = ++m;
+            }
+
+            Plot2D(g_pfPlotBuf, fDataMin, fDataMax,
+                   g_pfPhase, iSampsPerPeriod, dPhaseStep,
+                   g_pfYAxis, stYUM.iNumChans, stYUM.fChanBW,
+                   "Phase", "Frequency (MHz)", "Folded Dynamic Spectrum",
+                   iColourMap);
+        }
 
         if (!(cIsLastBlock))
         {
