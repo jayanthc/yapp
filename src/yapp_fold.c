@@ -1,9 +1,10 @@
 /*
  * @file yapp_fold.c
- * Program to fold time series data at a specified period.
+ * Program to fold filterbank or dedispersed time series data at a specified
+ *  period.
  *
  * @verbatim
- * Usage: yapp_fold [options] <time-series-data-file>
+ * Usage: yapp_fold [options] <data-file>
  *     -h  --help                           Display this usage information
  *     -s  --skip <time>                    The length of data in seconds, to be
  *                                          skipped
@@ -266,6 +267,11 @@ int main(int argc, char *argv[])
 
     /* compute the block size - a large multiple of iSampsPerPeriod */
     iBlockSize = DEF_FOLD_PULSES * iSampsPerPeriod;
+    if (iBlockSize > MAX_SIZE_BLOCK)
+    {
+        int iNumFold = MAX_SIZE_BLOCK / iSampsPerPeriod;
+        iBlockSize = iNumFold * iSampsPerPeriod;
+    }
 
     /* if lBytesToSkip is not a multiple of the block size, make it one */
     if (((float) lBytesToSkip / iBlockSize) - (lBytesToSkip / iBlockSize) != 0)
@@ -674,7 +680,7 @@ int main(int argc, char *argv[])
             Plot2D(g_pfPlotBuf, fDataMin, fDataMax,
                    g_pfPhase, iSampsPerPeriod, dPhaseStep,
                    g_pfYAxis, stYUM.iNumChans, stYUM.fChanBW,
-                   "Time (s)", "Frequency (MHz)", "Folded Dynamic Spectrum",
+                   "Phase", "Frequency (MHz)", "Folded Dynamic Spectrum",
                    iColourMap);
         }
 
