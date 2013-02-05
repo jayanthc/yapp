@@ -288,8 +288,7 @@ int YAPP_ReadMetadata(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
             if (iRet != YAPP_RET_SUCCESS)
             {
                 (void) fprintf(stderr,
-                               "ERROR: Reading specfile configuration information "
-                               "failed!\n");
+                               "ERROR: Reading configuration information failed!\n");
                 return YAPP_RET_ERROR;
             }
             break;
@@ -301,6 +300,16 @@ int YAPP_ReadMetadata(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
             {
                 (void) fprintf(stderr,
                                "ERROR: Reading filterbank file header failed!\n");
+                return YAPP_RET_ERROR;
+            }
+            break;
+
+        case YAPP_FORMAT_DTS_DAT:
+            iRet = YAPP_ReadPRESTOHeaderFile(pcFileSpec, pstYUM);
+            if (iRet != YAPP_RET_SUCCESS)
+            {
+                (void) fprintf(stderr,
+                               "ERROR: Reading PRESTO file header failed!\n");
                 return YAPP_RET_ERROR;
             }
             break;
@@ -1297,6 +1306,283 @@ int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM)
 }
 
 
+int YAPP_ReadPRESTOHeaderFile(char *pcFileData, YUM_t *pstYUM)
+{
+    size_t iLen = 0;
+    char *pcVal = NULL;
+    char* pcLine = NULL;
+    FILE *pFInf = NULL;
+    char acFileInf[LEN_GENSTRING] = {0};
+
+    /* build the header file name and open the file */
+    (void) strcpy(acFileInf, pcFileData);
+    (void) strcat(acFileInf, ".inf");
+    pFInf = fopen(acFileInf, "r");
+    if (NULL == pFInf)
+    {
+        fprintf(stderr,
+                "ERROR: Opening file %s failed! %s.\n",
+                acFileInf,
+                strerror(errno));
+        return EXIT_FAILURE;
+    }
+
+    /* read data file name and ignore it */
+    (void) getline(&pcLine, &iLen, pFInf); 
+    pcVal = strrchr(pcLine, '=');
+    if (NULL == pcVal)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Reading header file failed!\n");
+        /* since this is the first instance of calling getline(), pcLine may
+           not have been allocated, so check for NULL */
+        if (pcLine != NULL)
+        {
+            free(pcLine);
+        }
+        (void) fclose(pFInf);
+        return EXIT_FAILURE;
+    }
+
+    /* read telescope name and ignore it */
+    (void) getline(&pcLine, &iLen, pFInf); 
+    pcVal = strrchr(pcLine, '=');
+    if (NULL == pcVal)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Reading header file failed!\n");
+        free(pcLine);
+        (void) fclose(pFInf);
+        return EXIT_FAILURE;
+    }
+
+    /* read backend name and ignore it */
+    (void) getline(&pcLine, &iLen, pFInf); 
+    pcVal = strrchr(pcLine, '=');
+    if (NULL == pcVal)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Reading header file failed!\n");
+        free(pcLine);
+        (void) fclose(pFInf);
+        return EXIT_FAILURE;
+    }
+
+    /* read source name */
+    (void) getline(&pcLine, &iLen, pFInf); 
+    pcVal = strrchr(pcLine, '=');
+    if (NULL == pcVal)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Reading header file failed!\n");
+        free(pcLine);
+        (void) fclose(pFInf);
+        return EXIT_FAILURE;
+    }
+    (void) sscanf(pcVal, "=  %s", pstYUM->acPulsar);
+
+    /* read RA */
+    (void) getline(&pcLine, &iLen, pFInf); 
+    pcVal = strrchr(pcLine, '=');
+    if (NULL == pcVal)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Reading header file failed!\n");
+        free(pcLine);
+        (void) fclose(pFInf);
+        return EXIT_FAILURE;
+    }
+    /* TODO: compute numeric value for RA */
+
+    /* read declination */
+    (void) getline(&pcLine, &iLen, pFInf); 
+    pcVal = strrchr(pcLine, '=');
+    if (NULL == pcVal)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Reading header file failed!\n");
+        free(pcLine);
+        (void) fclose(pFInf);
+        return EXIT_FAILURE;
+    }
+    /* TODO: compute numeric value for dec. */
+
+    /* read observer name and ignore it */
+    (void) getline(&pcLine, &iLen, pFInf); 
+    pcVal = strrchr(pcLine, '=');
+    if (NULL == pcVal)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Reading header file failed!\n");
+        free(pcLine);
+        (void) fclose(pFInf);
+        return EXIT_FAILURE;
+    }
+
+    /* read epoch */
+    (void) getline(&pcLine, &iLen, pFInf); 
+    pcVal = strrchr(pcLine, '=');
+    if (NULL == pcVal)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Reading header file failed!\n");
+        free(pcLine);
+        (void) fclose(pFInf);
+        return EXIT_FAILURE;
+    }
+    (void) sscanf(pcVal, "=  %lf", &pstYUM->dTStart);
+
+    /* read barycentric flag */
+    (void) getline(&pcLine, &iLen, pFInf); 
+    pcVal = strrchr(pcLine, '=');
+    if (NULL == pcVal)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Reading header file failed!\n");
+        free(pcLine);
+        (void) fclose(pFInf);
+        return EXIT_FAILURE;
+    }
+    (void) sscanf(pcVal, "=  %d", &pstYUM->iFlagBary);
+
+    /* read sample count and ignore it */
+    (void) getline(&pcLine, &iLen, pFInf); 
+    pcVal = strrchr(pcLine, '=');
+    if (NULL == pcVal)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Reading header file failed!\n");
+        free(pcLine);
+        (void) fclose(pFInf);
+        return EXIT_FAILURE;
+    }
+
+    /* read sampling interval in seconds */
+    (void) getline(&pcLine, &iLen, pFInf); 
+    pcVal = strrchr(pcLine, '=');
+    if (NULL == pcVal)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Reading header file failed!\n");
+        free(pcLine);
+        (void) fclose(pFInf);
+        return EXIT_FAILURE;
+    }
+    (void) sscanf(pcVal, "=  %lf", &pstYUM->dTSamp);
+
+    /* read break status ignore it */
+    (void) getline(&pcLine, &iLen, pFInf); 
+    pcVal = strrchr(pcLine, '=');
+    if (NULL == pcVal)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Reading header file failed!\n");
+        free(pcLine);
+        (void) fclose(pFInf);
+        return EXIT_FAILURE;
+    }
+
+    /* read observation type and ignore it */
+    (void) getline(&pcLine, &iLen, pFInf); 
+    pcVal = strrchr(pcLine, '=');
+    if (NULL == pcVal)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Reading header file failed!\n");
+        free(pcLine);
+        (void) fclose(pFInf);
+        return EXIT_FAILURE;
+    }
+
+    /* read beam diameter and ignore it */
+    (void) getline(&pcLine, &iLen, pFInf); 
+    pcVal = strrchr(pcLine, '=');
+    if (NULL == pcVal)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Reading header file failed!\n");
+        free(pcLine);
+        (void) fclose(pFInf);
+        return EXIT_FAILURE;
+    }
+
+    /* read DM */
+    (void) getline(&pcLine, &iLen, pFInf); 
+    pcVal = strrchr(pcLine, '=');
+    if (NULL == pcVal)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Reading header file failed!\n");
+        free(pcLine);
+        (void) fclose(pFInf);
+        return EXIT_FAILURE;
+    }
+    (void) sscanf(pcVal, "=  %lf", &pstYUM->dDM);
+
+    /* read centre frequency */
+    (void) getline(&pcLine, &iLen, pFInf); 
+    pcVal = strrchr(pcLine, '=');
+    if (NULL == pcVal)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Reading header file failed!\n");
+        free(pcLine);
+        (void) fclose(pFInf);
+        return EXIT_FAILURE;
+    }
+    /* TODO: compute frequency of first channel */
+
+    /* read total bandwidth and ignore it */
+    (void) getline(&pcLine, &iLen, pFInf); 
+    pcVal = strrchr(pcLine, '=');
+    if (NULL == pcVal)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Reading header file failed!\n");
+        free(pcLine);
+        (void) fclose(pFInf);
+        return EXIT_FAILURE;
+    }
+
+    /* read number of channels */
+    (void) getline(&pcLine, &iLen, pFInf); 
+    pcVal = strrchr(pcLine, '=');
+    if (NULL == pcVal)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Reading header file failed!\n");
+        free(pcLine);
+        (void) fclose(pFInf);
+        return EXIT_FAILURE;
+    }
+    (void) sscanf(pcVal, "=  %d", &pstYUM->iNumChans);
+
+    /* read channel bandwidth and ignore it */
+    (void) getline(&pcLine, &iLen, pFInf); 
+    pcVal = strrchr(pcLine, '=');
+    if (NULL == pcVal)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Reading header file failed!\n");
+        free(pcLine);
+        (void) fclose(pFInf);
+        return EXIT_FAILURE;
+    }
+
+#if 0
+    /* fill in other fields */
+    pstHeader->iObsID = 6;      /* GBT */
+    pstHeader->iDataTypeID = 2; /* time series */
+#endif
+    pstYUM->iNumBits = 32;   /* single-precision floating-point */
+
+    free(pcLine);
+    (void) fclose(pFInf);
+
+    return EXIT_SUCCESS;
+}
+
+
 /*
  * Read one block of data from disk
  */
@@ -1407,6 +1693,205 @@ int YAPP_ReadData(float *pfBuf,
 
     return iReadItems;
 }
+
+
+#if 0
+int YAPP_WriteMetadata(char *pcFileData, YUM_t stYUM)
+{
+    char acFileTim[LEN_GENSTRING] = {0};
+    char acLabel[LEN_GENSTRING] = {0};
+    int iLen = 0;
+
+    /* open .tim file and write data */
+    (void) strcpy(acFileTim, pcFileData);
+    (void) strcat(acFileTim, EXT_TIM);
+    pFTim = fopen(acFileTim, "w");
+    if (NULL == pFTim)
+    {
+        fprintf(stderr,
+                "ERROR: Opening file %s failed! %s.\n",
+                acFileTim,
+                strerror(errno));
+        return EXIT_FAILURE;
+    }
+
+    /* write the parameters to the header section of the file */
+    /* start with the 'HEADER_START' label */
+    iLen = strlen("HEADER_START");
+    (void) fwrite(&iLen, sizeof(iLen), 1, pFTim);
+    (void) strcpy(acLabel, "HEADER_START");
+    (void) fwrite(acLabel, sizeof(char), iLen, pFTim);
+
+    /* write the rest of the header */
+    /* write source name */
+    /* write field label length */
+    iLen = strlen("source_name");
+    (void) fwrite(&iLen, sizeof(iLen), 1, pFTim);
+    /* write field label */
+    (void) strcpy(acLabel, "source_name");
+    (void) fwrite(acLabel, sizeof(char), iLen, pFTim);
+    iLen = strlen(stYUM.acPulsar);
+    (void) fwrite(&iLen, sizeof(iLen), 1, pFTim);
+    (void) fwrite(stYUM.acPulsar, sizeof(char), iLen, pFTim);
+
+    /* write data type */
+    iLen = strlen("data_type");
+    (void) fwrite(&iLen, sizeof(iLen), 1, pFTim);
+    (void) strcpy(acLabel, "data_type");
+    (void) fwrite(acLabel, sizeof(char), iLen, pFTim);
+    (void) fwrite(&stHeader.iDataTypeID,
+                  sizeof(stHeader.iDataTypeID),
+                  1,
+                  pFTim);
+
+    //TODO: check if we need this
+    /* write number of channels */
+    iLen = strlen("nchans");
+    (void) fwrite(&iLen, sizeof(iLen), 1, pFTim);
+    (void) strcpy(acLabel, "nchans");
+    (void) fwrite(acLabel, sizeof(char), iLen, pFTim);
+    (void) fwrite(&stYUM.iNumChans,
+                  sizeof(stYUM.iNumChans),
+                  1,
+                  pFTim);
+
+    //TODO: check if we need this
+    /* write frequency of first channel */
+    iLen = strlen("fch1");
+    (void) fwrite(&iLen, sizeof(iLen), 1, pFTim);
+    (void) strcpy(acLabel, "fch1");
+    (void) fwrite(acLabel, sizeof(char), iLen, pFTim);
+    (void) fwrite(&stHeader.dFChan1,
+                  sizeof(stHeader.dFChan1),
+                  1,
+                  pFTim);
+
+    /* write number of bits per sample */
+    iLen = strlen("nbits");
+    (void) fwrite(&iLen, sizeof(iLen), 1, pFTim);
+    (void) strcpy(acLabel, "nbits");
+    (void) fwrite(acLabel, sizeof(char), iLen, pFTim);
+    (void) fwrite(&stYUM.iNumBits,
+                  sizeof(stYUM.iNumBits),
+                  1,
+                  pFTim);
+
+    /* write number of IFs */
+    iLen = strlen("nifs");
+    (void) fwrite(&iLen, sizeof(iLen), 1, pFTim);
+    (void) strcpy(acLabel, "nifs");
+    (void) fwrite(acLabel, sizeof(char), iLen, pFTim);
+    (void) fwrite(&stYUM.iNumIFs,
+                  sizeof(stYUM.iNumIFs),
+                  1,
+                  pFTim);
+
+    /* write sampling time in seconds */
+    iLen = strlen("tsamp");
+    (void) fwrite(&iLen, sizeof(iLen), 1, pFTim);
+    (void) strcpy(acLabel, "tsamp");
+    (void) fwrite(acLabel, sizeof(char), iLen, pFTim);
+    dTSampInSec = stYUM.dTSamp / 1e3;
+    (void) fwrite(&dTSampInSec,
+                  sizeof(dTSampInSec),
+                  1,
+                  pFTim);
+
+    /* write timestamp of first sample (MJD) */
+    iLen = strlen("tstart");
+    (void) fwrite(&iLen, sizeof(iLen), 1, pFTim);
+    (void) strcpy(acLabel, "tstart");
+    (void) fwrite(acLabel, sizeof(char), iLen, pFTim);
+    (void) fwrite(&stYUM.dTStart,
+                  sizeof(stYUM.dTStart),
+                  1,
+                  pFTim);
+
+    /* write telescope ID */
+    iLen = strlen("telescope_id");
+    (void) fwrite(&iLen, sizeof(iLen), 1, pFTim);
+    (void) strcpy(acLabel, "telescope_id");
+    (void) fwrite(acLabel, sizeof(char), iLen, pFTim);
+    (void) fwrite(&stHeader.iObsID,
+                  sizeof(stHeader.iObsID),
+                  1,
+                  pFTim);
+
+    /* write backend ID */
+    iLen = strlen("machine_id");
+    (void) fwrite(&iLen, sizeof(iLen), 1, pFTim);
+    (void) strcpy(acLabel, "machine_id");
+    (void) fwrite(acLabel, sizeof(char), iLen, pFTim);
+    (void) fwrite(&stHeader.iBackendID,
+                  sizeof(stHeader.iBackendID),
+                  1,
+                  pFTim);
+
+    /* write source RA (J2000) */
+    iLen = strlen("src_raj");
+    (void) fwrite(&iLen, sizeof(iLen), 1, pFTim);
+    (void) strcpy(acLabel, "src_raj");
+    (void) fwrite(acLabel, sizeof(char), iLen, pFTim);
+    (void) fwrite(&stYUM.dSourceRA,
+                  sizeof(stYUM.dSourceRA),
+                  1,
+                  pFTim);
+
+    /* write source declination (J2000) */
+    iLen = strlen("src_dej");
+    (void) fwrite(&iLen, sizeof(iLen), 1, pFTim);
+    (void) strcpy(acLabel, "src_dej");
+    (void) fwrite(acLabel, sizeof(char), iLen, pFTim);
+    (void) fwrite(&stYUM.dSourceDec,
+                  sizeof(stYUM.dSourceDec), 1, pFTim);
+
+    /* write azimuth start */
+    iLen = strlen("az_start");
+    (void) fwrite(&iLen, sizeof(iLen), 1, pFTim);
+    (void) strcpy(acLabel, "az_start");
+    (void) fwrite(acLabel, sizeof(char), iLen, pFTim);
+    (void) fwrite(&stYUM.dAzStart,
+                  sizeof(stYUM.dAzStart),
+                  1,
+                  pFTim);
+
+    /* write ZA start */
+    iLen = strlen("za_start");
+    (void) fwrite(&iLen, sizeof(iLen), 1, pFTim);
+    (void) strcpy(acLabel, "za_start");
+    (void) fwrite(acLabel, sizeof(char), iLen, pFTim);
+    (void) fwrite(&stYUM.dZAStart,
+                  sizeof(stYUM.dZAStart),
+                  1,
+                  pFTim);
+
+    //TODO: check if we need this
+    /* write reference DM */
+    iLen = strlen("refdm");
+    (void) fwrite(&iLen, sizeof(iLen), 1, pFTim);
+    (void) strcpy(acLabel, "refdm");
+    (void) fwrite(acLabel, sizeof(char), iLen, pFTim);
+    (void) fwrite(&stYUM.dDM, sizeof(stYUM.dDM), 1, pFTim);
+
+    /* write barycentric flag */
+    iLen = strlen("barycentric");
+    (void) fwrite(&iLen, sizeof(iLen), 1, pFTim);
+    (void) strcpy(acLabel, "barycentric");
+    (void) fwrite(acLabel, sizeof(char), iLen, pFTim);
+    (void) fwrite(&stYUM.iFlagBary,
+                  sizeof(stYUM.iFlagBary),
+                  1,
+                  pFTim);
+
+    /* write header end tag */
+    iLen = strlen("HEADER_END");
+    (void) fwrite(&iLen, sizeof(iLen), 1, pFTim);
+    (void) strcpy(acLabel, "HEADER_END");
+    (void) fwrite(acLabel, sizeof(char), iLen, pFTim);
+
+    return EXIT_SUCCESS;
+}
+#endif
 
 
 /*

@@ -49,6 +49,7 @@
 #define YAPP_TRUE                   ((char) 1)  /**< @brief Boolean true */
 /* @} */
 
+/* TODO: combine the below two groups */
 /**
  * @defgroup YAPPFormat Data format strings.
  */
@@ -58,17 +59,31 @@
 #define YAPP_FORMATSTR_FIL          "fil"
 #define YAPP_FORMATSTR_DTS_DDS      "dds"
 #define YAPP_FORMATSTR_DTS_TIM      "tim"
+#define YAPP_FORMATSTR_DTS_DAT      "dat"
+#define YAPP_FORMATSTR_DTS_DAT_INF  "inf"
 /* @} */
+
+#define EXT_RAW                     ".raw"
+#define EXT_DYNSPEC                 ".spec"
+#define EXT_DEDISPSPEC              ".dds"
+#define EXT_DEDISPSPECCFG           ".cfg"
+#define EXT_PS                      ".ps"
+#define EXT_FIL                     ".fil"
+#define EXT_FHD                     ".fhd"
+#define EXT_TIM                     ".tim"
+#define EXT_DAT                     ".dat"
+#define EXT_INF                     ".inf"
 
 enum tagFileFormats
 {
     /* dynamic spectrum formats */
     YAPP_FORMAT_SPEC = 0,       /* Desh's specfile format */
     YAPP_FORMAT_RAW,            /* raw voltages (baseband data) */
-    YAPP_FORMAT_FIL,            /* Dunc's filterbank file format */
+    YAPP_FORMAT_FIL,            /* SIGPROC filterbank file format */
     /* dedispersed time series formats */
     YAPP_FORMAT_DTS_DDS,        /* Desh's dedispersed data format */
-    YAPP_FORMAT_DTS_TIM         /* Dunc's time series format */
+    YAPP_FORMAT_DTS_TIM,        /* SIGPROC time series format */
+    YAPP_FORMAT_DTS_DAT         /* PRESTO time series format */
 };
 
 /* sample sizes in number of bits */
@@ -81,15 +96,6 @@ enum tagFileFormats
 
 /* number of bits in a byte */
 #define YAPP_BYTE2BIT_FACTOR        8
-
-#define EXT_RAW                     ".raw"
-#define EXT_DYNSPEC                 ".spec"
-#define EXT_DEDISPSPEC              ".dds"
-#define EXT_DEDISPSPECCFG           ".cfg"
-#define EXT_PS                      ".ps"
-#define EXT_FIL                     ".fil"
-#define EXT_FHD                     ".fhd"
-#define EXT_TIM                     ".tim"
 
 #define INFIX_SMOOTHED              "smoothed"
 #define INFIX_BASESUBED             "basesubed"
@@ -463,6 +469,14 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM);
  * @param[out]      pstYUM              YUM structure
  */
 int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM);
+
+/**
+ * Read configuration information corresponding to a PRESTO '.dat' file, from a separate header file
+ *
+ * @param[in]       pcFileData          Data filename
+ * @param[out]      pstYUM              YUM structure
+ */
+int ReadPRESTOHeaderFile(char *pcFileData, YUM_t *pstYUM);
 
 /**
  * Read one block of data from disk

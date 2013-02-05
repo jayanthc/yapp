@@ -37,7 +37,7 @@ LFLAGS_SNDFILE = -lsndfile
 
 # directories
 SRCDIR = src
-TOOLSDIR = tools
+#TOOLSDIR = tools
 MANDIR = man
 IDIR = src
 BINDIR = bin
@@ -68,8 +68,6 @@ all: yapp_makever \
 	 yapp_basesub \
 	 yapp_fold.o \
 	 yapp_fold \
-	 yapp_dat2tim.o \
-	 yapp_dat2tim \
 	 tags
 #	 yapp_dedisplaw.o \
 	 set_colours.o \
@@ -146,12 +144,14 @@ yapp_fold: $(IDIR)/yapp_fold.o $(IDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o $(IDIR)/colourmap.o
 	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -o $(BINDIR)/$@
 
-yapp_dat2tim.o: $(TOOLSDIR)/yapp_dat2tim.c $(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h
-	$(CC) $(CFLAGS_C) -I$(SRCDIR) $(DDEBUG) $< -o $(TOOLSDIR)/$@
-
-yapp_dat2tim: $(TOOLSDIR)/yapp_dat2tim.o $(SRCDIR)/yapp_version.o \
-	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
-	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -o $(BINDIR)/$@
+#
+#yapp_dat2tim.o: $(TOOLSDIR)/yapp_dat2tim.c $(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h
+#	$(CC) $(CFLAGS_C) -I$(SRCDIR) $(DDEBUG) $< -o $(TOOLSDIR)/$@
+#
+#yapp_dat2tim: $(TOOLSDIR)/yapp_dat2tim.o $(SRCDIR)/yapp_version.o \
+#	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
+#	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -o $(BINDIR)/$@
+#
 
 ifeq ($(FC), g77)
 DFC = -D_FC_F77_
@@ -200,7 +200,8 @@ yapp_pulsarsnd: $(IDIR)/yapp_pulsarsnd.o
 #		-o $(BINDIR)/$@
 
 # create the tags file
-tags: $(SRCDIR)/yapp*.* $(SRCDIR)/colourmap* $(TOOLSDIR)/yapp*.*
+#tags: $(SRCDIR)/yapp*.* $(SRCDIR)/colourmap* $(TOOLSDIR)/yapp*.*
+tags: $(SRCDIR)/yapp*.* $(SRCDIR)/colourmap*
 	ctags $^
 
 # install the man pages
@@ -225,7 +226,7 @@ clean:
 	$(DELCMD) $(IDIR)/yapp_smooth.o
 	$(DELCMD) $(IDIR)/yapp_basesub.o
 	$(DELCMD) $(IDIR)/yapp_fold.o
-	$(DELCMD) $(TOOLSDIR)/yapp_dat2tim.o
+#	$(DELCMD) $(TOOLSDIR)/yapp_dat2tim.o
 #	$(DELCMD) $(IDIR)/set_colours.o
 #	$(DELCMD) $(IDIR)/yapp_dedisplaw.o
 #	$(DELCMD) $(IDIR)/reorderdds.o
