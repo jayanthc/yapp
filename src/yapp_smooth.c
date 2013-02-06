@@ -139,7 +139,7 @@ int main(int argc, char *argv[])
                 {
                     fprintf(stderr,
                             "WARNING: The chosen boxcar width may suppress "
-                            "pulsars with periods greater %g ms in the "
+                            "pulsars with periods less than %g ms in the "
                             "smoothed data!\n",
                             fWidth);
                 }
