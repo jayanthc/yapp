@@ -283,8 +283,7 @@ int YAPP_ReadMetadata(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
             if (iRet != YAPP_RET_SUCCESS)
             {
                 (void) fprintf(stderr,
-                               "ERROR: Reading specfile configuration information "
-                               "failed!\n");
+                               "ERROR: Reading configuration information failed!\n");
                 return YAPP_RET_ERROR;
             }
             break;

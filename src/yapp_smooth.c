@@ -257,7 +257,7 @@ int main(int argc, char *argv[])
     {
         iSampsPerWin += 1;
         (void) fprintf(stderr,
-                       "WARNING: Number of samples in one window modified to "
+                       "WARNING: Number of samples per window modified to "
                        "be odd, new boxcar window width is %g ms.\n",
                        stYUM.dTSamp * iSampsPerWin);
     }

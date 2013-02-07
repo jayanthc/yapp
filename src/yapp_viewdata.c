@@ -260,14 +260,12 @@ int main(int argc, char *argv[])
     {
         dDataProcTime = stYUM.iTimeSamps * dTSampInSec;
     }
-
     /* check if the input time duration is less than the length of the
        data */
-    if (dDataProcTime > (stYUM.iTimeSamps * dTSampInSec))
+    else if (dDataProcTime > (stYUM.iTimeSamps * dTSampInSec))
     {
         (void) fprintf(stderr,
-                       "ERROR: Input time is longer than length of "
-                       "data!\n");
+                       "ERROR: Input time is longer than length of data!\n");
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
@@ -341,7 +339,8 @@ int main(int argc, char *argv[])
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
-    if ((iFormat != YAPP_FORMAT_DTS_TIM) || (iFormat != YAPP_FORMAT_DTS_DDS))
+    if (!((YAPP_FORMAT_DTS_TIM == iFormat)
+          || (YAPP_FORMAT_DTS_DDS != iFormat)))
     {
         fStatBW = stYUM.iNumGoodChans * stYUM.fChanBW;  /* in MHz */
         (void) printf("Usable bandwidth                  : %g MHz\n", fStatBW);
@@ -365,7 +364,7 @@ int main(int argc, char *argv[])
     /* set all elements to 'YAPP_TRUE' */
     (void) memset(g_pcIsTimeGood, YAPP_TRUE, iTimeSampsToProc);
 
-    /* open the dynamic spectrum data file for reading */
+    /* open the data file for reading */
     g_pFSpec = fopen(pcFileSpec, "r");
     if (NULL == g_pFSpec)
     {
@@ -379,14 +378,13 @@ int main(int argc, char *argv[])
 
     /* allocate memory for the buffer, based on the number of channels and time
        samples */
-    g_pfBuf = (float *) YAPP_Malloc((size_t) stYUM.iNumChans
-                                    * iBlockSize,
+    g_pfBuf = (float *) YAPP_Malloc((size_t) stYUM.iNumChans * iBlockSize,
                                     sizeof(float),
                                     YAPP_FALSE);
     if (NULL == g_pfBuf)
     {
         (void) fprintf(stderr,
-                       "ERROR: Memory allocation for buffer failed! %s!\n",
+                       "ERROR: Memory allocation failed! %s!\n",
                        strerror(errno));
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
@@ -457,7 +455,8 @@ int main(int argc, char *argv[])
         return YAPP_RET_ERROR;
     }
 
-    if ((iFormat != YAPP_FORMAT_DTS_TIM) || (iFormat != YAPP_FORMAT_DTS_DDS))
+    if (!((YAPP_FORMAT_DTS_TIM == iFormat)
+          || (YAPP_FORMAT_DTS_DDS == iFormat)))
     {
         /* set up the image plot's Y-axis (frequency) */
         g_pfYAxis = (float *) YAPP_Malloc(stYUM.iNumChans,
@@ -683,7 +682,8 @@ int main(int argc, char *argv[])
                                        + (i * dTSampInSec)));
         }
 
-        if ((iFormat != YAPP_FORMAT_DTS_TIM) || (iFormat != YAPP_FORMAT_DTS_DDS))
+        if (!((YAPP_FORMAT_DTS_TIM == iFormat)
+              || (YAPP_FORMAT_DTS_DDS == iFormat)))
         {
             /* get the transpose of the two-dimensional array */
             i = 0;
