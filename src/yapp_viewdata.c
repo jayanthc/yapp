@@ -430,7 +430,6 @@ int main(int argc, char *argv[])
 
     /* set character height */
     cpgsch(PG_CH);
-	
 
     /* set up the plot's X-axis */
     g_pfXAxis = (float *) YAPP_Malloc(iBlockSize,

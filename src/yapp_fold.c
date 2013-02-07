@@ -64,8 +64,6 @@ int main(int argc, char *argv[])
     int iDataSizePerBlock = 0;  /* fSampSize * iNumChans * iBlockSize */
     float fStatBW = 0.0;
     float fNoiseRMS = 0.0;
-    float fThreshold = 0.0;
-    float fSNRMin = 0.0;
     double dNumSigmas = 0.0;
     double dTSampInSec = 0.0;   /* holds sampling time in s */
     double dTNow = 0.0;
@@ -84,7 +82,6 @@ int main(int argc, char *argv[])
     float fDataMin = 0.0;
     float fDataMax = 0.0;
     int iReadItems = 0;
-    float fXStep = 0.0;
     float fButX = 0.0;
     float fButY = 0.0;
     char cCurChar = 0;
