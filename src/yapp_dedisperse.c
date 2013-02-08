@@ -16,7 +16,8 @@
  *                                          (default is 10.0)
  *     -l  --law <law>                      Dispersion law
  *                                          (default is 2.0)
- *     -o  --out-format <format>            Output format - 'dds' or 'tim'
+ *     -o  --out-format <format>            Output format - 'dds', 'tim', or
+ *                                          'fil'
  *                                          (default is 'tim')
  *     -g  --graphics                       Turn on plotting
  *     -m  --colour-map <name>              Colour map for plotting
@@ -207,6 +208,10 @@ int main(int argc, char *argv[])
                 else if (0 == strcmp(optarg, YAPP_FORMATSTR_DTS_TIM))
                 {
                     iOutputFormat = YAPP_FORMAT_DTS_TIM;
+                }
+                else if (0 == strcmp(optarg, YAPP_FORMATSTR_FIL))
+                {
+                    iOutputFormat = YAPP_FORMAT_FIL;
                 }
                 else
                 {
@@ -607,7 +612,7 @@ int main(int argc, char *argv[])
     --iNumReads;
     ++iReadBlockCount;
 
-    #if 0
+    #if 1
     if (YAPP_FORMAT_SPEC == iFormat)
     {
         /* flag bad time sections, and if required, normalise within the beam
@@ -793,9 +798,16 @@ int main(int argc, char *argv[])
     {
         (void) strcat(acFileDedisp, EXT_TIM);
     }
-    else
+    else if (YAPP_FORMAT_DTS_TIM == iOutputFormat)
     {
         (void) strcat(acFileDedisp, EXT_DEDISPSPEC);
+    }
+    else    /* if filterbank */
+    {
+        (void) strcat(acFileDedisp, "_");
+        (void) strcat(acFileDedisp, INFIX_DEDISPERSED);
+        (void) strcat(acFileDedisp, EXT_FIL);
+        printf("************%s\n", acFileDedisp);
     }
 
     pFDedispData = fopen(acFileDedisp, "w");
@@ -811,7 +823,8 @@ int main(int argc, char *argv[])
     }
 
     /* add header for .tim file format */
-    if (YAPP_FORMAT_DTS_TIM == iOutputFormat)
+    if ((YAPP_FORMAT_FIL == iOutputFormat)
+        || (YAPP_FORMAT_DTS_TIM == iOutputFormat))
     {
         /* write the parameters to the header section of the file */
         /* start with the 'HEADER_START' label */
@@ -838,52 +851,75 @@ int main(int argc, char *argv[])
         (void) fwrite(&iLen, sizeof(iLen), 1, pFDedispData);
         (void) strcpy(acLabel, "data_type");
         (void) fwrite(acLabel, sizeof(char), iLen, pFDedispData);
-        /* set the data type to 'time series (topocentric)' */
-        stHeader.iDataTypeID = 2;
+        if (YAPP_FORMAT_FIL == iOutputFormat)
+        {
+            /* set the data type to 'filterbank' */
+            stHeader.iDataTypeID = 1;
+        }
+        else
+        {
+            /* set the data type to 'time series (topocentric)' */
+            stHeader.iDataTypeID = 2;
+        }
         (void) fwrite(&stHeader.iDataTypeID,
                       sizeof(stHeader.iDataTypeID),
                       1,
                       pFDedispData);
 
-        //TODO: check if we need this
-        /* write number of channels */
-        iLen = strlen("nchans");
-        (void) fwrite(&iLen, sizeof(iLen), 1, pFDedispData);
-        (void) strcpy(acLabel, "nchans");
-        (void) fwrite(acLabel, sizeof(char), iLen, pFDedispData);
-        /* set the number of channels to 1 */
-        stHeader.iNumChans = 1;
-        (void) fwrite(&stHeader.iNumChans,
-                      sizeof(stHeader.iNumChans),
-                      1,
-                      pFDedispData);
+        if (YAPP_FORMAT_FIL == iOutputFormat)
+        {
+            /* write number of channels */
+            iLen = strlen("nchans");
+            (void) fwrite(&iLen, sizeof(iLen), 1, pFDedispData);
+            (void) strcpy(acLabel, "nchans");
+            (void) fwrite(acLabel, sizeof(char), iLen, pFDedispData);
+            stHeader.iNumChans = stYUM.iNumChans;
+            (void) fwrite(&stHeader.iNumChans,
+                          sizeof(stHeader.iNumChans),
+                          1,
+                          pFDedispData);
 
-        //TODO: check if we need this
-        /* write frequency of first channel */
-        iLen = strlen("fch1");
-        (void) fwrite(&iLen, sizeof(iLen), 1, pFDedispData);
-        (void) strcpy(acLabel, "fch1");
-        (void) fwrite(acLabel, sizeof(char), iLen, pFDedispData);
-        if (stYUM.fChanBW < 0.0)
-        {
-            stHeader.dFChan1 = (double) stYUM.fFMax;
+            /* write frequency of first channel */
+            iLen = strlen(YAPP_SP_LABEL_FCHAN1);
+            (void) fwrite(&iLen, sizeof(iLen), 1, pFDedispData);
+            (void) strcpy(acLabel, YAPP_SP_LABEL_FCHAN1);
+            (void) fwrite(acLabel, sizeof(char), iLen, pFDedispData);
+            if (stYUM.cIsBandFlipped)
+            {
+                stHeader.dFChan1 = (double) stYUM.fFMax;
+            }
+            else
+            {
+                stHeader.dFChan1 = (double) stYUM.fFMin;
+            }
+            (void) fwrite(&stHeader.dFChan1,
+                          sizeof(stHeader.dFChan1),
+                          1,
+                          pFDedispData);
+
+            /* write channel bandwidth  */
+            iLen = strlen(YAPP_SP_LABEL_CHANBW);
+            (void) fwrite(&iLen, sizeof(iLen), 1, pFDedispData);
+            (void) strcpy(acLabel, YAPP_SP_LABEL_CHANBW);
+            (void) fwrite(acLabel, sizeof(char), iLen, pFDedispData);
+            stHeader.dChanBW = (double) stYUM.fChanBW;
+            (void) fwrite(&stHeader.dChanBW, sizeof(stHeader.dChanBW), 1, pFDedispData);
         }
-        else
-        {
-            stHeader.dFChan1 = (double) stYUM.fFMin;
-        }
-        (void) fwrite(&stHeader.dFChan1,
-                      sizeof(stHeader.dFChan1),
-                      1,
-                      pFDedispData);
 
         /* write number of bits per sample */
         iLen = strlen("nbits");
         (void) fwrite(&iLen, sizeof(iLen), 1, pFDedispData);
         (void) strcpy(acLabel, "nbits");
         (void) fwrite(acLabel, sizeof(char), iLen, pFDedispData);
-        /* set the number of bits per sample to 32 */
-        stHeader.iNumBits = YAPP_SAMPSIZE_32;
+        if (YAPP_FORMAT_FIL == iOutputFormat)
+        {
+            stHeader.iNumBits = stYUM.iNumBits;
+        }
+        else
+        {
+            /* set the number of bits per sample to 32 */
+            stHeader.iNumBits = YAPP_SAMPSIZE_32;
+        }
         (void) fwrite(&stHeader.iNumBits,
                       sizeof(stHeader.iNumBits),
                       1,
@@ -916,8 +952,7 @@ int main(int argc, char *argv[])
         (void) fwrite(&iLen, sizeof(iLen), 1, pFDedispData);
         (void) strcpy(acLabel, "tstart");
         (void) fwrite(acLabel, sizeof(char), iLen, pFDedispData);
-        //temp
-        stHeader.dTStart = (double) 56219;
+        stHeader.dTStart = stYUM.dTStart;   /* TODO: make sure this is being read */
         (void) fwrite(&stHeader.dTStart,
                       sizeof(stHeader.dTStart),
                       1,
@@ -1150,7 +1185,7 @@ int main(int argc, char *argv[])
                first buffer */
             iSecBufReadSampCount = iReadBlockCount * iBlockSize;
 
-            #if 0
+            #if 1
             if (YAPP_FORMAT_SPEC == iFormat)
             {
                 /* flag bad time sections, and if required, normalise within
@@ -1338,10 +1373,22 @@ int main(int argc, char *argv[])
                    iColourMap);
         }
 
-        (void) fwrite(g_pfDedispData,
-                      sizeof(float),
-                      iBlockSize,
-                      pFDedispData);
+        /* pfPriBuf now contains dedispersed, non-collapsed data. write this to
+           disk if required */
+        if (YAPP_FORMAT_FIL == iOutputFormat)
+        {
+            (void) fwrite(pfPriBuf,
+                          sizeof(float),
+                          iNumChans * iBlockSize,
+                          pFDedispData);
+        }
+        else
+        {
+            (void) fwrite(g_pfDedispData,
+                          sizeof(float),
+                          iBlockSize,
+                          pFDedispData);
+        }
 
         if (cHasGraphics)
         {
@@ -1526,7 +1573,7 @@ void PrintUsage(const char *pcProgName)
     (void) printf("                                         ");
     (void) printf("(default is 2.0)\n");
     (void) printf("    -o  --out-format <format>            ");
-    (void) printf("Output format - 'dds' or 'tim'\n");
+    (void) printf("Output format - 'dds', 'tim', or 'fil'\n");
     (void) printf("                                         ");
     (void) printf("(default is 'tim')\n");
     (void) printf("    -g  --graphics                       ");

@@ -1695,12 +1695,17 @@ int YAPP_ReadData(float *pfBuf,
 }
 
 
-#if 0
+/*
+ * Writes header to a data file.
+ * NOTE: Currently supports only .tim files.
+ */
 int YAPP_WriteMetadata(char *pcFileData, YUM_t stYUM)
 {
     char acFileTim[LEN_GENSTRING] = {0};
     char acLabel[LEN_GENSTRING] = {0};
     int iLen = 0;
+    FILE *pFTim = NULL;
+    YAPP_SIGPROC_HEADER stHeader = {{0}};
 
     /* open .tim file and write data */
     (void) strcpy(acFileTim, pcFileData);
@@ -1735,12 +1740,13 @@ int YAPP_WriteMetadata(char *pcFileData, YUM_t stYUM)
     (void) fwrite(stYUM.acPulsar, sizeof(char), iLen, pFTim);
 
     /* write data type */
+    int iTemp = 2;    /* time series */
     iLen = strlen("data_type");
     (void) fwrite(&iLen, sizeof(iLen), 1, pFTim);
     (void) strcpy(acLabel, "data_type");
     (void) fwrite(acLabel, sizeof(char), iLen, pFTim);
-    (void) fwrite(&stHeader.iDataTypeID,
-                  sizeof(stHeader.iDataTypeID),
+    (void) fwrite(&iTemp,
+                  sizeof(iTemp),
                   1,
                   pFTim);
 
@@ -1757,12 +1763,13 @@ int YAPP_WriteMetadata(char *pcFileData, YUM_t stYUM)
 
     //TODO: check if we need this
     /* write frequency of first channel */
+    double dTemp = 0.0;
     iLen = strlen("fch1");
     (void) fwrite(&iLen, sizeof(iLen), 1, pFTim);
     (void) strcpy(acLabel, "fch1");
     (void) fwrite(acLabel, sizeof(char), iLen, pFTim);
-    (void) fwrite(&stHeader.dFChan1,
-                  sizeof(stHeader.dFChan1),
+    (void) fwrite(&dTemp,
+                  sizeof(dTemp),
                   1,
                   pFTim);
 
@@ -1791,7 +1798,7 @@ int YAPP_WriteMetadata(char *pcFileData, YUM_t stYUM)
     (void) fwrite(&iLen, sizeof(iLen), 1, pFTim);
     (void) strcpy(acLabel, "tsamp");
     (void) fwrite(acLabel, sizeof(char), iLen, pFTim);
-    dTSampInSec = stYUM.dTSamp / 1e3;
+    double dTSampInSec = stYUM.dTSamp / 1e3;
     (void) fwrite(&dTSampInSec,
                   sizeof(dTSampInSec),
                   1,
@@ -1808,12 +1815,13 @@ int YAPP_WriteMetadata(char *pcFileData, YUM_t stYUM)
                   pFTim);
 
     /* write telescope ID */
+    iTemp = 6;  /* GBT */
     iLen = strlen("telescope_id");
     (void) fwrite(&iLen, sizeof(iLen), 1, pFTim);
     (void) strcpy(acLabel, "telescope_id");
     (void) fwrite(acLabel, sizeof(char), iLen, pFTim);
-    (void) fwrite(&stHeader.iObsID,
-                  sizeof(stHeader.iObsID),
+    (void) fwrite(&iTemp,
+                  sizeof(iTemp),
                   1,
                   pFTim);
 
@@ -1891,7 +1899,6 @@ int YAPP_WriteMetadata(char *pcFileData, YUM_t stYUM)
 
     return EXIT_SUCCESS;
 }
-#endif
 
 
 /*

@@ -99,6 +99,7 @@ enum tagFileFormats
 
 #define INFIX_SMOOTHED              "smoothed"
 #define INFIX_BASESUBED             "basesubed"
+#define INFIX_DEDISPERSED           "dedispersed"
 
 #define SUFFIX_CFG                  "_cfg"
 
