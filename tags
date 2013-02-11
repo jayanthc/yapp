@@ -56,7 +56,7 @@ DEF_PROC_SPEC	src/yapp.h	245;"	d
 DEF_SIZE_BLOCK	src/yapp.h	138;"	d
 DEF_SIZE_READ	src/yapp_ft.h	21;"	d
 DEF_WINDOWS	src/yapp.h	140;"	d
-DEF_WINDOWS_BASESUB	src/yapp.h	141;"	d
+DEF_WINDOWS_MEDFILTER	src/yapp.h	141;"	d
 DM_TOL_PERCENT	src/yapp.h	226;"	d
 DoFFT	src/yapp_ft.c	/^int DoFFT()$/;"	f
 DoPFB	src/yapp_ft.c	/^int DoPFB(int iNTaps, int iNFFT)$/;"	f
@@ -76,8 +76,8 @@ FILE_EXT	src/yapp_pulsarsnd.c	23;"	d	file:
 FILE_VERSRC	src/yapp_makever.c	25;"	d	file:
 GetColourMapFromName	src/colourmap.c	/^int GetColourMapFromName(char *pcCMapName)$/;"	f
 GetLatestTimestamp	src/yapp_makever.c	/^time_t GetLatestTimestamp()$/;"	f
-INFIX_BASESUBED	src/yapp.h	101;"	d
 INFIX_DEDISPERSED	src/yapp.h	102;"	d
+INFIX_MEDFILTERED	src/yapp.h	101;"	d
 INFIX_SMOOTHED	src/yapp.h	100;"	d
 InitPFB	src/yapp_ft.c	/^int InitPFB(int iNTaps, int iNFFT)$/;"	f
 LEN_GENSTRING	src/colourmap.h	28;"	d
@@ -86,7 +86,7 @@ MAX_LEN_GENSTRING	src/yapp_makever.c	22;"	d	file:
 MAX_LEN_PSRNAME	src/yapp.h	128;"	d
 MAX_PNUM_BINS	src/yapp.h	126;"	d
 MAX_SIZE_BLOCK	src/yapp.h	121;"	d
-MAX_SIZE_BLOCK_BASESUB	src/yapp.h	123;"	d
+MAX_SIZE_BLOCK_MEDFILTER	src/yapp.h	123;"	d
 MAX_SNR_BINS	src/yapp.h	125;"	d
 MIN_THRES_IN_SIGMA	src/yapp.h	228;"	d
 NUM_BAD_BOUNDS	src/yapp.h	112;"	d
@@ -146,11 +146,11 @@ PROC_SPEC_NOTSEL	src/yapp.h	234;"	d
 PROC_SPEC_PERCENT	src/yapp.h	236;"	d
 PROC_SPEC_TIME	src/yapp.h	238;"	d
 Plot2D	src/colourmap.c	/^void Plot2D(float* pfBuf, float fDataMin, float fDataMax,$/;"	f
-PrintUsage	src/yapp_basesub.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	src/yapp_dedisperse.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	src/yapp_dedisplaw.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	src/yapp_fold.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	src/yapp_ft.c	/^void PrintUsage(const char *pcProgName)$/;"	f
+PrintUsage	src/yapp_medfilter.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	src/yapp_pulsarsnd.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	src/yapp_smooth.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	src/yapp_viewdata.c	/^void PrintUsage(const char *pcProgName)$/;"	f
@@ -167,10 +167,13 @@ VER_BUILD_PREFIX	src/yapp_makever.c	27;"	d	file:
 YAPP_BYTE2BIT_FACTOR	src/yapp.h	98;"	d
 YAPP_CalcDelays	src/yapp_dedisperse.c	/^int YAPP_CalcDelays(double dDM,$/;"	f
 YAPP_CalcMean	src/yapp_common.c	/^float YAPP_CalcMean(float *pfBuf, int iLength)$/;"	f
+YAPP_CalcMedian	src/yapp_common.c	/^float YAPP_CalcMedian(float *pfBuf, int iLength, float fOldMedian)$/;"	f
 YAPP_CalcRMS	src/yapp_common.c	/^float YAPP_CalcRMS(float *pfBuf, int iLength, float fMean)$/;"	f
+YAPP_CalcRunningMean	src/yapp_common.c	/^float YAPP_CalcRunningMean(float *pfBuf, int iLength, float fOldMean)$/;"	f
 YAPP_CalcThresholdInSigmas	src/yapp_common.c	/^double YAPP_CalcThresholdInSigmas(int iTimeSamps)$/;"	f
 YAPP_CleanUp	src/yapp_common.c	/^void YAPP_CleanUp()$/;"	f
 YAPP_CleanUp	src/yapp_dedisplaw.c	/^void YAPP_CleanUp()$/;"	f
+YAPP_Compare	src/yapp_common.c	/^int YAPP_Compare(float *pfA, float *pfB)$/;"	f
 YAPP_ERF_ENTRIES	src/yapp.h	223;"	d
 YAPP_FALSE	src/yapp.h	48;"	d
 YAPP_FILE_DELAYS_LIN	src/yapp.h	258;"	d
@@ -320,8 +323,8 @@ g_pfBFGain	src/yapp_dedisperse.c	/^float *g_pfBFGain = NULL;$/;"	v
 g_pfBFGain	src/yapp_dedisplaw.c	/^float *g_pfBFGain = NULL;$/;"	v
 g_pfBFTimeSectMean	src/yapp_dedisperse.c	/^float *g_pfBFTimeSectMean = NULL;$/;"	v
 g_pfBFTimeSectMean	src/yapp_dedisplaw.c	/^float *g_pfBFTimeSectMean = NULL;$/;"	v
-g_pfBuf	src/yapp_basesub.c	/^float *g_pfBuf = NULL;$/;"	v
 g_pfBuf	src/yapp_fold.c	/^float *g_pfBuf = NULL;$/;"	v
+g_pfBuf	src/yapp_medfilter.c	/^float *g_pfBuf = NULL;$/;"	v
 g_pfBuf	src/yapp_smooth.c	/^float *g_pfBuf = NULL;$/;"	v
 g_pfBuf	src/yapp_viewdata.c	/^float *g_pfBuf = NULL;$/;"	v
 g_pfBuf0	src/yapp_dedisperse.c	/^float *g_pfBuf0 = NULL;$/;"	v
@@ -331,7 +334,7 @@ g_pfBuf1	src/yapp_dedisplaw.c	/^float *g_pfBuf1 = NULL;$/;"	v
 g_pfDedispDMChans	src/yapp_dedisplaw.c	/^float *g_pfDedispDMChans = NULL;$/;"	v
 g_pfDedispData	src/yapp_dedisperse.c	/^float *g_pfDedispData = NULL;$/;"	v
 g_pfDedispData	src/yapp_dedisplaw.c	/^float *g_pfDedispData = NULL;$/;"	v
-g_pfOutBuf	src/yapp_basesub.c	/^float *g_pfOutBuf = NULL;$/;"	v
+g_pfOutBuf	src/yapp_medfilter.c	/^float *g_pfOutBuf = NULL;$/;"	v
 g_pfOutBuf	src/yapp_smooth.c	/^float *g_pfOutBuf = NULL;$/;"	v
 g_pfPFBCoeff	src/yapp_ft.c	/^float* g_pfPFBCoeff = NULL;$/;"	v
 g_pfPhase	src/yapp_fold.c	/^float *g_pfPhase = NULL;$/;"	v
@@ -346,10 +349,10 @@ g_pfSumPowX	src/yapp_ft.c	/^float *g_pfSumPowX = NULL;$/;"	v
 g_pfSumPowY	src/yapp_ft.c	/^float *g_pfSumPowY = NULL;$/;"	v
 g_pfSumStokesIm	src/yapp_ft.c	/^float *g_pfSumStokesIm = NULL;$/;"	v
 g_pfSumStokesRe	src/yapp_ft.c	/^float *g_pfSumStokesRe = NULL;$/;"	v
-g_pfXAxis	src/yapp_basesub.c	/^float *g_pfXAxis = NULL;$/;"	v
 g_pfXAxis	src/yapp_dedisperse.c	/^float *g_pfXAxis = NULL;$/;"	v
 g_pfXAxis	src/yapp_dedisplaw.c	/^float *g_pfXAxis = NULL;$/;"	v
 g_pfXAxis	src/yapp_ft.c	/^float *g_pfXAxis = NULL;$/;"	v
+g_pfXAxis	src/yapp_medfilter.c	/^float *g_pfXAxis = NULL;$/;"	v
 g_pfXAxis	src/yapp_smooth.c	/^float *g_pfXAxis = NULL;$/;"	v
 g_pfXAxis	src/yapp_viewdata.c	/^float *g_pfXAxis = NULL;$/;"	v
 g_pfXAxisOld	src/yapp_viewdata.c	/^float *g_pfXAxisOld = NULL;$/;"	v
@@ -386,12 +389,12 @@ iNumIFs	src/yapp_sigproc.h	/^    int iNumIFs;$/;"	m	struct:tagSIGPROCHeader
 iObsID	src/yapp_sigproc.h	/^    int iObsID;$/;"	m	struct:tagSIGPROCHeader
 iTimeSamps	src/yapp.h	/^    int iTimeSamps;$/;"	m	struct:YUM_s
 lDataSizeTotal	src/yapp.h	/^    long int lDataSizeTotal;$/;"	m	struct:YUM_s
-main	src/yapp_basesub.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/yapp_dedisperse.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/yapp_dedisplaw.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/yapp_fold.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/yapp_ft.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/yapp_makever.c	/^int main(int argc, char *argv[])$/;"	f
+main	src/yapp_medfilter.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/yapp_pulsarsnd.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/yapp_smooth.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/yapp_viewdata.c	/^int main(int argc, char *argv[])$/;"	f

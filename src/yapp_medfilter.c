@@ -1,9 +1,9 @@
 /*
- * @file yapp_basesub.c
+ * @file yapp_medfilter.c
  * Program to baseline-subtract dedispersed time series data.
  *
  * @verbatim
- * Usage: yapp_basesub [options] <data-file>
+ * Usage: yapp_medfilter [options] <data-file>
  *     -h  --help                           Display this usage information
  *     -s  --skip <time>                    The length of data in seconds, to be
  *                                          skipped
@@ -79,7 +79,7 @@ int main(int argc, char *argv[])
     int iSampsPerWin = 0;
     int iDiff = 0;
     int i = 0;
-    float fMean = 0.0;
+    float fMedian = 0.0;
     float fMeanOrig = 0.0;
     float fRMSOrig = 0.0;
     float fMeanOrigAll = 0.0;
@@ -250,9 +250,9 @@ int main(int argc, char *argv[])
 
     /* calculate the number of samples in one window */
     iSampsPerWin = (int) round((fWidth * 1e3) / stYUM.dTSamp);
-    if ((DEF_WINDOWS_BASESUB * iSampsPerWin) > MAX_SIZE_BLOCK_BASESUB)
+    if ((DEF_WINDOWS_MEDFILTER * iSampsPerWin) > MAX_SIZE_BLOCK_MEDFILTER)
     {
-        iSampsPerWin = (int) ((float) MAX_SIZE_BLOCK_BASESUB) / DEF_WINDOWS_BASESUB;
+        iSampsPerWin = (int) ((float) MAX_SIZE_BLOCK_MEDFILTER) / DEF_WINDOWS_MEDFILTER;
         (void) printf("WARNING: Samples per window greater than maximum block "
                       "size. Resizing window to %d samples, equivalent to "
                       "%g s.\n",
@@ -260,10 +260,10 @@ int main(int argc, char *argv[])
                       iSampsPerWin * dTSampInSec);
     }
     /* compute the block size - a large multiple of iSampsPerWin */
-    iBlockSize = DEF_WINDOWS_BASESUB * iSampsPerWin;
-    if (iBlockSize > MAX_SIZE_BLOCK_BASESUB)
+    iBlockSize = DEF_WINDOWS_MEDFILTER * iSampsPerWin;
+    if (iBlockSize > MAX_SIZE_BLOCK_MEDFILTER)
     {
-        iBlockSize = MAX_SIZE_BLOCK_BASESUB;
+        iBlockSize = MAX_SIZE_BLOCK_MEDFILTER;
     }
 
     if (lBytesToSkip >= stYUM.lDataSizeTotal)
@@ -360,7 +360,7 @@ int main(int argc, char *argv[])
     (void) sprintf(acFileOut,
                    "%s_%s%gs%s",
                    pcFileOut,
-                   INFIX_BASESUBED,
+                   INFIX_MEDFILTERED,
                    fWidth,
                    EXT_TIM);
     pFOut = fopen(acFileOut, "w");
@@ -469,13 +469,23 @@ int main(int argc, char *argv[])
            all other blocks */
         iNumSamps = iReadItems;
 
-        /* baseline-subtract (moving-average-subtract) data */
+        /* median filter data */
         (void) memset(g_pfOutBuf, '\0', (sizeof(float) * iOutBlockSize));
         for (i = 0; i < (iNumSamps - (iSampsPerWin - 1)); ++i)
         {
-            fMean = YAPP_CalcMean((g_pfBuf + i), iSampsPerWin);
-            g_pfOutBuf[i] = g_pfBuf[i] - fMean;
+            fMedian = YAPP_CalcMedian((g_pfBuf + i), iSampsPerWin, fMedian);
+            g_pfOutBuf[i] = g_pfBuf[i] - fMedian;
         }
+        #if 0
+        for (i = 0; i < iNumSamps - iSampsPerWin; i += iSampsPerWin)
+        {
+            fMedian = YAPP_CalcMedian(g_pfBuf + i, iSampsPerWin, fMedian);
+            for (int j = 0; j < iSampsPerWin; ++j)
+            {
+                g_pfOutBuf[i+j] = g_pfBuf[i+j] - fMedian;
+            }
+        }
+        #endif
 
         /* write baseline-subtracted data to file */
         (void) fwrite(g_pfOutBuf,
@@ -547,7 +557,7 @@ int main(int argc, char *argv[])
                     g_pfXAxis[iOutBlockSize-1],
                     fDataMin,
                     fDataMax);
-            cpglab("Time (s)", "", "Before Baseline-Subtracting");
+            cpglab("Time (s)", "", "Before Median Filtering");
             cpgbox("BCNST", 0.0, 0, "BCNST", 0.0, 0);
             cpgsci(PG_CI_PLOT);
             cpgline(iOutBlockSize, g_pfXAxis, g_pfBuf);
@@ -591,7 +601,7 @@ int main(int argc, char *argv[])
                     g_pfXAxis[iOutBlockSize-1],
                     fDataMin,
                     fDataMax);
-            cpglab("Time (s)", "", "After Baseline-Subtracting");
+            cpglab("Time (s)", "", "After Median Filtering");
             cpgbox("BCNST", 0.0, 0, "BCNST", 0.0, 0);
             cpgsci(PG_CI_PLOT);
             cpgline(iOutBlockSize, g_pfXAxis, g_pfOutBuf);

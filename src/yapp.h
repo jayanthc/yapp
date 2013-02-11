@@ -98,7 +98,7 @@ enum tagFileFormats
 #define YAPP_BYTE2BIT_FACTOR        8
 
 #define INFIX_SMOOTHED              "smoothed"
-#define INFIX_BASESUBED             "basesubed"
+#define INFIX_MEDFILTERED           "medfiltered"
 #define INFIX_DEDISPERSED           "dedispersed"
 
 #define SUFFIX_CFG                  "_cfg"
@@ -120,7 +120,7 @@ enum tagFileFormats
    best the plots) doesn't happen properly */
 #define MAX_SIZE_BLOCK      65536   /**< @brief Maximum data read size */
 /* TODO: make memory estimation proper */
-#define MAX_SIZE_BLOCK_BASESUB  262144 /**< @brief Maximum data read size */
+#define MAX_SIZE_BLOCK_MEDFILTER  262144 /**< @brief Maximum data read size */
 
 #define MAX_SNR_BINS        50      /**< @brief Number of SNR bins */
 #define MAX_PNUM_BINS       50
@@ -138,7 +138,7 @@ enum tagFileFormats
 #define DEF_SIZE_BLOCK      4096    /**< @brief Default block size */
 
 #define DEF_WINDOWS         1000/**< @brief Default number of windows */
-#define DEF_WINDOWS_BASESUB 10  /**< @brief Default number of windows */
+#define DEF_WINDOWS_MEDFILTER 10  /**< @brief Default number of windows */
 
 #define DEF_FOLD_PULSES     1000/**< @brief Default number of pulses to fold */
 /* @} */
@@ -523,7 +523,10 @@ int YAPP_Smooth(float* pfInBuf,
                 float* pfOutBuf);
 
 float YAPP_CalcMean(float *pfBuf, int iLength);
+float YAPP_CalcRunningMean(float *pfBuf, int iLength, float fOldMean);
 float YAPP_CalcRMS(float *pfBuf, int iLength, float fMean);
+int YAPP_Compare(float *pfA, float *pfB);
+float YAPP_CalcMedian(float *pfBuf, int iLength, float fOldMedian);
 /*
  * The memory allocator
  */

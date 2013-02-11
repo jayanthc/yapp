@@ -1948,6 +1948,19 @@ float YAPP_CalcMean(float *pfBuf, int iLength)
 
 
 /*
+ * Calculate running mean
+ */
+float YAPP_CalcRunningMean(float *pfBuf, int iLength, float fOldMean)
+{
+    float fMean = 0.0;
+    int i = 0;
+
+    fMean = (fOldMean + pfBuf[iLength-1]) / 2;
+
+    return fMean;
+}
+
+/*
  * Calculate signal standard deviation
  */
 float YAPP_CalcRMS(float *pfBuf, int iLength, float fMean)
@@ -1963,6 +1976,87 @@ float YAPP_CalcRMS(float *pfBuf, int iLength, float fMean)
     fRMS = sqrtf(fRMS);
 
     return fRMS;
+}
+
+
+int YAPP_Compare(float *pfA, float *pfB)
+{
+    if (*pfA < *pfB)
+    {
+        return -1;
+    }
+    else if (*pfA == *pfB)
+    {
+        return 0;
+    }
+    else
+    {
+        return 1;
+    }
+}
+
+
+/*
+ * Calculate signal median
+ */
+float YAPP_CalcMedian(float *pfBuf, int iLength, float fOldMedian)
+{
+    static char cIsFirst = YAPP_TRUE;
+    static float *pfSortBuf = NULL;
+    float fMedian = 0.0;
+
+#if 0
+    if (cIsFirst)
+    {
+        /* allocate memory for the sorted buffer */
+        pfSortBuf = (float *) YAPP_Malloc(iLength, sizeof(float), YAPP_FALSE);
+        if (NULL == pfSortBuf)
+        {
+            (void) fprintf(stderr,
+                           "ERROR: Memory allocation failed! %s!\n",
+                           strerror(errno));
+            return YAPP_RET_ERROR;
+        }
+        (void) memcpy(pfSortBuf, pfBuf, iLength * sizeof(float));
+        qsort(pfSortBuf, iLength, sizeof(float), YAPP_Compare);
+        fMedian = pfSortBuf[iLength/2]; /* approx. if iLength is even */
+        cIsFirst = YAPP_FALSE;
+    }
+    else
+    {
+        if (pfBuf[iLength-1] < fOldMedian)
+        {
+            fMedian = pfSortBuf[(iLength/2)+1];
+        }
+        else if (pfBuf[iLength-1] > fOldMedian)
+        {
+            fMedian = pfSortBuf[(iLength/2)-1];
+        }
+        else
+        {
+            fMedian = fOldMedian;
+        }
+    }
+#else
+    if (cIsFirst)
+    {
+        /* allocate memory for the sorted buffer */
+        pfSortBuf = (float *) YAPP_Malloc(iLength, sizeof(float), YAPP_FALSE);
+        if (NULL == pfSortBuf)
+        {
+            (void) fprintf(stderr,
+                           "ERROR: Memory allocation failed! %s!\n",
+                           strerror(errno));
+            return YAPP_RET_ERROR;
+        }
+        cIsFirst = YAPP_FALSE;
+    }
+    (void) memcpy(pfSortBuf, pfBuf, iLength * sizeof(float));
+    qsort(pfSortBuf, iLength, sizeof(float), YAPP_Compare);
+    fMedian = pfSortBuf[iLength/2]; /* approx. if iLength is even */
+#endif
+
+    return fMedian;
 }
 
 
