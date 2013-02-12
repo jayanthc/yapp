@@ -80,8 +80,6 @@ int main(int argc, char *argv[])
     char cIsDMGiven = YAPP_FALSE;
     double dDM = 0.0;
     float fLaw = DEF_LAW;
-    float fFMin = 0.0;
-    float fFMax = 0.0;
     float fChanBW = 0.0;
     int iMaxOffset = 0;
     int iNumChans = 0;
@@ -139,6 +137,7 @@ int main(int argc, char *argv[])
     int k = 0;
     int l = 0;
     int m = 0;
+    float fStartOffset = 0.0;
     char cHasGraphics = YAPP_FALSE;
     int iColourMap = DEF_CMAP;
     int iInvCols = YAPP_FALSE;
@@ -322,8 +321,6 @@ int main(int argc, char *argv[])
     iNumGoodChans = stYUM.iNumGoodChans;
     fSampSize = stYUM.fSampSize;
     lDataSizeTotal = stYUM.lDataSizeTotal;
-    fFMax = stYUM.fFMax;
-    fFMin = stYUM.fFMin;
     pfTimeSectGain = stYUM.pfBFGain;    /* for .spec */
     dTNextBF = stYUM.dTNextBF;          /* for .spec */
     iNumChans = stYUM.iNumChans;
@@ -612,7 +609,7 @@ int main(int argc, char *argv[])
     --iNumReads;
     ++iReadBlockCount;
 
-    #if 1
+    #if 0
     if (YAPP_FORMAT_SPEC == iFormat)
     {
         /* flag bad time sections, and if required, normalise within the beam
@@ -749,23 +746,16 @@ int main(int argc, char *argv[])
         {
             for (i = 0; i < iNumChans; ++i)
             {
-                g_pfYAxis[i] = fFMax - i * fChanBW;
+                g_pfYAxis[i] = stYUM.fFMax - i * fChanBW;
             }
         }
         else
         {
             for (i = 0; i < iNumChans; ++i)
             {
-                g_pfYAxis[i] = fFMin + i * fChanBW;
+                g_pfYAxis[i] = stYUM.fFMin + i * fChanBW;
             }
         }
-
-        #if 0
-        /* calculate the tick step sizes */
-        fXStep = (int) ((((iBlockSize - 1) * dTSampInSec) - 0)
-                        / PG_TICK_STEPS_X);
-        fYStep = (int) ((fFMax - fFMin) / PG_TICK_STEPS_Y);
-        #endif
 
         /* allocate memory for the cpgimag() plotting buffer */
         g_pfPlotBuf = (float *) YAPP_Malloc((size_t) iNumChans * iBlockSize,
@@ -807,7 +797,6 @@ int main(int argc, char *argv[])
         (void) strcat(acFileDedisp, "_");
         (void) strcat(acFileDedisp, INFIX_DEDISPERSED);
         (void) strcat(acFileDedisp, EXT_FIL);
-        printf("************%s\n", acFileDedisp);
     }
 
     pFDedispData = fopen(acFileDedisp, "w");
@@ -820,6 +809,16 @@ int main(int argc, char *argv[])
         (void) fclose(g_pFSpec);
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
+    }
+
+    /* calucate the corrected start time */
+    if (g_piOffsetTab[0] > g_piOffsetTab[iNumChans-1])
+    {
+        fStartOffset = g_piOffsetTab[0] * dTSampInSec;
+    }
+    else
+    {
+        fStartOffset = g_piOffsetTab[iNumChans-1] * dTSampInSec;
     }
 
     /* add header for .tim file format */
@@ -952,7 +951,8 @@ int main(int argc, char *argv[])
         (void) fwrite(&iLen, sizeof(iLen), 1, pFDedispData);
         (void) strcpy(acLabel, "tstart");
         (void) fwrite(acLabel, sizeof(char), iLen, pFDedispData);
-        stHeader.dTStart = stYUM.dTStart;   /* TODO: make sure this is being read */
+        /* enter the start time corrected for dispersion */
+        stHeader.dTStart = stYUM.dTStart - (fStartOffset / 86400);
         (void) fwrite(&stHeader.dTStart,
                       sizeof(stHeader.dTStart),
                       1,
@@ -1020,7 +1020,6 @@ int main(int argc, char *argv[])
                       1,
                       pFDedispData);
 
-        //TODO: check if we need this
         /* write reference DM */
         iLen = strlen("refdm");
         (void) fwrite(&iLen, sizeof(iLen), 1, pFDedispData);
@@ -1064,7 +1063,6 @@ int main(int argc, char *argv[])
 
         if (cHasGraphics)
         {
-            /* common for all panels */
             for (i = 0; i < iBlockSize; ++i)
             {
                 g_pfXAxis[i] = (iReadSmpCount * dTSampInSec)
@@ -1185,7 +1183,7 @@ int main(int argc, char *argv[])
                first buffer */
             iSecBufReadSampCount = iReadBlockCount * iBlockSize;
 
-            #if 1
+            #if 0
             if (YAPP_FORMAT_SPEC == iFormat)
             {
                 /* flag bad time sections, and if required, normalise within
@@ -1197,7 +1195,6 @@ int main(int argc, char *argv[])
                             <= (*stYUM.padBadTimes)[iBadTimeSect][BADTIME_END]))
                     {
                         cIsInBadTimeRange = YAPP_TRUE;
-                        //g_pcIsTimeGood[iSecBufReadSampCount+i] = YAPP_FALSE;
                         g_pcIsTimeGood[((iReadBlockCount-1)*iBlockSize)+i]
                             = YAPP_FALSE;
                     }
@@ -1319,6 +1316,12 @@ int main(int argc, char *argv[])
 
         if (cHasGraphics)
         {
+            for (i = 0; i < iBlockSize; ++i)
+            {
+                g_pfXAxis[i] = (iReadSmpCount * dTSampInSec)
+                               + (i * dTSampInSec) - fStartOffset;
+            }
+
             cpgpanl(1, 2);
             /* erase just before plotting, to reduce flicker */
             cpgeras();
@@ -1603,6 +1606,8 @@ int YAPP_CalcDelays(double dDM,
     float fF1 = 0.0;
     float fF2 = 0.0;
     double dDelay = 0.0;
+    //float fFMaxCalc = INFINITY;     /* reference frequency */
+    float fFMaxCalc = stYUM.fFMax;     /* reference frequency */
 
     g_piOffsetTab = (int *) YAPP_Malloc((size_t) stYUM.iNumChans,
                                         sizeof(int),
@@ -1619,7 +1624,6 @@ int YAPP_CalcDelays(double dDM,
     /* calculate quadratic delays */
     /* NOTE: delay may not be 0 for the highest frequency channel,
        but the offset samples may be (depending on the sampling rate) */
-    //TODO: should be - and adjust the mjd according to infinite freq.
 #ifdef DEBUG
     {
         FILE *pFFileDelaysQuad = NULL;
@@ -1639,7 +1643,7 @@ int YAPP_CalcDelays(double dDM,
     {
         if (stYUM.cIsBandFlipped)
         {
-            fF1 = stYUM.fFMax;
+            fF1 = fFMaxCalc;
             fF2 = stYUM.fFMax;
             for (i = stYUM.iNumChans - 1; i >= 0; --i)
             {
@@ -1661,7 +1665,7 @@ int YAPP_CalcDelays(double dDM,
         }
         else
         {
-            fF1 = stYUM.fFMax;
+            fF1 = fFMaxCalc;
             fF2 = stYUM.fFMax;
             for (i = 0; i < stYUM.iNumChans; ++i)
             {
@@ -1686,7 +1690,7 @@ int YAPP_CalcDelays(double dDM,
     {
         if (stYUM.cIsBandFlipped)
         {
-            fF1 = stYUM.fFMax;
+            fF1 = fFMaxCalc;
             fF2 = stYUM.fFMax;
             for (i = 0; i < stYUM.iNumChans; ++i)
             {
@@ -1708,7 +1712,7 @@ int YAPP_CalcDelays(double dDM,
         }
         else
         {
-            fF1 = stYUM.fFMax;
+            fF1 = fFMaxCalc;
             fF2 = stYUM.fFMax;
             for (i = stYUM.iNumChans - 1; i >= 0; --i)
             {
