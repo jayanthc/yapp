@@ -486,6 +486,10 @@ int main(int argc, char *argv[])
         /* smooth data */
         (void) memset(g_pfOutBuf, '\0', (sizeof(float) * iOutBlockSize));
         (void) YAPP_Smooth(g_pfBuf, iNumSamps, iSampsPerWin, g_pfOutBuf);
+        for (i = 0; i < (iNumSamps - (iSampsPerWin - 1)); ++i)
+        {
+            printf("%f, %f\n", g_pfBuf[i], g_pfOutBuf[i]);
+        }
         /* write smoothed data to file */
         (void) fwrite(g_pfOutBuf,
                       sizeof(float),

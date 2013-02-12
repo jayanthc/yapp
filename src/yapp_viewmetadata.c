@@ -170,6 +170,9 @@ int main(int argc, char *argv[])
         (void) printf("    Time                          : %g s\n",
                       (stYUM.iTimeSamps * (stYUM.dTSamp / 1e3)));
 
+        //////////
+        printf("headerlen = %d\n", stYUM.iHeaderLen);
+        ///////
         if ((argc - iNextOpt) != 1)
         {
             (void) printf("----------------------------------------");
