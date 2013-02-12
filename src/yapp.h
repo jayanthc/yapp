@@ -88,6 +88,7 @@ enum tagFileFormats
 #define YAPP_BYTE2BIT_FACTOR        8
 
 #define INFIX_SMOOTHED              "smoothed"
+#define INFIX_DEDISPERSED           "dedispersed"
 
 #define SUFFIX_CFG                  "_cfg"
 
