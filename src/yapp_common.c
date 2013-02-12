@@ -513,7 +513,6 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
     double dFChan1 = 0.0;
     float fFCh1 = 0.0;
     double dChanBW = 0.0;
-    double dTStart = 0.0;
     int iObsID = 0;
 
     assert((YAPP_FORMAT_FIL == iFormat) || (YAPP_FORMAT_DTS_TIM == iFormat));
@@ -647,11 +646,11 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
         else if (0 == strcmp(acLabel, "tstart"))
         {
             /* read timestamp of first sample (MJD) */
-            iRet = fread(&dTStart,
-                         sizeof(dTStart),
+            iRet = fread(&pstYUM->dTStart,
+                         sizeof(pstYUM->dTStart),
                          1,
                          g_pFSpec);
-            pstYUM->iHeaderLen += sizeof(dTStart);
+            pstYUM->iHeaderLen += sizeof(pstYUM->dTStart);
         }
         else if (0 == strcmp(acLabel, "telescope_id"))
         {
@@ -833,9 +832,6 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
             pstYUM->fFMin = fFCh1;
             pstYUM->fFMax = pstYUM->fFMin + (pstYUM->iNumChans * pstYUM->fChanBW);
         }
-        /* calculate bandwidth and centre frequency */
-        pstYUM->fBW = pstYUM->fFMax - pstYUM->fFMin;
-        pstYUM->fFCentre = pstYUM->fFMin + (pstYUM->fBW / 2);
 
         if (YAPP_TRUE == pstYUM->iFlagSplicedData)
         {
@@ -870,6 +866,10 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
             pstYUM->iNumBands = 1;
         }
 
+        /* calculate bandwidth and centre frequency */
+        pstYUM->fBW = pstYUM->fFMax - pstYUM->fFMin;
+        pstYUM->fFCentre = pstYUM->fFMin + (pstYUM->fBW / 2);
+
         /* TODO: find out the discontinuities and print them as well, also
                  number of spliced bands */
     }
@@ -892,6 +892,10 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
         pstYUM->iNumChans = 1;
     }
     pstYUM->iTimeSamps = (int) (pstYUM->lDataSizeTotal / (pstYUM->iNumChans * pstYUM->fSampSize));
+
+    /* set number of good channels to number of channels - no support for
+       SIGPROC ignore files yet */
+    pstYUM->iNumGoodChans = pstYUM->iNumChans;
 
     return YAPP_RET_SUCCESS;
 }
