@@ -1007,15 +1007,15 @@ int InitPFB(int iNTaps, int iNFFT)
 
     /* create plans */
     g_stPlanX = fftwf_plan_dft_1d(iNFFT,
-                                 g_pfcFFTInX,
-                                 g_pfcFFTOutX,
-                                 FFTW_FORWARD,
-                                 FFTW_MEASURE);
+                                  g_pfcFFTInX,
+                                  g_pfcFFTOutX,
+                                  FFTW_FORWARD,
+                                  FFTW_MEASURE);
     g_stPlanY = fftwf_plan_dft_1d(iNFFT,
-                                 g_pfcFFTInY,
-                                 g_pfcFFTOutY,
-                                 FFTW_FORWARD,
-                                 FFTW_MEASURE);
+                                  g_pfcFFTInY,
+                                  g_pfcFFTOutY,
+                                  FFTW_FORWARD,
+                                  FFTW_MEASURE);
 
     return YAPP_RET_SUCCESS;
 }

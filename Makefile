@@ -64,8 +64,8 @@ all: yapp_makever \
 	 yapp_dedisperse \
 	 yapp_smooth.o \
 	 yapp_smooth \
-	 yapp_medfilter.o \
-	 yapp_medfilter \
+	 yapp_filter.o \
+	 yapp_filter \
 	 yapp_fold.o \
 	 yapp_fold \
      yapp_dat2tim.o \
@@ -132,12 +132,12 @@ yapp_smooth: $(IDIR)/yapp_smooth.o $(IDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
 	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -o $(BINDIR)/$@
 
-yapp_medfilter.o: $(SRCDIR)/yapp_medfilter.c $(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h
+yapp_filter.o: $(SRCDIR)/yapp_filter.c $(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h
 	$(CC) $(CFLAGS_C) $(DDEBUG) $< -o $(IDIR)/$@
 
-yapp_medfilter: $(IDIR)/yapp_medfilter.o $(IDIR)/yapp_version.o \
+yapp_filter: $(IDIR)/yapp_filter.o $(IDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
-	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -o $(BINDIR)/$@
+	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -lfftw3f -o $(BINDIR)/$@
 
 yapp_fold.o: $(SRCDIR)/yapp_fold.c $(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h
 	$(CC) $(CFLAGS_C) $(DDEBUG) $< -o $(IDIR)/$@
@@ -226,7 +226,7 @@ clean:
 	$(DELCMD) $(IDIR)/yapp_ft.o
 	$(DELCMD) $(IDIR)/yapp_dedisperse.o
 	$(DELCMD) $(IDIR)/yapp_smooth.o
-	$(DELCMD) $(IDIR)/yapp_medfilter.o
+	$(DELCMD) $(IDIR)/yapp_filter.o
 	$(DELCMD) $(IDIR)/yapp_fold.o
 	$(DELCMD) $(TOOLSDIR)/yapp_dat2tim.o
 #	$(DELCMD) $(IDIR)/set_colours.o
