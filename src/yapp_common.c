@@ -8,6 +8,8 @@
 
 #include "yapp.h"
 #include "yapp_sigproc.h"
+#include "yapp_psrfits.h"
+#include <fitsio.h>
 
 extern const double g_aadErfLookup[YAPP_ERF_ENTRIES][3];
 
@@ -41,6 +43,10 @@ int YAPP_GetFileType(char *pcFile)
     if (0 == strcmp(pcExt, EXT_RAW))
     {
         iFormat = YAPP_FORMAT_RAW;
+    }
+    else if (0 == strcmp(pcExt, EXT_PSRFITS))
+    {
+        iFormat =  YAPP_FORMAT_PSRFITS;
     }
     else if (0 == strcmp(pcExt, EXT_DYNSPEC))
     {
@@ -283,6 +289,16 @@ int YAPP_ReadMetadata(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
 
     switch (iFormat)
     {
+        case YAPP_FORMAT_PSRFITS:
+            iRet = YAPP_ReadPSRFITSHeader(pcFileSpec, pstYUM);
+            if (iRet != YAPP_RET_SUCCESS)
+            {
+                (void) fprintf(stderr,
+                               "ERROR: Reading PSRFITS header failed!\n");
+                return YAPP_RET_ERROR;
+            }
+            break;
+
         case YAPP_FORMAT_SPEC:
             iRet = YAPP_ReadDASCfg(pcFileSpec, pstYUM);
             if (iRet != YAPP_RET_SUCCESS)
@@ -320,6 +336,142 @@ int YAPP_ReadMetadata(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
                            iFormat);
             return YAPP_RET_ERROR;
     }
+
+    return YAPP_RET_SUCCESS;
+}
+
+
+int YAPP_ReadPSRFITSHeader(char *pcFileSpec, YUM_t *pstYUM)
+{
+    fitsfile *pstFileData = NULL;
+    int iStatus = 0;
+    char acErrMsg[LEN_GENSTRING] = {0};
+    int iTemp = 0;
+    double dTemp = 0.0;
+
+    /*  open PSRFITS file */
+    (void) fits_open_file(&pstFileData, pcFileSpec, READONLY, &iStatus);
+    if  (iStatus != 0)
+    {
+        fits_get_errstatus(iStatus, acErrMsg); 
+        (void) fprintf(stderr, "ERROR: Opening file failed! %s\n", acErrMsg);
+        return YAPP_RET_ERROR;
+    }
+
+    /* read Primary HDU header */
+    (void) fits_read_key(pstFileData,
+                         TSTRING,
+                         YAPP_PF_LABEL_OBSID,
+                         pstYUM->acSite,
+                         NULL,
+                         &iStatus);
+    (void) fits_read_key(pstFileData,
+                         TSTRING,
+                         YAPP_PF_LABEL_SRCNAME,
+                         pstYUM->acPulsar,
+                         NULL,
+                         &iStatus);
+    (void) fits_read_key(pstFileData,
+                         TFLOAT,
+                         YAPP_PF_LABEL_FCENTRE,
+                         &pstYUM->fFCentre,
+                         NULL,
+                         &iStatus);
+    (void) fits_read_key(pstFileData,
+                         TFLOAT,
+                         YAPP_PF_LABEL_BW,
+                         &pstYUM->fBW,
+                         NULL,
+                         &iStatus);
+    (void) fits_read_key(pstFileData,
+                         TINT,
+                         YAPP_PF_LABEL_NUMCHANS,
+                         &pstYUM->iNumChans,
+                         NULL,
+                         &iStatus);
+    pstYUM->iNumGoodChans = pstYUM->iNumChans;
+    pstYUM->iNumBands = 1;
+    (void) fits_read_key(pstFileData,
+                         TINT,
+                         YAPP_PF_LABEL_TSTART,
+                         &iTemp,
+                         NULL,
+                         &iStatus);
+    pstYUM->dTStart = (double) iTemp;
+    (void) fits_read_key(pstFileData,
+                         TINT,
+                         YAPP_PF_LABEL_TSTARTSEC,
+                         &iTemp,
+                         NULL,
+                         &iStatus);
+    pstYUM->dTStart += (((double) iTemp) / 86400);
+    (void) fits_read_key(pstFileData,
+                         TDOUBLE,
+                         YAPP_PF_LABEL_TSTARTOFF,
+                         &dTemp,
+                         NULL,
+                         &iStatus);
+    pstYUM->dTStart += dTemp;
+
+    /* read SUBINT HDU header */
+    (void) fits_movnam_hdu(pstFileData,
+                           BINARY_TBL,
+                           YAPP_PF_HDUNAME_SUBINT,
+                           0,
+                           &iStatus);
+    if  (iStatus != 0)
+    {
+        fits_get_errstatus(iStatus, acErrMsg); 
+        (void) fprintf(stderr,
+                       "ERROR: Moving to HDU %s failed! %s\n",
+                       YAPP_PF_HDUNAME_SUBINT,
+                       acErrMsg);
+        (void) fits_close_file(pstFileData, &iStatus);
+        return YAPP_RET_ERROR;
+    }
+    (void) fits_read_key(pstFileData,
+                         TINT,
+                         YAPP_PF_LABEL_NUMBITS,
+                         &pstYUM->iNumBits,
+                         NULL,
+                         &iStatus);
+    (void) fits_read_key(pstFileData,
+                         TDOUBLE,
+                         YAPP_PF_LABEL_TSAMP,
+                         &pstYUM->dTSamp,
+                         NULL,
+                         &iStatus);
+    pstYUM->dTSamp *= 1e3;      /* convert from s to ms */
+    (void) fits_read_key(pstFileData,
+                         TFLOAT,
+                         YAPP_PF_LABEL_CHANBW,
+                         &pstYUM->fChanBW,
+                         NULL,
+                         &iStatus);
+    (void) fits_read_key(pstFileData,
+                         TINT,
+                         YAPP_PF_LABEL_NSUBINT,
+                         &pstYUM->iTimeSamps,
+                         NULL,
+                         &iStatus);
+    (void) fits_read_key(pstFileData,
+                         TINT,
+                         YAPP_PF_LABEL_NSBLK,
+                         &iTemp,
+                         NULL,
+                         &iStatus);
+    pstYUM->iTimeSamps *= iTemp;
+
+    (void) fits_close_file(pstFileData, &iStatus);
+
+    /* calculate the absolute min and max frequencies */
+    pstYUM->fFMin = pstYUM->fFCentre - (pstYUM->fBW / 2) + (pstYUM->fChanBW / 2);
+    pstYUM->fFMax = pstYUM->fFCentre + (pstYUM->fBW / 2) - (pstYUM->fChanBW / 2);
+
+    /* calculate the size of data */
+    pstYUM->lDataSizeTotal = pstYUM->iNumChans
+                             * pstYUM->iTimeSamps
+                             * (pstYUM->iNumBits / YAPP_BYTE2BIT_FACTOR);
 
     return YAPP_RET_SUCCESS;
 }

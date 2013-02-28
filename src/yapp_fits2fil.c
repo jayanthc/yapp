@@ -16,6 +16,7 @@
 
 #include "yapp.h"
 #include "yapp_sigproc.h"   /* for SIGPROC filterbank file format support */
+#include <fitsio.h>
 
 /**
  * The build version string, maintained in the file version.c, which is
@@ -48,6 +49,7 @@ int main(int argc, char *argv[])
     char cIsFirst = YAPP_TRUE;
     int iReadItems = 0;
     int iNumSamps = 0;
+    int iNumFiles = 0;
     int iDiff = 0;
     int i = 0;
     int j = 0;
@@ -132,9 +134,7 @@ int main(int argc, char *argv[])
                        "ERROR: File type determination failed!\n");
         return YAPP_RET_ERROR;
     }
-    if (!((YAPP_FORMAT_FIL == iFormat)
-          || (YAPP_FORMAT_SPEC == iFormat)
-          || (YAPP_FORMAT_DTS_TIM == iFormat)))
+    if (!(YAPP_FORMAT_PSRFITS == iFormat))
     {
         (void) fprintf(stderr,
                        "ERROR: Invalid file type!\n");
@@ -151,6 +151,9 @@ int main(int argc, char *argv[])
         return YAPP_RET_ERROR;
     }
 
+    YAPP_CleanUp();
+
+    return YAPP_RET_SUCCESS;
 }
 
 /*
@@ -163,7 +166,7 @@ void PrintUsage(const char *pcProgName)
     (void) printf("    -h  --help                           ");
     (void) printf("Display this usage information\n");
     (void) printf("    -n  --nfiles <nfiles>                ");
-    (void) printf("Number of files in the sequence to be\n"
+    (void) printf("Number of files in the sequence to be\n");
     (void) printf("                                         ");
     (void) printf("converted\n");
     (void) printf("                                         ");

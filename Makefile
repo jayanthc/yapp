@@ -68,6 +68,8 @@ all: yapp_makever \
 	 yapp_filter \
 	 yapp_fold.o \
 	 yapp_fold \
+     yapp_fits2fil.o \
+     yapp_fits2fil \
      yapp_dat2tim.o \
      yapp_dat2tim \
 	 tags
@@ -99,7 +101,7 @@ yapp_viewmetadata.o: $(SRCDIR)/yapp_viewmetadata.c $(SRCDIR)/yapp.h
 # even though yapp_viewmetadata does not use PGPLOT, yapp_common does
 yapp_viewmetadata: $(IDIR)/yapp_viewmetadata.o $(IDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
-	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -o $(BINDIR)/$@
+	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -lcfitsio -o $(BINDIR)/$@
 
 colourmap.o: $(SRCDIR)/colourmap.c $(SRCDIR)/colourmap.h
 	$(CC) $(CFLAGS_C) $< -o $(IDIR)/$@
@@ -109,50 +111,56 @@ yapp_viewdata.o: $(SRCDIR)/yapp_viewdata.c $(SRCDIR)/yapp.h $(SRCDIR)/yapp_erflo
 
 yapp_viewdata: $(IDIR)/yapp_viewdata.o $(IDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o $(IDIR)/colourmap.o
-	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -o $(BINDIR)/$@
+	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -lcfitsio -o $(BINDIR)/$@
 
 yapp_ft.o: $(SRCDIR)/yapp_ft.c $(SRCDIR)/yapp.h
 	$(CC) $(CFLAGS_C) $(DDEBUG) $< -o $(IDIR)/$@
 
 yapp_ft: $(IDIR)/yapp_ft.o $(IDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
-	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -lfftw3f -o $(BINDIR)/$@
+	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -lfftw3f -lcfitsio -o $(BINDIR)/$@
 
 yapp_dedisperse.o: $(SRCDIR)/yapp_dedisperse.c $(SRCDIR)/yapp.h
 	$(CC) $(CFLAGS_C) $(DDEBUG) $(DFC) $(SRCDIR)/yapp_dedisperse.c -o $(IDIR)/$@
 
 yapp_dedisperse: $(IDIR)/yapp_dedisperse.o
 	$(CC) $(IDIR)/yapp_dedisperse.o $(IDIR)/yapp_version.o $(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o \
-		$(IDIR)/colourmap.o $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -o $(BINDIR)/$@
+		$(IDIR)/colourmap.o $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -lcfitsio -o $(BINDIR)/$@
 
 yapp_smooth.o: $(SRCDIR)/yapp_smooth.c $(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h
 	$(CC) $(CFLAGS_C) $(DDEBUG) $< -o $(IDIR)/$@
 
 yapp_smooth: $(IDIR)/yapp_smooth.o $(IDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
-	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -o $(BINDIR)/$@
+	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -lcfitsio -o $(BINDIR)/$@
 
 yapp_filter.o: $(SRCDIR)/yapp_filter.c $(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h
 	$(CC) $(CFLAGS_C) $(DDEBUG) $< -o $(IDIR)/$@
 
 yapp_filter: $(IDIR)/yapp_filter.o $(IDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
-	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -lfftw3f -o $(BINDIR)/$@
+	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -lfftw3f -lcfitsio -o $(BINDIR)/$@
 
 yapp_fold.o: $(SRCDIR)/yapp_fold.c $(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h
 	$(CC) $(CFLAGS_C) $(DDEBUG) $< -o $(IDIR)/$@
 
 yapp_fold: $(IDIR)/yapp_fold.o $(IDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o $(IDIR)/colourmap.o
-	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -o $(BINDIR)/$@
+	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -lcfitsio -o $(BINDIR)/$@
 
+yapp_fits2fil.o: $(SRCDIR)/yapp_fits2fil.c $(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h
+	$(CC) $(CFLAGS_C) $(DDEBUG) $< -o $(IDIR)/$@
+
+yapp_fits2fil: $(IDIR)/yapp_fits2fil.o $(IDIR)/yapp_version.o \
+	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
+	$(CC) $^ $(LFLAGS_MATH) -lcfitsio -o $(BINDIR)/$@
 
 yapp_dat2tim.o: $(TOOLSDIR)/yapp_dat2tim.c $(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h
 	$(CC) $(CFLAGS_C) -I$(SRCDIR) $(DDEBUG) $< -o $(TOOLSDIR)/$@
 
 yapp_dat2tim: $(TOOLSDIR)/yapp_dat2tim.o $(SRCDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
-	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -o $(BINDIR)/$@
+	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -lcfitsio -o $(BINDIR)/$@
 
 
 ifeq ($(FC), g77)
@@ -170,7 +178,7 @@ yapp_dedisplaw.o: $(SRCDIR)/yapp_dedisplaw.c $(SRCDIR)/yapp.h
 
 yapp_dedisplaw: $(IDIR)/yapp_dedisplaw.o
 	$(FC) $(IDIR)/yapp_dedisplaw.o $(IDIR)/yapp_version.o $(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o \
-		$(IDIR)/set_colours.o $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -o $(BINDIR)/$@
+		$(IDIR)/set_colours.o $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -lcfitsio -o $(BINDIR)/$@
 
 #killrfi.o: $(SRCDIR)/killrfi.c
 #	$(CC) $(CFLAGS_C) $(DDEBUG) $(SRCDIR)/killrfi.c -o $(IDIR)/$@
@@ -185,7 +193,7 @@ reorderdds.o: $(SRCDIR)/reorderdds.c
 
 reorderdds: $(IDIR)/reorderdds.o
 	$(FC) $(IDIR)/reorderdds.o $(IDIR)/yapp_version.o $(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o \
-        $(IDIR)/set_colours.o $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -o $(BINDIR)/$@
+        $(IDIR)/set_colours.o $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -lcfitsio -o $(BINDIR)/$@
 
 yapp_pulsarsnd.o: $(SRCDIR)/yapp_pulsarsnd.c $(SRCDIR)/yapp.h
 	$(CC) $(CFLAGS_C) $(SRCDIR)/yapp_pulsarsnd.c -o $(IDIR)/$@
@@ -228,6 +236,7 @@ clean:
 	$(DELCMD) $(IDIR)/yapp_smooth.o
 	$(DELCMD) $(IDIR)/yapp_filter.o
 	$(DELCMD) $(IDIR)/yapp_fold.o
+	$(DELCMD) $(IDIR)/yapp_fits2fil.o
 	$(DELCMD) $(TOOLSDIR)/yapp_dat2tim.o
 #	$(DELCMD) $(IDIR)/set_colours.o
 #	$(DELCMD) $(IDIR)/yapp_dedisplaw.o

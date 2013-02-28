@@ -55,6 +55,7 @@
  */
 /* @{ */
 #define YAPP_FORMATSTR_RAW          "raw"
+#define YAPP_FORMATSTR_PSRFITS      "fits"
 #define YAPP_FORMATSTR_SPEC         "spec"
 #define YAPP_FORMATSTR_FIL          "fil"
 #define YAPP_FORMATSTR_DTS_DDS      "dds"
@@ -64,6 +65,7 @@
 /* @} */
 
 #define EXT_RAW                     ".raw"
+#define EXT_PSRFITS                 ".fits"
 #define EXT_DYNSPEC                 ".spec"
 #define EXT_DEDISPSPEC              ".dds"
 #define EXT_DEDISPSPECCFG           ".cfg"
@@ -79,6 +81,7 @@ enum tagFileFormats
     /* dynamic spectrum formats */
     YAPP_FORMAT_SPEC = 0,       /* Desh's specfile format */
     YAPP_FORMAT_RAW,            /* raw voltages (baseband data) */
+    YAPP_FORMAT_PSRFITS,        /* PSRFITS spectrometer data */
     YAPP_FORMAT_FIL,            /* SIGPROC filterbank file format */
     /* dedispersed time series formats */
     YAPP_FORMAT_DTS_DDS,        /* Desh's dedispersed data format */
@@ -445,6 +448,14 @@ int YAPP_GetObsNameFromID(int iObsID, char *pcObs);
  * @param[out]      pstYUM              YUM structure
  */
 int YAPP_ReadMetadata(char *pcFileSpec, int iFormta, YUM_t *pstYUM);
+
+/**
+ * Read header from the input PSRFITS file
+ *
+ * @param[in]       pcFileSpec          Data filename
+ * @param[out]      pstYUM              YUM structure
+ */
+int YAPP_ReadPSRFITSHeader(char *pcFileSpec, YUM_t *pstYUM);
 
 /**
  * Read configuration information corresponding to a DAS '.spec' file
