@@ -1851,25 +1851,22 @@ int YAPP_ReadData(float *pfBuf,
 
 /*
  * Writes header to a data file.
- * NOTE: Currently supports only .tim files.
  */
-int YAPP_WriteMetadata(char *pcFileData, YUM_t stYUM)
+int YAPP_WriteMetadata(char *pcFileData, int iFormat, YUM_t stYUM)
 {
-    char acFileTim[LEN_GENSTRING] = {0};
     char acLabel[LEN_GENSTRING] = {0};
     int iLen = 0;
-    FILE *pFTim = NULL;
+    FILE *pFData = NULL;
     YAPP_SIGPROC_HEADER stHeader = {{0}};
+    int iTemp = 0;
+    double dTemp = 0.0;
 
-    /* open .tim file and write data */
-    (void) strcpy(acFileTim, pcFileData);
-    (void) strcat(acFileTim, EXT_TIM);
-    pFTim = fopen(acFileTim, "w");
-    if (NULL == pFTim)
+    pFData = fopen(pcFileData, "w");
+    if (NULL == pFData)
     {
         fprintf(stderr,
                 "ERROR: Opening file %s failed! %s.\n",
-                acFileTim,
+                pcFileData,
                 strerror(errno));
         return EXIT_FAILURE;
     }
@@ -1877,179 +1874,203 @@ int YAPP_WriteMetadata(char *pcFileData, YUM_t stYUM)
     /* write the parameters to the header section of the file */
     /* start with the 'HEADER_START' label */
     iLen = strlen("HEADER_START");
-    (void) fwrite(&iLen, sizeof(iLen), 1, pFTim);
+    (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
     (void) strcpy(acLabel, "HEADER_START");
-    (void) fwrite(acLabel, sizeof(char), iLen, pFTim);
+    (void) fwrite(acLabel, sizeof(char), iLen, pFData);
 
     /* write the rest of the header */
     /* write source name */
     /* write field label length */
     iLen = strlen("source_name");
-    (void) fwrite(&iLen, sizeof(iLen), 1, pFTim);
+    (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
     /* write field label */
     (void) strcpy(acLabel, "source_name");
-    (void) fwrite(acLabel, sizeof(char), iLen, pFTim);
+    (void) fwrite(acLabel, sizeof(char), iLen, pFData);
     iLen = strlen(stYUM.acPulsar);
-    (void) fwrite(&iLen, sizeof(iLen), 1, pFTim);
-    (void) fwrite(stYUM.acPulsar, sizeof(char), iLen, pFTim);
+    (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
+    (void) fwrite(stYUM.acPulsar, sizeof(char), iLen, pFData);
 
     /* write data type */
-    int iTemp = 2;    /* time series */
+    if (YAPP_FORMAT_DTS_TIM == iFormat)
+    {
+        iTemp = 2;      /* time series */
+    }
+    else if (YAPP_FORMAT_FIL == iFormat)
+    {
+        //TODO: check
+        iTemp = 1;      /* filterbank */
+    }
     iLen = strlen("data_type");
-    (void) fwrite(&iLen, sizeof(iLen), 1, pFTim);
+    (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
     (void) strcpy(acLabel, "data_type");
-    (void) fwrite(acLabel, sizeof(char), iLen, pFTim);
+    (void) fwrite(acLabel, sizeof(char), iLen, pFData);
     (void) fwrite(&iTemp,
                   sizeof(iTemp),
                   1,
-                  pFTim);
+                  pFData);
 
-    //TODO: check if we need this
-    /* write number of channels */
-    iLen = strlen("nchans");
-    (void) fwrite(&iLen, sizeof(iLen), 1, pFTim);
-    (void) strcpy(acLabel, "nchans");
-    (void) fwrite(acLabel, sizeof(char), iLen, pFTim);
-    (void) fwrite(&stYUM.iNumChans,
-                  sizeof(stYUM.iNumChans),
-                  1,
-                  pFTim);
+    if (YAPP_FORMAT_FIL == iFormat)
+    {
+        /* write number of channels */
+        iLen = strlen(YAPP_SP_LABEL_NUMCHANS);
+        (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
+        (void) strcpy(acLabel, YAPP_SP_LABEL_NUMCHANS);
+        (void) fwrite(acLabel, sizeof(char), iLen, pFData);
+        (void) fwrite(&stYUM.iNumChans,
+                      sizeof(stYUM.iNumChans),
+                      1,
+                      pFData);
 
-    //TODO: check if we need this
-    /* write frequency of first channel */
-    double dTemp = 0.0;
-    iLen = strlen("fch1");
-    (void) fwrite(&iLen, sizeof(iLen), 1, pFTim);
-    (void) strcpy(acLabel, "fch1");
-    (void) fwrite(acLabel, sizeof(char), iLen, pFTim);
-    (void) fwrite(&dTemp,
-                  sizeof(dTemp),
-                  1,
-                  pFTim);
+        /* write frequency of first channel */
+        dTemp = (double) stYUM.fFMin;
+        iLen = strlen(YAPP_SP_LABEL_FCHAN1);
+        (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
+        (void) strcpy(acLabel, YAPP_SP_LABEL_FCHAN1);
+        (void) fwrite(acLabel, sizeof(char), iLen, pFData);
+        (void) fwrite(&dTemp,
+                      sizeof(dTemp),
+                      1,
+                      pFData);
+
+        /* write channel bandwidth */
+        dTemp = (double) stYUM.fChanBW;
+        iLen = strlen(YAPP_SP_LABEL_CHANBW);
+        (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
+        (void) strcpy(acLabel, YAPP_SP_LABEL_CHANBW);
+        (void) fwrite(acLabel, sizeof(char), iLen, pFData);
+        (void) fwrite(&dTemp,
+                      sizeof(dTemp),
+                      1,
+                      pFData);
+    }
 
     /* write number of bits per sample */
     iLen = strlen("nbits");
-    (void) fwrite(&iLen, sizeof(iLen), 1, pFTim);
+    (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
     (void) strcpy(acLabel, "nbits");
-    (void) fwrite(acLabel, sizeof(char), iLen, pFTim);
+    (void) fwrite(acLabel, sizeof(char), iLen, pFData);
     (void) fwrite(&stYUM.iNumBits,
                   sizeof(stYUM.iNumBits),
                   1,
-                  pFTim);
+                  pFData);
 
     /* write number of IFs */
     iLen = strlen("nifs");
-    (void) fwrite(&iLen, sizeof(iLen), 1, pFTim);
+    (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
     (void) strcpy(acLabel, "nifs");
-    (void) fwrite(acLabel, sizeof(char), iLen, pFTim);
+    (void) fwrite(acLabel, sizeof(char), iLen, pFData);
     (void) fwrite(&stYUM.iNumIFs,
                   sizeof(stYUM.iNumIFs),
                   1,
-                  pFTim);
+                  pFData);
 
     /* write sampling time in seconds */
     iLen = strlen("tsamp");
-    (void) fwrite(&iLen, sizeof(iLen), 1, pFTim);
+    (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
     (void) strcpy(acLabel, "tsamp");
-    (void) fwrite(acLabel, sizeof(char), iLen, pFTim);
+    (void) fwrite(acLabel, sizeof(char), iLen, pFData);
     double dTSampInSec = stYUM.dTSamp / 1e3;
     (void) fwrite(&dTSampInSec,
                   sizeof(dTSampInSec),
                   1,
-                  pFTim);
+                  pFData);
 
     /* write timestamp of first sample (MJD) */
     iLen = strlen("tstart");
-    (void) fwrite(&iLen, sizeof(iLen), 1, pFTim);
+    (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
     (void) strcpy(acLabel, "tstart");
-    (void) fwrite(acLabel, sizeof(char), iLen, pFTim);
+    (void) fwrite(acLabel, sizeof(char), iLen, pFData);
     (void) fwrite(&stYUM.dTStart,
                   sizeof(stYUM.dTStart),
                   1,
-                  pFTim);
+                  pFData);
 
     /* write telescope ID */
     iTemp = 6;  /* GBT */
     iLen = strlen("telescope_id");
-    (void) fwrite(&iLen, sizeof(iLen), 1, pFTim);
+    (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
     (void) strcpy(acLabel, "telescope_id");
-    (void) fwrite(acLabel, sizeof(char), iLen, pFTim);
+    (void) fwrite(acLabel, sizeof(char), iLen, pFData);
     (void) fwrite(&iTemp,
                   sizeof(iTemp),
                   1,
-                  pFTim);
+                  pFData);
 
     /* write backend ID */
     iLen = strlen("machine_id");
-    (void) fwrite(&iLen, sizeof(iLen), 1, pFTim);
+    (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
     (void) strcpy(acLabel, "machine_id");
-    (void) fwrite(acLabel, sizeof(char), iLen, pFTim);
+    (void) fwrite(acLabel, sizeof(char), iLen, pFData);
     (void) fwrite(&stHeader.iBackendID,
                   sizeof(stHeader.iBackendID),
                   1,
-                  pFTim);
+                  pFData);
 
     /* write source RA (J2000) */
     iLen = strlen("src_raj");
-    (void) fwrite(&iLen, sizeof(iLen), 1, pFTim);
+    (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
     (void) strcpy(acLabel, "src_raj");
-    (void) fwrite(acLabel, sizeof(char), iLen, pFTim);
+    (void) fwrite(acLabel, sizeof(char), iLen, pFData);
     (void) fwrite(&stYUM.dSourceRA,
                   sizeof(stYUM.dSourceRA),
                   1,
-                  pFTim);
+                  pFData);
 
     /* write source declination (J2000) */
     iLen = strlen("src_dej");
-    (void) fwrite(&iLen, sizeof(iLen), 1, pFTim);
+    (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
     (void) strcpy(acLabel, "src_dej");
-    (void) fwrite(acLabel, sizeof(char), iLen, pFTim);
+    (void) fwrite(acLabel, sizeof(char), iLen, pFData);
     (void) fwrite(&stYUM.dSourceDec,
-                  sizeof(stYUM.dSourceDec), 1, pFTim);
+                  sizeof(stYUM.dSourceDec), 1, pFData);
 
     /* write azimuth start */
     iLen = strlen("az_start");
-    (void) fwrite(&iLen, sizeof(iLen), 1, pFTim);
+    (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
     (void) strcpy(acLabel, "az_start");
-    (void) fwrite(acLabel, sizeof(char), iLen, pFTim);
+    (void) fwrite(acLabel, sizeof(char), iLen, pFData);
     (void) fwrite(&stYUM.dAzStart,
                   sizeof(stYUM.dAzStart),
                   1,
-                  pFTim);
+                  pFData);
 
     /* write ZA start */
     iLen = strlen("za_start");
-    (void) fwrite(&iLen, sizeof(iLen), 1, pFTim);
+    (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
     (void) strcpy(acLabel, "za_start");
-    (void) fwrite(acLabel, sizeof(char), iLen, pFTim);
+    (void) fwrite(acLabel, sizeof(char), iLen, pFData);
     (void) fwrite(&stYUM.dZAStart,
                   sizeof(stYUM.dZAStart),
                   1,
-                  pFTim);
+                  pFData);
 
-    //TODO: check if we need this
-    /* write reference DM */
-    iLen = strlen("refdm");
-    (void) fwrite(&iLen, sizeof(iLen), 1, pFTim);
-    (void) strcpy(acLabel, "refdm");
-    (void) fwrite(acLabel, sizeof(char), iLen, pFTim);
-    (void) fwrite(&stYUM.dDM, sizeof(stYUM.dDM), 1, pFTim);
+    if (YAPP_FORMAT_DTS_TIM == iFormat)
+    {
+        /* write reference DM */
+        iLen = strlen("refdm");
+        (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
+        (void) strcpy(acLabel, "refdm");
+        (void) fwrite(acLabel, sizeof(char), iLen, pFData);
+        (void) fwrite(&stYUM.dDM, sizeof(stYUM.dDM), 1, pFData);
+    }
 
     /* write barycentric flag */
     iLen = strlen("barycentric");
-    (void) fwrite(&iLen, sizeof(iLen), 1, pFTim);
+    (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
     (void) strcpy(acLabel, "barycentric");
-    (void) fwrite(acLabel, sizeof(char), iLen, pFTim);
+    (void) fwrite(acLabel, sizeof(char), iLen, pFData);
     (void) fwrite(&stYUM.iFlagBary,
                   sizeof(stYUM.iFlagBary),
                   1,
-                  pFTim);
+                  pFData);
 
     /* write header end tag */
     iLen = strlen("HEADER_END");
-    (void) fwrite(&iLen, sizeof(iLen), 1, pFTim);
+    (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
     (void) strcpy(acLabel, "HEADER_END");
-    (void) fwrite(acLabel, sizeof(char), iLen, pFTim);
+    (void) fwrite(acLabel, sizeof(char), iLen, pFData);
+
+    (void) fclose(pFData);
 
     return EXIT_SUCCESS;
 }

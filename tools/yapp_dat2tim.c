@@ -109,7 +109,7 @@ int main(int argc, char *argv[])
     (void) strcpy(acFileTim, pcFilename);
     free(pcFilename);
     (void) strcat(acFileTim, EXT_TIM);
-    iRet = YAPP_WriteMetadata(acFileTim, stYUM);
+    iRet = YAPP_WriteMetadata(acFileTim, YAPP_FORMAT_DTS_TIM, stYUM);
     if (iRet != EXIT_SUCCESS)
     {
         fprintf(stderr,

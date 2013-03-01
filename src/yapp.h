@@ -501,6 +501,8 @@ int YAPP_ReadData(float *pfBuf,
                   float fSampSize,
                   int iTotSampsPerBlock);
 
+int YAPP_WriteMetadata(char *pcFileData, int iFormat, YUM_t stYUM);
+
 /**
  * Calculates the threshold in terms of standard deviation.
  *

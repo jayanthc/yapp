@@ -16,6 +16,7 @@
 
 #include "yapp.h"
 #include "yapp_sigproc.h"   /* for SIGPROC filterbank file format support */
+#include "yapp_psrfits.h"
 #include <fitsio.h>
 
 /**
@@ -29,12 +30,15 @@ extern FILE *g_pFSpec;
 
 /* the following are global only to enable cleaning up in case of abnormal
    termination, such as those triggered by SIGINT or SIGTERM */
-char *g_pcIsTimeGood = NULL;
-float *g_pfBuf = NULL;
+void *g_pvBuf = NULL;
 
 int main(int argc, char *argv[])
 {
     char *pcFileSpec = NULL;
+    char *pcFileOut = NULL;
+    FILE *pFFil = NULL;
+    char acFileOut[LEN_GENSTRING] = {0};
+    fitsfile *pstFileData = NULL;
     int iFormat = DEF_FORMAT;
     YUM_t stYUM = {{0}};
     int iBlockSize = DEF_SIZE_BLOCK;
@@ -50,6 +54,12 @@ int main(int argc, char *argv[])
     int iReadItems = 0;
     int iNumSamps = 0;
     int iNumFiles = 0;
+    int iNumSubInt = 0;
+    int iColNum = 0;
+    char acErrMsg[LEN_GENSTRING] = {0};
+    int iSampsPerSubInt = 0;
+    int iBytesPerSubInt = 0;
+    int iStatus = 0;
     int iDiff = 0;
     int i = 0;
     int j = 0;
@@ -151,6 +161,132 @@ int main(int argc, char *argv[])
         return YAPP_RET_ERROR;
     }
 
+    /* build output file name */
+    pcFileOut = YAPP_GetFilenameFromPath(pcFileSpec, EXT_PSRFITS);
+    (void) strcpy(acFileOut, pcFileOut);
+    (void) strcat(acFileOut, EXT_FIL);
+    printf("%s\n", acFileOut);
+
+    /* write metadata */
+    iFormat = YAPP_FORMAT_FIL;
+    iRet = YAPP_WriteMetadata(acFileOut, iFormat, stYUM);
+    if (iRet != YAPP_RET_SUCCESS)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Writing metadata failed for file %s!\n",
+                       acFileOut);
+        return YAPP_RET_ERROR;
+    }
+
+    /*  open PSRFITS file */
+    (void) fits_open_file(&pstFileData, pcFileSpec, READONLY, &iStatus);
+    if  (iStatus != 0)
+    {
+        fits_get_errstatus(iStatus, acErrMsg); 
+        (void) fprintf(stderr, "ERROR: Opening file failed! %s\n", acErrMsg);
+        return YAPP_RET_ERROR;
+    }
+    /* read SUBINT HDU header to get data parameters */
+    (void) fits_movnam_hdu(pstFileData,
+                           BINARY_TBL,
+                           YAPP_PF_HDUNAME_SUBINT,
+                           0,
+                           &iStatus);
+    if  (iStatus != 0)
+    {
+        fits_get_errstatus(iStatus, acErrMsg); 
+        (void) fprintf(stderr,
+                       "ERROR: Moving to HDU %s failed! %s\n",
+                       YAPP_PF_HDUNAME_SUBINT,
+                       acErrMsg);
+        (void) fits_close_file(pstFileData, &iStatus);
+        return YAPP_RET_ERROR;
+    }
+    (void) fits_read_key(pstFileData,
+                         TINT,
+                         YAPP_PF_LABEL_NSUBINT,
+                         &iNumSubInt,
+                         NULL,
+                         &iStatus);
+    (void) fits_read_key(pstFileData,
+                         TINT,
+                         YAPP_PF_LABEL_NSBLK,
+                         &iSampsPerSubInt,
+                         NULL,
+                         &iStatus);
+    (void) fits_get_colnum(pstFileData, CASESEN, "DATA", &iColNum, &iStatus);
+    if (iStatus != 0)
+    {
+        fits_get_errstatus(iStatus, acErrMsg); 
+        (void) fprintf(stderr,
+                       "ERROR: Getting column nmber failed! %s\n",
+                       acErrMsg);
+        (void) fits_close_file(pstFileData, &iStatus);
+        return YAPP_RET_ERROR;
+    }
+
+    /* allocate memory for data array */
+    iBytesPerSubInt = iSampsPerSubInt * (stYUM.iNumBits
+                                         / YAPP_BYTE2BIT_FACTOR);
+    g_pvBuf = YAPP_Malloc(iBytesPerSubInt, sizeof(char), YAPP_FALSE);
+    if (NULL == g_pvBuf)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Memory allocation failed! %s!\n",
+                       strerror(errno));
+        (void) fits_close_file(pstFileData, &iStatus);
+        return YAPP_RET_ERROR;
+    }
+
+    /* open .fil file */
+    pFFil = fopen(acFileOut, "a");
+    if (NULL == pFFil)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Opening file %s failed! %s.\n",
+                       acFileOut,
+                       strerror(errno));
+        (void) fits_close_file(pstFileData, &iStatus);
+        return YAPP_RET_ERROR;
+    }
+
+    /* read data */
+    //TODO: data type
+    for (i = 1; i <= iNumSubInt; ++i)
+    {
+        (void) fits_read_col(pstFileData,
+                             TSHORT,
+                             iColNum,
+                             i,
+                             1,
+                             iSampsPerSubInt,
+                             NULL,
+                             g_pvBuf,
+                             NULL,
+                             &iStatus);
+        /* transpose the array and write it to disk */
+        k = 0;
+        l = 0;
+        m = 0;
+        for (i = 0; i < iSampsPerSubInt / stYUM.iNumChans; ++i)
+        {
+            pfSpectrum = g_pvBuf + i * stYUM.iNumChans;
+            for (j = 0; j < stYUM.iNumChans; ++j)
+            {
+                g_pfPlotBuf[l] = pfSpectrum[j];
+                l = m + k * iBlockSize;
+                ++k;
+            }
+            k = 0;
+            l = ++m;
+        }
+        (void) fwrite(g_pvBuf, sizeof(char), iBytesPerSubInt, pFFil);
+        /* for some reason, the pdev spectrometer doesn't write the last
+           spectrum in a row completely, so fill the remaining with zeros */
+    }
+
+    (void) fclose(pFFil);
+    (void) fits_close_file(pstFileData, &iStatus);
     YAPP_CleanUp();
 
     return YAPP_RET_SUCCESS;

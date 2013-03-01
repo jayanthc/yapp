@@ -284,7 +284,7 @@ YAPP_SP_OBS_ORT	src/yapp_sigproc.h	68;"	d
 YAPP_SP_OBS_PARKES	src/yapp_sigproc.h	70;"	d
 YAPP_Smooth	src/yapp_common.c	/^int YAPP_Smooth(float* pfInBuf,$/;"	f
 YAPP_TRUE	src/yapp.h	49;"	d
-YAPP_WriteMetadata	src/yapp_common.c	/^int YAPP_WriteMetadata(char *pcFileData, YUM_t stYUM)$/;"	f
+YAPP_WriteMetadata	src/yapp_common.c	/^int YAPP_WriteMetadata(char *pcFileData, int iFormat, YUM_t stYUM)$/;"	f
 YUM_s	src/yapp.h	/^typedef struct YUM_s$/;"	s
 YUM_t	src/yapp.h	/^} YUM_t;$/;"	t	typeref:struct:YUM_s
 _GNU_SOURCE	src/yapp.h	20;"	d
@@ -343,7 +343,6 @@ g_pcIsChanGood	src/yapp_dedisperse.c	/^char *g_pcIsChanGood = NULL;$/;"	v
 g_pcIsChanGood	src/yapp_dedisplaw.c	/^char *g_pcIsChanGood = NULL;$/;"	v
 g_pcIsTimeGood	src/yapp_dedisperse.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	src/yapp_dedisplaw.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
-g_pcIsTimeGood	src/yapp_fits2fil.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	src/yapp_fold.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	src/yapp_viewdata.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pdDM	src/yapp_dedisplaw.c	/^double *g_pdDM = NULL;$/;"	v
@@ -355,7 +354,6 @@ g_pfBFGain	src/yapp_dedisplaw.c	/^float *g_pfBFGain = NULL;$/;"	v
 g_pfBFTimeSectMean	src/yapp_dedisperse.c	/^float *g_pfBFTimeSectMean = NULL;$/;"	v
 g_pfBFTimeSectMean	src/yapp_dedisplaw.c	/^float *g_pfBFTimeSectMean = NULL;$/;"	v
 g_pfBuf	src/yapp_filter.c	/^float *g_pfBuf = NULL;$/;"	v
-g_pfBuf	src/yapp_fits2fil.c	/^float *g_pfBuf = NULL;$/;"	v
 g_pfBuf	src/yapp_fold.c	/^float *g_pfBuf = NULL;$/;"	v
 g_pfBuf	src/yapp_medfilter.c	/^float *g_pfBuf = NULL;$/;"	v
 g_pfBuf	src/yapp_smooth.c	/^float *g_pfBuf = NULL;$/;"	v
@@ -401,6 +399,7 @@ g_pfcFFTOutY	src/yapp_ft.c	/^fftwf_complex *g_pfcFFTOutY = NULL;$/;"	v
 g_piOffsetTab	src/yapp_dedisperse.c	/^int *g_piOffsetTab = NULL;$/;"	v
 g_ppFDedispCfg	src/yapp_dedisplaw.c	/^FILE **g_ppFDedispCfg = NULL;$/;"	v
 g_ppFDedispData	src/yapp_dedisplaw.c	/^FILE **g_ppFDedispData = NULL;$/;"	v
+g_pvBuf	src/yapp_fits2fil.c	/^void *g_pvBuf = NULL;$/;"	v
 g_stPlanBwd	src/yapp_filter.c	/^fftwf_plan g_stPlanBwd = {0};$/;"	v
 g_stPlanFwd	src/yapp_filter.c	/^fftwf_plan g_stPlanFwd = {0};$/;"	v
 g_stPlanX	src/yapp_ft.c	/^fftwf_plan g_stPlanX = {0};$/;"	v
