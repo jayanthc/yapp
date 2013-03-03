@@ -436,9 +436,16 @@ char* YAPP_GetFilenameWithExtFromPath(char *pcPath);
  * Retrieves the observatory name from its ID.
  *
  * @param[in]   iObsID      Observatory ID
- * @param[out]  acObs       Observatory name
+ * @param[out]  pcObs       Observatory name
  */
-int YAPP_GetObsNameFromID(int iObsID, char *pcObs);
+int YAPP_SP_GetObsNameFromID(int iObsID, char *pcObs);
+
+/**
+ * Retrieves the observatory ID from its name.
+ *
+ * @param[out]  pcObs       Observatory name
+ */
+int YAPP_SP_GetObsIDFromName(char *pcObs);
 
 /**
  * Read metadata from file

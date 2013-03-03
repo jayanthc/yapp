@@ -41,31 +41,16 @@ int main(int argc, char *argv[])
     fitsfile *pstFileData = NULL;
     int iFormat = DEF_FORMAT;
     YUM_t stYUM = {{0}};
-    int iBlockSize = DEF_SIZE_BLOCK;
-    int iTotSampsPerBlock = 0;  /* iNumChans * iBlockSize */
-    int iDataSizePerBlock = 0;  /* fSampSize * iNumChans * iBlockSize */
-    double dTSampInSec = 0.0;   /* holds sampling time in s */
-    int iNumReads = 0;
-    int iTotNumReads = 0;
-    int iReadBlockCount = 0;
-    char cIsLastBlock = YAPP_FALSE;
     int iRet = YAPP_RET_SUCCESS;
-    char cIsFirst = YAPP_TRUE;
-    int iReadItems = 0;
-    int iNumSamps = 0;
     int iNumFiles = 0;
     int iNumSubInt = 0;
     int iColNum = 0;
     char acErrMsg[LEN_GENSTRING] = {0};
     int iSampsPerSubInt = 0;
-    int iBytesPerSubInt = 0;
+    long int lBytesPerSubInt = 0;
     int iStatus = 0;
-    int iDiff = 0;
     int i = 0;
-    int j = 0;
-    int k = 0;
-    int l = 0;
-    int m = 0;
+    int iDataType = 0;
     const char *pcProgName = NULL;
     int iNextOpt = 0;
     /* valid short options */
@@ -165,7 +150,6 @@ int main(int argc, char *argv[])
     pcFileOut = YAPP_GetFilenameFromPath(pcFileSpec, EXT_PSRFITS);
     (void) strcpy(acFileOut, pcFileOut);
     (void) strcat(acFileOut, EXT_FIL);
-    printf("%s\n", acFileOut);
 
     /* write metadata */
     iFormat = YAPP_FORMAT_FIL;
@@ -175,6 +159,7 @@ int main(int argc, char *argv[])
         (void) fprintf(stderr,
                        "ERROR: Writing metadata failed for file %s!\n",
                        acFileOut);
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
 
@@ -184,6 +169,7 @@ int main(int argc, char *argv[])
     {
         fits_get_errstatus(iStatus, acErrMsg); 
         (void) fprintf(stderr, "ERROR: Opening file failed! %s\n", acErrMsg);
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
     /* read SUBINT HDU header to get data parameters */
@@ -200,6 +186,7 @@ int main(int argc, char *argv[])
                        YAPP_PF_HDUNAME_SUBINT,
                        acErrMsg);
         (void) fits_close_file(pstFileData, &iStatus);
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
     (void) fits_read_key(pstFileData,
@@ -214,27 +201,33 @@ int main(int argc, char *argv[])
                          &iSampsPerSubInt,
                          NULL,
                          &iStatus);
-    (void) fits_get_colnum(pstFileData, CASESEN, "DATA", &iColNum, &iStatus);
+    (void) fits_get_colnum(pstFileData,
+                           CASESEN,
+                           YAPP_PF_LABEL_DATA,
+                           &iColNum,
+                           &iStatus);
     if (iStatus != 0)
     {
         fits_get_errstatus(iStatus, acErrMsg); 
         (void) fprintf(stderr,
-                       "ERROR: Getting column nmber failed! %s\n",
+                       "ERROR: Getting column number failed! %s\n",
                        acErrMsg);
         (void) fits_close_file(pstFileData, &iStatus);
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
 
     /* allocate memory for data array */
-    iBytesPerSubInt = iSampsPerSubInt * (stYUM.iNumBits
-                                         / YAPP_BYTE2BIT_FACTOR);
-    g_pvBuf = YAPP_Malloc(iBytesPerSubInt, sizeof(char), YAPP_FALSE);
+    lBytesPerSubInt = (long int) iSampsPerSubInt * stYUM.iNumChans
+                      * (stYUM.iNumBits / YAPP_BYTE2BIT_FACTOR);
+    g_pvBuf = YAPP_Malloc(lBytesPerSubInt, sizeof(char), YAPP_FALSE);
     if (NULL == g_pvBuf)
     {
         (void) fprintf(stderr,
                        "ERROR: Memory allocation failed! %s!\n",
                        strerror(errno));
         (void) fits_close_file(pstFileData, &iStatus);
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
 
@@ -247,42 +240,50 @@ int main(int argc, char *argv[])
                        acFileOut,
                        strerror(errno));
         (void) fits_close_file(pstFileData, &iStatus);
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
 
     /* read data */
-    //TODO: data type
+    switch (stYUM.iNumBits)
+    {
+        case YAPP_SAMPSIZE_8:
+            iDataType = TBYTE;
+            break;
+
+        case YAPP_SAMPSIZE_16:
+            iDataType = TSHORT;
+            break;
+
+        default:
+            (void) fprintf(stderr, "ERROR: Unexpected number of bits!\n");
+            (void) fits_close_file(pstFileData, &iStatus);
+            YAPP_CleanUp();
+            return YAPP_RET_ERROR;
+    }
     for (i = 1; i <= iNumSubInt; ++i)
     {
         (void) fits_read_col(pstFileData,
-                             TSHORT,
+                             iDataType,
                              iColNum,
                              i,
                              1,
-                             iSampsPerSubInt,
+                             (long int) stYUM.iNumChans * iSampsPerSubInt,
                              NULL,
                              g_pvBuf,
                              NULL,
                              &iStatus);
-        /* transpose the array and write it to disk */
-        k = 0;
-        l = 0;
-        m = 0;
-        for (i = 0; i < iSampsPerSubInt / stYUM.iNumChans; ++i)
+        if (iStatus != 0)
         {
-            pfSpectrum = g_pvBuf + i * stYUM.iNumChans;
-            for (j = 0; j < stYUM.iNumChans; ++j)
-            {
-                g_pfPlotBuf[l] = pfSpectrum[j];
-                l = m + k * iBlockSize;
-                ++k;
-            }
-            k = 0;
-            l = ++m;
+            fits_get_errstatus(iStatus, acErrMsg); 
+            (void) fprintf(stderr,
+                           "ERROR: Getting column number failed! %s\n",
+                           acErrMsg);
+            (void) fits_close_file(pstFileData, &iStatus);
+            YAPP_CleanUp();
+            return YAPP_RET_ERROR;
         }
-        (void) fwrite(g_pvBuf, sizeof(char), iBytesPerSubInt, pFFil);
-        /* for some reason, the pdev spectrometer doesn't write the last
-           spectrum in a row completely, so fill the remaining with zeros */
+        (void) fwrite(g_pvBuf, sizeof(char), lBytesPerSubInt, pFFil);
     }
 
     (void) fclose(pFFil);
