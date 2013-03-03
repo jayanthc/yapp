@@ -56,9 +56,9 @@
            from the raw data. We will also use the PFB option of
            <a href="yapp_ft.htm">yapp_ft</a>, so first, we need to generate the
            filter coefficients. We will be performing a 2048-point FFT, with an
-           8-tap PFB. Run <a href="yapp_gencoeff.htm">yapp_gencoeff.py</a> to
+           8-tap PFB. Run <a href="yapp_genpfbcoeff.htm">yapp_genpfbcoeff.py</a> to
            generate the filter coefficients:</p>
-        <code>yapp_gencoeff.py -n 2048 -t 8 -g</code>
+        <code>yapp_genpfbcoeff.py -n 2048 -t 8 -g</code>
         <p>Output:</p>
         <p>The above run would have created a file named
            <code>coeff_float_8_2048_1.dat</code> in the current working

@@ -75,6 +75,11 @@ header
     {
         font-size: 108pt;
     }
+    header span#labelBETA
+    {
+        font-size: 19pt;
+        color: #696969;
+    }
     header span#subTitleYAPP
     {
         font-size: 19pt;

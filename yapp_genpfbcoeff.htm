@@ -10,7 +10,7 @@
     <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Yanone+Kaffeesatz" />
     <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Titillium+Web" />
     <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Ubuntu+Mono" />
-    <title>Yet Another Pulsar Processor | yapp_gencoeff.py</title>
+    <title>Yet Another Pulsar Processor | yapp_genpfbcoeff.py</title>
 
 <!-- Google Analytics begin -->
 <script type="text/javascript">
@@ -40,21 +40,21 @@
       </ul>
     </nav>
     <header>
-    yapp_gencoeff.py
+    yapp_genpfbcoeff.py
     </header>
     <article>
       <section>
         <p>This Python script generates polyphase filter coefficients for
-           <a href="yapp_ft.htm">yapp_ft</a>, for use while running the latter with PFB
-           turned on. The filter coefficients are made up of a normalized sinc
-           function modulated by a Hanning window. The output is written to a
-           file that <code>yapp_ft</code> expects to find in the current
-           working directory. The format of the filename is
+           <a href="yapp_ft.htm">yapp_ft</a>, for use while running the latter
+           with PFB turned on. The filter coefficients are made up of a
+           normalized sinc function modulated by a Hanning window. The output
+           is written to a file that <code>yapp_ft</code> expects to find in
+           the current working directory. The format of the filename is
            <code>coeff_<i>ntaps</i>_<i>nfft</i>_<i>nsubbands</i>.dat</code>.
            The number of sub-bands, <code><i>nsubbands</i></code> is always 1.
            The filter coefficients are single-precision floating-point.</p>
         <p>Usage:</p>
-        <code>yapp_gencoeff.py [options]</code>
+        <code>yapp_genpfbcoeff.py [options]</code>
         <p>The options are:</p>
         <ul>
           <li><code>-h</code> or <code>--help</code>: Display this usage
@@ -70,7 +70,7 @@
            1024 FFT points. It creates a file named <code>coeff_4_1024_1.dat</code>
            in the current working directory, and also displays a plot of the
            filter coefficients.</p>
-        <code>yapp_gencoeff.py -n 1024 -t 4 -g</code>
+        <code>yapp_genpfbcoeff.py -n 1024 -t 4 -g</code>
         <p>System requirements: Python with Matplotlib</p>
         <p>&nbsp;</p>
         <p>&nbsp;</p>
