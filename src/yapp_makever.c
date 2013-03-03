@@ -24,7 +24,7 @@
 /* TODO: read the path as argument */
 #define FILE_VERSRC         "src/yapp_version.c"
 #define VAR_VER             "*g_pcVersion"
-#define VER_BUILD_PREFIX    "YAPP-DEV-2.2.0"
+#define VER_BUILD_PREFIX    "YAPP-DEV-3.0.0"
 #define VER_BUILD_DELIM     "-"
 
 time_t GetLatestTimestamp(void);

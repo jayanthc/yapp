@@ -37,7 +37,7 @@ LFLAGS_SNDFILE = -lsndfile
 
 # directories
 SRCDIR = src
-TOOLSDIR = tools
+UTILDIR = utilities
 MANDIR = man
 IDIR = src
 BINDIR = bin
@@ -148,17 +148,17 @@ yapp_fold: $(IDIR)/yapp_fold.o $(IDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o $(IDIR)/colourmap.o
 	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -lcfitsio -o $(BINDIR)/$@
 
-yapp_fits2fil.o: $(SRCDIR)/yapp_fits2fil.c $(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h
-	$(CC) $(CFLAGS_C) $(DDEBUG) $< -o $(IDIR)/$@
+yapp_fits2fil.o: $(UTILDIR)/yapp_fits2fil.c $(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h $(SRCDIR)/yapp_psrfits.h
+	$(CC) $(CFLAGS_C) -I$(SRCDIR) $(DDEBUG) $< -o $(UTILDIR)/$@
 
-yapp_fits2fil: $(IDIR)/yapp_fits2fil.o $(IDIR)/yapp_version.o \
+yapp_fits2fil: $(UTILDIR)/yapp_fits2fil.o $(IDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
 	$(CC) $^ $(LFLAGS_MATH) -lcfitsio -o $(BINDIR)/$@
 
-yapp_dat2tim.o: $(TOOLSDIR)/yapp_dat2tim.c $(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h
-	$(CC) $(CFLAGS_C) -I$(SRCDIR) $(DDEBUG) $< -o $(TOOLSDIR)/$@
+yapp_dat2tim.o: $(UTILDIR)/yapp_dat2tim.c $(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h
+	$(CC) $(CFLAGS_C) -I$(SRCDIR) $(DDEBUG) $< -o $(UTILDIR)/$@
 
-yapp_dat2tim: $(TOOLSDIR)/yapp_dat2tim.o $(SRCDIR)/yapp_version.o \
+yapp_dat2tim: $(UTILDIR)/yapp_dat2tim.o $(SRCDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
 	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) -lcfitsio -o $(BINDIR)/$@
 
@@ -210,7 +210,7 @@ yapp_pulsarsnd: $(IDIR)/yapp_pulsarsnd.o
 #		-o $(BINDIR)/$@
 
 # create the tags file
-#tags: $(SRCDIR)/yapp*.* $(SRCDIR)/colourmap* $(TOOLSDIR)/yapp*.*
+#tags: $(SRCDIR)/yapp*.* $(SRCDIR)/colourmap* $(UTILDIR)/yapp*.*
 tags: $(SRCDIR)/yapp*.* $(SRCDIR)/colourmap*
 	ctags $^
 
@@ -236,8 +236,8 @@ clean:
 	$(DELCMD) $(IDIR)/yapp_smooth.o
 	$(DELCMD) $(IDIR)/yapp_filter.o
 	$(DELCMD) $(IDIR)/yapp_fold.o
-	$(DELCMD) $(IDIR)/yapp_fits2fil.o
-	$(DELCMD) $(TOOLSDIR)/yapp_dat2tim.o
+	$(DELCMD) $(UTILDIR)/yapp_fits2fil.o
+	$(DELCMD) $(UTILDIR)/yapp_dat2tim.o
 #	$(DELCMD) $(IDIR)/set_colours.o
 #	$(DELCMD) $(IDIR)/yapp_dedisplaw.o
 #	$(DELCMD) $(IDIR)/reorderdds.o
