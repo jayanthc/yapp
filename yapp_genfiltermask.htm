@@ -10,7 +10,7 @@
     <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Yanone+Kaffeesatz" />
     <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Titillium+Web" />
     <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Ubuntu+Mono" />
-    <title>Yet Another Pulsar Processor | Documentation</title>
+    <title>Yet Another Pulsar Processor | yapp_genfiltermask.py</title>
 
 <!-- Google Analytics begin -->
 <script type="text/javascript">
@@ -40,25 +40,38 @@
       </ul>
     </nav>
     <header>
-    documentation
+    yapp_genfiltermask.py
     </header>
     <article>
       <section>
+        <p>This Python script generates polyphase filter coefficients for
+           <a href="yapp_ft.htm">yapp_ft</a>, for use while running the latter
+           with PFB turned on. The filter coefficients are made up of a
+           normalized sinc function modulated by a Hanning window. The output
+           is written to a file that <code>yapp_ft</code> expects to find in
+           the current working directory. The format of the filename is
+           <code>coeff_<i>ntaps</i>_<i>nfft</i>_<i>nsubbands</i>.dat</code>.
+           The number of sub-bands, <code><i>nsubbands</i></code> is always 1.
+           The filter coefficients are single-precision floating-point.</p>
+        <p>Usage:</p>
+        <code>yapp_genfiltermask.py [options]</code>
+        <p>The options are:</p>
         <ul>
-          <li><a href="yapp_common.htm">Common options</a></li>
-          <li><a href="yapp_viewmetadata.htm">yapp_viewmetadata</a></li>
-          <li><a href="yapp_viewdata.htm">yapp_viewdata</a></li>
-          <li><a href="yapp_ft.htm">yapp_ft</a></li>
-          <li><a href="yapp_genpfbcoeff.htm">yapp_genpfbcoeff.py</a></li>
-          <li><a href="yapp_dedisperse.htm">yapp_dedisperse</a></li>
-          <li><a href="yapp_smooth.htm">yapp_smooth</a></li>
-          <li><a href="yapp_filter.htm">yapp_filter</a></li>
-          <li><a href="yapp_genfiltermask.htm">yapp_genfiltermask.py</a></li>
-          <li><a href="yapp_fold.htm">yapp_fold</a></li>
-          <li><a href="yapp_fits2fil.htm">yapp_fits2fil</a></li>
-          <li><a href="yapp_dat2tim.htm">yapp_dat2tim</a></li>
-          <li><a href="https://github.com/jayanthc/yapp/issues">Known bugs</a></li>
+          <li><code>-h</code> or <code>--help</code>: Display this usage
+              information.</li>
+          <li><code>-n</code> or <code>--nfft <i>nfft</i></code>: Length of the
+              Fourier transform (default is 4096).</li>
+          <li><code>-t</code> or <code>--ntaps <i>ntaps</i></code>: Number of
+              taps in PFB (default is 8).</li>
+          <li><code>-g</code> or <code>--graphics</code>: Turn on plotting.</li>
         </ul>
+        <p>Example:</p>
+        <p>The following generates filter coefficients for a 4-tap filter with
+           1024 FFT points. It creates a file named <code>coeff_4_1024_1.dat</code>
+           in the current working directory, and also displays a plot of the
+           filter coefficients.</p>
+        <code>yapp_genfiltermask.py -n 1024 -t 4 -g</code>
+        <p>System requirements: Python with Matplotlib</p>
         <p>&nbsp;</p>
         <p>&nbsp;</p>
       </section>
