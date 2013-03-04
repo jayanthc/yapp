@@ -177,7 +177,8 @@ int main(int argc, char *argv[])
                       stYUM.iTimeSamps);
         (void) printf("    Time                          : %g s\n",
                       (stYUM.iTimeSamps * (stYUM.dTSamp / 1e3)));
-        if (!(YAPP_FORMAT_PSRFITS == iFormat))
+        if (!((YAPP_FORMAT_PSRFITS == iFormat)
+              || (YAPP_FORMAT_SPEC == iFormat)))
         {
             (void) printf("Length of header                  : %d\n",
                           stYUM.iHeaderLen);
@@ -186,9 +187,12 @@ int main(int argc, char *argv[])
         if ((argc - iNextOpt) != 1)
         {
             (void) printf("----------------------------------------");
-            (void) printf("----------------------------------------\n");
+            (void) printf("---------------------------------------\n");
         }
         ++iNextOpt;
+
+        /* clear stYUM before loading it again */
+        (void) memset(&stYUM, '\0', sizeof(YUM_t));
     }
 
     /* clean up */

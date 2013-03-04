@@ -26,7 +26,7 @@
 extern const char *g_pcVersion;
 
 /* data file */
-extern FILE *g_pFSpec;
+extern FILE *g_pFData;
 
 /* the following are global only to enable cleaning up in case of abnormal
    termination, such as those triggered by SIGINT or SIGTERM */
@@ -36,7 +36,6 @@ int main(int argc, char *argv[])
 {
     char *pcFileSpec = NULL;
     char *pcFileOut = NULL;
-    FILE *pFFil = NULL;
     char acFileOut[LEN_GENSTRING] = {0};
     fitsfile *pstFileData = NULL;
     int iFormat = DEF_FORMAT;
@@ -232,8 +231,8 @@ int main(int argc, char *argv[])
     }
 
     /* open .fil file */
-    pFFil = fopen(acFileOut, "a");
-    if (NULL == pFFil)
+    g_pFData = fopen(acFileOut, "a");
+    if (NULL == g_pFData)
     {
         (void) fprintf(stderr,
                        "ERROR: Opening file %s failed! %s.\n",
@@ -283,10 +282,9 @@ int main(int argc, char *argv[])
             YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
-        (void) fwrite(g_pvBuf, sizeof(char), lBytesPerSubInt, pFFil);
+        (void) fwrite(g_pvBuf, sizeof(char), lBytesPerSubInt, g_pFData);
     }
 
-    (void) fclose(pFFil);
     (void) fits_close_file(pstFileData, &iStatus);
     YAPP_CleanUp();
 

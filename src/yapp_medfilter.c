@@ -36,7 +36,7 @@ extern const char *g_pcVersion;
 extern int g_iPGDev;
 
 /* data file */
-extern FILE *g_pFSpec;
+extern FILE *g_pFData;
 
 /* the following are global only to enable cleaning up in case of abnormal
    termination, such as those triggered by SIGINT or SIGTERM */
@@ -325,8 +325,8 @@ int main(int argc, char *argv[])
     (void) printf("Boxcar window width is %d time samples.\n", iSampsPerWin);
 
     /* open the time series data file for reading */
-    g_pFSpec = fopen(pcFileData, "r");
-    if (NULL == g_pFSpec)
+    g_pFData = fopen(pcFileData, "r");
+    if (NULL == g_pFData)
     {
         (void) fprintf(stderr,
                        "ERROR: Opening file %s failed! %s.\n",
@@ -376,10 +376,10 @@ int main(int argc, char *argv[])
 
     /* skip the header by copying it to the output file */
     char acBuf[stYUM.iHeaderLen];
-    (void) fread(acBuf, sizeof(char), (long) stYUM.iHeaderLen, g_pFSpec);
+    (void) fread(acBuf, sizeof(char), (long) stYUM.iHeaderLen, g_pFData);
     (void) fwrite(acBuf, sizeof(char), (long) stYUM.iHeaderLen, pFOut);
     /* skip data, if any are to be skipped */
-    (void) fseek(g_pFSpec, lBytesToSkip, SEEK_CUR);
+    (void) fseek(g_pFData, lBytesToSkip, SEEK_CUR);
 
     /* open the PGPLOT graphics device */
     if (cHasGraphics)
@@ -515,7 +515,7 @@ int main(int argc, char *argv[])
         fRMSBaseSubedAll += fRMSBaseSubed;
 
         /* set the file position to rewind by (iSampsPerWin - 1) samples */
-        (void) fseek(g_pFSpec, -((iSampsPerWin - 1) * sizeof(float)), SEEK_CUR);
+        (void) fseek(g_pFData, -((iSampsPerWin - 1) * sizeof(float)), SEEK_CUR);
 
         if (cHasGraphics)
         {

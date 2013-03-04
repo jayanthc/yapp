@@ -33,7 +33,7 @@ int g_iMemTableSize = 0;
 int g_iPGDev = 0;
 
 /* data file */
-FILE *g_pFSpec = NULL;
+FILE *g_pFData = NULL;
 
 /*
  * Determine the file type
@@ -75,6 +75,10 @@ int YAPP_GetFileType(char *pcFile)
     else if (0 == strcmp(pcExt, EXT_TIM))
     {
         iFormat = YAPP_FORMAT_DTS_TIM;
+    }
+    else if (0 == strcmp(pcExt, EXT_DAT))
+    {
+        iFormat = YAPP_FORMAT_DTS_DAT;
     }
     else
     {
@@ -768,8 +772,8 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
     assert((YAPP_FORMAT_FIL == iFormat) || (YAPP_FORMAT_DTS_TIM == iFormat));
 
     /* open the dynamic spectrum data file for reading */
-    g_pFSpec = fopen(pcFileSpec, "r");
-    if (NULL == g_pFSpec)
+    g_pFData = fopen(pcFileSpec, "r");
+    if (NULL == g_pFData)
     {
         (void) fprintf(stderr,
                        "ERROR: Opening file %s failed! %s.\n",
@@ -781,7 +785,7 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
 
     /* read the parameters from the header section of the file */
     /* start with the 'HEADER_START' label */
-    iRet = fread(&iLen, sizeof(iLen), 1, g_pFSpec);
+    iRet = fread(&iLen, sizeof(iLen), 1, g_pFData);
     /* if this is a file with header, iLen should be strlen(HEADER_START) */
     if (iLen != strlen(YAPP_SP_LABEL_HDRSTART))
     {
@@ -797,7 +801,7 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
         }
         return YAPP_RET_SUCCESS;
     }
-    iRet = fread(acLabel, sizeof(char), iLen, g_pFSpec);
+    iRet = fread(acLabel, sizeof(char), iLen, g_pFData);
     acLabel[iLen] = '\0';
     if (strcmp(acLabel, YAPP_SP_LABEL_HDRSTART) != 0)
     {
@@ -812,15 +816,15 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
     while (strcmp(acLabel, YAPP_SP_LABEL_HDREND) != 0)
     {
         /* read field label length */
-        iRet = fread(&iLen, sizeof(iLen), 1, g_pFSpec);
+        iRet = fread(&iLen, sizeof(iLen), 1, g_pFData);
         /* read field label */
-        iRet = fread(acLabel, sizeof(char), iLen, g_pFSpec);
+        iRet = fread(acLabel, sizeof(char), iLen, g_pFData);
         acLabel[iLen] = '\0';
         pstYUM->iHeaderLen += (sizeof(iLen) + iLen);
         if (0 == strcmp(acLabel, YAPP_SP_LABEL_SRCNAME))
         {
-            iRet = fread(&iLen, sizeof(iLen), 1, g_pFSpec);
-            iRet = fread(pstYUM->acPulsar, sizeof(char), iLen, g_pFSpec);
+            iRet = fread(&iLen, sizeof(iLen), 1, g_pFData);
+            iRet = fread(pstYUM->acPulsar, sizeof(char), iLen, g_pFData);
             pstYUM->acPulsar[iLen] = '\0';
             pstYUM->iHeaderLen += (sizeof(iLen) + iLen);
         }
@@ -829,7 +833,7 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
             iRet = fread(&iDataTypeID,
                          sizeof(iDataTypeID),
                          1,
-                         g_pFSpec);
+                         g_pFData);
             pstYUM->iHeaderLen += sizeof(iDataTypeID);
         }
         else if (0 == strcmp(acLabel, YAPP_SP_LABEL_NUMCHANS))
@@ -838,7 +842,7 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
             iRet = fread(&pstYUM->iNumChans,
                          sizeof(pstYUM->iNumChans),
                          1,
-                         g_pFSpec);
+                         g_pFData);
             pstYUM->iHeaderLen += sizeof(pstYUM->iNumChans);
             /* set number of good channels to number of channels - no support for
                SIGPROC ignore files yet */
@@ -850,7 +854,7 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
             iRet = fread(&dFChan1,
                          sizeof(dFChan1),
                          1,
-                         g_pFSpec);
+                         g_pFData);
             fFCh1 = (float) dFChan1;
             pstYUM->iHeaderLen += sizeof(dFChan1);
         }
@@ -860,7 +864,7 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
             iRet = fread(&dChanBW,
                          sizeof(dChanBW),
                          1,
-                         g_pFSpec);
+                         g_pFData);
             pstYUM->fChanBW = (float) dChanBW;
             pstYUM->iHeaderLen += sizeof(dChanBW);
         }
@@ -870,7 +874,7 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
             iRet = fread(&pstYUM->iNumBits,
                          sizeof(pstYUM->iNumBits),
                          1,
-                         g_pFSpec);
+                         g_pFData);
             pstYUM->iHeaderLen += sizeof(pstYUM->iNumBits);
         }
         else if (0 == strcmp(acLabel, YAPP_SP_LABEL_NUMIFS))
@@ -879,7 +883,7 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
             iRet = fread(&pstYUM->iNumIFs,
                          sizeof(pstYUM->iNumIFs),
                          1,
-                         g_pFSpec);
+                         g_pFData);
             pstYUM->iHeaderLen += sizeof(pstYUM->iNumIFs);
         }
         else if (0 == strcmp(acLabel, YAPP_SP_LABEL_TSAMP))
@@ -888,7 +892,7 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
             iRet = fread(&pstYUM->dTSamp,
                          sizeof(pstYUM->dTSamp),
                          1,
-                         g_pFSpec);
+                         g_pFData);
             dTSampInSec = pstYUM->dTSamp;
             pstYUM->dTSamp = dTSampInSec * 1e3;     /* in ms */
             pstYUM->iHeaderLen += sizeof(pstYUM->dTSamp);
@@ -899,7 +903,7 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
             iRet = fread(&pstYUM->dTStart,
                          sizeof(pstYUM->dTStart),
                          1,
-                         g_pFSpec);
+                         g_pFData);
             pstYUM->iHeaderLen += sizeof(pstYUM->dTStart);
         }
         else if (0 == strcmp(acLabel, YAPP_SP_LABEL_OBSID))
@@ -908,7 +912,7 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
             iRet = fread(&iObsID,
                          sizeof(iObsID),
                          1,
-                         g_pFSpec);
+                         g_pFData);
             (void) YAPP_SP_GetObsNameFromID(iObsID, pstYUM->acSite);
             pstYUM->iHeaderLen += sizeof(iObsID);
         }
@@ -918,7 +922,7 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
             iRet = fread(&pstYUM->iBackendID,
                          sizeof(pstYUM->iBackendID),
                          1,
-                         g_pFSpec);
+                         g_pFData);
             pstYUM->iHeaderLen += sizeof(pstYUM->iBackendID);
         }
         else if (0 == strcmp(acLabel, YAPP_SP_LABEL_SRCRA))
@@ -927,7 +931,7 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
             iRet = fread(&pstYUM->dSourceRA,
                          sizeof(pstYUM->dSourceRA),
                          1,
-                         g_pFSpec);
+                         g_pFData);
             pstYUM->iHeaderLen += sizeof(pstYUM->dSourceRA);
         }
         else if (0 == strcmp(acLabel, YAPP_SP_LABEL_SRCDEC))
@@ -936,7 +940,7 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
             iRet = fread(&pstYUM->dSourceDec,
                          sizeof(pstYUM->dSourceDec),
                          1,
-                         g_pFSpec);
+                         g_pFData);
             pstYUM->iHeaderLen += sizeof(pstYUM->dSourceDec);
         }
         else if (0 == strcmp(acLabel, YAPP_SP_LABEL_AZSTART))
@@ -945,7 +949,7 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
             iRet = fread(&pstYUM->dAzStart,
                          sizeof(pstYUM->dAzStart),
                          1,
-                         g_pFSpec);
+                         g_pFData);
             pstYUM->iHeaderLen += sizeof(pstYUM->dAzStart);
         }
         else if (0 == strcmp(acLabel, YAPP_SP_LABEL_ZASTART))
@@ -954,14 +958,14 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
             iRet = fread(&pstYUM->dZAStart,
                          sizeof(pstYUM->dZAStart),
                          1,
-                         g_pFSpec);
+                         g_pFData);
             pstYUM->iHeaderLen += sizeof(pstYUM->dZAStart);
         }
         /* DTS-specific field */
         else if (0 == strcmp(acLabel, YAPP_SP_LABEL_DM))
         {
             /* read reference DM */
-            iRet = fread(&pstYUM->dDM, sizeof(pstYUM->dDM), 1, g_pFSpec);
+            iRet = fread(&pstYUM->dDM, sizeof(pstYUM->dDM), 1, g_pFData);
             pstYUM->iHeaderLen += sizeof(pstYUM->dDM);
         }
         else if (0 == strcmp(acLabel, YAPP_SP_LABEL_FLAGBARY))
@@ -970,7 +974,7 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
             iRet = fread(&pstYUM->iFlagBary,
                          sizeof(pstYUM->iFlagBary),
                          1,
-                         g_pFSpec);
+                         g_pFData);
             pstYUM->iHeaderLen += sizeof(pstYUM->iFlagBary);
         }
         else if (0 == strcmp(acLabel, YAPP_SP_LABEL_FREQSTART))
@@ -978,9 +982,9 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
             pstYUM->iFlagSplicedData = YAPP_TRUE;
 
             /* read field label length */
-            iRet = fread(&iLen, sizeof(iLen), 1, g_pFSpec);
+            iRet = fread(&iLen, sizeof(iLen), 1, g_pFData);
             /* read field label */
-            iRet = fread(acLabel, sizeof(char), iLen, g_pFSpec);
+            iRet = fread(acLabel, sizeof(char), iLen, g_pFData);
             acLabel[iLen] = '\0';
             pstYUM->iHeaderLen += (sizeof(iLen) + iLen);
             if (0 == strcmp(acLabel, YAPP_SP_LABEL_NUMCHANS))
@@ -989,7 +993,7 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
                 iRet = fread(&pstYUM->iNumChans,
                              sizeof(pstYUM->iNumChans),
                              1,
-                             g_pFSpec);
+                             g_pFData);
                 pstYUM->iHeaderLen += sizeof(pstYUM->iNumChans);
             }
             else
@@ -1022,14 +1026,14 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
             while (strcmp(acLabel, YAPP_SP_LABEL_FREQEND) != 0)
             {
                 /* read field label length */
-                iRet = fread(&iLen, sizeof(iLen), 1, g_pFSpec);
+                iRet = fread(&iLen, sizeof(iLen), 1, g_pFData);
                 /* read field label */
-                iRet = fread(acLabel, sizeof(char), iLen, g_pFSpec);
+                iRet = fread(acLabel, sizeof(char), iLen, g_pFData);
                 acLabel[iLen] = '\0';
                 pstYUM->iHeaderLen += (sizeof(iLen) + iLen);
                 if (0 == strcmp(acLabel, YAPP_SP_LABEL_FREQCHAN))
                 {
-                    iRet = fread(&dFChan, sizeof(dFChan), 1, g_pFSpec);
+                    iRet = fread(&dFChan, sizeof(dFChan), 1, g_pFData);
                     pstYUM->pfFreq[i] = (float) dFChan;
                     pstYUM->iHeaderLen += sizeof(dFChan);
                 }
@@ -1061,10 +1065,10 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
     }
 
     /* close the file, it may be opened later for reading data */
-    (void) fclose(g_pFSpec);
+    (void) fclose(g_pFData);
     /* set the stream pointer to NULL so that YAPP_CleanUp does not try to
        close it */
-    g_pFSpec = NULL;
+    g_pFData = NULL;
 
     if (YAPP_FORMAT_FIL == iFormat)
     {
@@ -1327,7 +1331,7 @@ int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM)
             iRet = fread(&iDataTypeID,
                          sizeof(iDataTypeID),
                          1,
-                         g_pFSpec);
+                         g_pFData);
             pstYUM->iHeaderLen += sizeof(iDataTypeID);
         }
         else if (0 == strcmp(acLabel, "tstart"))
@@ -1336,7 +1340,7 @@ int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM)
             iRet = fread(&dTStart,
                          sizeof(dTStart),
                          1,
-                         g_pFSpec);
+                         g_pFData);
             pstYUM->iHeaderLen += sizeof(dTStart);
         }
         else if (0 == strcmp(acLabel, "machine_id"))
@@ -1345,7 +1349,7 @@ int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM)
             iRet = fread(&pstYUM->iBackendID,
                          sizeof(pstYUM->iBackendID),
                          1,
-                         g_pFSpec);
+                         g_pFData);
             pstYUM->iHeaderLen += sizeof(pstYUM->iBackendID);
         }
         else if (0 == strcmp(acLabel, "src_raj"))
@@ -1354,7 +1358,7 @@ int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM)
             iRet = fread(&pstYUM->dSourceRA,
                          sizeof(pstYUM->dSourceRA),
                          1,
-                         g_pFSpec);
+                         g_pFData);
             pstYUM->iHeaderLen += sizeof(pstYUM->dSourceRA);
         }
         else if (0 == strcmp(acLabel, "src_dej"))
@@ -1363,7 +1367,7 @@ int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM)
             iRet = fread(&pstYUM->dSourceDec,
                          sizeof(pstYUM->dSourceDec),
                          1,
-                         g_pFSpec);
+                         g_pFData);
             pstYUM->iHeaderLen += sizeof(pstYUM->dSourceDec);
         }
         else if (0 == strcmp(acLabel, "az_start"))
@@ -1372,7 +1376,7 @@ int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM)
             iRet = fread(&pstYUM->dAzStart,
                          sizeof(pstYUM->dAzStart),
                          1,
-                         g_pFSpec);
+                         g_pFData);
             pstYUM->iHeaderLen += sizeof(pstYUM->dAzStart);
         }
         else if (0 == strcmp(acLabel, "za_start"))
@@ -1381,14 +1385,14 @@ int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM)
             iRet = fread(&pstYUM->dZAStart,
                          sizeof(pstYUM->dZAStart),
                          1,
-                         g_pFSpec);
+                         g_pFData);
             pstYUM->iHeaderLen += sizeof(pstYUM->dZAStart);
         }
         /* DTS-specific field */
         else if (0 == strcmp(acLabel, "refdm"))
         {
             /* read reference DM */
-            iRet = fread(&pstYUM->dDM, sizeof(pstYUM->dDM), 1, g_pFSpec);
+            iRet = fread(&pstYUM->dDM, sizeof(pstYUM->dDM), 1, g_pFData);
             pstYUM->iHeaderLen += sizeof(pstYUM->dDM);
         }
         else if (0 == strcmp(acLabel, "barycentric"))
@@ -1397,7 +1401,7 @@ int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM)
             iRet = fread(&pstYUM->iFlagBary,
                          sizeof(pstYUM->iFlagBary),
                          1,
-                         g_pFSpec);
+                         g_pFData);
             pstYUM->iHeaderLen += sizeof(pstYUM->iFlagBary);
         }
         else if (0 == strcmp(acLabel, "FREQUENCY_START"))
@@ -1405,9 +1409,9 @@ int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM)
             pstYUM->iFlagSplicedData = YAPP_TRUE;
 
             /* read field label length */
-            iRet = fread(&iLen, sizeof(iLen), 1, g_pFSpec);
+            iRet = fread(&iLen, sizeof(iLen), 1, g_pFData);
             /* read field label */
-            iRet = fread(acLabel, sizeof(char), iLen, g_pFSpec);
+            iRet = fread(acLabel, sizeof(char), iLen, g_pFData);
             acLabel[iLen] = '\0';
             pstYUM->iHeaderLen += (sizeof(iLen) + iLen);
             /* allocate memory for the frequency channel array read from
@@ -1431,14 +1435,14 @@ int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM)
             while (strcmp(acLabel, "FREQUENCY_END") != 0)
             {
                 /* read field label length */
-                iRet = fread(&iLen, sizeof(iLen), 1, g_pFSpec);
+                iRet = fread(&iLen, sizeof(iLen), 1, g_pFData);
                 /* read field label */
-                iRet = fread(acLabel, sizeof(char), iLen, g_pFSpec);
+                iRet = fread(acLabel, sizeof(char), iLen, g_pFData);
                 acLabel[iLen] = '\0';
                 pstYUM->iHeaderLen += (sizeof(iLen) + iLen);
                 if (0 == strcmp(acLabel, "fchannel"))
                 {
-                    iRet = fread(&dFChan, sizeof(dFChan), 1, g_pFSpec);
+                    iRet = fread(&dFChan, sizeof(dFChan), 1, g_pFData);
                     pstYUM->pfFreq[i] = (float) dFChan;
                     pstYUM->iHeaderLen += sizeof(dFChan);
                 }
@@ -1470,10 +1474,10 @@ int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM)
     }
 
     /* close the file, it may be opened later for reading data */
-    (void) fclose(g_pFSpec);
+    (void) fclose(g_pFData);
     /* set the stream pointer to NULL so that YAPP_CleanUp does not try to
        close it */
-    g_pFSpec = NULL;
+    g_pFData = NULL;
 
     if (pstYUM->fChanBW < 0.0)
     {
@@ -1730,6 +1734,32 @@ int YAPP_ReadPRESTOHeaderFile(char *pcFileData, YUM_t *pstYUM)
         return EXIT_FAILURE;
     }
 
+#if 0
+    /* read on/off bin pair #1 and ignore it */
+    (void) getline(&pcLine, &iLen, pFInf); 
+    pcVal = strrchr(pcLine, '=');
+    if (NULL == pcVal)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Reading header file failed!\n");
+        free(pcLine);
+        (void) fclose(pFInf);
+        return EXIT_FAILURE;
+    }
+
+    /* read on/off bin pair #2 and ignore it */
+    (void) getline(&pcLine, &iLen, pFInf); 
+    pcVal = strrchr(pcLine, '=');
+    if (NULL == pcVal)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Reading header file failed!\n");
+        free(pcLine);
+        (void) fclose(pFInf);
+        return EXIT_FAILURE;
+    }
+#endif
+
     /* read observation type and ignore it */
     (void) getline(&pcLine, &iLen, pFInf); 
     pcVal = strrchr(pcLine, '=');
@@ -1865,8 +1895,8 @@ int YAPP_ReadData(float *pfBuf,
     iReadItems = fread(pcBuf,
                        sizeof(char),
                        (int) (iTotSampsPerBlock * fSampSize),
-                       g_pFSpec);
-    if (ferror(g_pFSpec))
+                       g_pFData);
+    if (ferror(g_pFData))
     {
         (void) fprintf(stderr, "ERROR: File read failed!\n");
         free(pcBuf);
@@ -1986,14 +2016,13 @@ int YAPP_WriteMetadata(char *pcFileData, int iFormat, YUM_t stYUM)
     (void) fwrite(stYUM.acPulsar, sizeof(char), iLen, pFData);
 
     /* write data type */
-    if (YAPP_FORMAT_DTS_TIM == iFormat)
+    if (YAPP_FORMAT_FIL == iFormat)
     {
-        iTemp = 2;      /* time series */
+        iTemp = 1;      /* 'filterbank' */
     }
-    else if (YAPP_FORMAT_FIL == iFormat)
+    else if (YAPP_FORMAT_DTS_TIM == iFormat)
     {
-        //TODO: check
-        iTemp = 1;      /* filterbank */
+        iTemp = 2;      /* 'time series (topocentric)' */
     }
     iLen = strlen(YAPP_SP_LABEL_DATATYPE);
     (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
@@ -2419,10 +2448,10 @@ void YAPP_CleanUp()
     #endif
 
     /* close data file, if open */
-    if (g_pFSpec != NULL)
+    if (g_pFData != NULL)
     {
-        (void) fclose(g_pFSpec);
-        g_pFSpec = NULL;
+        (void) fclose(g_pFData);
+        g_pFData = NULL;
     }
 
     return;

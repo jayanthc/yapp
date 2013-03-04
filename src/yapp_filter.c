@@ -36,7 +36,7 @@ extern const char *g_pcVersion;
 extern int g_iPGDev;
 
 /* data file */
-extern FILE *g_pFSpec;
+extern FILE *g_pFData;
 
 /* the following are global only to enable cleaning up in case of abnormal
    termination, such as those triggered by SIGINT or SIGTERM */
@@ -217,18 +217,15 @@ int main(int argc, char *argv[])
 
     if (0.0 == dDataProcTime)
     {
-        dDataProcTime = stYUM.iTimeSamps * dTSampInSec;
+        dDataProcTime = (stYUM.iTimeSamps * dTSampInSec) - dDataSkipTime;
     }
-
     /* check if the input time duration is less than the length of the
        data */
-    if (dDataProcTime > (stYUM.iTimeSamps * dTSampInSec))
+    else if (dDataProcTime > (stYUM.iTimeSamps * dTSampInSec))
     {
         (void) fprintf(stderr,
-                       "ERROR: Input time is longer than length of "
+                       "WARNING: Input time is longer than length of "
                        "data!\n");
-        YAPP_CleanUp();
-        return YAPP_RET_ERROR;
     }
 
     /* open the filter specification file */
@@ -292,10 +289,11 @@ int main(int argc, char *argv[])
 
     if (lBytesToSkip >= stYUM.lDataSizeTotal)
     {
-        (void) printf("WARNING: Data to be skipped is greater than or equal to "
-                      "the size of the file! Terminating.\n");
+        (void) fprintf(stderr,
+                       "ERROR: Data to be skipped is greater than or equal to "
+                       "the size of the file!\n");
         YAPP_CleanUp();
-        return YAPP_RET_SUCCESS;
+        return YAPP_RET_ERROR;
     }
 
     if ((lBytesToSkip + lBytesToProc) > stYUM.lDataSizeTotal)
@@ -303,9 +301,17 @@ int main(int argc, char *argv[])
         (void) printf("WARNING: Total data to be read (skipped and processed) "
                       "is more than the size of the file! ");
         lBytesToProc = stYUM.lDataSizeTotal - lBytesToSkip;
+        dDataProcTime = ((double) lBytesToProc * dTSampInSec)
+                        / stYUM.fSampSize;
         (void) printf("Newly calculated size of data to be processed: %ld "
                       "bytes\n",
                       lBytesToProc);
+    }
+
+    /* change block size according to the number of samples to be processed */
+    if ((long) iBlockSize > lBytesToProc)
+    {
+        iBlockSize = (int) ceil(dDataProcTime / dTSampInSec);
     }
 
     iTimeSampsSkip = (int) (lBytesToSkip / (stYUM.fSampSize));
@@ -344,8 +350,8 @@ int main(int argc, char *argv[])
                   iBlockSize);
 
     /* open the time series data file for reading */
-    g_pFSpec = fopen(pcFileData, "r");
-    if (NULL == g_pFSpec)
+    g_pFData = fopen(pcFileData, "r");
+    if (NULL == g_pFData)
     {
         (void) fprintf(stderr,
                        "ERROR: Opening file %s failed! %s.\n",
@@ -417,10 +423,10 @@ int main(int argc, char *argv[])
 
     /* skip the header by copying it to the output file */
     char acBuf[stYUM.iHeaderLen];
-    (void) fread(acBuf, sizeof(char), (long) stYUM.iHeaderLen, g_pFSpec);
+    (void) fread(acBuf, sizeof(char), (long) stYUM.iHeaderLen, g_pFData);
     (void) fwrite(acBuf, sizeof(char), (long) stYUM.iHeaderLen, pFOut);
     /* skip data, if any are to be skipped */
-    (void) fseek(g_pFSpec, lBytesToSkip, SEEK_CUR);
+    (void) fseek(g_pFData, lBytesToSkip, SEEK_CUR);
 
     /* open the PGPLOT graphics device */
     if (cHasGraphics)
