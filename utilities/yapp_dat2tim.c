@@ -28,7 +28,6 @@ int main(int argc, char *argv[])
     char *pcFilename = NULL;
     FILE *pFTim = NULL;
     char acFileTim[LEN_GENSTRING] = {0};
-    YAPP_SIGPROC_HEADER stHeader = {{0}};
     YUM_t stYUM = {{0}};
     int iRet = EXIT_SUCCESS;
 

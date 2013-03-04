@@ -378,7 +378,6 @@ int YAPP_ReadPSRFITSHeader(char *pcFileSpec, YUM_t *pstYUM)
     int iStatus = 0;
     char acErrMsg[FLEN_ERRMSG] = {0};
     int iTemp = 0;
-    float fTemp = 0.0;
     double dTemp = 0.0;
     float *pfFreq = NULL;
     int iColNum = 0;
@@ -1169,18 +1168,18 @@ int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM)
 {
     FILE* pFHdr = NULL;
     char acFileHeader[LEN_GENSTRING] = {0};
-    char acTemp[LEN_GENSTRING] = {0};
     size_t iLen = 0;
-    double dFChan = 0.0;
     struct stat stFileStats = {0};
     int iRet = YAPP_RET_SUCCESS;
-    int i = 0;
+#if 0
+    double dFChan = 0.0;
     int iDataTypeID = 0;
     double dFChan1 = 0.0;
     float fFCh1 = 0.0;
     double dChanBW = 0.0;
     double dTStart = 0.0;
     int iObsID = 0;
+#endif
     char *pcExt = NULL;
     char *pcVal = NULL;
     char* pcLine = NULL;
@@ -1841,10 +1840,8 @@ int YAPP_ReadData(float *pfBuf,
 {
     static char cIsFirst = YAPP_TRUE;
     static char *pcBuf = NULL;
-    char *pcCur = NULL;
     int iReadItems = 0;
     int i = 0;
-    short int sSample = 0;
 
     if (cIsFirst)
     {
@@ -1889,6 +1886,8 @@ int YAPP_ReadData(float *pfBuf,
     {
         /* 16-bit/2-byte data */
         #if 0
+        char *pcCur = NULL;
+        short int sSample = 0;
         /* copy data from the byte buffer to the float buffer */
         for (i = 0; i < iReadItems; ++i)
         {
@@ -2246,7 +2245,6 @@ float YAPP_CalcMean(float *pfBuf, int iLength)
 float YAPP_CalcRunningMean(float *pfBuf, int iLength, float fOldMean)
 {
     float fMean = 0.0;
-    int i = 0;
 
     fMean = (fOldMean + pfBuf[iLength-1]) / 2;
 

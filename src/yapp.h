@@ -220,9 +220,6 @@ enum tagFileFormats
 #define PG_CI_DEF               1
 #define PG_CI_PLOT              11
 
-#define PATH_ERF_LOOKUP     "./ERF_LOOKUP_TABLE"    /**< @brief Path to the
-                                                         error function lookup
-                                                         table file. */
 #define YAPP_ERF_ENTRIES    1000    /* number of entries in the erf()
                                        lookup table */
 
@@ -495,7 +492,7 @@ int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM);
  * @param[in]       pcFileData          Data filename
  * @param[out]      pstYUM              YUM structure
  */
-int ReadPRESTOHeaderFile(char *pcFileData, YUM_t *pstYUM);
+int YAPP_ReadPRESTOHeaderFile(char *pcFileData, YUM_t *pstYUM);
 
 /**
  * Read one block of data from disk

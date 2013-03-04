@@ -26,7 +26,7 @@ yapp_viewdata:
 
 
 yapp_dedisperse:
-1.  BUG: Doesn't dedipserse merged files.
+1.  BUG: Doesn't dedisperse merged files.
 2.  BUG: Negative DM dedispersion not correct.
 
 

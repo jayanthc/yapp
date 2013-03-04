@@ -97,10 +97,12 @@ int main(int argc, char *argv[])
     YAPP_SIGPROC_HEADER stHeader = {{0}};
     char acLabel[LEN_GENSTRING] = {0};
     int iLen = 0;
+#if 0
     double dTNow = 0.0;
     int iTimeSect = 0;
     int iBadTimeSect = 0;
     char cIsInBadTimeRange = YAPP_FALSE;
+#endif
     float *pfTimeSectGain = NULL;
     float *pfPriBuf = NULL;
     float *pfSecBuf = NULL;

@@ -39,6 +39,7 @@ CMAP_WINTER	src/colourmap.h	/^    CMAP_WINTER$/;"	e	enum:CMap_e
 CMap_e	src/colourmap.h	/^typedef enum CMap_e$/;"	g
 CMap_t	src/colourmap.h	/^} CMap_t;$/;"	t	typeref:enum:CMap_e
 CleanUp	src/yapp_ft.c	/^void CleanUp(int iNTaps)$/;"	f
+CopyData	utilities/yapp_dat2tim.c	/^int CopyData(char *pcFileData, FILE *pFTim)$/;"	f
 CopyDataForFFT	src/yapp_ft.c	/^int CopyDataForFFT(int iNFFT)$/;"	f
 DEF_ACC	src/yapp_ft.h	24;"	d
 DEF_CMAP	src/colourmap.h	63;"	d
@@ -46,18 +47,18 @@ DEF_CMAP_STR	src/colourmap.h	64;"	d
 DEF_FOLD_PULSES	src/yapp.h	146;"	d
 DEF_FORMAT	src/yapp.h	139;"	d
 DEF_LAW	src/yapp.h	138;"	d
-DEF_LAW_MAX	src/yapp.h	256;"	d
-DEF_LAW_MIN	src/yapp.h	255;"	d
-DEF_LAW_STEP	src/yapp.h	253;"	d
+DEF_LAW_MAX	src/yapp.h	253;"	d
+DEF_LAW_MIN	src/yapp.h	252;"	d
+DEF_LAW_STEP	src/yapp.h	250;"	d
 DEF_NFFT	src/yapp_ft.h	19;"	d
 DEF_NUM_SUBBANDS	src/yapp_ft.h	31;"	d
 DEF_OUT_FORMAT	src/yapp.h	140;"	d
-DEF_PROC_SPEC	src/yapp.h	248;"	d
+DEF_PROC_SPEC	src/yapp.h	245;"	d
 DEF_SIZE_BLOCK	src/yapp.h	141;"	d
 DEF_SIZE_READ	src/yapp_ft.h	21;"	d
 DEF_WINDOWS	src/yapp.h	143;"	d
 DEF_WINDOWS_MEDFILTER	src/yapp.h	144;"	d
-DM_TOL_PERCENT	src/yapp.h	229;"	d
+DM_TOL_PERCENT	src/yapp.h	226;"	d
 DoFFT	src/yapp_ft.c	/^int DoFFT()$/;"	f
 DoPFB	src/yapp_ft.c	/^int DoPFB(int iNTaps, int iNFFT)$/;"	f
 EXT_DAT	src/yapp.h	76;"	d
@@ -89,13 +90,12 @@ MAX_PNUM_BINS	src/yapp.h	129;"	d
 MAX_SIZE_BLOCK	src/yapp.h	124;"	d
 MAX_SIZE_BLOCK_MEDFILTER	src/yapp.h	126;"	d
 MAX_SNR_BINS	src/yapp.h	128;"	d
-MIN_THRES_IN_SIGMA	src/yapp.h	231;"	d
+MIN_THRES_IN_SIGMA	src/yapp.h	228;"	d
 NUM_BAD_BOUNDS	src/yapp.h	115;"	d
 NUM_BYTES_PER_SAMP	src/yapp_ft.h	17;"	d
 NUM_CMAPS	src/colourmap.h	30;"	d
 NUM_TAPS	src/yapp_ft.h	18;"	d
 NUM_TAPS	src/yapp_ft.h	27;"	d
-PATH_ERF_LOOKUP	src/yapp.h	223;"	d
 PFB_DATA	src/yapp_ft.h	/^} PFB_DATA;$/;"	t	typeref:struct:tagPFBData
 PG_2D_VP_MB	src/colourmap.h	24;"	d
 PG_2D_VP_ML	src/colourmap.h	22;"	d
@@ -143,14 +143,13 @@ PG_VP_ML	src/yapp.h	172;"	d
 PG_VP_MR	src/yapp.h	173;"	d
 PG_VP_MT	src/yapp.h	175;"	d
 PLOT_DDS_SUFFIX	src/yapp.h	166;"	d
-PROC_SPEC_NOTSEL	src/yapp.h	237;"	d
-PROC_SPEC_PERCENT	src/yapp.h	239;"	d
-PROC_SPEC_TIME	src/yapp.h	241;"	d
+PROC_SPEC_NOTSEL	src/yapp.h	234;"	d
+PROC_SPEC_PERCENT	src/yapp.h	236;"	d
+PROC_SPEC_TIME	src/yapp.h	238;"	d
 Plot2D	src/colourmap.c	/^void Plot2D(float* pfBuf, float fDataMin, float fDataMax,$/;"	f
 PrintUsage	src/yapp_dedisperse.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	src/yapp_dedisplaw.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	src/yapp_filter.c	/^void PrintUsage(const char *pcProgName)$/;"	f
-PrintUsage	src/yapp_fits2fil.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	src/yapp_fold.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	src/yapp_ft.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	src/yapp_medfilter.c	/^void PrintUsage(const char *pcProgName)$/;"	f
@@ -158,9 +157,12 @@ PrintUsage	src/yapp_pulsarsnd.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	src/yapp_smooth.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	src/yapp_viewdata.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	src/yapp_viewmetadata.c	/^void PrintUsage(const char *pcProgName)$/;"	f
+PrintUsage	utilities/yapp_dat2tim.c	/^void PrintUsage(const char *pcProgName)$/;"	f
+PrintUsage	utilities/yapp_fits2fil.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 RET_ERROR	src/yapp_makever.c	20;"	d	file:
 RET_SUCCESS	src/yapp_makever.c	19;"	d	file:
 ReadData	src/yapp_ft.c	/^int ReadData(char cIsFirst, int iNTaps, int iNFFT)$/;"	f
+SIZE_BUF	utilities/yapp_dat2tim.h	12;"	d
 SUFFIX_CFG	src/yapp.h	107;"	d
 SetColourMap	src/colourmap.c	/^int SetColourMap(int iCMap, int iIsColInv, float fColMin, float fColMax)$/;"	f
 USEC2SEC	src/yapp_ft.h	33;"	d
@@ -177,11 +179,11 @@ YAPP_CalcThresholdInSigmas	src/yapp_common.c	/^double YAPP_CalcThresholdInSigmas
 YAPP_CleanUp	src/yapp_common.c	/^void YAPP_CleanUp()$/;"	f
 YAPP_CleanUp	src/yapp_dedisplaw.c	/^void YAPP_CleanUp()$/;"	f
 YAPP_Compare	src/yapp_common.c	/^int YAPP_Compare(float *pfA, float *pfB)$/;"	f
-YAPP_ERF_ENTRIES	src/yapp.h	226;"	d
+YAPP_ERF_ENTRIES	src/yapp.h	223;"	d
 YAPP_FALSE	src/yapp.h	48;"	d
-YAPP_FILE_DELAYS_LIN	src/yapp.h	261;"	d
-YAPP_FILE_DELAYS_OTHER	src/yapp.h	262;"	d
-YAPP_FILE_DELAYS_QUAD	src/yapp.h	260;"	d
+YAPP_FILE_DELAYS_LIN	src/yapp.h	258;"	d
+YAPP_FILE_DELAYS_OTHER	src/yapp.h	259;"	d
+YAPP_FILE_DELAYS_QUAD	src/yapp.h	257;"	d
 YAPP_FORMATSTR_DTS_DAT	src/yapp.h	63;"	d
 YAPP_FORMATSTR_DTS_DAT_INF	src/yapp.h	64;"	d
 YAPP_FORMATSTR_DTS_DDS	src/yapp.h	61;"	d
@@ -201,7 +203,7 @@ YAPP_GetFileType	src/yapp_common.c	/^int YAPP_GetFileType(char *pcFile)$/;"	f
 YAPP_GetFilenameFromPath	src/yapp_common.c	/^char* YAPP_GetFilenameFromPath(char *pcPath, char *pcExt)$/;"	f
 YAPP_GetFilenameWithExtFromPath	src/yapp_common.c	/^char* YAPP_GetFilenameWithExtFromPath(char *pcPath)$/;"	f
 YAPP_HandleStopSignals	src/yapp_common.c	/^void YAPP_HandleStopSignals(int iSigNo)$/;"	f
-YAPP_MAX_MEMTABLE	src/yapp.h	265;"	d
+YAPP_MAX_MEMTABLE	src/yapp.h	262;"	d
 YAPP_MAX_NUM_BANDS	src/yapp.h	132;"	d
 YAPP_Malloc	src/yapp_common.c	/^void* YAPP_Malloc(size_t iNumItems, size_t iSize, int iZero)$/;"	f
 YAPP_PF_HDUNAME_AOGEN	src/yapp_psrfits.h	12;"	d
@@ -297,6 +299,7 @@ YUM_t	src/yapp.h	/^} YUM_t;$/;"	t	typeref:struct:YUM_s
 _GNU_SOURCE	src/yapp.h	20;"	d
 _GNU_SOURCE	src/yapp_makever.c	8;"	d	file:
 __COLOURMAP_H__	src/colourmap.h	10;"	d
+__DAT2TIM_H__	utilities/yapp_dat2tim.h	10;"	d
 __YAPP_FT_H__	src/yapp_ft.h	10;"	d
 __YAPP_H__	src/yapp.h	10;"	d
 __YAPP_PSRFITS_H__	src/yapp_psrfits.h	10;"	d
@@ -407,7 +410,7 @@ g_pfcFFTOutY	src/yapp_ft.c	/^fftwf_complex *g_pfcFFTOutY = NULL;$/;"	v
 g_piOffsetTab	src/yapp_dedisperse.c	/^int *g_piOffsetTab = NULL;$/;"	v
 g_ppFDedispCfg	src/yapp_dedisplaw.c	/^FILE **g_ppFDedispCfg = NULL;$/;"	v
 g_ppFDedispData	src/yapp_dedisplaw.c	/^FILE **g_ppFDedispData = NULL;$/;"	v
-g_pvBuf	src/yapp_fits2fil.c	/^void *g_pvBuf = NULL;$/;"	v
+g_pvBuf	utilities/yapp_fits2fil.c	/^void *g_pvBuf = NULL;$/;"	v
 g_stPlanBwd	src/yapp_filter.c	/^fftwf_plan g_stPlanBwd = {0};$/;"	v
 g_stPlanFwd	src/yapp_filter.c	/^fftwf_plan g_stPlanFwd = {0};$/;"	v
 g_stPlanX	src/yapp_ft.c	/^fftwf_plan g_stPlanX = {0};$/;"	v
@@ -436,7 +439,6 @@ lDataSizeTotal	src/yapp.h	/^    long int lDataSizeTotal;$/;"	m	struct:YUM_s
 main	src/yapp_dedisperse.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/yapp_dedisplaw.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/yapp_filter.c	/^int main(int argc, char *argv[])$/;"	f
-main	src/yapp_fits2fil.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/yapp_fold.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/yapp_ft.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/yapp_makever.c	/^int main(int argc, char *argv[])$/;"	f
@@ -445,6 +447,8 @@ main	src/yapp_pulsarsnd.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/yapp_smooth.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/yapp_viewdata.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/yapp_viewmetadata.c	/^int main(int argc, char *argv[])$/;"	f
+main	utilities/yapp_dat2tim.c	/^int main(int argc, char *argv[])$/;"	f
+main	utilities/yapp_fits2fil.c	/^int main(int argc, char *argv[])$/;"	f
 padBadTimes	src/yapp.h	/^    double (*padBadTimes)[][NUM_BAD_BOUNDS];$/;"	m	struct:YUM_s
 pcData	src/yapp_ft.h	/^    signed char *pcData;        \/* raw data, (iNFFT * NUM_BYTES_PER_SAMP)$/;"	m	struct:tagPFBData
 pcIsChanGood	src/yapp.h	/^    char *pcIsChanGood;$/;"	m	struct:YUM_s
