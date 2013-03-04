@@ -1,4 +1,4 @@
-Yet Another Pulsar Processor (YAPP) 2.2-beta
+Yet Another Pulsar Processor (YAPP) 3.0-beta
 -------------------------------------------------------------------------------
 README
 
@@ -15,20 +15,30 @@ The YAPP tools available with this release are:
                           baseband data.
     yapp_dedisperse     : Dedisperses filterbank format data.
     yapp_smooth         : Boxcar-smoothes dedispersed time series data
+    yapp_filter         : Processes dedispersed time series data with a custom
+                          frequency-domain filter. 
     yapp_fold           : Folds filterbank and dedispersed time series data and
                           plots folded profile to PGPLOT device.
 
-The supported file formats are are DAS '.spec', SIGPROC '.fil', and SIGPROC
-'.tim'.
+YAPP also comes with the following utilities:
 
-System requirements: Linux/Mac OS, PGPLOT with C binding
+    yapp_fits2fil       : Converts PSRFITS data to SIGPROC '.fil'
+    yapp_dat2tim        : Converts PRESTO '.dat' to SIGPROC '.tim'
+
+The supported file formats are are PSRFITS, DAS '.spec', SIGPROC '.fil',
+SIGPROC '.tim', and PRESTO '.dat'.
+
+For detailed usage instructions, refer the man pages and/or online
+documentation.
+
+System requirements: Linux/Mac OS, PGPLOT with C binding, FFTW3, CFITSIO
 
 Installation instructions: On a typical Ubuntu-based machine in which PGPLOT
 was installed via APT, running 'make' followed by 'sudo make install' should
 work, with the binaries being copied to /usr/local/bin. For different operating
-systems and/or different PGPLOT installation directories and/or a different
-choice of YAPP installation directory, the makefile may need to be modified by
-hand.
+systems and/or different PGPLOT/FFTW3/CFITSIO installation directories and/or a
+different choice of YAPP installation directory, the makefile may need to be
+modified by hand.
 
 Created by Jayanth Chennamangalam
 http://jayanthc.github.com/yapp/

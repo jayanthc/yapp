@@ -53,12 +53,16 @@
  * @defgroup YAPPFormat Data format strings.
  */
 /* @{ */
+#define YAPP_FORMATSTR_PSRFITS      "fits"
 #define YAPP_FORMATSTR_SPEC         "spec"
 #define YAPP_FORMATSTR_FIL          "fil"
 #define YAPP_FORMATSTR_DTS_DDS      "dds"
 #define YAPP_FORMATSTR_DTS_TIM      "tim"
+#define YAPP_FORMATSTR_DTS_DAT      "dat"
+#define YAPP_FORMATSTR_DTS_DAT_INF  "inf"
 /* @} */
 
+#define EXT_PSRFITS                 ".fits"
 #define EXT_DYNSPEC                 ".spec"
 #define EXT_DEDISPSPEC              ".dds"
 #define EXT_DEDISPSPECCFG           ".cfg"
@@ -66,14 +70,19 @@
 #define EXT_FIL                     ".fil"
 #define EXT_FHD                     ".fhd"
 #define EXT_TIM                     ".tim"
+#define EXT_DAT                     ".dat"
+#define EXT_INF                     ".inf"
+
 enum tagFileFormats
 {
     /* dynamic spectrum formats */
     YAPP_FORMAT_SPEC = 0,       /* Desh's specfile format */
+    YAPP_FORMAT_PSRFITS,        /* PSRFITS spectrometer data */
     YAPP_FORMAT_FIL,            /* SIGPROC filterbank file format */
     /* dedispersed time series formats */
     YAPP_FORMAT_DTS_DDS,        /* Desh's dedispersed data format */
-    YAPP_FORMAT_DTS_TIM         /* SIGPROC time series format */
+    YAPP_FORMAT_DTS_TIM,        /* SIGPROC time series format */
+    YAPP_FORMAT_DTS_DAT         /* PRESTO time series format */
 };
 
 /* sample sizes in number of bits */
@@ -202,9 +211,6 @@ enum tagFileFormats
 #define PG_CI_DEF               1
 #define PG_CI_PLOT              11
 
-#define PATH_ERF_LOOKUP     "./ERF_LOOKUP_TABLE"    /**< @brief Path to the
-                                                         error function lookup
-                                                         table file. */
 #define YAPP_ERF_ENTRIES    1000    /* number of entries in the erf()
                                        lookup table */
 
@@ -418,9 +424,16 @@ char* YAPP_GetFilenameWithExtFromPath(char *pcPath);
  * Retrieves the observatory name from its ID.
  *
  * @param[in]   iObsID      Observatory ID
- * @param[out]  acObs       Observatory name
+ * @param[out]  pcObs       Observatory name
  */
-int YAPP_GetObsNameFromID(int iObsID, char *pcObs);
+int YAPP_SP_GetObsNameFromID(int iObsID, char *pcObs);
+
+/**
+ * Retrieves the observatory ID from its name.
+ *
+ * @param[out]  pcObs       Observatory name
+ */
+int YAPP_SP_GetObsIDFromName(char *pcObs);
 
 /**
  * Read metadata from file
@@ -430,6 +443,14 @@ int YAPP_GetObsNameFromID(int iObsID, char *pcObs);
  * @param[out]      pstYUM              YUM structure
  */
 int YAPP_ReadMetadata(char *pcFileSpec, int iFormta, YUM_t *pstYUM);
+
+/**
+ * Read header from the input PSRFITS file
+ *
+ * @param[in]       pcFileSpec          Data filename
+ * @param[out]      pstYUM              YUM structure
+ */
+int YAPP_ReadPSRFITSHeader(char *pcFileSpec, YUM_t *pstYUM);
 
 /**
  * Read configuration information corresponding to a DAS '.spec' file
@@ -457,6 +478,14 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM);
 int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM);
 
 /**
+ * Read configuration information corresponding to a PRESTO '.dat' file, from a separate header file
+ *
+ * @param[in]       pcFileData          Data filename
+ * @param[out]      pstYUM              YUM structure
+ */
+int YAPP_ReadPRESTOHeaderFile(char *pcFileData, YUM_t *pstYUM);
+
+/**
  * Read one block of data from disk
  *
  * @param[inout]    pfBuf               Output data buffer
@@ -466,6 +495,8 @@ int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM);
 int YAPP_ReadData(float *pfBuf,
                   float fSampSize,
                   int iTotSampsPerBlock);
+
+int YAPP_WriteMetadata(char *pcFileData, int iFormat, YUM_t stYUM);
 
 /**
  * Calculates the threshold in terms of standard deviation.

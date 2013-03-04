@@ -1469,6 +1469,7 @@ int YAPP_CalcDelays(double dDM,
     float fF1 = 0.0;
     float fF2 = 0.0;
     double dDelay = 0.0;
+    float fFMaxCalc = stYUM.fFMax;     /* reference frequency */
 
     g_piOffsetTab = (int *) YAPP_Malloc((size_t) stYUM.iNumChans,
                                         sizeof(int),
@@ -1504,7 +1505,7 @@ int YAPP_CalcDelays(double dDM,
     {
         if (stYUM.cIsBandFlipped)
         {
-            fF1 = stYUM.fFMax;
+            fF1 = fFMaxCalc;
             fF2 = stYUM.fFMax;
             for (i = stYUM.iNumChans - 1; i >= 0; --i)
             {
@@ -1526,7 +1527,7 @@ int YAPP_CalcDelays(double dDM,
         }
         else
         {
-            fF1 = stYUM.fFMax;
+            fF1 = fFMaxCalc;
             fF2 = stYUM.fFMax;
             for (i = 0; i < stYUM.iNumChans; ++i)
             {
@@ -1551,7 +1552,7 @@ int YAPP_CalcDelays(double dDM,
     {
         if (stYUM.cIsBandFlipped)
         {
-            fF1 = stYUM.fFMax;
+            fF1 = fFMaxCalc;
             fF2 = stYUM.fFMax;
             for (i = 0; i < stYUM.iNumChans; ++i)
             {
@@ -1573,7 +1574,7 @@ int YAPP_CalcDelays(double dDM,
         }
         else
         {
-            fF1 = stYUM.fFMax;
+            fF1 = fFMaxCalc;
             fF2 = stYUM.fFMax;
             for (i = stYUM.iNumChans - 1; i >= 0; --i)
             {

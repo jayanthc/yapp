@@ -117,29 +117,41 @@ int main(int argc, char *argv[])
                       stYUM.acPulsar);
         (void) printf("Start time                        : %.10g MJD\n",
                       stYUM.dTStart);
-        (void) printf("Centre frequency                  : %.10g MHz\n",
-                      stYUM.fFCentre);
-        (void) printf("Bandwidth                         : %.10g MHz\n",
-                      stYUM.fBW);
+        if ((YAPP_FORMAT_SPEC == iFormat)
+            || (YAPP_FORMAT_FIL == iFormat)
+            || (YAPP_FORMAT_PSRFITS == iFormat))
+        {
+            (void) printf("Centre frequency                  : %.10g MHz\n",
+                          stYUM.fFCentre);
+            (void) printf("Bandwidth                         : %.10g MHz\n",
+                          stYUM.fBW);
+        }
         (void) printf("Sampling interval                 : %.10g ms\n",
                       stYUM.dTSamp);
-        (void) printf("Number of channels                : %d\n",
-                      stYUM.iNumChans);
-        (void) printf("Number of good channels           : %d\n",
-                      stYUM.iNumGoodChans);
-        (void) printf("Channel bandwidth                 : %.10g MHz\n",
-                      stYUM.fChanBW);
-        (void) printf("Lowest frequency                  : %.10g MHz\n",
-                      stYUM.fFMin);
-        (void) printf("Highest frequency                 : %.10g MHz\n",
-                      stYUM.fFMax);
-        if (YAPP_TRUE == stYUM.cIsBandFlipped)
+        /* TODO: think about order - changing might cause problems in
+           headerless .fil */
+        if ((YAPP_FORMAT_SPEC == iFormat)
+            || (YAPP_FORMAT_FIL == iFormat)
+            || (YAPP_FORMAT_PSRFITS == iFormat))
         {
-            (void) printf("                                    "
-                          "Flipped band\n");
+            (void) printf("Number of channels                : %d\n",
+                          stYUM.iNumChans);
+            (void) printf("Number of good channels           : %d\n",
+                          stYUM.iNumGoodChans);
+            (void) printf("Channel bandwidth                 : %.10g MHz\n",
+                          stYUM.fChanBW);
+            (void) printf("Lowest frequency                  : %.10g MHz\n",
+                          stYUM.fFMin);
+            (void) printf("Highest frequency                 : %.10g MHz\n",
+                          stYUM.fFMax);
+            if (YAPP_TRUE == stYUM.cIsBandFlipped)
+            {
+                (void) printf("                                    "
+                              "Flipped band\n");
+            }
+            (void) printf("Estimated number of bands         : %d\n",
+                          stYUM.iNumBands);
         }
-        (void) printf("Estimated number of bands         : %d\n",
-                      stYUM.iNumBands);
         if (stYUM.iBFTimeSects != 0)    /* no beam-flip information */
         {
             (void) printf("First beam-flip time              : %.10g s\n",
@@ -165,8 +177,11 @@ int main(int argc, char *argv[])
                       stYUM.iTimeSamps);
         (void) printf("    Time                          : %g s\n",
                       (stYUM.iTimeSamps * (stYUM.dTSamp / 1e3)));
-        (void) printf("Length of header                  : %d\n",
-                      stYUM.iHeaderLen);
+        if (!(YAPP_FORMAT_PSRFITS == iFormat))
+        {
+            (void) printf("Length of header                  : %d\n",
+                          stYUM.iHeaderLen);
+        }
 
         if ((argc - iNextOpt) != 1)
         {

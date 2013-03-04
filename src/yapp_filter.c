@@ -1,9 +1,9 @@
 /*
- * @file yapp_smooth.c
- * Program to smooth (low-pass filter) dedispersed time series data.
+ * @file yapp_filter.c
+ * Program to arbitrarily filter dedipsersed time series data.
  *
  * @verbatim
- * Usage: yapp_smooth [options] <data-file>
+ * Usage: yapp_filter [options] <data-file>
  *     -h  --help                           Display this usage information
  *     -s  --skip <time>                    The length of data in seconds, to be
  *                                          skipped
@@ -11,8 +11,7 @@
  *     -p  --proc <time>                    The length of data in seconds, to be
  *                                          processed
  *                                          (default is all)
- *     -w  --width <width>                  Width of boxcar window in milliseconds
- *                                          (default is 1 ms)
+ *     -f  --filter <file>                  Filter mask filename
  *     -g  --graphics                       Turn on plotting
  *     -i  --invert                         Invert the background and foreground
  *                                          colours in plots
@@ -20,11 +19,12 @@
  *     -v  --version                        Display the version @endverbatim
  *
  * @author Jayanth Chennamangalam
- * @date 2013.01.08
+ * @date 2013.02.16
  */
 
 #include "yapp.h"
 #include "yapp_sigproc.h"   /* for SIGPROC filterbank file format support */
+#include <fftw3.h>
 
 /**
  * The build version string, maintained in the file version.c, which is
@@ -41,13 +41,18 @@ extern FILE *g_pFSpec;
 /* the following are global only to enable cleaning up in case of abnormal
    termination, such as those triggered by SIGINT or SIGTERM */
 float *g_pfBuf = NULL;
-float *g_pfOutBuf = NULL;
+fftwf_complex *g_pfcFFTBuf = NULL;
 float *g_pfXAxis = NULL;
+fftwf_plan g_stPlanFwd = {0};
+fftwf_plan g_stPlanBwd = {0};
+char *g_pcFilter = NULL;
 
 int main(int argc, char *argv[])
 {
+    FILE *pFFilter = NULL;
     FILE *pFOut = NULL;
     char *pcFileData = NULL;
+    char *pcFileFilter = NULL;
     char *pcFileOut = NULL;
     char acFileOut[LEN_GENSTRING] = {0};
     int iFormat = DEF_FORMAT;
@@ -62,11 +67,11 @@ int main(int argc, char *argv[])
     int iTimeSampsSkip = 0;
     int iTimeSampsToProc = 0;
     int iBlockSize = 0;
-    int iOutBlockSize = 0;
+    int iFFTUsableSize = 0;
     int iNumReads = 0;
     int iTotNumReads = 0;
     int iReadBlockCount = 0;
-    float fWidth = 1.0; /* in ms */
+    float fWidth = 60.0; /* in s */
     char cIsLastBlock = YAPP_FALSE;
     int iRet = YAPP_RET_SUCCESS;
     float fDataMin = 0.0;
@@ -76,31 +81,22 @@ int main(int argc, char *argv[])
     float fButY = 0.0;
     char cCurChar = 0;
     int iNumSamps = 0;
-    int iSampsPerWin = 0;
     int iDiff = 0;
     int i = 0;
-    char cIsFirst = YAPP_TRUE;
-    float fMeanOrig = 0.0;
-    float fRMSOrig = 0.0;
-    float fMeanOrigAll = 0.0;
-    float fRMSOrigAll = 0.0;
-    float fMeanSmoothed = 0.0;
-    float fRMSSmoothed = 0.0;
-    float fMeanSmoothedAll = 0.0;
-    float fRMSSmoothedAll = 0.0;
+    struct stat stFileStats = {0};
     char cHasGraphics = YAPP_FALSE;
     int iInvCols = YAPP_FALSE;
     char cIsNonInteractive = YAPP_FALSE;
     const char *pcProgName = NULL;
     int iNextOpt = 0;
     /* valid short options */
-    const char* const pcOptsShort = "hs:p:w:giev";
+    const char* const pcOptsShort = "hs:p:f:giev";
     /* valid long options */
     const struct option stOptsLong[] = {
         { "help",                   0, NULL, 'h' },
         { "skip",                   1, NULL, 's' },
         { "proc",                   1, NULL, 'p' },
-        { "width",                  1, NULL, 'w' },
+        { "filter",                 1, NULL, 'f' },
         { "graphics",               0, NULL, 'g' },
         { "invert",                 0, NULL, 'i' },
         { "non-interactive",        0, NULL, 'e' },
@@ -132,17 +128,9 @@ int main(int argc, char *argv[])
                 dDataProcTime = atof(optarg);
                 break;
 
-            case 'w':   /* -w or --width */
+            case 'f':   /* -f or --filter */
                 /* set option */
-                fWidth = atof(optarg);
-                if (fWidth > 1) /* 1 ms */
-                {
-                    fprintf(stderr,
-                            "WARNING: The chosen boxcar width may suppress "
-                            "pulsars with periods less than %g ms in the "
-                            "smoothed data!\n",
-                            fWidth);
-                }
+                pcFileFilter = optarg;
                 break;
 
             case 'g':   /* -g or --graphics */
@@ -243,31 +231,64 @@ int main(int argc, char *argv[])
         return YAPP_RET_ERROR;
     }
 
+    /* open the filter specification file */
+    pFFilter = fopen(pcFileFilter, "r");
+    if (NULL == pFFilter)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Opening file %s failed! %s.\n",
+                       pcFileFilter,
+                       strerror(errno));
+        YAPP_CleanUp();
+        return YAPP_RET_ERROR;
+    }
+
+    /* get the number of channels in the filter */
+    iRet = stat(pcFileFilter, &stFileStats);
+    if (iRet != YAPP_RET_SUCCESS)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Failed to stat %s: %s!\n",
+                       pcFileFilter,
+                       strerror(errno));
+        (void) fclose(pFFilter);
+        YAPP_CleanUp();
+        return YAPP_RET_ERROR;
+    }
+    iFFTUsableSize = (int) stFileStats.st_size;
+    iBlockSize = 2 * (iFFTUsableSize - 1);
+
+    g_pcFilter = (char *) YAPP_Malloc((size_t) iFFTUsableSize,
+                                      sizeof(char),
+                                      YAPP_FALSE);
+    if (NULL == g_pcFilter)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Memory allocation failed! %s!\n",
+                       strerror(errno));
+        (void) fclose(pFFilter);
+        YAPP_CleanUp();
+        return YAPP_RET_ERROR;
+    }
+
+    iRet = fread(g_pcFilter, sizeof(char), iFFTUsableSize, pFFilter);
+    if (iRet < iFFTUsableSize)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Reading filter file failed!\n");
+        (void) fclose(pFFilter);
+        YAPP_CleanUp();
+        return YAPP_RET_ERROR;
+    }
+
+    (void) fclose(pFFilter);
+
     lBytesToSkip = (long) floor((dDataSkipTime / dTSampInSec)
                                                     /* number of samples */
                            * stYUM.fSampSize);
     lBytesToProc = (long) floor((dDataProcTime / dTSampInSec)
                                                     /* number of samples */
                            * stYUM.fSampSize);
-
-    /* calculate the number of samples in one boxcar window */
-    iSampsPerWin = (int) round(fWidth / stYUM.dTSamp);
-    /* make the number of samples odd */
-    if (0 == (iSampsPerWin % 2))
-    {
-        iSampsPerWin += 1;
-        (void) fprintf(stderr,
-                       "WARNING: Number of samples per window modified to "
-                       "be odd, new boxcar window width is %g ms.\n",
-                       stYUM.dTSamp * iSampsPerWin);
-    }
-
-    /* compute the block size - a large multiple of iSampsPerWin */
-    iBlockSize = DEF_WINDOWS * iSampsPerWin;
-    if (iBlockSize > MAX_SIZE_BLOCK)
-    {
-        iBlockSize = MAX_SIZE_BLOCK;
-    }
 
     if (lBytesToSkip >= stYUM.lDataSizeTotal)
     {
@@ -300,11 +321,8 @@ int main(int argc, char *argv[])
                   (stYUM.iTimeSamps * dTSampInSec));
 
     iTimeSampsToProc = (int) (lBytesToProc / (stYUM.fSampSize));
-    /* calculate the actual number of samples that will be processed in one
-       iteration */
-    iOutBlockSize = iBlockSize - (iSampsPerWin - 1);
     /* based on actual processed blocks, rather than read blocks */
-    iNumReads = (int) ceilf(((float) iTimeSampsToProc) / iOutBlockSize);
+    iNumReads = (int) ceilf(((float) iTimeSampsToProc) / iBlockSize);
     iTotNumReads = iNumReads;
 
     /* optimisation - store some commonly used values in variables */
@@ -323,9 +341,7 @@ int main(int argc, char *argv[])
                   (iTimeSampsToProc * dTSampInSec),
                   (stYUM.iTimeSamps * dTSampInSec),
                   iNumReads,
-                  iOutBlockSize);
-
-    (void) printf("Boxcar window width is %d time samples.\n", iSampsPerWin);
+                  iBlockSize);
 
     /* open the time series data file for reading */
     g_pFSpec = fopen(pcFileData, "r");
@@ -353,6 +369,27 @@ int main(int argc, char *argv[])
         return YAPP_RET_ERROR;
     }
 
+    g_pfcFFTBuf = (fftwf_complex *) fftwf_malloc(iBlockSize
+                                                 * sizeof(fftwf_complex));
+    if (NULL == g_pfcFFTBuf)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Memory allocation failed! %s!\n",
+                       strerror(errno));
+        YAPP_CleanUp();
+        return YAPP_RET_ERROR;
+    }
+
+    /* create FFT plan */
+    g_stPlanFwd = fftwf_plan_dft_r2c_1d(iBlockSize,
+                                        g_pfBuf,
+                                        g_pfcFFTBuf,
+                                        FFTW_MEASURE);
+    g_stPlanBwd = fftwf_plan_dft_c2r_1d(iBlockSize,
+                                        g_pfcFFTBuf,
+                                        g_pfBuf,
+                                        FFTW_MEASURE);
+
     if (1 == iNumReads)
     {
         cIsLastBlock = YAPP_TRUE;
@@ -361,9 +398,9 @@ int main(int argc, char *argv[])
     /* open the time series data file for reading */
     pcFileOut = YAPP_GetFilenameFromPath(pcFileData, EXT_TIM);
     (void) sprintf(acFileOut,
-                   "%s_%s%gms%s",
+                   "%s_%s%gs%s",
                    pcFileOut,
-                   INFIX_SMOOTHED,
+                   INFIX_MEDFILTERED,
                    fWidth,
                    EXT_TIM);
     pFOut = fopen(acFileOut, "w");
@@ -373,6 +410,7 @@ int main(int argc, char *argv[])
                        "ERROR: Opening file %s failed! %s.\n",
                        acFileOut,
                        strerror(errno));
+        fftwf_free(g_pfcFFTBuf);
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
@@ -394,6 +432,7 @@ int main(int argc, char *argv[])
                            "ERROR: Opening graphics device %s failed!\n",
                            PG_DEV);
             (void) fclose(pFOut);
+            fftwf_free(g_pfcFFTBuf);
             YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
@@ -419,24 +458,10 @@ int main(int argc, char *argv[])
                            "ERROR: Memory allocation for X-axis failed! %s!\n",
                            strerror(errno));
             (void) fclose(pFOut);
+            fftwf_free(g_pfcFFTBuf);
             YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
-    }
-
-    /* allocate memory for the accumulation buffer */
-    g_pfOutBuf = (float *) YAPP_Malloc((size_t) iOutBlockSize,
-                                       sizeof(float),
-                                       YAPP_TRUE);
-    if (NULL == g_pfOutBuf)
-    {
-        (void) fprintf(stderr,
-                       "ERROR: Memory allocation for plot buffer failed! "
-                       "%s!\n",
-                       strerror(errno));
-        (void) fclose(pFOut);
-        YAPP_CleanUp();
-        return YAPP_RET_ERROR;
     }
 
     while (iNumReads > 0)
@@ -451,6 +476,7 @@ int main(int argc, char *argv[])
         {
             (void) fprintf(stderr, "ERROR: Reading data failed!\n");
             (void) fclose(pFOut);
+            fftwf_free(g_pfcFFTBuf);
             YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
@@ -472,66 +498,19 @@ int main(int argc, char *argv[])
            all other blocks */
         iNumSamps = iReadItems;
 
-        if (cIsFirst)
-        {
-            /* copy first (iSampsPerWin / 2) time samples to the output */
-            (void) memcpy(g_pfOutBuf, g_pfBuf, (iSampsPerWin / 2) * sizeof(float));
-            (void) fwrite(g_pfOutBuf,
-                          sizeof(float),
-                          (long) (iSampsPerWin / 2),
-                          pFOut);
-            cIsFirst = YAPP_FALSE;
-        }
-
-        /* smooth data */
-        (void) memset(g_pfOutBuf, '\0', (sizeof(float) * iOutBlockSize));
-        (void) YAPP_Smooth(g_pfBuf, iNumSamps, iSampsPerWin, g_pfOutBuf);
-        /* write smoothed data to file */
-        (void) fwrite(g_pfOutBuf,
-                      sizeof(float),
-                      (long) (iNumSamps - (iSampsPerWin - 1)),
-                      pFOut);
-
-        /* calculate statistics */
-        /* original signal */
-        fMeanOrig = YAPP_CalcMean(g_pfBuf, iNumSamps - (iSampsPerWin - 1));
-        fMeanOrigAll += fMeanOrig;
-        fRMSOrig = YAPP_CalcRMS(g_pfBuf,
-                                iNumSamps - (iSampsPerWin - 1),
-                                fMeanOrig);
-        fRMSOrig *= fRMSOrig;
-        fRMSOrig *= (iNumSamps - (iSampsPerWin - 1) - 1);
-        fRMSOrigAll += fRMSOrig;
-
-        /* smoothed signal */
-        fMeanSmoothed = YAPP_CalcMean(g_pfOutBuf, iNumSamps - (iSampsPerWin - 1));
-        fMeanSmoothedAll += fMeanSmoothed;
-        fRMSSmoothed = YAPP_CalcRMS(g_pfOutBuf,
-                                    iNumSamps - (iSampsPerWin - 1),
-                                    fMeanSmoothed);
-        fRMSSmoothed *= fRMSSmoothed;
-        fRMSSmoothed *= (iNumSamps - (iSampsPerWin - 1) - 1);
-        fRMSSmoothedAll += fRMSSmoothed;
-
-        /* set the file position to rewind by (iSampsPerWin - 1) samples */
-        (void) fseek(g_pFSpec, -((iSampsPerWin - 1) * sizeof(float)), SEEK_CUR);
-
         if (cHasGraphics)
         {
-            /* use a separate plotting buffer so that the x-axes for both
-               before and after plots are equivalent */
-            float* pfPlotBuf = g_pfBuf + (iSampsPerWin / 2);
-            fDataMin = pfPlotBuf[0];
-            fDataMax = pfPlotBuf[0];
-            for (i = 0; i < iOutBlockSize; ++i)
+            fDataMin = g_pfBuf[0];
+            fDataMax = g_pfBuf[0];
+            for (i = 0; i < iBlockSize; ++i)
             {
-                if (pfPlotBuf[i] < fDataMin)
+                if (g_pfBuf[i] < fDataMin)
                 {
-                    fDataMin = pfPlotBuf[i];
+                    fDataMin = g_pfBuf[i];
                 }
-                if (pfPlotBuf[i] > fDataMax)
+                if (g_pfBuf[i] > fDataMax)
                 {
-                    fDataMax = pfPlotBuf[i];
+                    fDataMax = g_pfBuf[i];
                 }
             }
 
@@ -545,37 +524,65 @@ int main(int argc, char *argv[])
             cpgpanl(1, 1);
             /* erase just before plotting, to reduce flicker */
             cpgeras();
-            for (i = 0; i < iOutBlockSize; ++i)
+            for (i = 0; i < iBlockSize; ++i)
             {
                 g_pfXAxis[i] = (float) (dDataSkipTime
                                         + (((iReadBlockCount - 1)
-                                            * iOutBlockSize
+                                            * iBlockSize
                                             * dTSampInSec)
                                            + (i * dTSampInSec)));
             }
 
             cpgsvp(PG_VP_ML, PG_VP_MR, PG_VP_MB, PG_VP_MT);
             cpgswin(g_pfXAxis[0],
-                    g_pfXAxis[iOutBlockSize-1],
+                    g_pfXAxis[iBlockSize-1],
                     fDataMin,
                     fDataMax);
-            cpglab("Time (s)", "", "Before Smoothing");
+            cpglab("Time (s)", "", "Before Filtering");
             cpgbox("BCNST", 0.0, 0, "BCNST", 0.0, 0);
             cpgsci(PG_CI_PLOT);
-            cpgline(iOutBlockSize, g_pfXAxis, pfPlotBuf);
+            cpgline(iBlockSize, g_pfXAxis, g_pfBuf);
             cpgsci(PG_CI_DEF);
+        }
 
-            fDataMin = g_pfOutBuf[0];
-            fDataMax = g_pfOutBuf[0];
-            for (i = 0; i < (iNumSamps - (iSampsPerWin - 1)); ++i)
+        /* filter data */
+        fftwf_execute(g_stPlanFwd);
+        /* output contains (N / 2) + 1 non-zero samples */
+        for (i = 0; i < iFFTUsableSize; ++i)
+        {
+            if (0.0 == g_pcFilter[i])
             {
-                if (g_pfOutBuf[i] < fDataMin)
+                g_pfcFFTBuf[i][0] = 0.0;    /* real part */
+                g_pfcFFTBuf[i][1] = 0.0;    /* imaginary part */
+            }
+        }
+        fftwf_execute(g_stPlanBwd);
+
+        /* normalize */
+        for (i = 0; i < iBlockSize; ++i)
+        {
+            g_pfBuf[i] /= iBlockSize;
+        }
+
+        /* write filtered data to file */
+        (void) fwrite(g_pfBuf,
+                      sizeof(float),
+                      (long) iNumSamps,
+                      pFOut);
+
+        if (cHasGraphics)
+        {
+            fDataMin = g_pfBuf[0];
+            fDataMax = g_pfBuf[0];
+            for (i = 0; i < iNumSamps; ++i)
+            {
+                if (g_pfBuf[i] < fDataMin)
                 {
-                    fDataMin = g_pfOutBuf[i];
+                    fDataMin = g_pfBuf[i];
                 }
-                if (g_pfOutBuf[i] > fDataMax)
+                if (g_pfBuf[i] > fDataMax)
                 {
-                    fDataMax = g_pfOutBuf[i];
+                    fDataMax = g_pfBuf[i];
                 }
             }
 
@@ -589,24 +596,24 @@ int main(int argc, char *argv[])
             cpgpanl(1, 2);
             /* erase just before plotting, to reduce flicker */
             cpgeras();
-            for (i = 0; i < iOutBlockSize; ++i)
+            for (i = 0; i < iBlockSize; ++i)
             {
                 g_pfXAxis[i] = (float) (dDataSkipTime
                                         + (((iReadBlockCount - 1)
-                                            * iOutBlockSize
+                                            * iBlockSize
                                             * dTSampInSec)
                                            + (i * dTSampInSec)));
             }
 
             cpgsvp(PG_VP_ML, PG_VP_MR, PG_VP_MB, PG_VP_MT);
             cpgswin(g_pfXAxis[0],
-                    g_pfXAxis[iOutBlockSize-1],
+                    g_pfXAxis[iBlockSize-1],
                     fDataMin,
                     fDataMax);
-            cpglab("Time (s)", "", "After Smoothing");
+            cpglab("Time (s)", "", "After Filtering");
             cpgbox("BCNST", 0.0, 0, "BCNST", 0.0, 0);
             cpgsci(PG_CI_PLOT);
-            cpgline(iOutBlockSize, g_pfXAxis, g_pfOutBuf);
+            cpgline(iBlockSize, g_pfXAxis, g_pfBuf);
             cpgsci(PG_CI_DEF);
 
             if (!(cIsLastBlock))
@@ -674,6 +681,9 @@ int main(int argc, char *argv[])
                             (void) usleep(PG_BUT_CL_SLEEP);
 
                             (void) fclose(pFOut);
+                            fftwf_destroy_plan(g_stPlanFwd);
+                            fftwf_destroy_plan(g_stPlanBwd);
+                            fftwf_free(g_pfcFFTBuf);
                             YAPP_CleanUp();
                             return YAPP_RET_SUCCESS;
                         }
@@ -695,29 +705,10 @@ int main(int argc, char *argv[])
 
     (void) printf("DONE!\n");
 
-    /* copy last (iSampsPerWin / 2) time samples to the output */
-    (void) memset(g_pfOutBuf, '\0', (sizeof(float) * iOutBlockSize));
-    (void) memcpy(g_pfOutBuf,
-                  g_pfBuf + iNumSamps - (iSampsPerWin / 2),
-                  (iSampsPerWin / 2) * sizeof(float));
-    (void) fwrite(g_pfOutBuf,
-                  sizeof(float),
-                  (long) (iSampsPerWin / 2),
-                  pFOut);
-
-    /* print statistics */
-    fMeanOrigAll /= iReadBlockCount;
-    fRMSOrigAll /= (stYUM.iTimeSamps - (iSampsPerWin - 1) - 1);
-    fRMSOrigAll = sqrtf(fRMSOrigAll);
-    (void) printf("Original signal mean = %g\n", fMeanOrigAll);
-    (void) printf("Original signal RMS = %g\n", fRMSOrigAll);
-    fMeanSmoothedAll /= iReadBlockCount;
-    fRMSSmoothedAll /= (stYUM.iTimeSamps - (iSampsPerWin - 1) - 1);
-    fRMSSmoothedAll = sqrtf(fRMSSmoothedAll);
-    (void) printf("Smoothed signal mean = %g\n", fMeanSmoothedAll);
-    (void) printf("Smoothed signal RMS = %g\n", fRMSSmoothedAll);
-
     (void) fclose(pFOut);
+    fftwf_destroy_plan(g_stPlanFwd);
+    fftwf_destroy_plan(g_stPlanBwd);
+    fftwf_free(g_pfcFFTBuf);
     YAPP_CleanUp();
 
     return YAPP_RET_SUCCESS;
@@ -744,10 +735,8 @@ void PrintUsage(const char *pcProgName)
     (void) printf("processed\n");
     (void) printf("                                         ");
     (void) printf("(default is all)\n");
-    (void) printf("    -w  --width                          ");
-    (void) printf("Width of boxcar window in milliseconds\n");
-    (void) printf("                                         ");
-    (void) printf("(default is 1 ms)\n");
+    (void) printf("    -f  --filter                         ");
+    (void) printf("Filter mask filename\n");
     (void) printf("    -g  --graphics                       ");
     (void) printf("Turn on plotting\n");
     (void) printf("    -i  --invert                         ");

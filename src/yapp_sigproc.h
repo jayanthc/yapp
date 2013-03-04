@@ -49,6 +49,9 @@ typedef struct tagSIGPROCHeader
 #define YAPP_SP_LABEL_ZASTART       "za_start"
 #define YAPP_SP_LABEL_DM            "refdm"
 #define YAPP_SP_LABEL_FLAGBARY      "barycentric"
+#define YAPP_SP_LABEL_FREQSTART     "FREQUENCY_START"
+#define YAPP_SP_LABEL_FREQEND       "FREQUENCY_END"
+#define YAPP_SP_LABEL_FREQCHAN      "fchannel"
 
 enum tagObservatory
 {
@@ -62,6 +65,8 @@ enum tagObservatory
     YAPP_SP_OBSID_GMRT,
     YAPP_SP_OBSID_EFFELSBERG
 };
+
+#define YAPP_SP_NUMOBS          9   /* number of supported sites */
 
 #define YAPP_SP_OBS_FAKE        "Fake"
 #define YAPP_SP_OBS_AO          "Arecibo"
