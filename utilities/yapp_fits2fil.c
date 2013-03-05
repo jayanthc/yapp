@@ -3,11 +3,8 @@
  * Program to convert PSRFITS to filterbank format.
  *
  * @verbatim
- * Usage: yapp_fits2fil [options] <data-file>
+ * Usage: yapp_fits2fil [options] <data-files>
  *     -h  --help                           Display this usage information
- *     -n  --nfiles <nfiles>                Number of files in the sequence to
- *                                          be converted
- *                                          (default is all)
  *     -v  --version                        Display the version @endverbatim
  *
  * @author Jayanth Chennamangalam
@@ -41,7 +38,6 @@ int main(int argc, char *argv[])
     int iFormat = DEF_FORMAT;
     YUM_t stYUM = {{0}};
     int iRet = YAPP_RET_SUCCESS;
-    int iNumFiles = 0;
     int iNumSubInt = 0;
     int iColNum = 0;
     char acErrMsg[LEN_GENSTRING] = {0};
@@ -50,14 +46,14 @@ int main(int argc, char *argv[])
     int iStatus = 0;
     int i = 0;
     int iDataType = 0;
+    char cIsFirst = YAPP_TRUE;
     const char *pcProgName = NULL;
     int iNextOpt = 0;
     /* valid short options */
-    const char* const pcOptsShort = "hs:p:n:c:m:iev";
+    const char* const pcOptsShort = "hv";
     /* valid long options */
     const struct option stOptsLong[] = {
         { "help",                   0, NULL, 'h' },
-        { "nfiles",                 1, NULL, 'n' },
         { "version",                0, NULL, 'v' },
         { NULL,                     0, NULL, 0   }
     };
@@ -75,11 +71,6 @@ int main(int argc, char *argv[])
                 /* print usage info and terminate */
                 PrintUsage(pcProgName);
                 return YAPP_RET_SUCCESS;
-
-            case 'n':   /* -n or --nfiles */
-                /* set option */
-                iNumFiles = atoi(optarg);
-                break;
 
             case 'v':   /* -v or --version */
                 /* display the version */
@@ -117,175 +108,201 @@ int main(int argc, char *argv[])
         return YAPP_RET_ERROR;
     }
 
-    /* get the input filename */
-    pcFileSpec = argv[optind];
-
-    /* determine the file type */
-    iFormat = YAPP_GetFileType(pcFileSpec);
-    if (YAPP_RET_ERROR == iFormat)
+    /* handle expanded wildcards */
+    iNextOpt = optind;
+    while ((argc - iNextOpt) != 0)
     {
-        (void) fprintf(stderr,
-                       "ERROR: File type determination failed!\n");
-        return YAPP_RET_ERROR;
-    }
-    if (!(YAPP_FORMAT_PSRFITS == iFormat))
-    {
-        (void) fprintf(stderr,
-                       "ERROR: Invalid file type!\n");
-        return YAPP_RET_ERROR;
-    }
+        /* get the input filename */
+        pcFileSpec = argv[iNextOpt];
 
-    /* read metadata */
-    iRet = YAPP_ReadMetadata(pcFileSpec, iFormat, &stYUM);
-    if (iRet != YAPP_RET_SUCCESS)
-    {
-        (void) fprintf(stderr,
-                       "ERROR: Reading metadata failed for file %s!\n",
-                       pcFileSpec);
-        return YAPP_RET_ERROR;
-    }
+        if (argc != 2)  /* more than one input file */
+        {
+            (void) printf("\rProcessing file %s.", pcFileSpec);
+            (void) fflush(stdout);
+        }
 
-    /* build output file name */
-    pcFileOut = YAPP_GetFilenameFromPath(pcFileSpec, EXT_PSRFITS);
-    (void) strcpy(acFileOut, pcFileOut);
-    (void) strcat(acFileOut, EXT_FIL);
+        /* determine the file type */
+        iFormat = YAPP_GetFileType(pcFileSpec);
+        if (YAPP_RET_ERROR == iFormat)
+        {
+            (void) fprintf(stderr,
+                           "ERROR: File type determination failed!\n");
+            return YAPP_RET_ERROR;
+        }
+        if (iFormat != YAPP_FORMAT_PSRFITS)
+        {
+            (void) fprintf(stderr,
+                           "ERROR: Invalid file type!\n");
+            return YAPP_RET_ERROR;
+        }
 
-    /* write metadata */
-    iFormat = YAPP_FORMAT_FIL;
-    iRet = YAPP_WriteMetadata(acFileOut, iFormat, stYUM);
-    if (iRet != YAPP_RET_SUCCESS)
-    {
-        (void) fprintf(stderr,
-                       "ERROR: Writing metadata failed for file %s!\n",
-                       acFileOut);
-        YAPP_CleanUp();
-        return YAPP_RET_ERROR;
-    }
+        if (cIsFirst)
+        {
+            /* read metadata */
+            iRet = YAPP_ReadMetadata(pcFileSpec, iFormat, &stYUM);
+            if (iRet != YAPP_RET_SUCCESS)
+            {
+                (void) fprintf(stderr,
+                               "ERROR: Reading metadata failed for file %s!\n",
+                               pcFileSpec);
+                return YAPP_RET_ERROR;
+            }
 
-    /*  open PSRFITS file */
-    (void) fits_open_file(&pstFileData, pcFileSpec, READONLY, &iStatus);
-    if  (iStatus != 0)
-    {
-        fits_get_errstatus(iStatus, acErrMsg); 
-        (void) fprintf(stderr, "ERROR: Opening file failed! %s\n", acErrMsg);
-        YAPP_CleanUp();
-        return YAPP_RET_ERROR;
-    }
-    /* read SUBINT HDU header to get data parameters */
-    (void) fits_movnam_hdu(pstFileData,
-                           BINARY_TBL,
-                           YAPP_PF_HDUNAME_SUBINT,
-                           0,
-                           &iStatus);
-    if  (iStatus != 0)
-    {
-        fits_get_errstatus(iStatus, acErrMsg); 
-        (void) fprintf(stderr,
-                       "ERROR: Moving to HDU %s failed! %s\n",
-                       YAPP_PF_HDUNAME_SUBINT,
-                       acErrMsg);
-        (void) fits_close_file(pstFileData, &iStatus);
-        YAPP_CleanUp();
-        return YAPP_RET_ERROR;
-    }
-    (void) fits_read_key(pstFileData,
-                         TINT,
-                         YAPP_PF_LABEL_NSUBINT,
-                         &iNumSubInt,
-                         NULL,
-                         &iStatus);
-    (void) fits_read_key(pstFileData,
-                         TINT,
-                         YAPP_PF_LABEL_NSBLK,
-                         &iSampsPerSubInt,
-                         NULL,
-                         &iStatus);
-    (void) fits_get_colnum(pstFileData,
-                           CASESEN,
-                           YAPP_PF_LABEL_DATA,
-                           &iColNum,
-                           &iStatus);
-    if (iStatus != 0)
-    {
-        fits_get_errstatus(iStatus, acErrMsg); 
-        (void) fprintf(stderr,
-                       "ERROR: Getting column number failed! %s\n",
-                       acErrMsg);
-        (void) fits_close_file(pstFileData, &iStatus);
-        YAPP_CleanUp();
-        return YAPP_RET_ERROR;
-    }
+            /* build output file name */
+            pcFileOut = YAPP_GetFilenameFromPath(pcFileSpec, EXT_PSRFITS);
+            (void) strcpy(acFileOut, pcFileOut);
+            (void) strcat(acFileOut, EXT_FIL);
 
-    /* allocate memory for data array */
-    lBytesPerSubInt = (long int) iSampsPerSubInt * stYUM.iNumChans
-                      * (stYUM.iNumBits / YAPP_BYTE2BIT_FACTOR);
-    g_pvBuf = YAPP_Malloc(lBytesPerSubInt, sizeof(char), YAPP_FALSE);
-    if (NULL == g_pvBuf)
-    {
-        (void) fprintf(stderr,
-                       "ERROR: Memory allocation failed! %s!\n",
-                       strerror(errno));
-        (void) fits_close_file(pstFileData, &iStatus);
-        YAPP_CleanUp();
-        return YAPP_RET_ERROR;
-    }
+            /* write metadata */
+            iFormat = YAPP_FORMAT_FIL;
+            iRet = YAPP_WriteMetadata(acFileOut, iFormat, stYUM);
+            if (iRet != YAPP_RET_SUCCESS)
+            {
+                (void) fprintf(stderr,
+                               "ERROR: Writing metadata failed for file %s!\n",
+                               acFileOut);
+                YAPP_CleanUp();
+                return YAPP_RET_ERROR;
+            }
+        }
 
-    /* open .fil file */
-    g_pFData = fopen(acFileOut, "a");
-    if (NULL == g_pFData)
-    {
-        (void) fprintf(stderr,
-                       "ERROR: Opening file %s failed! %s.\n",
-                       acFileOut,
-                       strerror(errno));
-        (void) fits_close_file(pstFileData, &iStatus);
-        YAPP_CleanUp();
-        return YAPP_RET_ERROR;
-    }
-
-    /* read data */
-    switch (stYUM.iNumBits)
-    {
-        case YAPP_SAMPSIZE_8:
-            iDataType = TBYTE;
-            break;
-
-        case YAPP_SAMPSIZE_16:
-            iDataType = TSHORT;
-            break;
-
-        default:
-            (void) fprintf(stderr, "ERROR: Unexpected number of bits!\n");
-            (void) fits_close_file(pstFileData, &iStatus);
+        /*  open PSRFITS file */
+        (void) fits_open_file(&pstFileData, pcFileSpec, READONLY, &iStatus);
+        if  (iStatus != 0)
+        {
+            fits_get_errstatus(iStatus, acErrMsg); 
+            (void) fprintf(stderr, "ERROR: Opening file failed! %s\n", acErrMsg);
             YAPP_CleanUp();
             return YAPP_RET_ERROR;
-    }
-    for (i = 1; i <= iNumSubInt; ++i)
-    {
-        (void) fits_read_col(pstFileData,
-                             iDataType,
-                             iColNum,
-                             i,
-                             1,
-                             (long int) stYUM.iNumChans * iSampsPerSubInt,
-                             NULL,
-                             g_pvBuf,
-                             NULL,
-                             &iStatus);
-        if (iStatus != 0)
+        }
+        /* read SUBINT HDU header to get data parameters */
+        (void) fits_movnam_hdu(pstFileData,
+                               BINARY_TBL,
+                               YAPP_PF_HDUNAME_SUBINT,
+                               0,
+                               &iStatus);
+        if  (iStatus != 0)
         {
             fits_get_errstatus(iStatus, acErrMsg); 
             (void) fprintf(stderr,
-                           "ERROR: Getting column number failed! %s\n",
+                           "ERROR: Moving to HDU %s failed! %s\n",
+                           YAPP_PF_HDUNAME_SUBINT,
                            acErrMsg);
             (void) fits_close_file(pstFileData, &iStatus);
             YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
-        (void) fwrite(g_pvBuf, sizeof(char), lBytesPerSubInt, g_pFData);
+        /* NOTE: the number of rows may be different in the last file, so this
+                 needs to be read for every file */
+        (void) fits_read_key(pstFileData,
+                             TINT,
+                             YAPP_PF_LABEL_NSUBINT,
+                             &iNumSubInt,
+                             NULL,
+                             &iStatus);
+        if (cIsFirst)
+        {
+            (void) fits_read_key(pstFileData,
+                                 TINT,
+                                 YAPP_PF_LABEL_NSBLK,
+                                 &iSampsPerSubInt,
+                                 NULL,
+                                 &iStatus);
+            (void) fits_get_colnum(pstFileData,
+                                   CASESEN,
+                                   YAPP_PF_LABEL_DATA,
+                                   &iColNum,
+                                   &iStatus);
+            if (iStatus != 0)
+            {
+                fits_get_errstatus(iStatus, acErrMsg); 
+                (void) fprintf(stderr,
+                               "ERROR: Getting column number failed! %s\n",
+                               acErrMsg);
+                (void) fits_close_file(pstFileData, &iStatus);
+                YAPP_CleanUp();
+                return YAPP_RET_ERROR;
+            }
+
+            /* allocate memory for data array */
+            lBytesPerSubInt = (long int) iSampsPerSubInt * stYUM.iNumChans
+                              * (stYUM.iNumBits / YAPP_BYTE2BIT_FACTOR);
+            g_pvBuf = YAPP_Malloc(lBytesPerSubInt, sizeof(char), YAPP_FALSE);
+            if (NULL == g_pvBuf)
+            {
+                (void) fprintf(stderr,
+                               "ERROR: Memory allocation failed! %s!\n",
+                               strerror(errno));
+                (void) fits_close_file(pstFileData, &iStatus);
+                YAPP_CleanUp();
+                return YAPP_RET_ERROR;
+            }
+
+            /* open .fil file */
+            g_pFData = fopen(acFileOut, "a");
+            if (NULL == g_pFData)
+            {
+                (void) fprintf(stderr,
+                               "ERROR: Opening file %s failed! %s.\n",
+                               acFileOut,
+                               strerror(errno));
+                (void) fits_close_file(pstFileData, &iStatus);
+                YAPP_CleanUp();
+                return YAPP_RET_ERROR;
+            }
+
+            /* read data */
+            switch (stYUM.iNumBits)
+            {
+                case YAPP_SAMPSIZE_8:
+                    iDataType = TBYTE;
+                    break;
+
+                case YAPP_SAMPSIZE_16:
+                    iDataType = TSHORT;
+                    break;
+
+                default:
+                    (void) fprintf(stderr,
+                                   "ERROR: Unexpected number of bits!\n");
+                    (void) fits_close_file(pstFileData, &iStatus);
+                    YAPP_CleanUp();
+                    return YAPP_RET_ERROR;
+            }
+        }
+        for (i = 1; i <= iNumSubInt; ++i)
+        {
+            (void) fits_read_col(pstFileData,
+                                 iDataType,
+                                 iColNum,
+                                 i,
+                                 1,
+                                 (long int) stYUM.iNumChans * iSampsPerSubInt,
+                                 NULL,
+                                 g_pvBuf,
+                                 NULL,
+                                 &iStatus);
+            if (iStatus != 0)
+            {
+                fits_get_errstatus(iStatus, acErrMsg); 
+                (void) fprintf(stderr,
+                               "ERROR: Getting column number failed! %s\n",
+                               acErrMsg);
+                (void) fits_close_file(pstFileData, &iStatus);
+                YAPP_CleanUp();
+                return YAPP_RET_ERROR;
+            }
+            (void) fwrite(g_pvBuf, sizeof(char), lBytesPerSubInt, g_pFData);
+        }
+
+        (void) fits_close_file(pstFileData, &iStatus);
+        cIsFirst = YAPP_FALSE;
+        ++iNextOpt;
     }
 
-    (void) fits_close_file(pstFileData, &iStatus);
+    (void) printf("\n");
+
+    /* clean up */
     YAPP_CleanUp();
 
     return YAPP_RET_SUCCESS;
@@ -296,16 +313,10 @@ int main(int argc, char *argv[])
  */
 void PrintUsage(const char *pcProgName)
 {
-    (void) printf("Usage: %s [options] <data-file>\n",
+    (void) printf("Usage: %s [options] <data-files>\n",
                   pcProgName);
     (void) printf("    -h  --help                           ");
     (void) printf("Display this usage information\n");
-    (void) printf("    -n  --nfiles <nfiles>                ");
-    (void) printf("Number of files in the sequence to be\n");
-    (void) printf("                                         ");
-    (void) printf("converted\n");
-    (void) printf("                                         ");
-    (void) printf("(default is all)\n");
     (void) printf("    -v  --version                        ");
     (void) printf("Display the version\n");
 

@@ -25,8 +25,8 @@ YAPP also comes with the following utilities:
     yapp_fits2fil       : Converts PSRFITS data to SIGPROC '.fil'
     yapp_dat2tim        : Converts PRESTO '.dat' to SIGPROC '.tim'
 
-The supported file formats are are PSRFITS, DAS '.spec', SIGPROC '.fil',
-SIGPROC '.tim', and PRESTO '.dat'.
+The supported file formats are are DAS '.spec', SIGPROC '.fil', and SIGPROC
+'.tim', with partial support for PSRFITS and PRESTO '.dat'.
 
 For detailed usage instructions, refer the man pages and/or online
 documentation.

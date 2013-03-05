@@ -2127,11 +2127,11 @@ int YAPP_WriteMetadata(char *pcFileData, int iFormat, YUM_t stYUM)
     iTemp = YAPP_SP_GetObsIDFromName(stYUM.acSite);
     if (YAPP_RET_ERROR == iTemp)
     {
-        /* could not identify observatory, set it to Arecibo */
+        /* could not identify observatory, set it to 'unknown/fake' */
         (void) printf("WARNING: "
                       "Identifying observatory failed, setting site to %s!\n",
-                      YAPP_SP_OBS_AO);
-        iTemp = YAPP_SP_OBSID_AO;
+                      YAPP_SP_OBS_FAKE);
+        iTemp = YAPP_SP_OBSID_FAKE;
     }
     iLen = strlen(YAPP_SP_LABEL_OBSID);
     (void) fwrite(&iLen, sizeof(iLen), 1, pFData);

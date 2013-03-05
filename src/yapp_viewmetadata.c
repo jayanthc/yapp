@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
 
     /* handle expanded wildcards */
     iNextOpt = optind;
-    while ((argc - iNextOpt) != 0)  /* handle expanded wildcards */
+    while ((argc - iNextOpt) != 0)
     {
         /* get the input filename */
         pcFileSpec = argv[iNextOpt];
@@ -97,6 +97,15 @@ int main(int argc, char *argv[])
         {
             (void) fprintf(stderr,
                            "ERROR: File type determination failed!\n");
+            return YAPP_RET_ERROR;
+        }
+        if (!((YAPP_FORMAT_PSRFITS == iFormat)
+              || (YAPP_FORMAT_FIL == iFormat)
+              || (YAPP_FORMAT_SPEC == iFormat)
+              || (YAPP_FORMAT_DTS_TIM == iFormat)))
+        {
+            (void) fprintf(stderr,
+                           "ERROR: Invalid file type!\n");
             return YAPP_RET_ERROR;
         }
 

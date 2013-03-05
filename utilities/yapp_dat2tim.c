@@ -28,6 +28,7 @@ int main(int argc, char *argv[])
     char *pcFilename = NULL;
     FILE *pFTim = NULL;
     char acFileTim[LEN_GENSTRING] = {0};
+    int iFormat = DEF_FORMAT;
     YUM_t stYUM = {{0}};
     int iRet = EXIT_SUCCESS;
 
@@ -94,6 +95,21 @@ int main(int argc, char *argv[])
 
     /* get the input filename */
     pcFileData = argv[optind];
+
+    /* determine the file type */
+    iFormat = YAPP_GetFileType(pcFileData);
+    if (YAPP_RET_ERROR == iFormat)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: File type determination failed!\n");
+        return YAPP_RET_ERROR;
+    }
+    if (iFormat != YAPP_FORMAT_DTS_DAT)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Invalid file type!\n");
+        return YAPP_RET_ERROR;
+    }
 
     pcFilename = YAPP_GetFilenameFromPath(pcFileData, EXT_DAT);
 

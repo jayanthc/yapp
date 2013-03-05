@@ -97,6 +97,7 @@ int main(int argc, char *argv[])
     YAPP_SIGPROC_HEADER stHeader = {{0}};
     char acLabel[LEN_GENSTRING] = {0};
     int iLen = 0;
+    int iTemp = 0;
 #if 0
     double dTNow = 0.0;
     int iTimeSect = 0;
@@ -789,7 +790,7 @@ int main(int argc, char *argv[])
     {
         (void) strcat(acFileDedisp, EXT_TIM);
     }
-    else if (YAPP_FORMAT_DTS_TIM == iOutputFormat)
+    else if (YAPP_FORMAT_DTS_DDS == iOutputFormat)
     {
         (void) strcat(acFileDedisp, EXT_DEDISPSPEC);
     }
@@ -902,7 +903,14 @@ int main(int argc, char *argv[])
             (void) fwrite(&iLen, sizeof(iLen), 1, pFDedispData);
             (void) strcpy(acLabel, YAPP_SP_LABEL_CHANBW);
             (void) fwrite(acLabel, sizeof(char), iLen, pFDedispData);
-            stHeader.dChanBW = (double) stYUM.fChanBW;
+            if (stYUM.cIsBandFlipped)
+            {
+                stHeader.dChanBW = (double) (-stYUM.fChanBW);
+            }
+            else
+            {
+                stHeader.dChanBW = (double) stYUM.fChanBW;
+            }
             (void) fwrite(&stHeader.dChanBW, sizeof(stHeader.dChanBW), 1, pFDedispData);
         }
 
@@ -911,15 +919,8 @@ int main(int argc, char *argv[])
         (void) fwrite(&iLen, sizeof(iLen), 1, pFDedispData);
         (void) strcpy(acLabel, "nbits");
         (void) fwrite(acLabel, sizeof(char), iLen, pFDedispData);
-        if (YAPP_FORMAT_FIL == iOutputFormat)
-        {
-            stHeader.iNumBits = stYUM.iNumBits;
-        }
-        else
-        {
-            /* set the number of bits per sample to 32 */
-            stHeader.iNumBits = YAPP_SAMPSIZE_32;
-        }
+        /* set the number of bits per sample to 32 */
+        stHeader.iNumBits = YAPP_SAMPSIZE_32;
         (void) fwrite(&stHeader.iNumBits,
                       sizeof(stHeader.iNumBits),
                       1,
@@ -964,8 +965,16 @@ int main(int argc, char *argv[])
         (void) fwrite(&iLen, sizeof(iLen), 1, pFDedispData);
         (void) strcpy(acLabel, "telescope_id");
         (void) fwrite(acLabel, sizeof(char), iLen, pFDedispData);
-        //temp
-        stHeader.iObsID = 0;    /* 'unknown type' in SIGPROC */
+        iTemp = YAPP_SP_GetObsIDFromName(stYUM.acSite);
+        if (YAPP_RET_ERROR == iTemp)
+        {
+            /* could not identify observatory, set it to 'unknown/fake' */
+            (void) printf("WARNING: "
+                          "Identifying observatory failed, setting site to %s!\n",
+                          YAPP_SP_OBS_FAKE);
+            iTemp = YAPP_SP_OBSID_FAKE;
+        }
+        stHeader.iObsID = iTemp;
         (void) fwrite(&stHeader.iObsID,
                       sizeof(stHeader.iObsID),
                       1,
@@ -1379,6 +1388,7 @@ int main(int argc, char *argv[])
            disk if required */
         if (YAPP_FORMAT_FIL == iOutputFormat)
         {
+            /* TODO: write in native data type? */
             (void) fwrite(pfPriBuf,
                           sizeof(float),
                           iNumChans * iBlockSize,
