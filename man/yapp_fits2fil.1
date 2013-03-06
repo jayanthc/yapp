@@ -1,0 +1,60 @@
+.\#
+.\# Yet Another Pulsar Processor Commands
+.\# yapp_fits2fil Manual Page
+.\#
+.\# Created by Jayanth Chennamangalam on 2013.03.05
+.\#
+
+.TH YAPP_FITS2FIL 1 "2013-03-05" "YAPP 3.0-beta" \
+"Yet Another Pulsar Processor"
+
+
+.SH NAME
+yapp_fits2fil \- convert search-mode PSRFITS to SIGPROC '.fil'
+
+
+.SH SYNOPSIS
+.B yapp_fits2fil
+[options]
+.I data-files
+
+
+.SH DESCRIPTION
+Converts one or a set of search-mode PSRFITS files to a single SIGPROC '.fil' \
+file. Supports 4-, 8-, 16-, and 32-bit PSRFITS files.
+
+
+.SH OPTIONS
+.TP
+.B \-h, --help
+Display a short help text.
+.TP
+.B \-v, --version
+Display the version.
+
+
+.TP
+The data file name may be a composed of standard shell wildcards such as * or \
+?.
+
+
+.SH EXAMPLE
+.TP
+Converts the files data.000.fits, data.001.fits, and data.002.fits to \
+data.000.fil, assuming that there are no other files in the current directory \
+that match the wildcard expansion of 'data.0*.fits'.
+.TP
+yapp_fits2fil data.0*.fits
+
+
+.SH SEE ALSO
+.BR yapp_viewmetadata (1),
+.BR yapp_viewdata (1),
+.BR yapp_dedisperse (1),
+.BR yapp_fold (1)
+
+
+.SH AUTHOR
+.TP 
+Written by Jayanth Chennamangalam. http://jayanthc.github.com/yapp/
+

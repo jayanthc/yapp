@@ -1,20 +1,20 @@
 .\#
 .\# Yet Another Pulsar Processor Commands
-.\# yapp_gencoeff.py Manual Page
+.\# yapp_genpfbcoeff.py Manual Page
 .\#
 .\# Created by Jayanth Chennamangalam on 2012.12.18
 .\#
 
-.TH YAPP_GENCOEFF.PY 1 "2013-02-02" "YAPP 2.2-beta" \
+.TH YAPP_GENPFBCOEFF.PY 1 "2013-03-05" "YAPP 3.0-beta" \
 "Yet Another Pulsar Processor"
 
 
 .SH NAME
-yapp_gencoeff.py \- generate polyphase filter coefficients
+yapp_genpfbcoeff.py \- generate polyphase filter coefficients
 
 
 .SH SYNOPSIS
-.B yapp_gencoeff.py
+.B yapp_genpfbcoeff.py
 [options]
 
 
@@ -33,7 +33,7 @@ coeff_ntaps_nfft_nsubbands.dat. The number of sub-bands, nsubbands is always \
 .B \-h, --help
 Display a short help text.
 .TP
-.B \-n, --nfft \fIN
+.B \-n, --nfft \fInfft
 Number of points in FFT (default is 4096).
 .TP
 .B \-t, --ntaps \fIntaps
@@ -49,7 +49,7 @@ The following generates filter coefficients for a 4-tap filter with 1024 FFT \
 points. It creates a file named coeff_4_1024_1.dat in the current working \
 directory, and also displays a plot of the filter coefficients.
 .TP
-yapp_gencoeff.py -n 1024 -t 4 -g
+yapp_genpfbcoeff.py -n 1024 -t 4 -g
 
 
 .SH SEE ALSO

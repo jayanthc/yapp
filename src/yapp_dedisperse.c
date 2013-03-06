@@ -48,7 +48,7 @@ extern const char *g_pcVersion;
 extern int g_iPGDev;
 
 /* data file */
-extern FILE *g_pFSpec;
+extern FILE *g_pFData;
 
 /* the following are global only to enable cleaning up in case of abnormal
    termination, such as those triggered by SIGINT or SIGTERM */
@@ -96,6 +96,7 @@ int main(int argc, char *argv[])
     YAPP_SIGPROC_HEADER stHeader = {{0}};
     char acLabel[LEN_GENSTRING] = {0};
     int iLen = 0;
+    int iTemp = 0;
     float *pfTimeSectGain = NULL;
     float *pfPriBuf = NULL;
     float *pfSecBuf = NULL;
@@ -185,6 +186,14 @@ int main(int argc, char *argv[])
             case 'n':   /* -n or --nsamp */
                 /* set option */
                 iBlockSize = atoi(optarg);
+                /* validate - PGPLOT does not like iBlockSize = 1 */
+                if (iBlockSize < 2)
+                {
+                    (void) fprintf(stderr,
+                                   "ERROR: Number of samples must be > 1!\n");
+                    PrintUsage(pcProgName);
+                    return YAPP_RET_ERROR;
+                }
                 break;
 
             case 'd':   /* -d or --dm */
@@ -354,18 +363,15 @@ int main(int argc, char *argv[])
     /* calculate bytes to skip and read */
     if (0.0 == dDataProcTime)
     {
-        dDataProcTime = iTimeSamps * dTSampInSec;
+        dDataProcTime = (iTimeSamps * dTSampInSec) - dDataSkipTime;
     }
-
     /* check if the input time duration is less than the length of the
        data */
-    if (dDataProcTime > (iTimeSamps * dTSampInSec))
+    else if (dDataProcTime > (iTimeSamps * dTSampInSec))
     {
         (void) fprintf(stderr,
-                       "ERROR: Input time is longer than length of "
+                       "WARNING: Input time is longer than length of "
                        "data!\n");
-        YAPP_CleanUp();
-        return YAPP_RET_ERROR;
     }
 
     lBytesToSkip = (long) floor((dDataSkipTime / dTSampInSec)
@@ -379,10 +385,11 @@ int main(int argc, char *argv[])
 
     if (lBytesToSkip >= lDataSizeTotal)
     {
-        (void) printf("WARNING: Data to be skipped is greater than or equal to "
-                      " the size of the file! Terminating.\n");
+        (void) fprintf(stderr,
+                       "ERROR: Data to be skipped is greater than or equal to "
+                       "the size of the file!\n");
         YAPP_CleanUp();
-        return YAPP_RET_SUCCESS;
+        return YAPP_RET_ERROR;
     }
 
     if ((lBytesToSkip + lBytesToProc) > lDataSizeTotal)
@@ -390,6 +397,8 @@ int main(int argc, char *argv[])
         (void) printf("WARNING: Total data to be read (skipped and processed) "
                       "is more than the size of the file! ");
         lBytesToProc = lDataSizeTotal - lBytesToSkip;
+        dDataProcTime = ((double) lBytesToProc * dTSampInSec)
+                        / (iNumChans * fSampSize);
         (void) printf("Newly calculated size of data to be processed: %ld "
                       "bytes\n",
                       lBytesToProc);
@@ -468,7 +477,7 @@ int main(int argc, char *argv[])
                   (stYUM.iTimeSamps * dTSampInSec));
 
     iTimeSampsToProc = (int) (lBytesToProc / (iNumChans * fSampSize));
-    iNumReads = (int) floorf(((float) iTimeSampsToProc) / iBlockSize);
+    iNumReads = (int) ceilf(((float) iTimeSampsToProc) / iBlockSize);
     iTotNumReads = iNumReads;
 
     /* optimisation - store some commonly used values in variables */
@@ -517,9 +526,9 @@ int main(int argc, char *argv[])
     /* set all elements to 'YAPP_TRUE' */
     (void) memset(g_pcIsTimeGood, YAPP_TRUE, iTimeSampsToProc);
 
-    /* open the dynamic spectrum data file for reading */
-    g_pFSpec = fopen(pcFileSpec, "r");
-    if (NULL == g_pFSpec)
+    /* open the data file for reading */
+    g_pFData = fopen(pcFileSpec, "r");
+    if (NULL == g_pFData)
     {
         (void) fprintf(stderr,
                        "ERROR: Opening file %s failed! %s.\n",
@@ -539,7 +548,6 @@ int main(int argc, char *argv[])
         (void) fprintf(stderr,
                        "ERROR: Memory allocation failed! %s!\n",
                        strerror(errno));
-        (void) fclose(g_pFSpec);
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
@@ -551,7 +559,6 @@ int main(int argc, char *argv[])
         (void) fprintf(stderr,
                        "ERROR: Memory allocation failed! %s!\n",
                        strerror(errno));
-        (void) fclose(g_pFSpec);
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
@@ -568,7 +575,6 @@ int main(int argc, char *argv[])
         (void) fprintf(stderr,
                        "ERROR: Memory allocation failed! %s!\n",
                        strerror(errno));
-        (void) fclose(g_pFSpec);
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
@@ -577,14 +583,14 @@ int main(int argc, char *argv[])
     {
         /* TODO: Need to do this only if the file contains the header */
         /* skip the header */
-        (void) fseek(g_pFSpec, (long) stYUM.iHeaderLen, SEEK_SET);
+        (void) fseek(g_pFData, (long) stYUM.iHeaderLen, SEEK_SET);
         /* skip data, if any are to be skipped */
-        (void) fseek(g_pFSpec, lBytesToSkip, SEEK_CUR);
+        (void) fseek(g_pFData, lBytesToSkip, SEEK_CUR);
     }
     else
     {
         /* skip data, if any are to be skipped */
-        (void) fseek(g_pFSpec, lBytesToSkip, SEEK_SET);
+        (void) fseek(g_pFData, lBytesToSkip, SEEK_SET);
     }
 
     /* read the first block of data */
@@ -621,7 +627,6 @@ int main(int argc, char *argv[])
                 (void) fprintf(stderr,
                                "ERROR: Opening graphics device %s failed!\n",
                                acDev);
-                (void) fclose(g_pFSpec);
                 YAPP_CleanUp();
                 return YAPP_RET_ERROR;
             }
@@ -635,7 +640,6 @@ int main(int argc, char *argv[])
                 (void) fprintf(stderr,
                                "ERROR: Opening graphics device %s failed!\n",
                                PG_DEV);
-                (void) fclose(g_pFSpec);
                 YAPP_CleanUp();
                 return YAPP_RET_ERROR;
             }
@@ -658,7 +662,6 @@ int main(int argc, char *argv[])
                            "ERROR: Memory allocation failed! %s!\n",
                            strerror(errno));
             cpgclos();
-            (void) fclose(g_pFSpec);
             YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
@@ -671,7 +674,6 @@ int main(int argc, char *argv[])
                            "ERROR: Memory allocation failed! %s!\n",
                            strerror(errno));
             cpgclos();
-            (void) fclose(g_pFSpec);
             YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
@@ -700,7 +702,6 @@ int main(int argc, char *argv[])
                            "ERROR: Memory allocation failed! %s!\n",
                            strerror(errno));
             cpgclos();
-            (void) fclose(g_pFSpec);
             YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
@@ -721,7 +722,7 @@ int main(int argc, char *argv[])
     {
         (void) strcat(acFileDedisp, EXT_TIM);
     }
-    else if (YAPP_FORMAT_DTS_TIM == iOutputFormat)
+    else if (YAPP_FORMAT_DTS_DDS == iOutputFormat)
     {
         (void) strcat(acFileDedisp, EXT_DEDISPSPEC);
     }
@@ -739,7 +740,6 @@ int main(int argc, char *argv[])
                 "ERROR: Opening file %s failed! %s.\n",
                 acFileDedisp,
                 strerror(errno));
-        (void) fclose(g_pFSpec);
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
@@ -834,7 +834,14 @@ int main(int argc, char *argv[])
             (void) fwrite(&iLen, sizeof(iLen), 1, pFDedispData);
             (void) strcpy(acLabel, YAPP_SP_LABEL_CHANBW);
             (void) fwrite(acLabel, sizeof(char), iLen, pFDedispData);
-            stHeader.dChanBW = (double) stYUM.fChanBW;
+            if (stYUM.cIsBandFlipped)
+            {
+                stHeader.dChanBW = (double) (-stYUM.fChanBW);
+            }
+            else
+            {
+                stHeader.dChanBW = (double) stYUM.fChanBW;
+            }
             (void) fwrite(&stHeader.dChanBW, sizeof(stHeader.dChanBW), 1, pFDedispData);
         }
 
@@ -843,15 +850,8 @@ int main(int argc, char *argv[])
         (void) fwrite(&iLen, sizeof(iLen), 1, pFDedispData);
         (void) strcpy(acLabel, "nbits");
         (void) fwrite(acLabel, sizeof(char), iLen, pFDedispData);
-        if (YAPP_FORMAT_FIL == iOutputFormat)
-        {
-            stHeader.iNumBits = stYUM.iNumBits;
-        }
-        else
-        {
-            /* set the number of bits per sample to 32 */
-            stHeader.iNumBits = YAPP_SAMPSIZE_32;
-        }
+        /* set the number of bits per sample to 32 */
+        stHeader.iNumBits = YAPP_SAMPSIZE_32;
         (void) fwrite(&stHeader.iNumBits,
                       sizeof(stHeader.iNumBits),
                       1,
@@ -896,8 +896,16 @@ int main(int argc, char *argv[])
         (void) fwrite(&iLen, sizeof(iLen), 1, pFDedispData);
         (void) strcpy(acLabel, "telescope_id");
         (void) fwrite(acLabel, sizeof(char), iLen, pFDedispData);
-        //temp
-        stHeader.iObsID = 0;    /* 'unknown type' in SIGPROC */
+        iTemp = YAPP_SP_GetObsIDFromName(stYUM.acSite);
+        if (YAPP_RET_ERROR == iTemp)
+        {
+            /* could not identify observatory, set it to 'unknown/fake' */
+            (void) printf("WARNING: "
+                          "Identifying observatory failed, setting site to %s!\n",
+                          YAPP_SP_OBS_FAKE);
+            iTemp = YAPP_SP_OBSID_FAKE;
+        }
+        stHeader.iObsID = iTemp;
         (void) fwrite(&stHeader.iObsID,
                       sizeof(stHeader.iObsID),
                       1,
@@ -1076,7 +1084,7 @@ int main(int argc, char *argv[])
                                            iTotSampsPerBlock);
                 pfSecBuf = g_pfBuf0;
             }
-            if (ferror(g_pFSpec))
+            if (ferror(g_pFData))
             {
                 (void) fprintf(stderr, "ERROR: File read failed!\n");
                 if (cHasGraphics)
@@ -1084,7 +1092,6 @@ int main(int argc, char *argv[])
                     cpgclos();
                 }
                 (void) fclose(pFDedispData);
-                (void) fclose(g_pFSpec);
                 YAPP_CleanUp();
                 return YAPP_RET_ERROR;
             }
@@ -1358,8 +1365,6 @@ int main(int argc, char *argv[])
 
                             cpgclos();
                             (void) fclose(pFDedispData);
-                            (void) fclose(g_pFSpec);
-                            g_pFSpec = NULL;
                             YAPP_CleanUp();
                             return YAPP_RET_SUCCESS;
                         }
@@ -1400,8 +1405,6 @@ int main(int argc, char *argv[])
     }
 
     (void) fclose(pFDedispData);
-    (void) fclose(g_pFSpec);
-    g_pFSpec = NULL;
     YAPP_CleanUp();
 
     return YAPP_RET_SUCCESS;

@@ -294,14 +294,13 @@ int main(int argc, char *argv[])
     iTimeSamps = (int) floor(((double) lDataSizeTotal) / fSampSize);
 
     /* calculate bytes to skip and read */
-    if (0 == dDataProcTime)
+    if (0.0 == dDataProcTime)
     {
-        dDataProcTime = iTimeSamps * dTSampInSec;
+        dDataProcTime = (iTimeSamps * dTSampInSec) - dDataSkipTime;
     }
-
     /* check if the input time duration is less than the length of the
        data */
-    if (dDataProcTime > (iTimeSamps * dTSampInSec))
+    else if (dDataProcTime > (iTimeSamps * dTSampInSec))
     {
         (void) fprintf(stderr,
                        "WARNING: Input time is longer than length of "
@@ -315,11 +314,19 @@ int main(int argc, char *argv[])
                                                     /* number of samples */
                            * fSampSize);
 
+    if (lBytesToSkip >= stYUM.lDataSizeTotal)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Data to be skipped is greater than or equal to "
+                       "the size of the file!\n");
+        YAPP_CleanUp();
+        return YAPP_RET_ERROR;
+    }
+
     if ((lBytesToSkip + lBytesToProc) > lDataSizeTotal)
     {
         (void) printf("WARNING: Total data to be read (skipped and processed) "
-                      "%ld, %ld is more than the size of the file! ",
-                       lBytesToSkip, lBytesToProc);
+                      "is more than the size of the file! ");
         lBytesToProc = lDataSizeTotal - lBytesToSkip;
         (void) printf("Newly calculated size of data to be processed: %ld "
                       "bytes\n",

@@ -1,0 +1,85 @@
+.\#
+.\# Yet Another Pulsar Processor Commands
+.\# yapp_filter Manual Page
+.\#
+.\# Created by Jayanth Chennamangalam on 2013.03.05
+.\#
+
+.TH YAPP_FILTER 1 "2013-03-05" "YAPP 3.0-beta" \
+"Yet Another Pulsar Processor"
+
+
+.SH NAME
+yapp_filter \- filter dedispersed time series data
+
+
+.SH SYNOPSIS
+.B yapp_filter
+[options]
+.I data-file
+
+
+.SH DESCRIPTION
+Filters dedispersed time series data to remove low and/or high frequency \
+variations. The data file should be in the SIGPROC .tim format.
+
+While using this program, one should be careful not to over-filter the data \
+as this may lead to fast/slow pulsars being filtered out.
+
+
+.SH OPTIONS
+.TP
+.B \-h, --help
+Display a short help text.
+.TP
+.B \-s, --skip \fItime
+Length of data to be skipped, in seconds (default is 0).
+.TP
+.B \-p, --proc \fItime
+Length of data to be processed, in seconds (default is all data).
+.TP
+.B \-f, --filter \fIfile
+Filter mask filename.
+.TP
+.B \-g, --graphics
+Turn on plotting.
+.TP
+.B \-i, --invert
+Invert background and foreground colours in plots.
+.TP
+.B \-e, --non-interactive
+Run in non-interactive mode.
+.TP
+.B \-v, --version
+Display the version.
+
+
+.SH FILES
+.TP
+This program requires a filter mask file. Filter mask files can be created \
+using the yapp_genfiltermask.py Python script.
+
+
+.SH EXAMPLE
+.TP
+Filters the data in data.tim with a filter mask specified in the file \
+yapp_mask_16384_0.0001_1.0_100.0.dat, with graphics turned on, and in \
+interactive mode. The output is written to data_filtered.tim.
+.TP
+yapp_filter -f yapp_mask_16384_0.0001_1.0_100.0.dat -g data.tim
+
+
+.SH SEE ALSO
+.BR yapp_genfiltermask (1),
+.BR yapp_dat2tim (1),
+.BR yapp_viewmetadata (1),
+.BR yapp_viewdata (1),
+.BR yapp_dedisperse (1),
+.BR yapp_smooth (1),
+.BR yapp_fold (1)
+
+
+.SH AUTHOR
+.TP 
+Written by Jayanth Chennamangalam. http://jayanthc.github.com/yapp/
+

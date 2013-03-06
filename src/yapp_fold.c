@@ -38,7 +38,7 @@ extern const char *g_pcVersion;
 extern int g_iPGDev;
 
 /* data file */
-extern FILE *g_pFSpec;
+extern FILE *g_pFData;
 
 /* the following are global only to enable cleaning up in case of abnormal
    termination, such as those triggered by SIGINT or SIGTERM */
@@ -248,16 +248,15 @@ int main(int argc, char *argv[])
     /* calculate bytes to skip and read */
     if (0.0 == dDataProcTime)
     {
-        dDataProcTime = stYUM.iTimeSamps * dTSampInSec;
+        dDataProcTime = (stYUM.iTimeSamps * dTSampInSec) - dDataSkipTime;
     }
     /* check if the input time duration is less than the length of the
        data */
     else if (dDataProcTime > (stYUM.iTimeSamps * dTSampInSec))
     {
         (void) fprintf(stderr,
-                       "ERROR: Input time is longer than length of data!\n");
-        YAPP_CleanUp();
-        return YAPP_RET_ERROR;
+                       "WARNING: Input time is longer than length of "
+                       "data!\n");
     }
 
     lBytesToSkip = (long) floor((dDataSkipTime / dTSampInSec)
@@ -293,10 +292,11 @@ int main(int argc, char *argv[])
 
     if (lBytesToSkip >= stYUM.lDataSizeTotal)
     {
-        (void) printf("WARNING: Data to be skipped is greater than or equal to "
-                      "the size of the file! Terminating.\n");
+        (void) fprintf(stderr,
+                       "ERROR: Data to be skipped is greater than or equal to "
+                       "the size of the file!\n");
         YAPP_CleanUp();
-        return YAPP_RET_SUCCESS;
+        return YAPP_RET_ERROR;
     }
 
     if ((lBytesToSkip + lBytesToProc) > stYUM.lDataSizeTotal)
@@ -304,9 +304,17 @@ int main(int argc, char *argv[])
         (void) printf("WARNING: Total data to be read (skipped and processed) "
                       "is more than the size of the file! ");
         lBytesToProc = stYUM.lDataSizeTotal - lBytesToSkip;
+        dDataProcTime = ((double) lBytesToProc * dTSampInSec)
+                        / (stYUM.iNumChans * stYUM.fSampSize);
         (void) printf("Newly calculated size of data to be processed: %ld "
                       "bytes\n",
                       lBytesToProc);
+    }
+
+    /* change block size according to the number of samples to be processed */
+    if ((long) iBlockSize > lBytesToProc)
+    {
+        iBlockSize = (int) ceil(dDataProcTime / dTSampInSec);
     }
 
     iTimeSampsSkip = (int) (lBytesToSkip / (stYUM.iNumChans * stYUM.fSampSize));
@@ -322,14 +330,7 @@ int main(int argc, char *argv[])
                   (stYUM.iTimeSamps * dTSampInSec));
 
     iTimeSampsToProc = (int) (lBytesToProc / (stYUM.iNumChans * stYUM.fSampSize));
-    if (iTimeSampsToProc <= iBlockSize)
-    {
-        iNumReads = 1;
-    }
-    else
-    {
-        iNumReads = (int) floorf(((float) iTimeSampsToProc) / iBlockSize);
-    }
+    iNumReads = (int) ceilf(((float) iTimeSampsToProc) / iBlockSize);
     iTotNumReads = iNumReads;
 
     /* optimisation - store some commonly used values in variables */
@@ -358,7 +359,8 @@ int main(int argc, char *argv[])
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
-    if ((iFormat != YAPP_FORMAT_DTS_TIM) || (iFormat != YAPP_FORMAT_DTS_DDS))
+    if (!((YAPP_FORMAT_DTS_TIM == iFormat)
+          || (YAPP_FORMAT_DTS_DDS != iFormat)))
     {
         fStatBW = stYUM.iNumGoodChans * stYUM.fChanBW;  /* in MHz */
         (void) printf("Usable bandwidth                  : %g MHz\n", fStatBW);
@@ -383,8 +385,8 @@ int main(int argc, char *argv[])
     (void) memset(g_pcIsTimeGood, YAPP_TRUE, iTimeSampsToProc);
 
     /* open the data file for reading */
-    g_pFSpec = fopen(pcFileData, "r");
-    if (NULL == g_pFSpec)
+    g_pFData = fopen(pcFileData, "r");
+    if (NULL == g_pFData)
     {
         (void) fprintf(stderr,
                        "ERROR: Opening file %s failed! %s.\n",
@@ -417,14 +419,14 @@ int main(int argc, char *argv[])
     {
         /* TODO: Need to do this only if the file contains the header */
         /* skip the header */
-        (void) fseek(g_pFSpec, (long) stYUM.iHeaderLen, SEEK_SET);
+        (void) fseek(g_pFData, (long) stYUM.iHeaderLen, SEEK_SET);
         /* skip data, if any are to be skipped */
-        (void) fseek(g_pFSpec, lBytesToSkip, SEEK_CUR);
+        (void) fseek(g_pFData, lBytesToSkip, SEEK_CUR);
     }
     else
     {
         /* skip data, if any are to be skipped */
-        (void) fseek(g_pFSpec, lBytesToSkip, SEEK_SET);
+        (void) fseek(g_pFData, lBytesToSkip, SEEK_SET);
     }
 
     /* open the PGPLOT graphics device */
@@ -527,8 +529,8 @@ int main(int argc, char *argv[])
             return YAPP_RET_ERROR;
         }
         g_pfYAxis = (float *) YAPP_Malloc(stYUM.iNumChans,
-                                         sizeof(float),
-                                         YAPP_FALSE);
+                                          sizeof(float),
+                                          YAPP_FALSE);
         if (NULL == g_pfYAxis)
         {
             (void) fprintf(stderr,

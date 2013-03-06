@@ -1,0 +1,69 @@
+.\#
+.\# Yet Another Pulsar Processor Commands
+.\# yapp_genfiltermask.py Manual Page
+.\#
+.\# Created by Jayanth Chennamangalam on 2012.12.18
+.\#
+
+.TH YAPP_GENFILTERMASK.PY 1 "2013-03-05" "YAPP 3.0-beta" \
+"Yet Another Pulsar Processor"
+
+
+.SH NAME
+yapp_genfiltermask.py \- generate filter mask
+
+
+.SH SYNOPSIS
+.B yapp_genfiltermask.py
+[options]
+
+
+.SH DESCRIPTION
+This Python script generates a filter mask (frequency response) for \
+yapp_filter. The format of the filename is \
+yapp_mask_nfft_tsamp_lower_upper.dat. The mask coefficients are signed bytes.
+
+
+.SH OPTIONS
+.TP
+.B \-h, --help
+Display a short help text.
+.TP
+.B \-n, --nfft \fInfft
+Length of FFT used in yapp_filter (default is 4096).
+.TP
+.B \-t, --tsamp \fItsamp
+Sampling time in seconds.
+.TP
+.B \-l, --lower \fIfreq
+Lower cut-off frequency in Hz (default is 0.1 Hz).
+.TP
+.B \-u, --upper \fIfreq
+Upper cut-off frequency in Hz (default is 1000 Hz).
+.TP
+.B \-g, --graphics
+Turn on plotting.
+
+.TP
+The flag \-t (or --tsamp) is a required argument.
+
+
+.SH EXAMPLE
+.TP
+The following generates a filter mask to run yapp_filter with 16384 FFT \
+points, with a lower cut-off frequency of 1 Hz and an upper cut-off frequency \
+of 100 Hz, for data with a sampling time of 10 microseconds. It creates a \
+file named yapp_mask_16384_0.0001_1.0_100.0.dat in the current working \
+directory, and also displays a plot of the filter mask.
+.TP
+yapp_genfiltermask.py -n 16384 -t 0.0001 -l 1 -u 100 -g
+
+
+.SH SEE ALSO
+.BR yapp_filter (1)
+
+
+.SH AUTHOR
+.TP 
+Written by Jayanth Chennamangalam. http://jayanthc.github.com/yapp/
+
