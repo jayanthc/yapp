@@ -5,7 +5,7 @@
 .\# Created by Jayanth Chennamangalam on 2012.10.14
 .\#
 
-.TH YAPP_FT 1 "2013-02-02" "YAPP 2.2-beta" \
+.TH YAPP_FT 1 "2013-03-05" "YAPP 3.0-beta" \
 "Yet Another Pulsar Processor"
 
 
@@ -84,7 +84,7 @@ The flags \-l (or --tsamp) and \-f (or --centre-freq) are required arguments.
 .TP
 If running with PFB on, this program requires a filter coefficients file to \
 be present in the current directory. Filter coefficients files can be created \
-using the yapp_gencoeff.py Python script.
+using the yapp_genpfbcoeff.py Python script.
 
 
 .SH EXAMPLE
@@ -101,11 +101,10 @@ yapp_ft -l 0.00000078125 -f 1420.405751 -b -n 1024 -a 10 -o GBT -r J1921+2153 ra
 
 
 .SH SEE ALSO
-.BR yapp_gencoeff.py (1),
+.BR yapp_genpfbcoeff.py (1),
 .BR yapp_viewmetadata (1),
 .BR yapp_viewdata (1),
 .BR yapp_dedisperse (1),
-.BR yapp_smooth (1),
 .BR yapp_fold (1)
 
 

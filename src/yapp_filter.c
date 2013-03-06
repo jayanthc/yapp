@@ -404,10 +404,9 @@ int main(int argc, char *argv[])
     /* open the time series data file for reading */
     pcFileOut = YAPP_GetFilenameFromPath(pcFileData, EXT_TIM);
     (void) sprintf(acFileOut,
-                   "%s_%s%gs%s",
+                   "%s_%s%s",
                    pcFileOut,
-                   INFIX_MEDFILTERED,
-                   fWidth,
+                   INFIX_FILTERED,
                    EXT_TIM);
     pFOut = fopen(acFileOut, "w");
     if (NULL == pFOut)
@@ -741,7 +740,7 @@ void PrintUsage(const char *pcProgName)
     (void) printf("processed\n");
     (void) printf("                                         ");
     (void) printf("(default is all)\n");
-    (void) printf("    -f  --filter                         ");
+    (void) printf("    -f  --filter <file>                  ");
     (void) printf("Filter mask filename\n");
     (void) printf("    -g  --graphics                       ");
     (void) printf("Turn on plotting\n");

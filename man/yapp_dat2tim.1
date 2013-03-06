@@ -1,0 +1,57 @@
+.\#
+.\# Yet Another Pulsar Processor Commands
+.\# yapp_dat2tim Manual Page
+.\#
+.\# Created by Jayanth Chennamangalam on 2013.03.05
+.\#
+
+.TH YAPP_DAT2TIM 1 "2013-03-05" "YAPP 3.0-beta" \
+"Yet Another Pulsar Processor"
+
+
+.SH NAME
+yapp_dat2tim \- convert PRESTO '.dat' to SIGPROC '.tim'
+
+
+.SH SYNOPSIS
+.B yapp_dat2tim
+[options]
+.I data-file
+
+
+.SH DESCRIPTION
+Converts dedispersed time series data file format from PRESTO '.dat' to \
+SIGPROC '.tim'. The '.inf' file containing PRESTO header information must be \
+present in the same directory as the '.dat' file.
+
+
+.SH OPTIONS
+.TP
+.B \-h, --help
+Display a short help text.
+.TP
+.B \-v, --version
+Display the version.
+
+
+.SH EXAMPLE
+.TP
+Converts the file data.dat to data.tim, assuming the header file data.inf is \
+present in the current directory.
+.TP
+yapp_dat2tim data.dat
+
+
+.SH SEE ALSO
+.BR yapp_viewmetadata (1),
+.BR yapp_viewdata (1),
+.BR yapp_dedisperse (1),
+.BR yapp_smooth (1),
+.BR yapp_filter (1),
+.BR yapp_fold (1)
+
+
+.SH AUTHOR
+.TP 
+Written by Jayanth Chennamangalam. http://jayanthc.github.com/yapp/
+

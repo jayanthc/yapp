@@ -1388,7 +1388,6 @@ int main(int argc, char *argv[])
            disk if required */
         if (YAPP_FORMAT_FIL == iOutputFormat)
         {
-            /* TODO: write in native data type? */
             (void) fwrite(pfPriBuf,
                           sizeof(float),
                           iNumChans * iBlockSize,

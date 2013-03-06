@@ -22,7 +22,9 @@ def PrintUsage(ProgName):
     print "                               (default is 4096)"
     print "    -t  --tsamp <tsamp>        Sampling time in seconds"
     print "    -l  --lower <freq>         Lower cut-off frequency in Hz"
+    print "                               (default is 0.1 Hz)"
     print "    -u  --upper <freq>         Upper cut-off frequency in Hz"
+    print "                               (default is 1000 Hz)"
     print "    -g  --graphics             Turn on graphics"
     return
 
@@ -104,7 +106,7 @@ MaskFilename = "yapp_mask_"                                                   \
                + str(NFFT) + "_"                                              \
                + str(TSamp) + "_"                                             \
                + str(FLow) + "_"                                              \
-               + str(FHigh) + ".ym"
+               + str(FHigh) + ".dat" 
 Mask.astype('uint8').tofile(MaskFilename)
 # plot the mask
 if (Plot):

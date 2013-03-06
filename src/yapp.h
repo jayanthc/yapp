@@ -102,6 +102,7 @@ enum tagFileFormats
 
 #define INFIX_SMOOTHED              "smoothed"
 #define INFIX_MEDFILTERED           "medfiltered"
+#define INFIX_FILTERED              "filtered"
 #define INFIX_DEDISPERSED           "dedispersed"
 
 #define SUFFIX_CFG                  "_cfg"
