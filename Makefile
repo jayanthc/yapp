@@ -5,6 +5,7 @@
 #
 
 # C compiler and flags
+# this may need to be changed to g77 in some cases
 CC = gcc
 
 # include path for other libraries

@@ -555,7 +555,7 @@ int YAPP_ReadPSRFITSHeader(char *pcFileSpec, YUM_t *pstYUM)
     /* calculate the size of data */
     pstYUM->lDataSizeTotal = (long) pstYUM->iNumChans
                              * pstYUM->iTimeSamps
-                             * (pstYUM->iNumBits / YAPP_BYTE2BIT_FACTOR);
+                             * ((float) pstYUM->iNumBits / YAPP_BYTE2BIT_FACTOR);
 
     return YAPP_RET_SUCCESS;
 }
@@ -1908,24 +1908,11 @@ int YAPP_ReadData(float *pfBuf,
     {
         /* 32-bit/4-byte data */
         /* copy data from the byte buffer to the float buffer */
-        /* TODO: check which of these two is right: */
         (void) memcpy(pfBuf, pcBuf, (int) (iTotSampsPerBlock * fSampSize));
-        /*(void) memcpy(pfBuf, pcBuf, (int) (iReadItems * fSampSize));*/
     }
     else if (YAPP_SAMPSIZE_16 == (fSampSize * YAPP_BYTE2BIT_FACTOR))
     {
         /* 16-bit/2-byte data */
-        #if 0
-        char *pcCur = NULL;
-        short int sSample = 0;
-        /* copy data from the byte buffer to the float buffer */
-        for (i = 0; i < iReadItems; ++i)
-        {
-            pcCur = pcBuf + (int) (i * fSampSize);
-            (void) memcpy(&sSample, pcCur, (int) fSampSize);
-            pfBuf[i] = (float) sSample;
-        }
-        #endif
         short int* psBuf = (short int*) pcBuf;
         for (i = 0; i < iReadItems; ++i)
         {

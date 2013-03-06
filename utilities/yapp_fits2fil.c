@@ -226,7 +226,7 @@ int main(int argc, char *argv[])
 
             /* allocate memory for data array */
             lBytesPerSubInt = (long int) iSampsPerSubInt * stYUM.iNumChans
-                              * (stYUM.iNumBits / YAPP_BYTE2BIT_FACTOR);
+                              * ((float) stYUM.iNumBits / YAPP_BYTE2BIT_FACTOR);
             g_pvBuf = YAPP_Malloc(lBytesPerSubInt, sizeof(char), YAPP_FALSE);
             if (NULL == g_pvBuf)
             {
@@ -254,12 +254,22 @@ int main(int argc, char *argv[])
             /* read data */
             switch (stYUM.iNumBits)
             {
+                case YAPP_SAMPSIZE_4:
+                    iDataType = TBYTE;
+                    /* update iSampsPerSubInt */
+                    iSampsPerSubInt /= 2;
+                    break;
+
                 case YAPP_SAMPSIZE_8:
                     iDataType = TBYTE;
                     break;
 
                 case YAPP_SAMPSIZE_16:
                     iDataType = TSHORT;
+                    break;
+
+                case YAPP_SAMPSIZE_32:
+                    iDataType = TLONG;
                     break;
 
                 default:

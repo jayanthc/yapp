@@ -71,7 +71,6 @@ int main(int argc, char *argv[])
     int iNumReads = 0;
     int iTotNumReads = 0;
     int iReadBlockCount = 0;
-    float fWidth = 60.0; /* in s */
     char cIsLastBlock = YAPP_FALSE;
     int iRet = YAPP_RET_SUCCESS;
     float fDataMin = 0.0;
