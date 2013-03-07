@@ -11,9 +11,7 @@
 
 #define SIZE_BUF    1048576 /* 1 MB */
 
-int GetMetadata(FILE *pFInf, YAPP_SIGPROC_HEADER *pstHeader);
-int CopyData(char *pcFileData, FILE *pFTim);
-char* GetFilenameFromPath(char *pcPath, char *pcExt);
+int YAPP_CopyData(char *pcFileData, FILE *pFTim);
 
 #endif  /* __DAT2TIM_H__ */
 

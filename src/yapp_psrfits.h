@@ -33,6 +33,7 @@
 #define YAPP_PF_LABEL_SRCRA         "RA"
 #define YAPP_PF_LABEL_SRCDEC        "DEC"
 #define YAPP_PF_LABEL_NSBLK         "NSBLK"
+#define YAPP_PF_LABEL_NPOL          "NPOL"
 #define YAPP_PF_LABEL_DATA          "DATA"
 #define YAPP_PF_LABEL_DATFREQ       "DAT_FREQ"
 #define YAPP_PF_LABEL_NSUBINT       "NAXIS2"    /* in SUBINT HDU */

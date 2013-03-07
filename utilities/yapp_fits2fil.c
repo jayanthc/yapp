@@ -5,6 +5,9 @@
  * @verbatim
  * Usage: yapp_fits2fil [options] <data-files>
  *     -h  --help                           Display this usage information
+ *     -p  --pol <pol>                      Polarization to output
+ *                                          ('X', 'Y', 'X+Y', or 'X&Y'), in the
+ *                                          case of dual-polarization data
  *     -v  --version                        Display the version @endverbatim
  *
  * @author Jayanth Chennamangalam
@@ -12,6 +15,7 @@
  */
 
 #include "yapp.h"
+#include "yapp_fits2fil.h"
 #include "yapp_sigproc.h"   /* for SIGPROC filterbank file format support */
 #include "yapp_psrfits.h"
 #include <fitsio.h>
@@ -28,6 +32,8 @@ extern FILE *g_pFData;
 /* the following are global only to enable cleaning up in case of abnormal
    termination, such as those triggered by SIGINT or SIGTERM */
 void *g_pvBuf = NULL;
+void *g_pvPolX = NULL;
+void *g_pvPolY = NULL;
 
 int main(int argc, char *argv[])
 {
@@ -35,6 +41,7 @@ int main(int argc, char *argv[])
     char *pcFileOut = NULL;
     char acFileOut[LEN_GENSTRING] = {0};
     fitsfile *pstFileData = NULL;
+    char *pcPol = NULL;
     int iFormat = DEF_FORMAT;
     YUM_t stYUM = {{0}};
     int iRet = YAPP_RET_SUCCESS;
@@ -43,17 +50,20 @@ int main(int argc, char *argv[])
     char acErrMsg[LEN_GENSTRING] = {0};
     int iSampsPerSubInt = 0;
     long int lBytesPerSubInt = 0;
+    int iNumPol = 0;
     int iStatus = 0;
     int i = 0;
     int iDataType = 0;
+    int iPolFormat = YAPP_DEF_POL_FORMAT;
     char cIsFirst = YAPP_TRUE;
     const char *pcProgName = NULL;
     int iNextOpt = 0;
     /* valid short options */
-    const char* const pcOptsShort = "hv";
+    const char* const pcOptsShort = "hp:v";
     /* valid long options */
     const struct option stOptsLong[] = {
         { "help",                   0, NULL, 'h' },
+        { "pol",                    1, NULL, 'p' },
         { "version",                0, NULL, 'v' },
         { NULL,                     0, NULL, 0   }
     };
@@ -71,6 +81,11 @@ int main(int argc, char *argv[])
                 /* print usage info and terminate */
                 PrintUsage(pcProgName);
                 return YAPP_RET_SUCCESS;
+
+            case 'p':   /* -p or --pol */
+                /* set option */
+                pcPol = optarg;
+                break;
 
             case 'v':   /* -v or --version */
                 /* display the version */
@@ -105,6 +120,32 @@ int main(int argc, char *argv[])
     {
         (void) fprintf(stderr,
                        "ERROR: Handler registration failed!\n");
+        return YAPP_RET_ERROR;
+    }
+
+    /* get polarization output option */
+    if (strncmp(pcPol, YAPP_POL_X, YAPP_LEN_POL_STR) == 0)
+    {
+        iPolFormat = YAPP_POL_FORMAT_X;
+    }
+    else if (strncmp(pcPol, YAPP_POL_Y, YAPP_LEN_POL_STR) == 0)
+    {
+        iPolFormat = YAPP_POL_FORMAT_Y;
+    }
+    else if (strncmp(pcPol, YAPP_POL_XPLUSY, YAPP_LEN_POL_STR) == 0)
+    {
+        iPolFormat = YAPP_POL_FORMAT_XPLUSY;
+    }
+    else if (strncmp(pcPol, YAPP_POL_XANDY, YAPP_LEN_POL_STR) == 0)
+    {
+        iPolFormat = YAPP_POL_FORMAT_XANDY;
+    }
+    else
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Unrecognized polarization format %s!\n",
+                       pcPol);
+        PrintUsage(pcProgName);
         return YAPP_RET_ERROR;
     }
 
@@ -145,6 +186,14 @@ int main(int argc, char *argv[])
                 (void) fprintf(stderr,
                                "ERROR: Reading metadata failed for file %s!\n",
                                pcFileSpec);
+                return YAPP_RET_ERROR;
+            }
+
+            if (stYUM.iNumPol > YAPP_MAX_NPOL)
+            {
+                (void) fprintf(stderr,
+                               "ERROR: Unsupported number of polarizations!"
+                               "\n");
                 return YAPP_RET_ERROR;
             }
 
@@ -225,7 +274,8 @@ int main(int argc, char *argv[])
             }
 
             /* allocate memory for data array */
-            lBytesPerSubInt = (long int) iSampsPerSubInt * stYUM.iNumChans
+            lBytesPerSubInt = (long int) iNumPol * iSampsPerSubInt
+                              * stYUM.iNumChans
                               * ((float) stYUM.iNumBits / YAPP_BYTE2BIT_FACTOR);
             g_pvBuf = YAPP_Malloc(lBytesPerSubInt, sizeof(char), YAPP_FALSE);
             if (NULL == g_pvBuf)
@@ -236,6 +286,34 @@ int main(int argc, char *argv[])
                 (void) fits_close_file(pstFileData, &iStatus);
                 YAPP_CleanUp();
                 return YAPP_RET_ERROR;
+            }
+
+            if (YAPP_MAX_NPOL == iNumPol)
+            {
+                g_pvPolX = YAPP_Malloc((lBytesPerSubInt / 2),
+                                       sizeof(char),
+                                       YAPP_FALSE);
+                if (NULL == g_pvPolX)
+                {
+                    (void) fprintf(stderr,
+                                   "ERROR: Memory allocation failed! %s!\n",
+                                   strerror(errno));
+                    (void) fits_close_file(pstFileData, &iStatus);
+                    YAPP_CleanUp();
+                    return YAPP_RET_ERROR;
+                }
+                g_pvPolY = YAPP_Malloc((lBytesPerSubInt / 2),
+                                       sizeof(char),
+                                       YAPP_FALSE);
+                if (NULL == g_pvPolY)
+                {
+                    (void) fprintf(stderr,
+                                   "ERROR: Memory allocation failed! %s!\n",
+                                   strerror(errno));
+                    (void) fits_close_file(pstFileData, &iStatus);
+                    YAPP_CleanUp();
+                    return YAPP_RET_ERROR;
+                }
             }
 
             /* open .fil file */
@@ -287,7 +365,8 @@ int main(int argc, char *argv[])
                                  iColNum,
                                  i,
                                  1,
-                                 (long int) stYUM.iNumChans * iSampsPerSubInt,
+                                 ((long int) stYUM.iNumPol * stYUM.iNumChans 
+                                  * iSampsPerSubInt),
                                  NULL,
                                  g_pvBuf,
                                  NULL,
@@ -302,7 +381,20 @@ int main(int argc, char *argv[])
                 YAPP_CleanUp();
                 return YAPP_RET_ERROR;
             }
-            (void) fwrite(g_pvBuf, sizeof(char), lBytesPerSubInt, g_pFData);
+            if (YAPP_MAX_NPOL == stYUM.iNumPol)
+            {
+                (void) YAPP_WritePolSelection(stYUM.iNumBits,
+                                              lBytesPerSubInt,
+                                              iPolFormat,
+                                              g_pFData);
+            }
+            else
+            {
+                (void) fwrite(g_pvBuf,
+                              sizeof(char),
+                              lBytesPerSubInt,
+                              g_pFData);
+            }
         }
 
         (void) fits_close_file(pstFileData, &iStatus);
@@ -317,6 +409,144 @@ int main(int argc, char *argv[])
 
     return YAPP_RET_SUCCESS;
 }
+
+
+/*
+ * Write the selected polarization output format to file
+ */
+int YAPP_WritePolSelection(int iNumBits,
+                           long int lLen,
+                           int iPolFormat,
+                           FILE *pFDef, ...)
+{
+    va_list stArgs = {{0}};
+    FILE *pFSec = NULL;
+    long int i = 0;
+    long int j = 0;
+    long int lNumSamps = 0;
+
+    va_start(stArgs, pFDef);
+    if (YAPP_POL_FORMAT_XANDY == iPolFormat)
+    {
+        pFSec = va_arg(stArgs, FILE*);
+    }
+    va_end(stArgs);
+
+    lNumSamps = (int) ((float) lLen
+                       / ((float) iNumBits / YAPP_BYTE2BIT_FACTOR));
+
+    switch (iNumBits)
+    {
+        case YAPP_SAMPSIZE_4:
+        {
+            unsigned char *pcBuf = (unsigned char *) g_pvBuf;
+            unsigned char *pcPolX = (unsigned char *) g_pvPolX;
+            unsigned char *pcPolY = (unsigned char *) g_pvPolY;
+            j = 0;
+            for (i = 0; i < lNumSamps; i += 2)
+            {
+                pcPolX[j] = pcBuf[i] & 0x0F;
+                pcPolY[j] = (pcBuf[i] & 0xF0) >> 4;
+                pcPolX[j] |= ((pcBuf[i+1] & 0x0F) << 4);
+                pcPolY[j] |= (pcBuf[i+1] & 0xF0);
+                ++j;
+            }
+            break;
+        }
+
+        case YAPP_SAMPSIZE_8:
+        {
+            char *pcBuf = (char *) g_pvBuf;
+            char *pcPolX = (char *) g_pvPolX;
+            char *pcPolY = (char *) g_pvPolY;
+            j = 0;
+            for (i = 0; i < lNumSamps; i += 2)
+            {
+                pcPolX[j] = pcBuf[i];
+                pcPolY[j] = pcBuf[i+1];
+                ++j;
+            }
+            break;
+        }
+
+        case YAPP_SAMPSIZE_16:
+        {
+            short int *psBuf = (short int *) g_pvBuf;
+            short int *psPolX = (short int *) g_pvPolX;
+            short int *psPolY = (short int *) g_pvPolY;
+            j = 0;
+            for (i = 0; i < lNumSamps; i += 2)
+            {
+                psPolX[j] = psBuf[i];
+                psPolY[j] = psBuf[i+1];
+                ++j;
+            }
+            break;
+        }
+
+        case YAPP_SAMPSIZE_32:
+        {
+            int *piBuf = (int *) g_pvBuf;
+            int *piPolX = (int *) g_pvPolX;
+            int *piPolY = (int *) g_pvPolY;
+            j = 0;
+            for (i = 0; i < lNumSamps; i += 2)
+            {
+                piPolX[j] = piBuf[i];
+                piPolY[j] = piBuf[i+1];
+                ++j;
+            }
+            break;
+        }
+
+        default:
+        {
+            (void) fprintf(stderr,
+                           "ERROR: Unexpected number of bits!\n");
+            return YAPP_RET_ERROR;
+        }
+    }
+
+
+    switch (iPolFormat)
+    {
+        case YAPP_POL_FORMAT_X:
+            (void) fwrite(g_pvPolX,
+                          sizeof(char),
+                          (lLen / 2),
+                          pFDef);
+            break;
+
+        case YAPP_POL_FORMAT_Y:
+            (void) fwrite(g_pvPolY,
+                          sizeof(char),
+                          (lLen / 2),
+                          pFSec);
+            break;
+
+        case YAPP_POL_FORMAT_XANDY:
+            (void) fwrite(g_pvPolX,
+                          sizeof(char),
+                          (lLen / 2),
+                          pFDef);
+            (void) fwrite(g_pvPolY,
+                          sizeof(char),
+                          (lLen / 2),
+                          pFSec);
+            break;
+
+        case YAPP_POL_FORMAT_XPLUSY:
+            break;
+
+        default:
+            (void) fprintf(stderr,
+                           "ERROR: Unexpected polarization format!\n");
+            return YAPP_RET_ERROR;
+    }
+
+    return YAPP_RET_SUCCESS;
+}
+
 
 /*
  * Prints usage information

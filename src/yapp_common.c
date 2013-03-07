@@ -469,6 +469,12 @@ int YAPP_ReadPSRFITSHeader(char *pcFileSpec, YUM_t *pstYUM)
     pstYUM->dTSamp *= 1e3;      /* convert from s to ms */
     (void) fits_read_key(pstFileData,
                          TINT,
+                         YAPP_PF_LABEL_NPOL,
+                         &pstYUM->iNumPol,
+                         NULL,
+                         &iStatus);
+    (void) fits_read_key(pstFileData,
+                         TINT,
                          YAPP_PF_LABEL_NSUBINT,
                          &pstYUM->iTimeSamps,
                          NULL,
@@ -553,7 +559,8 @@ int YAPP_ReadPSRFITSHeader(char *pcFileSpec, YUM_t *pstYUM)
     }
 
     /* calculate the size of data */
-    pstYUM->lDataSizeTotal = (long) pstYUM->iNumChans
+    pstYUM->lDataSizeTotal = (long) pstYUM->iNumPol
+                             * pstYUM->iNumChans
                              * pstYUM->iTimeSamps
                              * ((float) pstYUM->iNumBits / YAPP_BYTE2BIT_FACTOR);
 

@@ -143,7 +143,7 @@ int main(int argc, char *argv[])
                 strerror(errno));
         return EXIT_FAILURE;
     }
-    iRet = CopyData(pcFileData, pFTim);
+    iRet = YAPP_CopyData(pcFileData, pFTim);
     if (iRet != EXIT_SUCCESS)
     {
         fprintf(stderr,
@@ -159,7 +159,7 @@ int main(int argc, char *argv[])
 
 
 
-int CopyData(char *pcFileData, FILE *pFTim)
+int YAPP_CopyData(char *pcFileData, FILE *pFTim)
 {
     FILE *pFData = NULL;
     struct stat stFileStats = {0};
