@@ -44,10 +44,11 @@
     </header>
     <article>
       <section>
-        <p>As the name indicates, this program is used to display metadata/data
-           header/configuration information associated with a data file. The
-           following file types are supported:</p>
+        <p>This program displays metadata/data header/configuration information
+           associated with one or more data files. The following file types are
+           supported:</p>
         <ul>
+          <li>Search-mode PSRFITS</li>
           <li>DAS <code>.spec</code> filterbank format</li>
           <li>SIGPROC <code>.fil</code> filterbank format (including the
               headerless version, provided a <code>.fhd</code> configuration
@@ -55,7 +56,7 @@
           <li>SIGPROC <code>.tim</code> time series format</li>
         </ul>
         <p>Usage:</p> 
-        <code>yapp_viewmetadata [options] <i>data-file</i></code>
+        <code>yapp_viewmetadata [options] <i>data-files</i></code>
         <p>The options are:</p>
         <ul>
           <li><code>-h</code> or <code>--help</code>: Display a short help text.</li>
@@ -72,7 +73,6 @@
        <p>The following displays the metadata for all DAS filterbank files in
           the current working directory.</p>
        <code>yapp_viewmetadata *.spec</code>
-       <p>System requirements: Linux/MacOS</p>
        <p>&nbsp;</p>
        <p>&nbsp;</p>
       </section>

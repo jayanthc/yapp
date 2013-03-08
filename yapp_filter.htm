@@ -44,14 +44,14 @@
     </header>
     <article>
       <section>
-        <p>Smoothes dedispersed time series data using a boxcar window (moving
-           average smoothing). The data file should be in the SIGPROC
+        <p>Filters dedispersed time series data to remove low and/or high
+           frequency variations. The data file should be in the SIGPROC
            <code>.tim</code> format.</p>
-        <p>Smoothing is a low-pass filtering operation, so one should be
-           careful not to over-smooth the data as this may lead to fast pulsars
-           being filtered out. As a rule of thumb, if you would like to see a
-           pulsar of spin period X ms, the boxcar window width should be
-           &lt; X ms.</p>
+        <p>While using this program, one should be careful not to over-filter
+           the data as this may lead to fast/slow pulsars being filtered out.</p>
+        <p>This program requires a filter mask file. Filter mask files can be
+           created using the <a href="yapp_genfiltermask.htm">yapp_genfiltermask.py</a>
+           Python script.</p>
         <p>Usage:</p> 
         <code>yapp_filter [options] <i>data-file</i></code>
         <ul>
@@ -61,8 +61,8 @@
               data to be skipped, in seconds (default is 0 s).</li>
           <li><code>-p</code> or <code>--proc <i>time</i></code>: Length of
               data to be processed, in seconds (default is all data).</li>
-          <li><code>-w</code> or <code>--width <i>width</i></code>:
-              Width of the boxcar window in milliseconds (default is 1 ms).</li>
+          <li><code>-f</code> or <code>--filter <i>file</i></code>: Filter mask
+              filename.</li>
           <li><code>-g</code> or <code>--graphics</code>: Turn on plotting.</li>
           <li><code>-i</code> or <code>--invert</code>: Invert background and
               foreground colours in plots (default is white on black).</li>
@@ -71,11 +71,11 @@
           <li><code>-v</code> or <code>--version</code>: Display the version.</li>
        </ul>
        <p>Example:</p>
-       <p>Smoothes the data in <code>data.tim</code> with a boxcar window of
-          width 2.5 ms, with graphics turned on, and in non-interactive mode.
-          The output is written to <code>data.smoothed2.5.tim</code>.</p>
-       <code>yapp_filter -w 2.5 -g -e data.tim</code>
-       <p>System requirements: Linux/MacOS, PGPLOT with C binding</p>
+       <p>Filters the data in <code>data.tim</code> with a filter mask
+          specified in the file <code>yapp_mask_16384_0.0001_1.0_100.0.dat</code>,
+          with graphics turned on, and in interactive mode. The output is
+          written to <code>data_filtered.tim</code>.</p>
+       <code>yapp_filter -f yapp_mask_16384_0.0001_1.0_100.0.dat -g data.tim</code>
        <p>&nbsp;</p>
        <p>&nbsp;</p>
       </section>

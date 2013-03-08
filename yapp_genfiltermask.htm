@@ -44,15 +44,10 @@
     </header>
     <article>
       <section>
-        <p>This Python script generates polyphase filter coefficients for
-           <a href="yapp_ft.htm">yapp_ft</a>, for use while running the latter
-           with PFB turned on. The filter coefficients are made up of a
-           normalized sinc function modulated by a Hanning window. The output
-           is written to a file that <code>yapp_ft</code> expects to find in
-           the current working directory. The format of the filename is
-           <code>coeff_<i>ntaps</i>_<i>nfft</i>_<i>nsubbands</i>.dat</code>.
-           The number of sub-bands, <code><i>nsubbands</i></code> is always 1.
-           The filter coefficients are single-precision floating-point.</p>
+        <p>This Python script generates a filter mask (frequency response) for
+           <a href="yapp_filter.htm">yapp_filter</a>. The format of the
+           filename is <code>yapp_mask_nfft_tsamp_lower_upper.dat</code>. The
+           mask coefficients are signed bytes.</p>
         <p>Usage:</p>
         <code>yapp_genfiltermask.py [options]</code>
         <p>The options are:</p>
@@ -61,17 +56,24 @@
               information.</li>
           <li><code>-n</code> or <code>--nfft <i>nfft</i></code>: Length of the
               Fourier transform (default is 4096).</li>
-          <li><code>-t</code> or <code>--ntaps <i>ntaps</i></code>: Number of
-              taps in PFB (default is 8).</li>
+          <li><code>-t</code> or <code>--tsamp <i>tsamp</i></code>: Sampling
+              time in seconds.</li>
+          <li><code>-l</code> or <code>--lower <i>freq</i></code>: Lower
+              cut-off frequency in Hz (default is 0.1 Hz).</li>
+          <li><code>-u</code> or <code>--upper <i>freq</i></code>: Upper
+              cut-off frequency in Hz (default is 1000 Hz).</li>
           <li><code>-g</code> or <code>--graphics</code>: Turn on plotting.</li>
         </ul>
+        <p>The flag <code>-t</code> (or <code>--tsamp</code>) is a required
+           argument.</p>
         <p>Example:</p>
-        <p>The following generates filter coefficients for a 4-tap filter with
-           1024 FFT points. It creates a file named <code>coeff_4_1024_1.dat</code>
-           in the current working directory, and also displays a plot of the
-           filter coefficients.</p>
-        <code>yapp_genfiltermask.py -n 1024 -t 4 -g</code>
-        <p>System requirements: Python with Matplotlib</p>
+        <p>The following generates a filter mask to run <a href="yapp_filter.htm">yapp_filter</a>
+           with 16384 FFT points, with a lower cut-off frequency of 1 Hz and an
+           upper cut-off frequency of 100 Hz, for data with a sampling time of
+           10 microseconds. It creates a file named
+           <code>yapp_mask_16384_0.0001_1.0_100.0.dat</code> in the current
+           working directory, and also displays a plot of the filter mask.</p>
+        <code>yapp_genfiltermask.py -n 16384 -t 0.0001 -l 1 -u 100 -g</code>
         <p>&nbsp;</p>
         <p>&nbsp;</p>
       </section>

@@ -44,38 +44,22 @@
     </header>
     <article>
       <section>
-        <p>Smoothes dedispersed time series data using a boxcar window (moving
-           average smoothing). The data file should be in the SIGPROC
-           <code>.tim</code> format.</p>
-        <p>Smoothing is a low-pass filtering operation, so one should be
-           careful not to over-smooth the data as this may lead to fast pulsars
-           being filtered out. As a rule of thumb, if you would like to see a
-           pulsar of spin period X ms, the boxcar window width should be
-           &lt; X ms.</p>
+        <p>Converts dedispersed time series data in PRESTO <code>.dat</code>
+           format to SIGPROC <code>.tim</code> format. The <code>.inf</code>
+           file containing PRESTO header information must be present in the
+           same directory as the <code>.dat</code> file.</p>
         <p>Usage:</p> 
         <code>yapp_dat2tim [options] <i>data-file</i></code>
         <ul>
           <li><code>-h</code> or <code>--help</code>: Display this usage
               information.</li>
-          <li><code>-s</code> or <code>--skip <i>time</i></code>: Length of
-              data to be skipped, in seconds (default is 0 s).</li>
-          <li><code>-p</code> or <code>--proc <i>time</i></code>: Length of
-              data to be processed, in seconds (default is all data).</li>
-          <li><code>-w</code> or <code>--width <i>width</i></code>:
-              Width of the boxcar window in milliseconds (default is 1 ms).</li>
-          <li><code>-g</code> or <code>--graphics</code>: Turn on plotting.</li>
-          <li><code>-i</code> or <code>--invert</code>: Invert background and
-              foreground colours in plots (default is white on black).</li>
-          <li><code>-e</code> or <code>--non-interactive</code>: Run in
-              non-interactive mode.</li>
           <li><code>-v</code> or <code>--version</code>: Display the version.</li>
        </ul>
        <p>Example:</p>
-       <p>Smoothes the data in <code>data.tim</code> with a boxcar window of
-          width 2.5 ms, with graphics turned on, and in non-interactive mode.
-          The output is written to <code>data.smoothed2.5.tim</code>.</p>
-       <code>yapp_dat2tim -w 2.5 -g -e data.tim</code>
-       <p>System requirements: Linux/MacOS, PGPLOT with C binding</p>
+       <p>Converts the file <code>data.dat</code> to <code>data.tim</code>,
+          assuming the header file <code>data.inf</code> is present in the
+          current directory.</p>
+       <code>yapp_dat2tim data.dat</code>
        <p>&nbsp;</p>
        <p>&nbsp;</p>
       </section>
