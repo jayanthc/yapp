@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
         /* get the input filename */
         pcFileSpec = argv[iNextOpt];
 
-        if (argc != 2)  /* more than one input file */
+        if ((argc - optind) > 1)    /* more than one input file */
         {
             (void) printf("File: %s\n", pcFileSpec);
         }
@@ -178,6 +178,11 @@ int main(int argc, char *argv[])
         {
             (void) printf("Number of IFs                     : %d\n",
                           stYUM.iNumIFs);
+        }
+        if (stYUM.iNumPol != 0)
+        {
+            (void) printf("Number of polarizations           : %d\n",
+                          stYUM.iNumPol);
         }
         (void) printf("Duration of data in\n");
         (void) printf("    Bytes                         : %ld\n",

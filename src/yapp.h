@@ -296,6 +296,7 @@ typedef struct YUM_s
     int iHeaderLen;
     double dTStart;     /* in MJD */
     float fSampSize;
+    int iNumPol;
 
 #if 0
     /* DAS configuration information */

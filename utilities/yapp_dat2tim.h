@@ -6,14 +6,12 @@
  * @date 2012.12.18
  */
 
-#ifndef __DAT2TIM_H__
-#define __DAT2TIM_H__
+#ifndef __YAPP_DAT2TIM_H__
+#define __YAPP_DAT2TIM_H__
 
 #define SIZE_BUF    1048576 /* 1 MB */
 
-int GetMetadata(FILE *pFInf, YAPP_SIGPROC_HEADER *pstHeader);
-int CopyData(char *pcFileData, FILE *pFTim);
-char* GetFilenameFromPath(char *pcPath, char *pcExt);
+int YAPP_CopyData(char *pcFileData, FILE *pFTim);
 
-#endif  /* __DAT2TIM_H__ */
+#endif  /* __YAPP_DAT2TIM_H__ */
 

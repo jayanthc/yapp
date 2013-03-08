@@ -159,16 +159,16 @@ yapp_fold: $(IDIR)/yapp_fold.o $(IDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o $(IDIR)/colourmap.o
 	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) $(LFLAGS_CFITSIO) -o $(BINDIR)/$@
 
-yapp_fits2fil.o: $(UTILDIR)/yapp_fits2fil.c $(SRCDIR)/yapp.h \
-	$(SRCDIR)/yapp_sigproc.h $(SRCDIR)/yapp_psrfits.h
+yapp_fits2fil.o: $(UTILDIR)/yapp_fits2fil.c $(UTILDIR)/yapp_fits2fil.h \
+	$(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h $(SRCDIR)/yapp_psrfits.h
 	$(CC) $(CFLAGS_C) -I$(SRCDIR) $(DDEBUG) $< -o $(UTILDIR)/$@
 
 yapp_fits2fil: $(UTILDIR)/yapp_fits2fil.o $(IDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
 	$(CC) $^ $(LFLAGS_MATH) $(LFLAGS_CFITSIO) -o $(BINDIR)/$@
 
-yapp_dat2tim.o: $(UTILDIR)/yapp_dat2tim.c $(SRCDIR)/yapp.h \
-	$(SRCDIR)/yapp_sigproc.h
+yapp_dat2tim.o: $(UTILDIR)/yapp_dat2tim.c $(UTILDIR)/yapp_dat2tim.h \
+	$(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h
 	$(CC) $(CFLAGS_C) -I$(SRCDIR) $(DDEBUG) $< -o $(UTILDIR)/$@
 
 yapp_dat2tim: $(UTILDIR)/yapp_dat2tim.o $(SRCDIR)/yapp_version.o \
