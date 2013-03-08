@@ -21,13 +21,21 @@ yapp_fits2fil \- convert search-mode PSRFITS to SIGPROC '.fil'
 
 .SH DESCRIPTION
 Converts one or a set of search-mode PSRFITS files to a single SIGPROC '.fil' \
-file. Supports 4-, 8-, 16-, and 32-bit PSRFITS files.
+file. Supports 4-, 8-, 16-, and 32-bit PSRFITS files, both single- and \
+dual-polarization. For dual-polarization data, by default, the output is \
+written to two files, one for each polarization. Polarization-summing is \
+supported.
+
+This program ignores weights, offsets, and scales.
 
 
 .SH OPTIONS
 .TP
 .B \-h, --help
 Display a short help text.
+.TP
+.B \-s,  --sum
+Sum polarizations in the case of dual-polarization data.
 .TP
 .B \-v, --version
 Display the version.
