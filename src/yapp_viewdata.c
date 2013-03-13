@@ -105,6 +105,7 @@ int main(int argc, char *argv[])
     int k = 0;
     int l = 0;
     int m = 0;
+    char acLabel[LEN_GENSTRING] = {0};
     int iColourMap = DEF_CMAP;
     int iInvCols = YAPP_FALSE;
     char cIsNonInteractive = YAPP_FALSE;
@@ -299,12 +300,6 @@ int main(int argc, char *argv[])
                       lBytesToProc);
     }
 
-    /* change block size according to the number of samples to be processed */
-    if ((long) iBlockSize > lBytesToProc)
-    {
-        iBlockSize = (int) ceil(dDataProcTime / dTSampInSec);
-    }
-
     iTimeSampsSkip = (int) (lBytesToSkip / (stYUM.iNumChans * stYUM.fSampSize));
     (void) printf("Skipping\n"
                   "    %ld of %ld bytes\n"
@@ -320,6 +315,12 @@ int main(int argc, char *argv[])
     iTimeSampsToProc = (int) (lBytesToProc / (stYUM.iNumChans * stYUM.fSampSize));
     iNumReads = (int) ceilf(((float) iTimeSampsToProc) / iBlockSize);
     iTotNumReads = iNumReads;
+
+    /* change block size according to the number of samples to be processed */
+    if (iBlockSize > iTimeSampsToProc)
+    {
+        iBlockSize = (int) ceil(dDataProcTime / dTSampInSec);
+    }
 
     /* optimisation - store some commonly used values in variables */
     iTotSampsPerBlock = stYUM.iNumChans * iBlockSize;
@@ -537,12 +538,21 @@ int main(int argc, char *argv[])
         --iNumReads;
         ++iReadBlockCount;
 
-        if (iReadItems < iTotSampsPerBlock)
+        if (iReadItems < iTotSampsPerBlock) /* usually, the last block */
         {
             iDiff = (stYUM.iNumChans * iBlockSize) - iReadItems;
 
             /* reset remaining elements to '\0' */
             (void) memset((g_pfBuf + iReadItems),
+                          '\0',
+                          (sizeof(float) * iDiff));
+        }
+        else if (cIsLastBlock)  /* when user has requested proc. time */
+        {
+            iDiff = (iBlockSize - (iTimeSampsToProc % iBlockSize)) * stYUM.iNumChans;
+
+            /* reset remaining elements to '\0' */
+            (void) memset((g_pfBuf + ((iTimeSampsToProc % iBlockSize) * stYUM.iNumChans)),
                           '\0',
                           (sizeof(float) * iDiff));
         }
@@ -759,6 +769,10 @@ int main(int argc, char *argv[])
             cpgline(iBlockSize, g_pfXAxis, g_pfBuf);
             cpgsci(PG_CI_DEF);
         }
+
+        /* display the plot number */
+        (void) sprintf(acLabel, "%d / %d", iReadBlockCount, iTotNumReads);
+        cpgmtxt("T", -1.5, 0.99, 1.0, acLabel);
 
         if (!(cIsLastBlock))
         {
