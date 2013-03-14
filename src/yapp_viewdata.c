@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
     float *pfSpectrum = NULL;
     long lBytesToSkip = 0;
     long lBytesToProc = 0;
-    int iTimeSampsSkip = 0;
+    int iTimeSampsToSkip = 0;
     int iTimeSampsToProc = 0;
     int iNumReads = 0;
     int iTotNumReads = 0;
@@ -300,24 +300,26 @@ int main(int argc, char *argv[])
                       lBytesToProc);
     }
 
-    iTimeSampsSkip = (int) (lBytesToSkip / (stYUM.iNumChans * stYUM.fSampSize));
+    iTimeSampsToSkip = (int) (lBytesToSkip
+                              / (stYUM.iNumChans * stYUM.fSampSize));
     (void) printf("Skipping\n"
                   "    %ld of %ld bytes\n"
                   "    %d of %d time samples\n"
                   "    %.10g of %.10g seconds\n",
                   lBytesToSkip,
                   stYUM.lDataSizeTotal,
-                  iTimeSampsSkip,
+                  iTimeSampsToSkip,
                   stYUM.iTimeSamps,
-                  (iTimeSampsSkip * dTSampInSec),
+                  (iTimeSampsToSkip * dTSampInSec),
                   (stYUM.iTimeSamps * dTSampInSec));
 
-    iTimeSampsToProc = (int) (lBytesToProc / (stYUM.iNumChans * stYUM.fSampSize));
-    iNumReads = (int) ceilf(((float) iTimeSampsToProc) / iBlockSize);
+    iTimeSampsToProc = (int) (lBytesToProc
+                              / (stYUM.iNumChans * stYUM.fSampSize));
+    iNumReads = (int) ceilf((float) iTimeSampsToProc / iBlockSize);
     iTotNumReads = iNumReads;
 
     /* change block size according to the number of samples to be processed */
-    if (iBlockSize > iTimeSampsToProc)
+    if (iTimeSampsToProc < iBlockSize)
     {
         iBlockSize = (int) ceil(dDataProcTime / dTSampInSec);
     }
@@ -549,12 +551,15 @@ int main(int argc, char *argv[])
         }
         else if (cIsLastBlock)  /* when user has requested proc. time */
         {
-            iDiff = (iBlockSize - (iTimeSampsToProc % iBlockSize)) * stYUM.iNumChans;
+            iDiff = (iBlockSize - (iTimeSampsToProc % iBlockSize))
+                    * stYUM.iNumChans;
 
             /* reset remaining elements to '\0' */
-            (void) memset((g_pfBuf + ((iTimeSampsToProc % iBlockSize) * stYUM.iNumChans)),
+            (void) memset((g_pfBuf + ((iTimeSampsToProc % iBlockSize)
+                                      * stYUM.iNumChans)),
                           '\0',
                           (sizeof(float) * iDiff));
+            /* TODO: .spec files will still process these trailing zeros */
         }
 
         /* calculate the number of time samples in the block - this may not
