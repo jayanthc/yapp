@@ -451,6 +451,7 @@ int main(int argc, char *argv[])
         (void) fprintf(stderr,
                        "ERROR: Memory allocation for X-axis failed! %s!\n",
                        strerror(errno));
+        cpgclos();
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }

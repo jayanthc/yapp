@@ -1952,16 +1952,6 @@ int YAPP_WriteMetadata(char *pcFileData, int iFormat, YUM_t stYUM)
         (void) fwrite(&stYUM.dDM, sizeof(stYUM.dDM), 1, pFData);
     }
 
-    /* write barycentric flag */
-    iLen = strlen(YAPP_SP_LABEL_FLAGBARY);
-    (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
-    (void) strcpy(acLabel, YAPP_SP_LABEL_FLAGBARY);
-    (void) fwrite(acLabel, sizeof(char), iLen, pFData);
-    (void) fwrite(&stYUM.iFlagBary,
-                  sizeof(stYUM.iFlagBary),
-                  1,
-                  pFData);
-
     /* write header end tag */
     iLen = strlen(YAPP_SP_LABEL_HDREND);
     (void) fwrite(&iLen, sizeof(iLen), 1, pFData);

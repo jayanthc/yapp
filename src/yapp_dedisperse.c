@@ -798,52 +798,53 @@ int main(int argc, char *argv[])
                       1,
                       pFDedispData);
 
-        if (YAPP_FORMAT_FIL == iOutputFormat)
+        /* NOTE: number of channels, frequency of first channel, and channel
+                 bandwidth are not strictly required in a .tim file, but they
+                 are required if .tim files for different frequency bands need
+                 to be combined */
+        /* write number of channels */
+        iLen = strlen("nchans");
+        (void) fwrite(&iLen, sizeof(iLen), 1, pFDedispData);
+        (void) strcpy(acLabel, "nchans");
+        (void) fwrite(acLabel, sizeof(char), iLen, pFDedispData);
+        stHeader.iNumChans = stYUM.iNumChans;
+        (void) fwrite(&stHeader.iNumChans,
+                      sizeof(stHeader.iNumChans),
+                      1,
+                      pFDedispData);
+
+        /* write frequency of first channel */
+        iLen = strlen(YAPP_SP_LABEL_FCHAN1);
+        (void) fwrite(&iLen, sizeof(iLen), 1, pFDedispData);
+        (void) strcpy(acLabel, YAPP_SP_LABEL_FCHAN1);
+        (void) fwrite(acLabel, sizeof(char), iLen, pFDedispData);
+        if (stYUM.cIsBandFlipped)
         {
-            /* write number of channels */
-            iLen = strlen("nchans");
-            (void) fwrite(&iLen, sizeof(iLen), 1, pFDedispData);
-            (void) strcpy(acLabel, "nchans");
-            (void) fwrite(acLabel, sizeof(char), iLen, pFDedispData);
-            stHeader.iNumChans = stYUM.iNumChans;
-            (void) fwrite(&stHeader.iNumChans,
-                          sizeof(stHeader.iNumChans),
-                          1,
-                          pFDedispData);
-
-            /* write frequency of first channel */
-            iLen = strlen(YAPP_SP_LABEL_FCHAN1);
-            (void) fwrite(&iLen, sizeof(iLen), 1, pFDedispData);
-            (void) strcpy(acLabel, YAPP_SP_LABEL_FCHAN1);
-            (void) fwrite(acLabel, sizeof(char), iLen, pFDedispData);
-            if (stYUM.cIsBandFlipped)
-            {
-                stHeader.dFChan1 = (double) stYUM.fFMax;
-            }
-            else
-            {
-                stHeader.dFChan1 = (double) stYUM.fFMin;
-            }
-            (void) fwrite(&stHeader.dFChan1,
-                          sizeof(stHeader.dFChan1),
-                          1,
-                          pFDedispData);
-
-            /* write channel bandwidth  */
-            iLen = strlen(YAPP_SP_LABEL_CHANBW);
-            (void) fwrite(&iLen, sizeof(iLen), 1, pFDedispData);
-            (void) strcpy(acLabel, YAPP_SP_LABEL_CHANBW);
-            (void) fwrite(acLabel, sizeof(char), iLen, pFDedispData);
-            if (stYUM.cIsBandFlipped)
-            {
-                stHeader.dChanBW = (double) (-stYUM.fChanBW);
-            }
-            else
-            {
-                stHeader.dChanBW = (double) stYUM.fChanBW;
-            }
-            (void) fwrite(&stHeader.dChanBW, sizeof(stHeader.dChanBW), 1, pFDedispData);
+            stHeader.dFChan1 = (double) stYUM.fFMax;
         }
+        else
+        {
+            stHeader.dFChan1 = (double) stYUM.fFMin;
+        }
+        (void) fwrite(&stHeader.dFChan1,
+                      sizeof(stHeader.dFChan1),
+                      1,
+                      pFDedispData);
+
+        /* write channel bandwidth  */
+        iLen = strlen(YAPP_SP_LABEL_CHANBW);
+        (void) fwrite(&iLen, sizeof(iLen), 1, pFDedispData);
+        (void) strcpy(acLabel, YAPP_SP_LABEL_CHANBW);
+        (void) fwrite(acLabel, sizeof(char), iLen, pFDedispData);
+        if (stYUM.cIsBandFlipped)
+        {
+            stHeader.dChanBW = (double) (-stYUM.fChanBW);
+        }
+        else
+        {
+            stHeader.dChanBW = (double) stYUM.fChanBW;
+        }
+        (void) fwrite(&stHeader.dChanBW, sizeof(stHeader.dChanBW), 1, pFDedispData);
 
         /* write number of bits per sample */
         iLen = strlen("nbits");
