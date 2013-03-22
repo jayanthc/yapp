@@ -10,7 +10,7 @@
     <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Yanone+Kaffeesatz" />
     <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Titillium+Web" />
     <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Ubuntu+Mono" />
-    <title>Yet Another Pulsar Processor | yapp_viewmetadata</title>
+    <title>Yet Another Pulsar Processor | About</title>
 
 <!-- Google Analytics begin -->
 <script type="text/javascript">
@@ -41,41 +41,23 @@
       </ul>
     </nav>
     <header>
-    yapp_viewmetadata
+    about
     </header>
     <article>
       <section>
-        <p>This program displays metadata/data header/configuration information
-           associated with one or more data files. The following file types are
-           supported:</p>
-        <ul>
-          <li>Search-mode PSRFITS</li>
-          <li>DAS <code>.spec</code> filterbank format</li>
-          <li>SIGPROC <code>.fil</code> filterbank format (including the
-              headerless version, provided a <code>.fhd</code> configuration
-              file is present in the same directory)</li>
-          <li>SIGPROC <code>.tim</code> time series format</li>
-        </ul>
-        <p>Usage:</p> 
-        <code>yapp_viewmetadata [options] <i>data-files</i></code>
-        <p>The options are:</p>
-        <ul>
-          <li><code>-h</code> or <code>--help</code>: Display a short help text.</li>
-	      <li><code>-v</code> or <code>--version</code>: Display the version.</li>
-	   </ul>
-       <p>The data file name may be a composed of standard shell wildcards such
-          as <code>*</code> or <code>?</code>.</p>
-       <p>Examples:</p> 
-       <p>The following displays the metadata for the SIGPROC filterbank file
-          <code>data.fil</code>. If this is a headerless filterbank file, it is
-          expected that a file with metadata information, named <code>data.fhd</code>
-          is present in the same directory as the data file.</p>
-       <code>yapp_viewmetadata data.fil</code>
-       <p>The following displays the metadata for all DAS filterbank files in
-          the current working directory.</p>
-       <code>yapp_viewmetadata *.spec</code>
-       <p>&nbsp;</p>
-       <p>&nbsp;</p>
+        <p>Yet Another Pulsar Processor (YAPP) is a radio pulsar data analysis
+           software suite. The tools in this software suite include those for
+           viewing filterbank data, viewing associated metadata, converting
+           baseband data to filterbank format, dedispersion, smoothing,
+           filtering, and folding, along with a few format-conversion
+           utilities.</p>
+        <p>YAPP is very much in development, and the number of features it
+           currently supports are limited. It is mainly intended to be used in
+           conjunction with other pulsar data processing software such as
+           <a href="http://sigproc.sourceforge.net/">SIGPROC</a> or
+           <a href="http://www.cv.nrao.edu/~sransom/presto/">PRESTO</a>.</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
       </section>
     </article>
     <footer>
