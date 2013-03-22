@@ -1,6 +1,12 @@
 TODO
 ----
 
+
+1. RFI mask generator.
+2. Program to add multiple dedispersed time series.
+3. Barycentre based on location of observatory.
+
+
 all:
 1. popt-ify all programs.
 
@@ -32,6 +38,8 @@ yapp_viewdata:
 yapp_dedisperse:
 1.  BUG: Doesn't dedisperse merged files.
 2.  BUG: Negative DM dedispersion not correct.
+3.  Barycentre data.
+4.  Make sure start time stamp is correct.
 
 
 All:
