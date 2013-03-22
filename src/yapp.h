@@ -167,6 +167,12 @@ enum tagFileFormats
 #define PG_VP_MT                0.90    /**< @brief Top margin */
 /* @} */
 
+/* viewport margins for the colour wedge */
+#define PG_WEDG_VP_ML       0.78
+#define PG_WEDG_VP_MR       0.97
+#define PG_WEDG_VP_MB       PG_2D_VP_MB
+#define PG_WEDG_VP_MT       0.15
+
 #define PG_CH                   1.0     /**< @brief Default character height */
 #define PG_CH_2P                1.5     /**< @brief Character height for two panels */
 #define PG_CH_3P                1.5     /**< @brief Character height for three panels */
