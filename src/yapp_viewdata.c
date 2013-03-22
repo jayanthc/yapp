@@ -750,7 +750,8 @@ int main(int argc, char *argv[])
             cpgbox("CST", 0.0, 0, "CST", 0.0, 0);
             if (!cIsFirst)
             {
-                cpgwedg("RI", 1.0, 5.0, fDataMinOld, fDataMaxOld, "");
+                cpgsvp(PG_WEDG_VP_ML, PG_WEDG_VP_MR, PG_WEDG_VP_MB, PG_WEDG_VP_MT);
+                cpgwedg("TI", 0.0, 3.0, fDataMinOld, fDataMaxOld, "");
             }
             cIsFirst = YAPP_FALSE;
             cpgsci(PG_CI_DEF);
@@ -777,6 +778,7 @@ int main(int argc, char *argv[])
         }
 
         /* display the plot number */
+        /* TODO: bug - in maximized window, plot not proper  */
         (void) sprintf(acLabel, "%d / %d", iReadBlockCount, iTotNumReads);
         cpgmtxt("T", -1.5, 0.99, 1.0, acLabel);
 

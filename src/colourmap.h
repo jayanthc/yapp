@@ -19,11 +19,18 @@
  * @defgroup PlotMargins PGPLOT viewport margins
  */
 /* @{ */
-#define PG_2D_VP_ML            0.06    /**< @brief Left margin */
-#define PG_2D_VP_MR            0.90    /**< @brief Right margin */
-#define PG_2D_VP_MB            0.14    /**< @brief Bottom margin */
-#define PG_2D_VP_MT            0.90    /**< @brief Top margin */
+#define PG_2D_VP_ML         0.06    /**< @brief Left margin */
+#define PG_2D_VP_MR         0.98    /**< @brief Right margin */
+#define PG_2D_VP_MB         0.14    /**< @brief Bottom margin */
+#define PG_2D_VP_MT         0.90    /**< @brief Top margin */
 /* @} */
+
+/* TODO: this block is a duplicate of that in yapp.h */
+/* viewport margins for the colour wedge */
+#define PG_WEDG_VP_ML       0.78
+#define PG_WEDG_VP_MR       0.97
+#define PG_WEDG_VP_MB       PG_2D_VP_MB
+#define PG_WEDG_VP_MT       0.15
 
 #define LEN_GENSTRING       256
 #define CMAP_LEVELS         64

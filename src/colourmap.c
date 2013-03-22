@@ -1068,7 +1068,9 @@ void Plot2D(float* pfBuf, float fDataMin, float fDataMax,
     /* add labels and title */
     cpglab(pcXLabel, pcYLabel, pcTitle);
     /* plot the colour index for reference */
-    cpgwedg("RI", 1.0, 5.0, fDataMin, fDataMax, "");
+    cpgsvp(PG_WEDG_VP_ML, PG_WEDG_VP_MR, PG_WEDG_VP_MB, PG_WEDG_VP_MT);
+    cpgwedg("TI", 0.0, 3.0, fDataMin, fDataMax, "");
+    cpgsvp(PG_2D_VP_ML, PG_2D_VP_MR, PG_2D_VP_MB, PG_2D_VP_MT);
 
     return;
 }

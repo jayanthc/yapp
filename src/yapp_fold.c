@@ -831,6 +831,8 @@ int main(int argc, char *argv[])
             }
             else
             {
+                fDataMinOld = fDataMin;
+                fDataMaxOld = fDataMax;
                 fDataMin = g_pfBuf[0];
                 fDataMax = g_pfBuf[0];
                 for (i = 0; i < iSampsPerPeriod; ++i)
@@ -856,23 +858,24 @@ int main(int argc, char *argv[])
                               fDataMax);
                 #endif
 
-                cpgsci(0);      /* background */
                 if (!cIsFirst)
                 {
-                    cpgwedg("RI", 1.0, 5.0, fDataMinOld, fDataMaxOld, "");
+                    cpgsci(0);      /* background */
+                    cpgsvp(PG_WEDG_VP_ML, PG_WEDG_VP_MR, PG_WEDG_VP_MB, PG_WEDG_VP_MT);
+                    cpgwedg("TI", 0.0, 3.0, fDataMinOld, fDataMaxOld, "");
+                    cpgsci(PG_CI_DEF);
                 }
-                cpgsci(PG_CI_DEF);
                 Plot2D(g_pfBuf, fDataMin, fDataMax,
                        g_pfPhase, iSampsPerPeriod, dPhaseStep,
                        g_pfYAxis, iNumPulses, 1.0,
                        "Phase", "Pulse Number", "Folded Dynamic Spectrum",
                        iColourMap);
-                fDataMinOld = fDataMin;
-                fDataMaxOld = fDataMax;
             }
         }
         else
         {
+            fDataMinOld = fDataMin;
+            fDataMaxOld = fDataMax;
             fDataMin = g_pfProfBuf[0];
             fDataMax = g_pfProfBuf[0];
             for (i = 0; i < iSampsPerPeriod; ++i)
@@ -915,19 +918,18 @@ int main(int argc, char *argv[])
                 l = ++m;
             }
 
-            cpgsci(0);      /* background */
             if (!cIsFirst)
             {
-                cpgwedg("RI", 1.0, 5.0, fDataMinOld, fDataMaxOld, "");
+                cpgsci(0);      /* background */
+                cpgsvp(PG_WEDG_VP_ML, PG_WEDG_VP_MR, PG_WEDG_VP_MB, PG_WEDG_VP_MT);
+                cpgwedg("TI", 0.0, 3.0, fDataMinOld, fDataMaxOld, "");
+                cpgsci(PG_CI_DEF);
             }
-            cpgsci(PG_CI_DEF);
             Plot2D(g_pfPlotBuf, fDataMin, fDataMax,
                    g_pfPhase, iSampsPerPeriod, dPhaseStep,
                    g_pfYAxis, stYUM.iNumChans, stYUM.fChanBW,
                    "Phase", "Frequency (MHz)", "Folded Dynamic Spectrum",
                    iColourMap);
-            fDataMinOld = fDataMin;
-            fDataMaxOld = fDataMax;
         }
 
         /* display the plot number */
