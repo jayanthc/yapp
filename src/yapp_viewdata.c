@@ -342,6 +342,8 @@ int main(int argc, char *argv[])
                   iNumReads,
                   iBlockSize);
 
+    (void) printf("Observation start time: %.15g MJD\n", stYUM.dTStart);
+
     /* calculate the threshold */
     dNumSigmas = YAPP_CalcThresholdInSigmas(iTimeSampsToProc);
     if ((double) YAPP_RET_ERROR == dNumSigmas)
@@ -541,7 +543,8 @@ int main(int argc, char *argv[])
         --iNumReads;
         ++iReadBlockCount;
 
-        if (iReadItems < iTotSampsPerBlock) /* usually, the last block */
+        if ((iReadItems < iTotSampsPerBlock)    /* usually, the last block */
+            || (0 == iNumReads))                /* definitely the last block */
         {
             iDiff = (stYUM.iNumChans * iBlockSize) - iReadItems;
 
@@ -550,7 +553,7 @@ int main(int argc, char *argv[])
                           '\0',
                           (sizeof(float) * iDiff));
         }
-        else if (cIsLastBlock)  /* when user has requested proc. time */
+        else if (cIsLastBlock)  /* usually, when user has requested proc. time */
         {
             iDiff = (iBlockSize - (iTimeSampsToProc % iBlockSize))
                     * stYUM.iNumChans;
@@ -747,17 +750,12 @@ int main(int argc, char *argv[])
                     0.5,
                     0);
             cpgbox("CST", 0.0, 0, "CST", 0.0, 0);
-            if (!cIsFirst)
-            {
-                cpgsvp(PG_WEDG_VP_ML, PG_WEDG_VP_MR, PG_WEDG_VP_MB, PG_WEDG_VP_MT);
-                cpgwedg("TI", 0.0, 3.0, fDataMinOld, fDataMaxOld, "");
-            }
             cIsFirst = YAPP_FALSE;
             cpgsci(PG_CI_DEF);
             Plot2D(g_pfPlotBuf, fDataMin, fDataMax,
                    g_pfXAxis, iBlockSize, dTSampInSec,
                    g_pfYAxis, stYUM.iNumChans, stYUM.fChanBW,
-                   "Time (s)", "Frequency (MHz)", "Dynamic Spectrum",
+                   "Time - Start Time (s)", "Frequency (MHz)", "Dynamic Spectrum",
                    iColourMap);
         }
         else
@@ -769,7 +767,7 @@ int main(int argc, char *argv[])
                     g_pfXAxis[iBlockSize-1],
                     fDataMin,
                     fDataMax);
-            cpglab("Time (s)", "", "Time Series");
+            cpglab("Time - Start Time (s)", "", "Time Series");
             cpgbox("BCNST", 0.0, 0, "BCNST", 0.0, 0);
             cpgsci(PG_CI_PLOT);
             cpgline(iBlockSize, g_pfXAxis, g_pfBuf);

@@ -133,6 +133,8 @@ int main(int argc, char *argv[])
     int k = 0;
     int l = 0;
     int m = 0;
+    double dDelay = 0.0;
+    int iStartOffset = 0;
     float fStartOffset = 0.0;
     char cHasGraphics = YAPP_FALSE;
     int iColourMap = DEF_CMAP;
@@ -349,6 +351,14 @@ int main(int argc, char *argv[])
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
+
+    /* calculate the corrected start time */
+    dDelay = (double) -4.148741601e6
+             * (((double) 1.0 / pow(INFINITY, fLaw))
+                - ((double) 1.0 / pow(stYUM.fFMax, fLaw)))
+             * dDM;    /* in ms */
+    iStartOffset = (int) (dDelay / stYUM.dTSamp);
+    fStartOffset = iStartOffset * dTSampInSec;
 
     /* ensure that the block size is at least equivalent to the maximum offset,
        because we don't read beyond the second buffer */
