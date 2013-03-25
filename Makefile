@@ -82,6 +82,8 @@ all: yapp_makever \
 	 yapp_filter \
 	 yapp_fold.o \
 	 yapp_fold \
+	 yapp_add.o \
+	 yapp_add \
 	 yapp_fits2fil.o \
 	 yapp_fits2fil \
 	 yapp_dat2tim.o \
@@ -168,6 +170,13 @@ yapp_fold: $(IDIR)/yapp_fold.o $(IDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o $(IDIR)/colourmap.o
 	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) $(LFLAGS_CFITSIO) -o $(BINDIR)/$@
 
+yapp_add.o: $(SRCDIR)/yapp_add.c $(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h
+	$(CC) $(CFLAGS_C) $(DDEBUG) $< -o $(IDIR)/$@
+
+yapp_add: $(IDIR)/yapp_add.o $(IDIR)/yapp_version.o \
+	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
+	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) $(LFLAGS_CFITSIO) -o $(BINDIR)/$@
+
 yapp_fits2fil.o: $(UTILDIR)/yapp_fits2fil.c $(UTILDIR)/yapp_fits2fil.h \
 	$(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h $(SRCDIR)/yapp_psrfits.h
 	$(CC) $(CFLAGS_C) -I$(SRCDIR) $(DDEBUG) $< -o $(UTILDIR)/$@
@@ -248,6 +257,7 @@ clean:
 	$(DELCMD) $(IDIR)/yapp_smooth.o
 	$(DELCMD) $(IDIR)/yapp_filter.o
 	$(DELCMD) $(IDIR)/yapp_fold.o
+	$(DELCMD) $(IDIR)/yapp_add.o
 	$(DELCMD) $(UTILDIR)/yapp_fits2fil.o
 	$(DELCMD) $(UTILDIR)/yapp_dat2tim.o
 #	$(DELCMD) $(IDIR)/set_colours.o

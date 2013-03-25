@@ -1611,10 +1611,7 @@ int YAPP_CalcDelays(double dDM,
     float fF1 = 0.0;
     float fF2 = 0.0;
     double dDelay = 0.0;
-    //float fFMaxCalc = INFINITY;     /* reference frequency */
     float fFMaxCalc = stYUM.fFMax;     /* reference frequency */
-    /* TODO: just do this for max frequency, but calculate dTStart based on
-       inf freq. */
 
     g_piOffsetTab = (int *) YAPP_Malloc((size_t) stYUM.iNumChans,
                                         sizeof(int),

@@ -30,20 +30,13 @@ yapp_viewdata:
     Anything above 62334 (out of 62385) is nan (problem maybe with
     das_spectro_lin).
 6.  BUG: Last block of 0833b45.spec not plotting correctly.
-7.  BUG: Process exactly the amount of time asked for, not at multiples of
-    block size.
 8.  FEATURE: Support user-defined colourmaps.
 
 
 yapp_dedisperse:
 1.  BUG: Doesn't dedisperse merged files.
 2.  BUG: Negative DM dedispersion not correct.
-3.  Barycentre data.
-4.  Make sure start time stamp is correct.
-
-
-All:
-1.  FEATURE: Add block X of Y in plots.
+3.  BUG: When creating .fil output files, last block leaves some remnant stuff.
 
 
 -------------------------------------------------------------------------------
@@ -64,9 +57,7 @@ yapp_dedisplaw:
 8.  FEATURE: Compare max SNRs between laws and write only max to file.
 
 Misc:
-1.  FEATURE: Program to update the old-format field name (NXXXX) with the new
-    format (JXXXX+YY)
-2.  BUG (PGPLOT BUG): PGPLOT leaks 26 bytes just be cpgopen() and cpgclos().
+2.  BUG (PGPLOT BUG): PGPLOT leaks 124 bytes just by cpgopen() and cpgclos().
 
 Bugs in Other Programs:
 1. psrfits2psrfits: Creation of 4-bit files from 16-bit files seems to cause

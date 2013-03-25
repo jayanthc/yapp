@@ -1,18 +1,13 @@
 /*
- * @file yapp_smooth.c
- * Program to smooth (low-pass filter) dedispersed time series data.
+ * @file yapp_add.c
+ * Program to coherently add dedispersed time series data for different
+ *  frequency bands.
  *
  * @verbatim
- * Usage: yapp_smooth [options] <data-file>
+ * Usage: yapp_add [options] <data-file-maxfreq> ... <data-file-minfreq>
  *     -h  --help                           Display this usage information
- *     -s  --skip <time>                    The length of data in seconds, to be
- *                                          skipped
- *                                          (default is 0 s)
- *     -p  --proc <time>                    The length of data in seconds, to be
- *                                          processed
- *                                          (default is all)
- *     -w  --width <width>                  Width of boxcar window in milliseconds
- *                                          (default is 1 ms)
+ *     -n  --nsamp <samples>                Number of samples read in one block
+ *                                          (default is 4096 samples)
  *     -g  --graphics                       Turn on plotting
  *     -i  --invert                         Invert the background and foreground
  *                                          colours in plots
@@ -20,7 +15,7 @@
  *     -v  --version                        Display the version @endverbatim
  *
  * @author Jayanth Chennamangalam
- * @date 2013.01.08
+ * @date 2013.03.24
  */
 
 #include "yapp.h"
@@ -35,9 +30,6 @@ extern const char *g_pcVersion;
 /* PGPLOT device ID */
 extern int g_iPGDev;
 
-/* data file */
-extern FILE *g_pFData;
-
 /* the following are global only to enable cleaning up in case of abnormal
    termination, such as those triggered by SIGINT or SIGTERM */
 float *g_pfBuf = NULL;
@@ -46,27 +38,21 @@ float *g_pfXAxis = NULL;
 
 int main(int argc, char *argv[])
 {
+    FILE **ppFIn = NULL;
     FILE *pFOut = NULL;
-    char *pcFileData = NULL;
     char *pcFileOut = NULL;
     char acFileOut[LEN_GENSTRING] = {0};
     int iFormat = DEF_FORMAT;
-    double dDataSkipTime = 0.0;
-    double dDataProcTime = 0.0;
     YUM_t stYUM = {{0}};
+    float *pfFreqs = NULL;
+    int iBlockSize = DEF_SIZE_BLOCK;
+    int iOutBlockSize = 0;
     int iTotSampsPerBlock = 0;  /* iBlockSize */
     int iDataSizePerBlock = 0;  /* fSampSize * iBlockSize */
     double dTSampInSec = 0.0;   /* holds sampling time in s */
-    long lBytesToSkip = 0;
-    long lBytesToProc = 0;
-    int iTimeSampsToSkip = 0;
-    int iTimeSampsToProc = 0;
-    int iBlockSize = 0;
-    int iOutBlockSize = 0;
     int iNumReads = 0;
     int iTotNumReads = 0;
     int iReadBlockCount = 0;
-    float fWidth = 1.0; /* in ms */
     char cIsLastBlock = YAPP_FALSE;
     int iRet = YAPP_RET_SUCCESS;
     float fDataMin = 0.0;
@@ -76,31 +62,20 @@ int main(int argc, char *argv[])
     float fButY = 0.0;
     char cCurChar = 0;
     int iNumSamps = 0;
-    int iSampsPerWin = 0;
     int iDiff = 0;
     int i = 0;
     char cIsFirst = YAPP_TRUE;
-    float fMeanOrig = 0.0;
-    float fRMSOrig = 0.0;
-    float fMeanOrigAll = 0.0;
-    float fRMSOrigAll = 0.0;
-    float fMeanSmoothed = 0.0;
-    float fRMSSmoothed = 0.0;
-    float fMeanSmoothedAll = 0.0;
-    float fRMSSmoothedAll = 0.0;
     char cHasGraphics = YAPP_FALSE;
     int iInvCols = YAPP_FALSE;
     char cIsNonInteractive = YAPP_FALSE;
     const char *pcProgName = NULL;
     int iNextOpt = 0;
     /* valid short options */
-    const char* const pcOptsShort = "hs:p:w:giev";
+    const char* const pcOptsShort = "hn:giev";
     /* valid long options */
     const struct option stOptsLong[] = {
         { "help",                   0, NULL, 'h' },
-        { "skip",                   1, NULL, 's' },
-        { "proc",                   1, NULL, 'p' },
-        { "width",                  1, NULL, 'w' },
+        { "nsamp",                  1, NULL, 'n' },
         { "graphics",               0, NULL, 'g' },
         { "invert",                 0, NULL, 'i' },
         { "non-interactive",        0, NULL, 'e' },
@@ -122,26 +97,16 @@ int main(int argc, char *argv[])
                 PrintUsage(pcProgName);
                 return YAPP_RET_SUCCESS;
 
-            case 's':   /* -s or --skip */
+            case 'n':   /* -n or --nsamp */
                 /* set option */
-                dDataSkipTime = atof(optarg);
-                break;
-
-            case 'p':   /* -p or --proc */
-                /* set option */
-                dDataProcTime = atof(optarg);
-                break;
-
-            case 'w':   /* -w or --width */
-                /* set option */
-                fWidth = atof(optarg);
-                if (fWidth > 1) /* 1 ms */
+                iBlockSize = atoi(optarg);
+                /* validate - PGPLOT does not like iBlockSize = 1 */
+                if (iBlockSize < 2)
                 {
-                    fprintf(stderr,
-                            "WARNING: The chosen boxcar width may suppress "
-                            "pulsars with periods less than %g ms in the "
-                            "smoothed data!\n",
-                            fWidth);
+                    (void) fprintf(stderr,
+                                   "ERROR: Number of samples must be > 1!\n");
+                    PrintUsage(pcProgName);
+                    return YAPP_RET_ERROR;
                 }
                 break;
 
@@ -187,6 +152,15 @@ int main(int argc, char *argv[])
         return YAPP_RET_ERROR;
     }
 
+    /* only one file - no need to add */
+    iNumInFiles = argc - optind;
+    if (iNumInFiles == 1)
+    {
+        (void) fprintf(stderr, "ERROR: Only one input file given!\n");
+        PrintUsage(pcProgName);
+        return YAPP_RET_ERROR;
+    }
+
     /* register the signal-handling function */
     iRet = YAPP_RegisterSignalHandlers();
     if (iRet != YAPP_RET_SUCCESS)
@@ -196,115 +170,58 @@ int main(int argc, char *argv[])
         return YAPP_RET_ERROR;
     }
 
-    /* get the input filename */
-    pcFileData = argv[optind];
-
-    /* determine the file type */
-    iFormat = YAPP_GetFileType(pcFileData);
-    if (YAPP_RET_ERROR == iFormat)
+    /* user input validation - check the file type for all input files */
+    for (i = optind; i < argc; ++i)
     {
-        (void) fprintf(stderr,
-                       "ERROR: File type determination failed!\n");
-        return YAPP_RET_ERROR;
-    }
-    if (iFormat != YAPP_FORMAT_DTS_TIM)
-    {
-        (void) fprintf(stderr,
-                       "ERROR: Invalid file type!\n");
-        return YAPP_RET_ERROR;
+        /* determine the file type */
+        iFormat = YAPP_GetFileType(argv[i]);
+        if (YAPP_RET_ERROR == iFormat)
+        {
+            (void) fprintf(stderr,
+                           "ERROR: File type determination failed!\n");
+            return YAPP_RET_ERROR;
+        }
+        if (iFormat != YAPP_FORMAT_DTS_TIM)
+        {
+            (void) fprintf(stderr,
+                           "ERROR: Invalid file type!\n");
+            return YAPP_RET_ERROR;
+        }
     }
 
     /* read metadata */
-    iRet = YAPP_ReadMetadata(pcFileData, iFormat, &stYUM);
-    if (iRet != YAPP_RET_SUCCESS)
+    /* NOTE: it is assumed that all files correspond to a single observation.
+             the only information taken from all files except the last one is
+             the highest frequency. general metadata is read from the last
+             file */
+    /* allocate memory for the frequency array */
+    pfFreqs = (float *) YAPP_Malloc((size_t) iNumInFiles,
+                                    sizeof(float),
+                                    YAPP_FALSE);
+    if (NULL == pfFreqs)
     {
         (void) fprintf(stderr,
-                       "ERROR: Reading metadata failed for file %s!\n",
-                       pcFileData);
+                       "ERROR: Memory allocation failed! %s!\n",
+                       strerror(errno));
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
+    }
+    for (i = optind; i < argc; ++i)
+    {
+        iRet = YAPP_ReadMetadata(argv[i], iFormat, &stYUM);
+        if (iRet != YAPP_RET_SUCCESS)
+        {
+            (void) fprintf(stderr,
+                           "ERROR: Reading metadata failed for file %s!\n",
+                           argv[i]);
+            return YAPP_RET_ERROR;
+        }
+        pfFreqs[i-optind] = stYUM.fFMax;
     }
 
     /* convert sampling interval to seconds */
     dTSampInSec = stYUM.dTSamp / 1e3;
 
-    /* calculate bytes to skip and read */
-    if (0.0 == dDataProcTime)
-    {
-        dDataProcTime = (stYUM.iTimeSamps * dTSampInSec) - dDataSkipTime;
-    }
-    /* check if the input time duration is less than the length of the
-       data */
-    else if (dDataProcTime > (stYUM.iTimeSamps * dTSampInSec))
-    {
-        (void) fprintf(stderr,
-                       "WARNING: Input time is longer than length of "
-                       "data!\n");
-    }
-
-    lBytesToSkip = (long) floor((dDataSkipTime / dTSampInSec)
-                                                    /* number of samples */
-                           * stYUM.fSampSize);
-    lBytesToProc = (long) floor((dDataProcTime / dTSampInSec)
-                                                    /* number of samples */
-                           * stYUM.fSampSize);
-
-    /* calculate the number of samples in one boxcar window */
-    iSampsPerWin = (int) round(fWidth / stYUM.dTSamp);
-    /* make the number of samples odd */
-    if (0 == (iSampsPerWin % 2))
-    {
-        iSampsPerWin += 1;
-        (void) fprintf(stderr,
-                       "WARNING: Number of samples per window modified to "
-                       "be odd, new boxcar window width is %g ms.\n",
-                       stYUM.dTSamp * iSampsPerWin);
-    }
-
-    /* compute the block size - a large multiple of iSampsPerWin */
-    iBlockSize = DEF_WINDOWS * iSampsPerWin;
-    if (iBlockSize > MAX_SIZE_BLOCK)
-    {
-        iBlockSize = MAX_SIZE_BLOCK;
-    }
-
-    if (lBytesToSkip >= stYUM.lDataSizeTotal)
-    {
-        (void) fprintf(stderr,
-                       "ERROR: Data to be skipped is greater than or equal to "
-                       "the size of the file!\n");
-        YAPP_CleanUp();
-        return YAPP_RET_ERROR;
-    }
-
-    if ((lBytesToSkip + lBytesToProc) > stYUM.lDataSizeTotal)
-    {
-        (void) printf("WARNING: Total data to be read (skipped and processed) "
-                      "is more than the size of the file! ");
-        lBytesToProc = stYUM.lDataSizeTotal - lBytesToSkip;
-        (void) printf("Newly calculated size of data to be processed: %ld "
-                      "bytes\n",
-                      lBytesToProc);
-    }
-
-    /* change block size according to the number of samples to be processed */
-    if (iTimeSampsToProc < iBlockSize)
-    {
-        iBlockSize = (int) ceil(dDataProcTime / dTSampInSec);
-    }
-
-    iTimeSampsToSkip = (int) (lBytesToSkip / (stYUM.fSampSize));
-    (void) printf("Skipping\n"
-                  "    %ld of %ld bytes\n"
-                  "    %d of %d time samples\n"
-                  "    %.10g of %.10g seconds\n",
-                  lBytesToSkip,
-                  stYUM.lDataSizeTotal,
-                  iTimeSampsToSkip,
-                  stYUM.iTimeSamps,
-                  (iTimeSampsToSkip * dTSampInSec),
-                  (stYUM.iTimeSamps * dTSampInSec));
-
-    iTimeSampsToProc = (int) (lBytesToProc / (stYUM.fSampSize));
     /* calculate the actual number of samples that will be processed in one
        iteration */
     iOutBlockSize = iBlockSize - (iSampsPerWin - 1);
@@ -330,18 +247,31 @@ int main(int argc, char *argv[])
                   iNumReads,
                   iOutBlockSize);
 
-    (void) printf("Boxcar window width is %d time samples.\n", iSampsPerWin);
-
-    /* open the time series data file for reading */
-    g_pFData = fopen(pcFileData, "r");
-    if (NULL == g_pFData)
+    /* open the time series data files for reading */
+    /* allocate memory for the file pointer array */
+    ppFIn = (FILE *) YAPP_Malloc((size_t) iNumInFiles,
+                                 sizeof(FILE),
+                                 YAPP_FALSE);
+    if (NULL == ppFIn)
     {
         (void) fprintf(stderr,
-                       "ERROR: Opening file %s failed! %s.\n",
-                       pcFileData,
+                       "ERROR: Memory allocation failed! %s!\n",
                        strerror(errno));
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
+    }
+    for (i = optind; i < argc; ++i)
+    {
+        ppFIn[i] = fopen(argv[i], "r");
+        if (NULL == ppFIn[i])
+        {
+            (void) fprintf(stderr,
+                           "ERROR: Opening file %s failed! %s.\n",
+                           argv[i],
+                           strerror(errno));
+            YAPP_CleanUp();
+            return YAPP_RET_ERROR;
+        }
     }
 
     /* allocate memory for the buffer, based on the number of channels and time
@@ -364,7 +294,7 @@ int main(int argc, char *argv[])
     }
 
     /* open the time series data file for writing */
-    pcFileOut = YAPP_GetFilenameFromPath(pcFileData, EXT_TIM);
+    pcFileOut = YAPP_GetFilenameFromPath(argv[optind], EXT_TIM);
     (void) sprintf(acFileOut,
                    "%s_%s%gms%s",
                    pcFileOut,
@@ -386,8 +316,6 @@ int main(int argc, char *argv[])
     char acBuf[stYUM.iHeaderLen];
     (void) fread(acBuf, sizeof(char), (long) stYUM.iHeaderLen, g_pFData);
     (void) fwrite(acBuf, sizeof(char), (long) stYUM.iHeaderLen, pFOut);
-    /* skip data, if any are to be skipped */
-    (void) fseek(g_pFData, lBytesToSkip, SEEK_CUR);
 
     /* open the PGPLOT graphics device */
     if (cHasGraphics)
@@ -477,49 +405,11 @@ int main(int argc, char *argv[])
            all other blocks */
         iNumSamps = iReadItems;
 
-        if (cIsFirst)
-        {
-            /* copy first (iSampsPerWin / 2) time samples to the output */
-            (void) memcpy(g_pfOutBuf, g_pfBuf, (iSampsPerWin / 2) * sizeof(float));
-            (void) fwrite(g_pfOutBuf,
-                          sizeof(float),
-                          (long) (iSampsPerWin / 2),
-                          pFOut);
-            cIsFirst = YAPP_FALSE;
-        }
-
-        /* smooth data */
-        (void) memset(g_pfOutBuf, '\0', (sizeof(float) * iOutBlockSize));
-        (void) YAPP_Smooth(g_pfBuf, iNumSamps, iSampsPerWin, g_pfOutBuf);
         /* write smoothed data to file */
         (void) fwrite(g_pfOutBuf,
                       sizeof(float),
                       (long) (iNumSamps - (iSampsPerWin - 1)),
                       pFOut);
-
-        /* calculate statistics */
-        /* original signal */
-        fMeanOrig = YAPP_CalcMean(g_pfBuf, iNumSamps - (iSampsPerWin - 1));
-        fMeanOrigAll += fMeanOrig;
-        fRMSOrig = YAPP_CalcRMS(g_pfBuf,
-                                iNumSamps - (iSampsPerWin - 1),
-                                fMeanOrig);
-        fRMSOrig *= fRMSOrig;
-        fRMSOrig *= (iNumSamps - (iSampsPerWin - 1) - 1);
-        fRMSOrigAll += fRMSOrig;
-
-        /* smoothed signal */
-        fMeanSmoothed = YAPP_CalcMean(g_pfOutBuf, iNumSamps - (iSampsPerWin - 1));
-        fMeanSmoothedAll += fMeanSmoothed;
-        fRMSSmoothed = YAPP_CalcRMS(g_pfOutBuf,
-                                    iNumSamps - (iSampsPerWin - 1),
-                                    fMeanSmoothed);
-        fRMSSmoothed *= fRMSSmoothed;
-        fRMSSmoothed *= (iNumSamps - (iSampsPerWin - 1) - 1);
-        fRMSSmoothedAll += fRMSSmoothed;
-
-        /* set the file position to rewind by (iSampsPerWin - 1) samples */
-        (void) fseek(g_pFData, -((iSampsPerWin - 1) * sizeof(float)), SEEK_CUR);
 
         if (cHasGraphics)
         {
@@ -552,11 +442,10 @@ int main(int argc, char *argv[])
             cpgeras();
             for (i = 0; i < iOutBlockSize; ++i)
             {
-                g_pfXAxis[i] = (float) (dDataSkipTime
-                                        + (((iReadBlockCount - 1)
+                g_pfXAxis[i] = (float) (((iReadBlockCount - 1)
                                             * iOutBlockSize
                                             * dTSampInSec)
-                                           + (i * dTSampInSec)));
+                                           + (i * dTSampInSec));
             }
 
             cpgsvp(PG_VP_ML, PG_VP_MR, PG_VP_MB, PG_VP_MT);
@@ -596,11 +485,10 @@ int main(int argc, char *argv[])
             cpgeras();
             for (i = 0; i < iOutBlockSize; ++i)
             {
-                g_pfXAxis[i] = (float) (dDataSkipTime
-                                        + (((iReadBlockCount - 1)
+                g_pfXAxis[i] = (float) (((iReadBlockCount - 1)
                                             * iOutBlockSize
                                             * dTSampInSec)
-                                           + (i * dTSampInSec)));
+                                           + (i * dTSampInSec));
             }
 
             cpgsvp(PG_VP_ML, PG_VP_MR, PG_VP_MB, PG_VP_MT);
@@ -733,26 +621,15 @@ int main(int argc, char *argv[])
  */
 void PrintUsage(const char *pcProgName)
 {
-    (void) printf("Usage: %s [options] <data-file>\n",
+    (void) printf("Usage: %s [options] <data-file-maxfreq> ... "
+                  "<data-file-minfreq>\n"
                   pcProgName);
     (void) printf("    -h  --help                           ");
     (void) printf("Display this usage information\n");
-    (void) printf("    -s  --skip <time>                    ");
-    (void) printf("The length of data in seconds, to be\n");
+    (void) printf("    -n  --nsamp <samples>                ");
+    (void) printf("Number of samples read in one block\n");
     (void) printf("                                         ");
-    (void) printf("skipped\n");
-    (void) printf("                                         ");
-    (void) printf("(default is 0 s)\n");
-    (void) printf("    -p  --proc <time>                    ");
-    (void) printf("The length of data in seconds, to be\n");
-    (void) printf("                                         ");
-    (void) printf("processed\n");
-    (void) printf("                                         ");
-    (void) printf("(default is all)\n");
-    (void) printf("    -w  --width                          ");
-    (void) printf("Width of boxcar window in milliseconds\n");
-    (void) printf("                                         ");
-    (void) printf("(default is 1 ms)\n");
+    (void) printf("(default is 4096 samples)\n");
     (void) printf("    -g  --graphics                       ");
     (void) printf("Turn on plotting\n");
     (void) printf("    -i  --invert                         ");
