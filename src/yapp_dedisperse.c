@@ -364,6 +364,9 @@ int main(int argc, char *argv[])
     dDelay = (double) -4.148741601e6
              * (((double) 1.0 / pow(INFINITY, fLaw))
                 - ((double) 1.0 / pow(stYUM.fFMax, fLaw)))
+                /* TODO: max or min? find out if we drop samples at the
+                   beginning of the scan for channels except highest freq.
+                   one */
              * dDM;    /* in ms */
     iStartOffset = (int) (dDelay / stYUM.dTSamp);
     fStartOffset = iStartOffset * dTSampInSec;

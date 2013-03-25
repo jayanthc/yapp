@@ -82,13 +82,13 @@ all: yapp_makever \
 	 yapp_filter \
 	 yapp_fold.o \
 	 yapp_fold \
-	 yapp_add.o \
-	 yapp_add \
 	 yapp_fits2fil.o \
 	 yapp_fits2fil \
 	 yapp_dat2tim.o \
 	 yapp_dat2tim \
 	 tags
+#	 yapp_add.o \
+#	 yapp_add \
 #	 yapp_dedisplaw.o \
 	 set_colours.o \
 	 yapp_dedisplaw \
@@ -257,7 +257,7 @@ clean:
 	$(DELCMD) $(IDIR)/yapp_smooth.o
 	$(DELCMD) $(IDIR)/yapp_filter.o
 	$(DELCMD) $(IDIR)/yapp_fold.o
-	$(DELCMD) $(IDIR)/yapp_add.o
+#	$(DELCMD) $(IDIR)/yapp_add.o
 	$(DELCMD) $(UTILDIR)/yapp_fits2fil.o
 	$(DELCMD) $(UTILDIR)/yapp_dat2tim.o
 #	$(DELCMD) $(IDIR)/set_colours.o
