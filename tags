@@ -365,7 +365,6 @@ g_pFDataSec	utilities/yapp_fits2fil.c	/^FILE *g_pFDataSec = NULL;$/;"	v
 g_padBadTimes	src/yapp_dedisperse.c	/^double (*g_padBadTimes)[][NUM_BAD_BOUNDS] = NULL;$/;"	v
 g_padBadTimes	src/yapp_dedisplaw.c	/^double (*g_padBadTimes)[][NUM_BAD_BOUNDS] = NULL;$/;"	v
 g_pcFilter	src/yapp_filter.c	/^char *g_pcFilter = NULL;$/;"	v
-g_pcIsChanGood	src/yapp_dedisperse.c	/^char *g_pcIsChanGood = NULL;$/;"	v
 g_pcIsChanGood	src/yapp_dedisplaw.c	/^char *g_pcIsChanGood = NULL;$/;"	v
 g_pcIsTimeGood	src/yapp_dedisperse.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	src/yapp_dedisplaw.c	/^char *g_pcIsTimeGood = NULL;$/;"	v

@@ -1077,76 +1077,73 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
        close it */
     g_pFData = NULL;
 
-    if (YAPP_FORMAT_FIL == iFormat)
+    if (pstYUM->fChanBW < 0.0)
     {
-        if (pstYUM->fChanBW < 0.0)
-        {
-            pstYUM->cIsBandFlipped = YAPP_TRUE;
-            /* make the channel bandwidth positive */
-            pstYUM->fChanBW = fabs(pstYUM->fChanBW);
-            pstYUM->fFMax = fFCh1;
-            pstYUM->fFMin = pstYUM->fFMax
-                            - ((pstYUM->iNumChans - 1) * pstYUM->fChanBW);
-        }
-        else
-        {
-            pstYUM->cIsBandFlipped = YAPP_FALSE;
-            pstYUM->fFMin = fFCh1;
-            pstYUM->fFMax = pstYUM->fFMin
-                            + ((pstYUM->iNumChans - 1) * pstYUM->fChanBW);
-        }
+        pstYUM->cIsBandFlipped = YAPP_TRUE;
+        /* make the channel bandwidth positive */
+        pstYUM->fChanBW = fabs(pstYUM->fChanBW);
+        pstYUM->fFMax = fFCh1;
+        pstYUM->fFMin = pstYUM->fFMax
+                        - ((pstYUM->iNumChans - 1) * pstYUM->fChanBW);
+    }
+    else
+    {
+        pstYUM->cIsBandFlipped = YAPP_FALSE;
+        pstYUM->fFMin = fFCh1;
+        pstYUM->fFMax = pstYUM->fFMin
+                        + ((pstYUM->iNumChans - 1) * pstYUM->fChanBW);
+    }
 
-        if (YAPP_TRUE == pstYUM->iFlagSplicedData)
-        {
-            /* in spliced data files, the first frequency is always the
-               highest - since we have inverted the array, it is the last
-               frequency */
-            pstYUM->fFMax = pstYUM->pfFreq[pstYUM->iNumChans-1];
-            /* get the lowest frequency */
-            pstYUM->fFMin = pstYUM->pfFreq[0];
-            /* calculate the channel bandwidth */
-            pstYUM->fChanBW = pstYUM->pfFreq[1] - pstYUM->pfFreq[0];
+    if (YAPP_TRUE == pstYUM->iFlagSplicedData)
+    {
+        /* in spliced data files, the first frequency is always the
+           highest - since we have inverted the array, it is the last
+           frequency */
+        pstYUM->fFMax = pstYUM->pfFreq[pstYUM->iNumChans-1];
+        /* get the lowest frequency */
+        pstYUM->fFMin = pstYUM->pfFreq[0];
+        /* calculate the channel bandwidth */
+        pstYUM->fChanBW = pstYUM->pfFreq[1] - pstYUM->pfFreq[0];
 
-            /* TODO: Number-of-bands calculation not accurate */
-            for (i = 1; i < pstYUM->iNumChans; ++i)
+        /* TODO: Number-of-bands calculation not accurate */
+        for (i = 1; i < pstYUM->iNumChans; ++i)
+        {
+            /*if (fabsf(pfFreq[i] - pfFreq[i-1]) > fChanBW)*/
+            /* kludge: */
+            if (fabsf(pstYUM->pfFreq[i] - pstYUM->pfFreq[i-1]) > (2 * pstYUM->fChanBW))
             {
-                /*if (fabsf(pfFreq[i] - pfFreq[i-1]) > fChanBW)*/
-                /* kludge: */
-                if (fabsf(pstYUM->pfFreq[i] - pstYUM->pfFreq[i-1]) > (2 * pstYUM->fChanBW))
+                ++pstYUM->iNumBands;
+                if (YAPP_MAX_NUM_BANDS == pstYUM->iNumBands)
                 {
-                    ++pstYUM->iNumBands;
-                    if (YAPP_MAX_NUM_BANDS == pstYUM->iNumBands)
-                    {
-                        (void) printf("WARNING: "
-                                      "Maximum number of bands reached!\n");
-                        break;
-                    }
+                    (void) printf("WARNING: "
+                                  "Maximum number of bands reached!\n");
+                    break;
                 }
             }
         }
-        else
-        {
-            pstYUM->iNumBands = 1;
-        }
-
-        /* calculate bandwidth and centre frequency */
-        /* NOTE: max and min are the _centre_ frequencies of the bins, so the
-                 total bandwidth would be (max+chanbw/2)-(min-chanbw/2) */
-        pstYUM->fBW = (pstYUM->fFMax - pstYUM->fFMin) + pstYUM->fChanBW;
-        if (0 == (pstYUM->iNumChans % 2))   /* even number of channels */
-        {
-            pstYUM->fFCentre = (pstYUM->fFMin - (pstYUM->fChanBW / 2))
-                               + ((pstYUM->iNumChans / 2) * pstYUM->fChanBW);
-        }
-        else                                /* odd number of channels */
-        {
-            pstYUM->fFCentre = pstYUM->fFMin
-                               + ((pstYUM->iNumChans / 2) * pstYUM->fChanBW);
-        }
-
-        /* TODO: find out the discontinuities and print them as well, also
-                 number of spliced bands */
     }
+    else
+    {
+        pstYUM->iNumBands = 1;
+    }
+
+    /* calculate bandwidth and centre frequency */
+    /* NOTE: max and min are the _centre_ frequencies of the bins, so the
+             total bandwidth would be (max+chanbw/2)-(min-chanbw/2) */
+    pstYUM->fBW = (pstYUM->fFMax - pstYUM->fFMin) + pstYUM->fChanBW;
+    if (0 == (pstYUM->iNumChans % 2))   /* even number of channels */
+    {
+        pstYUM->fFCentre = (pstYUM->fFMin - (pstYUM->fChanBW / 2))
+                           + ((pstYUM->iNumChans / 2) * pstYUM->fChanBW);
+    }
+    else                                /* odd number of channels */
+    {
+        pstYUM->fFCentre = pstYUM->fFMin
+                           + ((pstYUM->iNumChans / 2) * pstYUM->fChanBW);
+    }
+
+    /* TODO: find out the discontinuities and print them as well, also
+                 number of spliced bands */
 
     pstYUM->fSampSize = ((float) pstYUM->iNumBits) / YAPP_BYTE2BIT_FACTOR;
 
@@ -1157,7 +1154,6 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
                        "ERROR: Failed to stat %s: %s!\n",
                        pcFileSpec,
                        strerror(errno));
-        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
     pstYUM->lDataSizeTotal = (long) stFileStats.st_size - pstYUM->iHeaderLen;
@@ -1166,6 +1162,25 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
         pstYUM->iNumChans = 1;
     }
     pstYUM->iTimeSamps = (int) (pstYUM->lDataSizeTotal / (pstYUM->iNumChans * pstYUM->fSampSize));
+
+    /* call all channels good - no support for SIGPROC ignore files yet */
+    pstYUM->pcIsChanGood = (char *) YAPP_Malloc(pstYUM->iNumChans,
+                                                sizeof(char),
+                                                YAPP_FALSE);
+    if (NULL == pstYUM->pcIsChanGood)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Memory allocation for channel goodness "
+                       "flag failed! %s!\n",
+                       strerror(errno));
+        return YAPP_RET_ERROR;
+    }
+
+    /* read the channel goodness flags */
+    for (i = 0; i < pstYUM->iNumChans; ++i)
+    {
+        pstYUM->pcIsChanGood[i] = YAPP_TRUE;
+    }
 
     /* set number of good channels to number of channels - no support for
        SIGPROC ignore files yet */
@@ -1976,7 +1991,6 @@ int YAPP_WriteMetadata(char *pcFileData, int iFormat, YUM_t stYUM)
     char acLabel[LEN_GENSTRING] = {0};
     int iLen = 0;
     FILE *pFData = NULL;
-    YAPP_SIGPROC_HEADER stHeader = {{0}};
     int iTemp = 0;
     double dTemp = 0.0;
 
@@ -2027,8 +2041,10 @@ int YAPP_WriteMetadata(char *pcFileData, int iFormat, YUM_t stYUM)
                   1,
                   pFData);
 
-    if (YAPP_FORMAT_FIL == iFormat)
-    {
+        /* NOTE: number of channels, frequency of first channel, and channel
+                 bandwidth are not strictly required in a .tim file, but they
+                 are required if .tim files for different frequency bands need
+                 to be combined */
         /* write number of channels */
         iLen = strlen(YAPP_SP_LABEL_NUMCHANS);
         (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
@@ -2040,6 +2056,10 @@ int YAPP_WriteMetadata(char *pcFileData, int iFormat, YUM_t stYUM)
                       pFData);
 
         /* write frequency of first channel */
+        iLen = strlen(YAPP_SP_LABEL_FCHAN1);
+        (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
+        (void) strcpy(acLabel, YAPP_SP_LABEL_FCHAN1);
+        (void) fwrite(acLabel, sizeof(char), iLen, pFData);
         if (stYUM.cIsBandFlipped)
         {
             dTemp = (double) stYUM.fFMax;
@@ -2048,16 +2068,16 @@ int YAPP_WriteMetadata(char *pcFileData, int iFormat, YUM_t stYUM)
         {
             dTemp = (double) stYUM.fFMin;
         }
-        iLen = strlen(YAPP_SP_LABEL_FCHAN1);
-        (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
-        (void) strcpy(acLabel, YAPP_SP_LABEL_FCHAN1);
-        (void) fwrite(acLabel, sizeof(char), iLen, pFData);
         (void) fwrite(&dTemp,
                       sizeof(dTemp),
                       1,
                       pFData);
 
         /* write channel bandwidth */
+        iLen = strlen(YAPP_SP_LABEL_CHANBW);
+        (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
+        (void) strcpy(acLabel, YAPP_SP_LABEL_CHANBW);
+        (void) fwrite(acLabel, sizeof(char), iLen, pFData);
         if (stYUM.cIsBandFlipped)
         {
             dTemp = (double) (-stYUM.fChanBW);
@@ -2066,15 +2086,10 @@ int YAPP_WriteMetadata(char *pcFileData, int iFormat, YUM_t stYUM)
         {
             dTemp = (double) stYUM.fChanBW;
         }
-        iLen = strlen(YAPP_SP_LABEL_CHANBW);
-        (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
-        (void) strcpy(acLabel, YAPP_SP_LABEL_CHANBW);
-        (void) fwrite(acLabel, sizeof(char), iLen, pFData);
         (void) fwrite(&dTemp,
                       sizeof(dTemp),
                       1,
                       pFData);
-    }
 
     /* write number of bits per sample */
     iLen = strlen(YAPP_SP_LABEL_NUMBITS);
@@ -2118,6 +2133,10 @@ int YAPP_WriteMetadata(char *pcFileData, int iFormat, YUM_t stYUM)
                   pFData);
 
     /* write telescope ID */
+    iLen = strlen(YAPP_SP_LABEL_OBSID);
+    (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
+    (void) strcpy(acLabel, YAPP_SP_LABEL_OBSID);
+    (void) fwrite(acLabel, sizeof(char), iLen, pFData);
     iTemp = YAPP_SP_GetObsIDFromName(stYUM.acSite);
     if (YAPP_RET_ERROR == iTemp)
     {
@@ -2127,10 +2146,6 @@ int YAPP_WriteMetadata(char *pcFileData, int iFormat, YUM_t stYUM)
                       YAPP_SP_OBS_FAKE);
         iTemp = YAPP_SP_OBSID_FAKE;
     }
-    iLen = strlen(YAPP_SP_LABEL_OBSID);
-    (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
-    (void) strcpy(acLabel, YAPP_SP_LABEL_OBSID);
-    (void) fwrite(acLabel, sizeof(char), iLen, pFData);
     (void) fwrite(&iTemp,
                   sizeof(iTemp),
                   1,
@@ -2141,8 +2156,8 @@ int YAPP_WriteMetadata(char *pcFileData, int iFormat, YUM_t stYUM)
     (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
     (void) strcpy(acLabel, YAPP_SP_LABEL_BEID);
     (void) fwrite(acLabel, sizeof(char), iLen, pFData);
-    (void) fwrite(&stHeader.iBackendID,
-                  sizeof(stHeader.iBackendID),
+    (void) fwrite(&stYUM.iBackendID,
+                  sizeof(stYUM.iBackendID),
                   1,
                   pFData);
 
@@ -2184,15 +2199,12 @@ int YAPP_WriteMetadata(char *pcFileData, int iFormat, YUM_t stYUM)
                   1,
                   pFData);
 
-    if (YAPP_FORMAT_DTS_TIM == iFormat)
-    {
         /* write reference DM */
         iLen = strlen(YAPP_SP_LABEL_DM);
         (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
         (void) strcpy(acLabel, YAPP_SP_LABEL_DM);
         (void) fwrite(acLabel, sizeof(char), iLen, pFData);
         (void) fwrite(&stYUM.dDM, sizeof(stYUM.dDM), 1, pFData);
-    }
 
 #if 0
     /* write barycentric flag */

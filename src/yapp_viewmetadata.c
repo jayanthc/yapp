@@ -113,8 +113,7 @@ int main(int argc, char *argv[])
         if (iRet != YAPP_RET_SUCCESS)
         {
             (void) fprintf(stderr,
-                           "ERROR: Reading metadata failed for file %s! "
-                           "Moving to next file.\n",
+                           "ERROR: Reading metadata failed for file %s!\n",
                            pcFileSpec);
             ++iNextOpt;
             continue;
