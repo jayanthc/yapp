@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
     double dTSampInSec = 0.0;   /* holds sampling time in s */
     long lBytesToSkip = 0;
     long lBytesToProc = 0;
-    int iTimeSampsSkip = 0;
+    int iTimeSampsToSkip = 0;
     int iTimeSampsToProc = 0;
     int iBlockSize = 0;
     int iOutBlockSize = 0;
@@ -227,6 +227,7 @@ int main(int argc, char *argv[])
     /* convert sampling interval to seconds */
     dTSampInSec = stYUM.dTSamp / 1e3;
 
+    /* calculate bytes to skip and read */
     if (0.0 == dDataProcTime)
     {
         dDataProcTime = (stYUM.iTimeSamps * dTSampInSec) - dDataSkipTime;
@@ -286,21 +287,21 @@ int main(int argc, char *argv[])
     }
 
     /* change block size according to the number of samples to be processed */
-    if ((long) iBlockSize > lBytesToProc)
+    if (iTimeSampsToProc < iBlockSize)
     {
         iBlockSize = (int) ceil(dDataProcTime / dTSampInSec);
     }
 
-    iTimeSampsSkip = (int) (lBytesToSkip / (stYUM.fSampSize));
+    iTimeSampsToSkip = (int) (lBytesToSkip / (stYUM.fSampSize));
     (void) printf("Skipping\n"
                   "    %ld of %ld bytes\n"
                   "    %d of %d time samples\n"
                   "    %.10g of %.10g seconds\n",
                   lBytesToSkip,
                   stYUM.lDataSizeTotal,
-                  iTimeSampsSkip,
+                  iTimeSampsToSkip,
                   stYUM.iTimeSamps,
-                  (iTimeSampsSkip * dTSampInSec),
+                  (iTimeSampsToSkip * dTSampInSec),
                   (stYUM.iTimeSamps * dTSampInSec));
 
     iTimeSampsToProc = (int) (lBytesToProc / (stYUM.fSampSize));
@@ -351,7 +352,7 @@ int main(int argc, char *argv[])
     if (NULL == g_pfBuf)
     {
         (void) fprintf(stderr,
-                       "ERROR: Memory allocation for buffer failed! %s!\n",
+                       "ERROR: Memory allocation failed! %s!\n",
                        strerror(errno));
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
@@ -362,7 +363,7 @@ int main(int argc, char *argv[])
         cIsLastBlock = YAPP_TRUE;
     }
 
-    /* open the time series data file for reading */
+    /* open the time series data file for writing */
     pcFileOut = YAPP_GetFilenameFromPath(pcFileData, EXT_TIM);
     (void) sprintf(acFileOut,
                    "%s_%s%gms%s",

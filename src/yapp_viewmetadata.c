@@ -113,8 +113,7 @@ int main(int argc, char *argv[])
         if (iRet != YAPP_RET_SUCCESS)
         {
             (void) fprintf(stderr,
-                           "ERROR: Reading metadata failed for file %s! "
-                           "Moving to next file.\n",
+                           "ERROR: Reading metadata failed for file %s!\n",
                            pcFileSpec);
             ++iNextOpt;
             continue;
@@ -149,10 +148,15 @@ int main(int argc, char *argv[])
                           stYUM.iNumGoodChans);
             (void) printf("Channel bandwidth                 : %.10g MHz\n",
                           stYUM.fChanBW);
-            (void) printf("Lowest frequency                  : %.10g MHz\n",
-                          stYUM.fFMin);
-            (void) printf("Highest frequency                 : %.10g MHz\n",
-                          stYUM.fFMax);
+        }
+        (void) printf("Lowest frequency                  : %.10g MHz\n",
+                      stYUM.fFMin);
+        (void) printf("Highest frequency                 : %.10g MHz\n",
+                      stYUM.fFMax);
+        if ((YAPP_FORMAT_SPEC == iFormat)
+            || (YAPP_FORMAT_FIL == iFormat)
+            || (YAPP_FORMAT_PSRFITS == iFormat))
+        {
             if (YAPP_TRUE == stYUM.cIsBandFlipped)
             {
                 (void) printf("                                    "
@@ -183,6 +187,11 @@ int main(int argc, char *argv[])
         {
             (void) printf("Number of polarizations           : %d\n",
                           stYUM.iNumPol);
+        }
+        if (YAPP_FORMAT_DTS_TIM == iFormat)
+        {
+            (void) printf("DM used in dedispersion           : %g\n",
+                          stYUM.dDM);
         }
         (void) printf("Duration of data in\n");
         (void) printf("    Bytes                         : %ld\n",
