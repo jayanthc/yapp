@@ -95,12 +95,10 @@ int main(int argc, char *argv[])
     char acLabel[LEN_GENSTRING] = {0};
     int iLen = 0;
     int iTemp = 0;
-#if 1
     double dTNow = 0.0;
     int iTimeSect = 0;
     int iBadTimeSect = 0;
     char cIsInBadTimeRange = YAPP_FALSE;
-#endif
     float *pfTimeSectGain = NULL;
     float *pfPriBuf = NULL;
     float *pfSecBuf = NULL;
@@ -619,7 +617,6 @@ int main(int argc, char *argv[])
        all other blocks */
     iNumSamps = iReadItems / iNumChans;
 
-    #if 1
     if (YAPP_FORMAT_SPEC == iFormat)
     {
         /* flag bad time sections, and if required, normalise within the beam
@@ -677,7 +674,6 @@ int main(int argc, char *argv[])
             dTNow += dTSampInSec;   /* in s */
         }
     }
-    #endif
 
     if (cHasGraphics)
     {
@@ -972,7 +968,6 @@ int main(int argc, char *argv[])
                first buffer */
             iSecBufReadSampCount = iReadBlockCount * iBlockSize;
 
-            #if 1
             if (YAPP_FORMAT_SPEC == iFormat)
             {
                 /* flag bad time sections, and if required, normalise within
@@ -1037,7 +1032,6 @@ int main(int argc, char *argv[])
 
                 dTNow += dTSampInSec;   /* in s */
             }
-            #endif
         }
 
         //(void) printf("Processing data block %d.\n", (iReadBlockCount - 1));
