@@ -2199,12 +2199,12 @@ int YAPP_WriteMetadata(char *pcFileData, int iFormat, YUM_t stYUM)
                   1,
                   pFData);
 
-        /* write reference DM */
-        iLen = strlen(YAPP_SP_LABEL_DM);
-        (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
-        (void) strcpy(acLabel, YAPP_SP_LABEL_DM);
-        (void) fwrite(acLabel, sizeof(char), iLen, pFData);
-        (void) fwrite(&stYUM.dDM, sizeof(stYUM.dDM), 1, pFData);
+    /* write reference DM */
+    iLen = strlen(YAPP_SP_LABEL_DM);
+    (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
+    (void) strcpy(acLabel, YAPP_SP_LABEL_DM);
+    (void) fwrite(acLabel, sizeof(char), iLen, pFData);
+    (void) fwrite(&stYUM.dDM, sizeof(stYUM.dDM), 1, pFData);
 
 #if 0
     /* write barycentric flag */
