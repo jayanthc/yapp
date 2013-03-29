@@ -286,12 +286,6 @@ int main(int argc, char *argv[])
                       lBytesToProc);
     }
 
-    /* change block size according to the number of samples to be processed */
-    if (iTimeSampsToProc < iBlockSize)
-    {
-        iBlockSize = (int) ceil(dDataProcTime / dTSampInSec);
-    }
-
     iTimeSampsToSkip = (int) (lBytesToSkip / (stYUM.fSampSize));
     (void) printf("Skipping\n"
                   "    %ld of %ld bytes\n"
@@ -305,6 +299,11 @@ int main(int argc, char *argv[])
                   (stYUM.iTimeSamps * dTSampInSec));
 
     iTimeSampsToProc = (int) (lBytesToProc / (stYUM.fSampSize));
+    /* change block size according to the number of samples to be processed */
+    if (iTimeSampsToProc < iBlockSize)
+    {
+        iBlockSize = (int) ceil(dDataProcTime / dTSampInSec);
+    }
     /* calculate the actual number of samples that will be processed in one
        iteration */
     iOutBlockSize = iBlockSize - (iSampsPerWin - 1);
