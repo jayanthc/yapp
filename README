@@ -1,4 +1,4 @@
-Yet Another Pulsar Processor (YAPP) 3.0-beta
+Yet Another Pulsar Processor (YAPP) 3.1-beta
 -------------------------------------------------------------------------------
 README
 
@@ -16,7 +16,9 @@ The YAPP tools available with this release are:
     yapp_dedisperse     : Dedisperses filterbank format data.
     yapp_smooth         : Boxcar-smoothes dedispersed time series data
     yapp_filter         : Processes dedispersed time series data with a custom
-                          frequency-domain filter. 
+                          frequency-domain filter.
+    yapp_add            : Coherently add dedispersed time series data from
+                          multiple frequency bands
     yapp_fold           : Folds filterbank and dedispersed time series data and
                           plots folded profile to PGPLOT device.
 
