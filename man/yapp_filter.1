@@ -5,7 +5,7 @@
 .\# Created by Jayanth Chennamangalam on 2013.03.05
 .\#
 
-.TH YAPP_FILTER 1 "2013-03-05" "YAPP 3.0-beta" \
+.TH YAPP_FILTER 1 "2013-03-28" "YAPP 3.1-beta" \
 "Yet Another Pulsar Processor"
 
 
@@ -64,7 +64,7 @@ using the yapp_genfiltermask.py Python script.
 .TP
 Filters the data in data.tim with a filter mask specified in the file \
 yapp_mask_16384_0.0001_1.0_100.0.dat, with graphics turned on, and in \
-interactive mode. The output is written to data_filtered.tim.
+interactive mode. The output is written to data.filter.tim.
 .TP
 yapp_filter -f yapp_mask_16384_0.0001_1.0_100.0.dat -g data.tim
 
@@ -76,6 +76,7 @@ yapp_filter -f yapp_mask_16384_0.0001_1.0_100.0.dat -g data.tim
 .BR yapp_viewdata (1),
 .BR yapp_dedisperse (1),
 .BR yapp_smooth (1),
+.BR yapp_add (1),
 .BR yapp_fold (1)
 
 

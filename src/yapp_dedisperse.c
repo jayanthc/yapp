@@ -1051,8 +1051,6 @@ int main(int argc, char *argv[])
             }
         }
 
-        //(void) printf("Processing data block %d.\n", (iReadBlockCount - 1));
-
         /* clear the g_pfDedispData array */
         (void) memset(g_pfDedispData,
                       '\0',
