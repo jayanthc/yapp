@@ -366,9 +366,9 @@ int main(int argc, char *argv[])
     /* open the time series data file for writing */
     pcFileOut = YAPP_GetFilenameFromPath(pcFileData, EXT_TIM);
     (void) sprintf(acFileOut,
-                   "%s_%s%gms%s",
+                   "%s.%s%g%s",
                    pcFileOut,
-                   INFIX_SMOOTHED,
+                   INFIX_SMOOTH,
                    fWidth,
                    EXT_TIM);
     pFOut = fopen(acFileOut, "w");
@@ -449,7 +449,8 @@ int main(int argc, char *argv[])
         /* read data */
         (void) printf("\rReading data block %d.", iReadBlockCount);
         (void) fflush(stdout);
-        iReadItems = YAPP_ReadData(g_pfBuf,
+        iReadItems = YAPP_ReadData(g_pFData,
+                                   g_pfBuf,
                                    stYUM.fSampSize,
                                    iTotSampsPerBlock);
         if (YAPP_RET_ERROR == iReadItems)

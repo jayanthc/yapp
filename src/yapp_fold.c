@@ -99,6 +99,9 @@ int main(int argc, char *argv[])
     double dPhaseStep = 0.0;
     int iSampsPerPeriod = 0;
     int iTotalPulses = 0;
+    double dPNorm = 0.0;
+    float fAcc = -10.0;
+    double dTime = 0.0;
     long int lSampCount = 0;
     float fMeanNoise = 0.0;
     float fRMSNoise = 0.0;
@@ -323,10 +326,13 @@ int main(int argc, char *argv[])
             iBlockSize = iNumPulses * iSampsPerPeriod;
         }
     }
-    if (iBlockSize > MAX_SIZE_BLOCK)
+    if (iBlockSize > MAX_SIZE_BLOCK_FOLD)
     {
-        int iNumFold = (int) floor((double) MAX_SIZE_BLOCK / iSampsPerPeriod);
+        int iNumFold = (int) floor((double) MAX_SIZE_BLOCK_FOLD
+                                   / iSampsPerPeriod);
+        /* TODO: check for isampsperperiod > maxsizeblock */
         iBlockSize = iNumFold * iSampsPerPeriod;
+        printf("ispp = %d, inf = %d, ibs = %d, inp = %d\n", iSampsPerPeriod, iNumFold, iBlockSize, iNumPulses);
         if (iNumPulses != 0)
         {
             iNumPulses = iNumFold;
@@ -415,6 +421,10 @@ int main(int argc, char *argv[])
                   (stYUM.iTimeSamps * dTSampInSec),
                   iNumReads,
                   iBlockSize);
+
+    /* calculate normalisation quantity for acceleration */
+    dPNorm = (dPeriod * 1e-3) / (1 + ((fAcc * stYUM.iTimeSamps * dTSampInSec)
+                                      / (2 * YAPP_LIGHTSPEED)));
 
     /* calculate the threshold */
     dNumSigmas = YAPP_CalcThresholdInSigmas(iTimeSampsToProc);
@@ -646,7 +656,8 @@ int main(int argc, char *argv[])
         /* read data */
         (void) printf("\rReading data block %d.", iReadBlockCount);
         (void) fflush(stdout);
-        iReadItems = YAPP_ReadData(g_pfBuf,
+        iReadItems = YAPP_ReadData(g_pFData,
+                                   g_pfBuf,
                                    stYUM.fSampSize,
                                    iTotSampsPerBlock);
         if (YAPP_RET_ERROR == iReadItems)
@@ -731,6 +742,11 @@ int main(int argc, char *argv[])
             }
         }
 
+        /* update the folding period based on the acceleration */
+        dPeriod = dPNorm * 1e3 * (1 + ((fAcc * dTime) / (2 * YAPP_LIGHTSPEED)));
+        iSampsPerPeriod = (int) round(dPeriod / stYUM.dTSamp);
+        printf("%.15g, %.15g, %d\n", dPNorm, dPeriod, iSampsPerPeriod);
+
         if (YAPP_FORMAT_DTS_TIM == iFormat)
         {
             fMeanNoise = YAPP_CalcMean(g_pfBuf, iNumSamps);
@@ -749,6 +765,7 @@ int main(int argc, char *argv[])
                     g_pfProfBuf[j] += (((g_pfBuf[i] - fMeanNoise) / fRMSNoise)
                                        / DEF_FOLD_PULSES);
                     ++lSampCount;
+        dTime += dTSampInSec;
                 }
             }
             else
@@ -763,6 +780,7 @@ int main(int argc, char *argv[])
                     g_pfBuf[i] += (((g_pfBuf[i] - fMeanNoise) / fRMSNoise)
                                    / iNumPulses);
                     ++lSampCount;
+        dTime += dTSampInSec;
                 }
             }
         }
@@ -789,6 +807,7 @@ int main(int argc, char *argv[])
                                       / DEF_FOLD_PULSES);
                 }
                 ++lSampCount;
+        dTime += dTSampInSec;
             }
         }
 

@@ -100,10 +100,11 @@ enum tagFileFormats
 /* number of bits in a byte */
 #define YAPP_BYTE2BIT_FACTOR        8
 
-#define INFIX_SMOOTHED              "smoothed"
-#define INFIX_MEDFILTERED           "medfiltered"
-#define INFIX_FILTERED              "filtered"
-#define INFIX_DEDISPERSED           "dedispersed"
+#define INFIX_SMOOTH                "smooth"
+#define INFIX_MEDFILTER             "medfilt"
+#define INFIX_FILTER                "filt"
+#define INFIX_DEDISPERSE            "dm"
+#define INFIX_ADD                   "sum"
 
 #define SUFFIX_CFG                  "_cfg"
 
@@ -123,6 +124,8 @@ enum tagFileFormats
 /* TODO: If the size of a block is less than the maximum delay, dedispersion (at
    best the plots) doesn't happen properly */
 #define MAX_SIZE_BLOCK      65536   /**< @brief Maximum data read size */
+//#define MAX_SIZE_BLOCK_FOLD 262144  /**< @brief Maximum data read size */
+#define MAX_SIZE_BLOCK_FOLD 1048576  /**< @brief Maximum data read size */
 /* TODO: make memory estimation proper */
 #define MAX_SIZE_BLOCK_MEDFILTER  262144 /**< @brief Maximum data read size */
 
@@ -141,10 +144,10 @@ enum tagFileFormats
 #define DEF_OUT_FORMAT      YAPP_FORMAT_DTS_TIM
 #define DEF_SIZE_BLOCK      4096    /**< @brief Default block size */
 
-#define DEF_WINDOWS         1000/**< @brief Default number of windows */
-#define DEF_WINDOWS_MEDFILTER 10  /**< @brief Default number of windows */
+#define DEF_WINDOWS         1000    /**< @brief Default number of windows */
+#define DEF_WINDOWS_MEDFILTER 10    /**< @brief Default number of windows */
 
-#define DEF_FOLD_PULSES     1000/**< @brief Default number of pulses to fold */
+#define DEF_FOLD_PULSES     1000    /**< @brief Default number of pulses to fold */
 /* @} */
 
 /**
@@ -267,6 +270,9 @@ enum tagFileFormats
 #endif
 
 #define YAPP_MAX_MEMTABLE       1024
+
+/* physical constants */
+#define YAPP_LIGHTSPEED         299792458.0     /* m s^-1 */
 
 /**
  * YAPP Unified Metadata (YUM) definition
@@ -509,7 +515,8 @@ int YAPP_ReadPRESTOHeaderFile(char *pcFileData, YUM_t *pstYUM);
  * @param[in]       fSampSize           Size of a sample, in bytes
  * @param[in]       iTotSampsPerBlock   Number of samples per block
  */
-int YAPP_ReadData(float *pfBuf,
+int YAPP_ReadData(FILE *pFData,
+                  float *pfBuf,
                   float fSampSize,
                   int iTotSampsPerBlock);
 
