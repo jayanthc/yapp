@@ -596,7 +596,10 @@ int main(int argc, char *argv[])
     /* read the first block of data */
     (void) printf("Reading data block %d.", iReadBlockCount);
     (void) fflush(stdout);
-    iReadItems = YAPP_ReadData(g_pfBuf0, fSampSize, iTotSampsPerBlock);
+    iReadItems = YAPP_ReadData(g_pFData,
+                               g_pfBuf0,
+                               fSampSize,
+                               iTotSampsPerBlock);
     if (YAPP_RET_ERROR == iReadItems)
     {
         (void) fprintf(stderr, "ERROR: Reading data failed!\n");
@@ -780,20 +783,32 @@ int main(int argc, char *argv[])
     {
         pcFilename = YAPP_GetFilenameFromPath(pcFileSpec, EXT_DYNSPEC);
     }
-    (void) strcpy(acFileDedisp, pcFilename);
     if (YAPP_FORMAT_DTS_TIM == iOutputFormat)
     {
-        (void) strcat(acFileDedisp, EXT_TIM);
+        (void) sprintf(acFileDedisp,
+                       "%s.%s%g%s",
+                       pcFilename,
+                       INFIX_DEDISPERSE,
+                       dDM,
+                       EXT_TIM);
     }
     else if (YAPP_FORMAT_DTS_DDS == iOutputFormat)
     {
-        (void) strcat(acFileDedisp, EXT_DEDISPSPEC);
+        (void) sprintf(acFileDedisp,
+                       "%s.%s%g%s",
+                       pcFilename,
+                       INFIX_DEDISPERSE,
+                       dDM,
+                       EXT_DEDISPSPEC);
     }
     else    /* if filterbank */
     {
-        (void) strcat(acFileDedisp, "_");
-        (void) strcat(acFileDedisp, INFIX_DEDISPERSED);
-        (void) strcat(acFileDedisp, EXT_FIL);
+        (void) sprintf(acFileDedisp,
+                       "%s.%s%g%s",
+                       pcFilename,
+                       INFIX_DEDISPERSE,
+                       dDM,
+                       EXT_FIL);
     }
 
     /* add header for .tim file format */
@@ -914,14 +929,16 @@ int main(int argc, char *argv[])
             (void) fflush(stdout);
             if (BUF_0 == iPrimaryBuf)
             {
-                iReadItems = YAPP_ReadData(g_pfBuf1,
+                iReadItems = YAPP_ReadData(g_pFData,
+                                           g_pfBuf1,
                                            fSampSize,
                                            iTotSampsPerBlock);
                 pfSecBuf = g_pfBuf1;
             }
             else
             {
-                iReadItems = YAPP_ReadData(g_pfBuf0,
+                iReadItems = YAPP_ReadData(g_pFData,
+                                           g_pfBuf0,
                                            fSampSize,
                                            iTotSampsPerBlock);
                 pfSecBuf = g_pfBuf0;

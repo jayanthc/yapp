@@ -1085,6 +1085,11 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
         pstYUM->fFMin = fFCh1;
         pstYUM->fFMax = pstYUM->fFMin
                         + ((pstYUM->iNumChans - 1) * pstYUM->fChanBW);
+        /* kludge to handle .tim files */
+        if (1 == pstYUM->iNumChans)
+        {
+            pstYUM->fFMax = pstYUM->fFMin + pstYUM->fChanBW;
+        }
     }
 
     if (YAPP_TRUE == pstYUM->iFlagSplicedData)
@@ -1641,7 +1646,8 @@ int YAPP_ReadPRESTOHeaderFile(char *pcFileData, YUM_t *pstYUM)
 /*
  * Read one block of data from disk
  */
-int YAPP_ReadData(float *pfBuf,
+int YAPP_ReadData(FILE *pFData,
+                  float *pfBuf,
                   float fSampSize,
                   int iTotSampsPerBlock)
 {
@@ -1672,8 +1678,8 @@ int YAPP_ReadData(float *pfBuf,
     iReadItems = fread(pcBuf,
                        sizeof(char),
                        (int) (iTotSampsPerBlock * fSampSize),
-                       g_pFData);
-    if (ferror(g_pFData))
+                       pFData);
+    if (ferror(pFData))
     {
         (void) fprintf(stderr, "ERROR: File read failed!\n");
         free(pcBuf);

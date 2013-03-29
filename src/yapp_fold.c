@@ -323,9 +323,10 @@ int main(int argc, char *argv[])
             iBlockSize = iNumPulses * iSampsPerPeriod;
         }
     }
-    if (iBlockSize > MAX_SIZE_BLOCK)
+    if (iBlockSize > MAX_SIZE_BLOCK_FOLD)
     {
-        int iNumFold = (int) floor((double) MAX_SIZE_BLOCK / iSampsPerPeriod);
+        int iNumFold = (int) floor((double) MAX_SIZE_BLOCK_FOLD
+                                   / iSampsPerPeriod);
         iBlockSize = iNumFold * iSampsPerPeriod;
         if (iNumPulses != 0)
         {
@@ -646,7 +647,8 @@ int main(int argc, char *argv[])
         /* read data */
         (void) printf("\rReading data block %d.", iReadBlockCount);
         (void) fflush(stdout);
-        iReadItems = YAPP_ReadData(g_pfBuf,
+        iReadItems = YAPP_ReadData(g_pFData,
+                                   g_pfBuf,
                                    stYUM.fSampSize,
                                    iTotSampsPerBlock);
         if (YAPP_RET_ERROR == iReadItems)
