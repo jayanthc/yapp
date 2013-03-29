@@ -1,0 +1,72 @@
+.\#
+.\# Yet Another Pulsar Processor Commands
+.\# yapp_add Manual Page
+.\#
+.\# Created by Jayanth Chennamangalam on 2013.03.28
+.\#
+
+.TH YAPP_ADD 1 "2013-03-28" "YAPP 3.1-beta" \
+"Yet Another Pulsar Processor"
+
+
+.SH NAME
+yapp_add \- coherently add dedispersed time series from multiple frequency \
+bands
+
+
+.SH SYNOPSIS
+.B yapp_add
+[options]
+.I data-file-maxfreq ... data-file-minfreq
+
+
+.SH DESCRIPTION
+Coherently adds time series data dedispersed from different frequency bands \
+of a spectrometer. The time series files must be input in decreasing \
+frequency order. The data files should be in the SIGPROC .tim format.
+
+
+.SH OPTIONS
+.TP
+.B \-h, --help
+Display a short help text.
+.TP
+.B \-n, --nsamp \fIsamples
+Number of time samples read in one block (default is 4096 samples).
+.TP
+.B \-g, --graphics
+Turn on plotting.
+.TP
+.B \-i, --invert
+Invert background and foreground colours in plots.
+.TP
+.B \-e, --non-interactive
+Run in non-interactive mode.
+.TP
+.B \-v, --version
+Display the version.
+
+
+.SH EXAMPLE
+.TP
+Adds the time series in data0.tim, data1.tim, and data2.tim (assuming \
+decreasing frequency order), with graphics not turned on. The output is \
+written to data0.sum.tim.
+.TP
+yapp_add data0.tim data1.tim data2.tim
+
+
+.SH SEE ALSO
+.BR yapp_dat2tim (1),
+.BR yapp_viewmetadata (1),
+.BR yapp_viewdata (1),
+.BR yapp_dedisperse (1),
+.BR yapp_smooth (1),
+.BR yapp_filter (1),
+.BR yapp_fold (1)
+
+
+.SH AUTHOR
+.TP 
+Written by Jayanth Chennamangalam. http://jayanthc.github.com/yapp/
+
