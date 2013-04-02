@@ -54,6 +54,12 @@
               headerless version, provided a <code>.fhd</code> configuration
               file is present in the same directory)</li>
         </ul>
+        <p>The output may be written as one of DAS <code>.dds</code>, SIGPROC
+           <code>.tim</code>, or a non-frequency-collapsed SIGPROC <code>.fil</code>.
+           In the case of the latter, irrespective of the original format of
+           the data, the output samples are single-precision floats. The start
+           MJD of the output reflects dispersion delay correction with respect
+           to infinite frequency.</p>
         <p>Usage:</p> 
         <code>yapp_dedisperse [options] <i>data-file</i></code>
         <ul>
