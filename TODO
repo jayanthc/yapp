@@ -3,12 +3,16 @@ TODO
 
 
 1. RFI mask generator.
-2. Program to add multiple dedispersed time series.
+2. yapp equivalent to realfft.
 3. Barycentre based on location of observatory.
 
 
 all:
 1. popt-ify all programs.
+
+
+yapp_add:
+1.  FEATURE: Wildcards - automatically decide right order.
 
 
 yapp_ft:
