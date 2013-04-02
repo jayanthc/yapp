@@ -184,12 +184,14 @@ int main(int argc, char *argv[])
         {
             (void) fprintf(stderr,
                            "ERROR: File type determination failed!\n");
+            YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
         if (iFormat != YAPP_FORMAT_DTS_TIM)
         {
             (void) fprintf(stderr,
                            "ERROR: Invalid file type!\n");
+            YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
     }
@@ -243,6 +245,7 @@ int main(int argc, char *argv[])
             (void) fprintf(stderr,
                            "ERROR: Reading metadata failed for file %s!\n",
                            argv[i]);
+            YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
         pafMaxFreq[i-optind] = stYUM.fFMax;
@@ -253,6 +256,16 @@ int main(int argc, char *argv[])
     paiOffset[0] = 0;
     for (i = 1; i < iNumBands; ++i)
     {
+        /* basic check to see if the files are in proper frequency order */
+        /* NOTE: this program supports frequency overlap, so compare with
+                 pafMaxFreq[i-1] instead of pafMinFreq[i-1] */
+        if (stYUM.fFMax > pafMaxFreq[i-1])
+        {
+            (void) fprintf(stderr,
+                           "ERROR: Files not in correct order!\n");
+            YAPP_CleanUp();
+            return YAPP_RET_ERROR;
+        }
         paiOffset[i] = CalcOffset(pafMaxFreq[0],
                                   pafMaxFreq[i],
                                   stYUM.dTSamp,

@@ -31,7 +31,11 @@ a .fhd configuration file is present in the same directory)
 The output may be written as one of DAS '.dds', SIGPROC '.tim', or a \
 non-frequency-collapsed SIGPROC '.fil'. In the case of the latter, \
 irrespective of the original format of the data, the output samples are \
-single-precision floats.
+single-precision floats. The start MJD of the output reflects dispersion \
+delay correction with respect to infinite frequency.
+
+In addition to the regular quadratic delay correction, this program supports \
+variable dispersion laws.
 
 
 .SH OPTIONS
