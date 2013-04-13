@@ -171,10 +171,12 @@ PrintUsage	src/yapp_viewdata.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	src/yapp_viewmetadata.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	utilities/yapp_dat2tim.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	utilities/yapp_fits2fil.c	/^void PrintUsage(const char *pcProgName)$/;"	f
+PrintUsage	utilities/yapp_tim2dat.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 RET_ERROR	src/yapp_makever.c	20;"	d	file:
 RET_SUCCESS	src/yapp_makever.c	19;"	d	file:
 ReadData	src/yapp_ft.c	/^int ReadData(char cIsFirst, int iNTaps, int iNFFT)$/;"	f
 SIZE_BUF	utilities/yapp_dat2tim.h	12;"	d
+SIZE_BUF	utilities/yapp_tim2dat.h	12;"	d
 SUFFIX_CFG	src/yapp.h	109;"	d
 SetColourMap	src/colourmap.c	/^int SetColourMap(int iCMap, int iIsColInv, float fColMin, float fColMax)$/;"	f
 USEC2SEC	src/yapp_ft.h	33;"	d
@@ -192,6 +194,10 @@ YAPP_CleanUp	src/yapp_common.c	/^void YAPP_CleanUp()$/;"	f
 YAPP_CleanUp	src/yapp_dedisplaw.c	/^void YAPP_CleanUp()$/;"	f
 YAPP_Compare	src/yapp_common.c	/^int YAPP_Compare(float *pfA, float *pfB)$/;"	f
 YAPP_CopyData	utilities/yapp_dat2tim.c	/^int YAPP_CopyData(char *pcFileData, FILE *pFTim)$/;"	f
+YAPP_CopyData	utilities/yapp_tim2dat.c	/^int YAPP_CopyData(char *pcFileData, FILE *pFDat, int iOffset)$/;"	f
+YAPP_DEGPERHOUR	src/yapp.h	277;"	d
+YAPP_DecDouble2String	src/yapp_common.c	/^void YAPP_DecDouble2String(double dDec, char *pcDec)$/;"	f
+YAPP_DecString2Double	src/yapp_common.c	/^double YAPP_DecString2Double(char *pcDec)$/;"	f
 YAPP_ERF_ENTRIES	src/yapp.h	233;"	d
 YAPP_FALSE	src/yapp.h	48;"	d
 YAPP_FILE_DELAYS_LIN	src/yapp.h	268;"	d
@@ -246,6 +252,8 @@ YAPP_PF_LABEL_TSAMP	src/yapp_psrfits.h	24;"	d
 YAPP_PF_LABEL_TSTART	src/yapp_psrfits.h	27;"	d
 YAPP_PF_LABEL_TSTARTOFF	src/yapp_psrfits.h	29;"	d
 YAPP_PF_LABEL_TSTARTSEC	src/yapp_psrfits.h	28;"	d
+YAPP_RADouble2String	src/yapp_common.c	/^void YAPP_RADouble2String(double dRA, char *pcRA)$/;"	f
+YAPP_RAString2Double	src/yapp_common.c	/^double YAPP_RAString2Double(char *pcRA)$/;"	f
 YAPP_RET_ERROR	src/yapp.h	41;"	d
 YAPP_RET_READDONE	src/yapp_ft.h	35;"	d
 YAPP_RET_SUCCESS	src/yapp.h	40;"	d
@@ -322,6 +330,7 @@ __YAPP_FT_H__	src/yapp_ft.h	10;"	d
 __YAPP_H__	src/yapp.h	10;"	d
 __YAPP_PSRFITS_H__	src/yapp_psrfits.h	10;"	d
 __YAPP_SIGPROC_H__	src/yapp_sigproc.h	10;"	d
+__YAPP_TIM2DAT_H__	utilities/yapp_tim2dat.h	10;"	d
 acPulsar	src/yapp.h	/^    char acPulsar[MAX_LEN_PSRNAME];$/;"	m	struct:YUM_s
 acPulsar	src/yapp_sigproc.h	/^    char acPulsar[MAX_LEN_PSRNAME];$/;"	m	struct:tagSIGPROCHeader
 acSite	src/yapp.h	/^    char acSite[LEN_GENSTRING];$/;"	m	struct:YUM_s
@@ -475,6 +484,7 @@ main	src/yapp_viewdata.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/yapp_viewmetadata.c	/^int main(int argc, char *argv[])$/;"	f
 main	utilities/yapp_dat2tim.c	/^int main(int argc, char *argv[])$/;"	f
 main	utilities/yapp_fits2fil.c	/^int main(int argc, char *argv[])$/;"	f
+main	utilities/yapp_tim2dat.c	/^int main(int argc, char *argv[])$/;"	f
 padBadTimes	src/yapp.h	/^    double (*padBadTimes)[][NUM_BAD_BOUNDS];$/;"	m	struct:YUM_s
 pcData	src/yapp_ft.h	/^    signed char *pcData;        \/* raw data, (iNFFT * NUM_BYTES_PER_SAMP)$/;"	m	struct:tagPFBData
 pcIsChanGood	src/yapp.h	/^    char *pcIsChanGood;$/;"	m	struct:YUM_s

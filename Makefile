@@ -88,6 +88,8 @@ all: yapp_makever \
 	 yapp_fits2fil \
 	 yapp_dat2tim.o \
 	 yapp_dat2tim \
+	 yapp_tim2dat.o \
+	 yapp_tim2dat \
 	 tags
 #	 yapp_dedisplaw.o \
 	 set_colours.o \
@@ -193,6 +195,14 @@ yapp_dat2tim: $(UTILDIR)/yapp_dat2tim.o $(SRCDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
 	$(CC) $^ $(LFLAGS_MATH) $(LFLAGS_CFITSIO) -o $(BINDIR)/$@
 
+yapp_tim2dat.o: $(UTILDIR)/yapp_tim2dat.c $(UTILDIR)/yapp_tim2dat.h \
+	$(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h
+	$(CC) $(CFLAGS_C) -I$(SRCDIR) $(DDEBUG) $< -o $(UTILDIR)/$@
+
+yapp_tim2dat: $(UTILDIR)/yapp_tim2dat.o $(SRCDIR)/yapp_version.o \
+	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
+	$(CC) $^ $(LFLAGS_MATH) $(LFLAGS_CFITSIO) -o $(BINDIR)/$@
+
 yapp_dedisplaw.o: $(SRCDIR)/yapp_dedisplaw.c $(SRCDIR)/yapp.h
 	$(CC) $(CFLAGS_C) $(DFC) $(DDEBUG) $(SRCDIR)/yapp_dedisplaw.c -o $(IDIR)/$@
 
@@ -260,6 +270,7 @@ clean:
 	$(DELCMD) $(IDIR)/yapp_add.o
 	$(DELCMD) $(UTILDIR)/yapp_fits2fil.o
 	$(DELCMD) $(UTILDIR)/yapp_dat2tim.o
+	$(DELCMD) $(UTILDIR)/yapp_tim2dat.o
 #	$(DELCMD) $(IDIR)/set_colours.o
 #	$(DELCMD) $(IDIR)/yapp_dedisplaw.o
 #	$(DELCMD) $(IDIR)/reorderdds.o

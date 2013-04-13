@@ -1,20 +1,20 @@
 /*
- * @file yapp_dat2tim.c
- * Program to convert dedispersed time series data from PRESTO .dat to SIGPROC
- * .tim format.
+ * @file yapp_tim2dat.c
+ * Program to convert dedispersed time series data from SIGPROC .tim format to
+ *  PRESTO .dat to SIGPROC .tim format.
  *
  * @verbatim
- * Usage: yapp_dat2tim [options] <data-file>
+ * Usage: yapp_tim2dat [options] <data-file>
  *     -h  --help                           Display this usage information
  *     -v  --version                        Display the version @endverbatim
  *
  * @author Jayanth Chennamangalam
- * @date 2012.12.18
+ * @date 2013.04.12
  */
 
 #include "yapp.h"
 #include "yapp_sigproc.h"
-#include "yapp_dat2tim.h"
+#include "yapp_tim2dat.h"
 
 /**
  * The build version string, maintained in the file version.c, which is
@@ -26,8 +26,8 @@ int main(int argc, char *argv[])
 {
     char *pcFileData = NULL;
     char *pcFilename = NULL;
-    FILE *pFTim = NULL;
-    char acFileTim[LEN_GENSTRING] = {0};
+    FILE *pFDat = NULL;
+    char acFileDat[LEN_GENSTRING] = {0};
     int iFormat = DEF_FORMAT;
     YUM_t stYUM = {{0}};
     int iRet = EXIT_SUCCESS;
@@ -104,16 +104,14 @@ int main(int argc, char *argv[])
                        "ERROR: File type determination failed!\n");
         return YAPP_RET_ERROR;
     }
-    if (iFormat != YAPP_FORMAT_DTS_DAT)
+    if (iFormat != YAPP_FORMAT_DTS_TIM)
     {
         (void) fprintf(stderr,
                        "ERROR: Invalid file type!\n");
         return YAPP_RET_ERROR;
     }
 
-    pcFilename = YAPP_GetFilenameFromPath(pcFileData, EXT_DAT);
-
-    iRet = YAPP_ReadPRESTOHeaderFile(pcFilename, &stYUM);
+    iRet = YAPP_ReadMetadata(pcFileData, iFormat, &stYUM);
     if (iRet != EXIT_SUCCESS)
     {
         fprintf(stderr,
@@ -121,45 +119,44 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    (void) strcpy(acFileTim, pcFilename);
-    free(pcFilename);
-    (void) strcat(acFileTim, EXT_TIM);
-    iRet = YAPP_WriteMetadata(acFileTim, YAPP_FORMAT_DTS_TIM, stYUM);
+    pcFilename = YAPP_GetFilenameFromPath(pcFileData, EXT_TIM);
+    (void) strcpy(acFileDat, pcFilename);
+    (void) strcat(acFileDat, EXT_DAT);
+    iRet = YAPP_WriteMetadata(acFileDat, YAPP_FORMAT_DTS_DAT, stYUM);
     if (iRet != EXIT_SUCCESS)
     {
         fprintf(stderr,
                 "ERROR: Writing metadata failed!\n");
-        (void) fclose(pFTim);
+        (void) fclose(pFDat);
         return EXIT_FAILURE;
     }
 
-    /* open .tim file and write data */
-    pFTim = fopen(acFileTim, "a");
-    if (NULL == pFTim)
+    /* open .dat file and write data */
+    pFDat = fopen(acFileDat, "w");
+    if (NULL == pFDat)
     {
         fprintf(stderr,
                 "ERROR: Opening file %s failed! %s.\n",
-                acFileTim,
+                acFileDat,
                 strerror(errno));
         return EXIT_FAILURE;
     }
-    iRet = YAPP_CopyData(pcFileData, pFTim);
+    iRet = YAPP_CopyData(pcFileData, pFDat, stYUM.iHeaderLen);
     if (iRet != EXIT_SUCCESS)
     {
         fprintf(stderr,
                 "ERROR: Writing data failed!\n");
-        (void) fclose(pFTim);
+        (void) fclose(pFDat);
         return EXIT_FAILURE;
     }
 
-    (void) fclose(pFTim);
+    (void) fclose(pFDat);
 
     return EXIT_SUCCESS;
 }
 
 
-
-int YAPP_CopyData(char *pcFileData, FILE *pFTim)
+int YAPP_CopyData(char *pcFileData, FILE *pFDat, int iOffset)
 {
     FILE *pFData = NULL;
     struct stat stFileStats = {0};
@@ -191,6 +188,9 @@ int YAPP_CopyData(char *pcFileData, FILE *pFTim)
         return EXIT_FAILURE;
     }
 
+    /* skip header */
+    fseek(pFData, iOffset, SEEK_SET);
+
     /* allocate memory for the buffer */
     pcBuf = (char *) malloc(SIZE_BUF);
     if (NULL == pcBuf)
@@ -207,14 +207,14 @@ int YAPP_CopyData(char *pcFileData, FILE *pFTim)
     {
         iRet = fread(pcBuf, 1, SIZE_BUF, pFData);
         lByteCount += iRet;
-        iWrit = fwrite(pcBuf, 1, iRet, pFTim);
+        iWrit = fwrite(pcBuf, 1, iRet, pFDat);
     }
     while (SIZE_BUF == iRet);
 
     free(pcBuf);
 
     /* check if all data has been copied */
-    if (lByteCount != stFileStats.st_size)
+    if (lByteCount != (stFileStats.st_size - iOffset))
     {
         (void) fprintf(stderr, "ERROR: Data copy failed!\n");
         printf("%ld, %ld\n", lByteCount, stFileStats.st_size);

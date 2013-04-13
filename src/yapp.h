@@ -274,6 +274,8 @@ enum tagFileFormats
 /* physical constants */
 #define YAPP_LIGHTSPEED         299792458.0     /* m s^-1 */
 
+#define YAPP_DEGPERHOUR         15              /* degrees per hour */
+
 /**
  * YAPP Unified Metadata (YUM) definition
  * YUM abstracts the metadata storage schemes employed by different file
@@ -554,6 +556,10 @@ int YAPP_Smooth(float* pfInBuf,
                 int iSampsPerWin,
                 float* pfOutBuf);
 
+double YAPP_RAString2Double(char *pcRA);
+double YAPP_DecString2Double(char *pcDec);
+void YAPP_RADouble2String(double dRA, char *pcRA);
+void YAPP_DecDouble2String(double dDec, char *pcDec);
 float YAPP_CalcMean(float *pfBuf, int iLength);
 float YAPP_CalcRunningMean(float *pfBuf, int iLength, float fOldMean);
 float YAPP_CalcRMS(float *pfBuf, int iLength, float fMean);

@@ -814,7 +814,7 @@ int main(int argc, char *argv[])
                        EXT_FIL);
     }
 
-    /* add header for .tim file format */
+    /* add header for .fil or .tim file format */
     if ((YAPP_FORMAT_FIL == iOutputFormat)
         || (YAPP_FORMAT_DTS_TIM == iOutputFormat))
     {
@@ -824,6 +824,12 @@ int main(int argc, char *argv[])
         /* enter the start time corrected for dispersion */
         stYUMOut.dTStart = stYUM.dTStart - (fStartOffset / 86400);
         stYUMOut.dDM = dDM;
+        if (YAPP_FORMAT_DTS_TIM == iOutputFormat)
+        {
+            stYUMOut.iNumChans = 1;
+            stYUMOut.fChanBW = stYUM.fBW;
+            stYUMOut.cIsBandFlipped = YAPP_FALSE;
+        }
 
         /* write metadata to disk */
         iRet = YAPP_WriteMetadata(acFileDedisp, iOutputFormat, stYUMOut);

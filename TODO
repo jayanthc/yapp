@@ -2,9 +2,11 @@ TODO
 ----
 
 
-1. RFI mask generator.
-2. yapp equivalent to realfft.
-3. Barycentre based on location of observatory.
+1. tim2dat
+2. RFI mask generator.
+3. Program to remove running mean/baseline - manual fitting?
+4. yapp equivalent to realfft.
+5. Incoherent summation (stacking).
 
 
 all:

@@ -1,6 +1,6 @@
 /*
  * @file yapp_fits2fil.c
- * Program to convert PSRFITS to filterbank format.
+ * Program to convert multiple PSRFITS files to a single filterbank file.
  *
  * @verbatim
  * Usage: yapp_fits2fil [options] <data-files>

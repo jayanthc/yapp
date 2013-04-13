@@ -383,6 +383,7 @@ int YAPP_ReadPSRFITSHeader(char *pcFileSpec, YUM_t *pstYUM)
     char acErrMsg[FLEN_ERRMSG] = {0};
     int iTemp = 0;
     double dTemp = 0.0;
+    char acTemp[FLEN_VALUE] = {0};
     float *pfFreq = NULL;
     int iColNum = 0;
 
@@ -437,6 +438,20 @@ int YAPP_ReadPSRFITSHeader(char *pcFileSpec, YUM_t *pstYUM)
                          NULL,
                          &iStatus);
     pstYUM->dTStart += dTemp;
+    (void) fits_read_key(pstFileData,
+                         TSTRING,
+                         YAPP_PF_LABEL_SRCRA,
+                         acTemp,
+                         NULL,
+                         &iStatus);
+    pstYUM->dSourceRA = YAPP_RAString2Double(acTemp);
+    (void) fits_read_key(pstFileData,
+                         TSTRING,
+                         YAPP_PF_LABEL_SRCDEC,
+                         acTemp,
+                         NULL,
+                         &iStatus);
+    pstYUM->dSourceDec = YAPP_DecString2Double(acTemp);
 
     /* read SUBINT HDU header */
     (void) fits_movnam_hdu(pstFileData,
@@ -565,6 +580,80 @@ int YAPP_ReadPSRFITSHeader(char *pcFileSpec, YUM_t *pstYUM)
                              * ((float) pstYUM->iNumBits / YAPP_BYTE2BIT_FACTOR);
 
     return YAPP_RET_SUCCESS;
+}
+
+
+double YAPP_RAString2Double(char *pcRA)
+{
+    double dRA = 0.0;
+    char *pcTemp = NULL;
+
+    /* extract hours */
+    pcTemp = strtok(pcRA, ":");
+    dRA = atof(pcTemp) * YAPP_DEGPERHOUR;
+    /* extract minutes */
+    pcTemp = strtok(NULL, ":");
+    dRA += ((atof(pcTemp) / 60) * YAPP_DEGPERHOUR);
+    /* extract seconds */
+    pcTemp = strtok(NULL, ":");
+    dRA += ((atof(pcTemp) / 3600) * YAPP_DEGPERHOUR);
+
+    return dRA;
+}
+
+
+double YAPP_DecString2Double(char *pcDec)
+{
+    double dDec = 0.0;
+    char *pcTemp = NULL;
+
+    /* extract degrees */
+    pcTemp = strtok(pcDec, ":");
+    dDec = atof(pcTemp);
+    /* extract minutes */
+    pcTemp = strtok(NULL, ":");
+    dDec += (atof(pcTemp) / 60);
+    /* extract seconds */
+    pcTemp = strtok(NULL, ":");
+    dDec += (atof(pcTemp) / 3600);
+
+    return dDec;
+}
+
+
+void YAPP_RADouble2String(double dRA, char *pcRA)
+{
+    int iHour = 0;
+    int iMin = 0;
+    double dSec = 0.0;
+
+    /* extract the integer part */
+    iHour = (int) (dRA / YAPP_DEGPERHOUR);
+    /* extract the fractional part */
+    iMin = (int) (((dRA / YAPP_DEGPERHOUR) - iHour) * 60);
+    dSec = ((((dRA / YAPP_DEGPERHOUR) - iHour) * 60) - iMin) * 60;
+
+    (void) sprintf(pcRA, "%.2d:%.2d:%.7g", iHour, iMin, dSec);
+
+    return;
+}
+
+
+void YAPP_DecDouble2String(double dDec, char *pcDec)
+{
+    int iDeg = 0;
+    int iMin = 0;
+    double dSec = 0.0;
+
+    /* extract the integer part */
+    iDeg = (int) dDec;
+    /* extract the fractional part */
+    iMin = (int) ((dDec - iDeg) * 60);
+    dSec = (((dDec - iDeg) * 60) - iMin) * 60;
+
+    (void) sprintf(pcDec, "%.2d:%.2d:%.7g", iDeg, iMin, dSec);
+
+    return;
 }
 
 
@@ -1090,12 +1179,15 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
     {
         pstYUM->cIsBandFlipped = YAPP_FALSE;
         pstYUM->fFMin = fFCh1;
-        pstYUM->fFMax = pstYUM->fFMin
-                        + ((pstYUM->iNumChans - 1) * pstYUM->fChanBW);
-        /* kludge to handle .tim files */
         if (1 == pstYUM->iNumChans)
         {
+            /* kludge to handle .tim files */
             pstYUM->fFMax = pstYUM->fFMin + pstYUM->fChanBW;
+        }
+        else
+        {
+            pstYUM->fFMax = pstYUM->fFMin
+                            + ((pstYUM->iNumChans - 1) * pstYUM->fChanBW);
         }
     }
 
@@ -1133,9 +1225,17 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
     }
 
     /* calculate bandwidth and centre frequency */
-    /* NOTE: max and min are the _centre_ frequencies of the bins, so the
-             total bandwidth would be (max+chanbw/2)-(min-chanbw/2) */
-    pstYUM->fBW = (pstYUM->fFMax - pstYUM->fFMin) + pstYUM->fChanBW;
+    if (1 == pstYUM->iNumChans)
+    {
+        /* kludge to handle .tim files */
+        pstYUM->fBW = pstYUM->fFMax - pstYUM->fFMin;
+    }
+    else
+    {
+        /* NOTE: max and min are the _centre_ frequencies of the bins, so the
+                 total bandwidth would be (max+chanbw/2)-(min-chanbw/2) */
+        pstYUM->fBW = (pstYUM->fFMax - pstYUM->fFMin) + pstYUM->fChanBW;
+    }
     if (0 == (pstYUM->iNumChans % 2))   /* even number of channels */
     {
         pstYUM->fFCentre = (pstYUM->fFMin - (pstYUM->fChanBW / 2))
@@ -1144,7 +1244,7 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
     else                                /* odd number of channels */
     {
         pstYUM->fFCentre = pstYUM->fFMin
-                           + ((pstYUM->iNumChans / 2) * pstYUM->fChanBW);
+                           + (((float) pstYUM->iNumChans / 2) * pstYUM->fChanBW);
     }
 
     /* TODO: find out the discontinuities and print them as well, also
@@ -1996,241 +2096,321 @@ int YAPP_WriteMetadata(char *pcFileData, int iFormat, YUM_t stYUM)
 {
     char acLabel[LEN_GENSTRING] = {0};
     int iLen = 0;
-    FILE *pFData = NULL;
     int iTemp = 0;
     double dTemp = 0.0;
 
-    pFData = fopen(pcFileData, "w");
-    if (NULL == pFData)
+    if ((YAPP_FORMAT_FIL == iFormat) || (YAPP_FORMAT_DTS_TIM == iFormat))
     {
-        fprintf(stderr,
-                "ERROR: Opening file %s failed! %s.\n",
-                pcFileData,
-                strerror(errno));
-        return EXIT_FAILURE;
-    }
+        FILE *pFData = fopen(pcFileData, "w");
+        if (NULL == pFData)
+        {
+            fprintf(stderr,
+                    "ERROR: Opening file %s failed! %s.\n",
+                    pcFileData,
+                    strerror(errno));
+            return EXIT_FAILURE;
+        }
 
-    /* write the parameters to the header section of the file */
-    /* start with the 'HEADER_START' label */
-    iLen = strlen(YAPP_SP_LABEL_HDRSTART);
-    (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
-    (void) strcpy(acLabel, YAPP_SP_LABEL_HDRSTART);
-    (void) fwrite(acLabel, sizeof(char), iLen, pFData);
+        /* write the parameters to the header section of the file */
+        /* start with the 'HEADER_START' label */
+        iLen = strlen(YAPP_SP_LABEL_HDRSTART);
+        (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
+        (void) strcpy(acLabel, YAPP_SP_LABEL_HDRSTART);
+        (void) fwrite(acLabel, sizeof(char), iLen, pFData);
 
-    /* write the rest of the header */
-    /* write source name */
-    /* write field label length */
-    iLen = strlen(YAPP_SP_LABEL_SRCNAME);
-    (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
-    /* write field label */
-    (void) strcpy(acLabel, YAPP_SP_LABEL_SRCNAME);
-    (void) fwrite(acLabel, sizeof(char), iLen, pFData);
-    iLen = strlen(stYUM.acPulsar);
-    (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
-    (void) fwrite(stYUM.acPulsar, sizeof(char), iLen, pFData);
+        /* write the rest of the header */
+        /* write source name */
+        /* write field label length */
+        iLen = strlen(YAPP_SP_LABEL_SRCNAME);
+        (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
+        /* write field label */
+        (void) strcpy(acLabel, YAPP_SP_LABEL_SRCNAME);
+        (void) fwrite(acLabel, sizeof(char), iLen, pFData);
+        iLen = strlen(stYUM.acPulsar);
+        (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
+        (void) fwrite(stYUM.acPulsar, sizeof(char), iLen, pFData);
 
-    /* write data type */
-    if (YAPP_FORMAT_FIL == iFormat)
-    {
-        iTemp = 1;      /* 'filterbank' */
-    }
-    else if (YAPP_FORMAT_DTS_TIM == iFormat)
-    {
-        iTemp = 2;      /* 'time series (topocentric)' */
-    }
-    iLen = strlen(YAPP_SP_LABEL_DATATYPE);
-    (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
-    (void) strcpy(acLabel, YAPP_SP_LABEL_DATATYPE);
-    (void) fwrite(acLabel, sizeof(char), iLen, pFData);
-    (void) fwrite(&iTemp,
-                  sizeof(iTemp),
-                  1,
-                  pFData);
+        /* write data type */
+        if (YAPP_FORMAT_FIL == iFormat)
+        {
+            iTemp = 1;      /* 'filterbank' */
+        }
+        else if (YAPP_FORMAT_DTS_TIM == iFormat)
+        {
+            iTemp = 2;      /* 'time series (topocentric)' */
+        }
+        iLen = strlen(YAPP_SP_LABEL_DATATYPE);
+        (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
+        (void) strcpy(acLabel, YAPP_SP_LABEL_DATATYPE);
+        (void) fwrite(acLabel, sizeof(char), iLen, pFData);
+        (void) fwrite(&iTemp,
+                      sizeof(iTemp),
+                      1,
+                      pFData);
 
-    /* NOTE: number of channels, frequency of first channel, and channel
-             bandwidth are not strictly required in a .tim file, but they
-             are required if .tim files for different frequency bands need
-             to be combined */
-    /* write number of channels */
-    iLen = strlen(YAPP_SP_LABEL_NUMCHANS);
-    (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
-    (void) strcpy(acLabel, YAPP_SP_LABEL_NUMCHANS);
-    (void) fwrite(acLabel, sizeof(char), iLen, pFData);
-    (void) fwrite(&stYUM.iNumChans,
-                  sizeof(stYUM.iNumChans),
-                  1,
-                  pFData);
+        /* NOTE: number of channels, frequency of first channel, and channel
+                 bandwidth are not strictly required in a .tim file, but they
+                 are required if .tim files for different frequency bands need
+                 to be combined */
+        /* write number of channels */
+        iLen = strlen(YAPP_SP_LABEL_NUMCHANS);
+        (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
+        (void) strcpy(acLabel, YAPP_SP_LABEL_NUMCHANS);
+        (void) fwrite(acLabel, sizeof(char), iLen, pFData);
+        (void) fwrite(&stYUM.iNumChans,
+                      sizeof(stYUM.iNumChans),
+                      1,
+                      pFData);
 
-    /* write frequency of first channel */
-    iLen = strlen(YAPP_SP_LABEL_FCHAN1);
-    (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
-    (void) strcpy(acLabel, YAPP_SP_LABEL_FCHAN1);
-    (void) fwrite(acLabel, sizeof(char), iLen, pFData);
-    if (stYUM.cIsBandFlipped)
-    {
-        dTemp = (double) stYUM.fFMax;
-    }
-    else
-    {
-        dTemp = (double) stYUM.fFMin;
-    }
-    (void) fwrite(&dTemp,
-                  sizeof(dTemp),
-                  1,
-                  pFData);
+        /* write frequency of first channel */
+        iLen = strlen(YAPP_SP_LABEL_FCHAN1);
+        (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
+        (void) strcpy(acLabel, YAPP_SP_LABEL_FCHAN1);
+        (void) fwrite(acLabel, sizeof(char), iLen, pFData);
+        if (stYUM.cIsBandFlipped)
+        {
+            dTemp = (double) stYUM.fFMax;
+        }
+        else
+        {
+            dTemp = (double) stYUM.fFMin;
+        }
+        (void) fwrite(&dTemp,
+                      sizeof(dTemp),
+                      1,
+                      pFData);
 
-    /* write channel bandwidth */
-    iLen = strlen(YAPP_SP_LABEL_CHANBW);
-    (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
-    (void) strcpy(acLabel, YAPP_SP_LABEL_CHANBW);
-    (void) fwrite(acLabel, sizeof(char), iLen, pFData);
-    if (stYUM.cIsBandFlipped)
-    {
-        dTemp = (double) (-stYUM.fChanBW);
-    }
-    else
-    {
-        dTemp = (double) stYUM.fChanBW;
-    }
-    (void) fwrite(&dTemp,
-                  sizeof(dTemp),
-                  1,
-                  pFData);
+        /* write channel bandwidth */
+        iLen = strlen(YAPP_SP_LABEL_CHANBW);
+        (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
+        (void) strcpy(acLabel, YAPP_SP_LABEL_CHANBW);
+        (void) fwrite(acLabel, sizeof(char), iLen, pFData);
+        if (stYUM.cIsBandFlipped)
+        {
+            dTemp = (double) (-stYUM.fChanBW);
+        }
+        else
+        {
+            dTemp = (double) stYUM.fChanBW;
+        }
+        (void) fwrite(&dTemp,
+                      sizeof(dTemp),
+                      1,
+                      pFData);
 
-    /* write number of bits per sample */
-    iLen = strlen(YAPP_SP_LABEL_NUMBITS);
-    (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
-    (void) strcpy(acLabel, YAPP_SP_LABEL_NUMBITS);
-    (void) fwrite(acLabel, sizeof(char), iLen, pFData);
-    (void) fwrite(&stYUM.iNumBits,
-                  sizeof(stYUM.iNumBits),
-                  1,
-                  pFData);
+        /* write number of bits per sample */
+        iLen = strlen(YAPP_SP_LABEL_NUMBITS);
+        (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
+        (void) strcpy(acLabel, YAPP_SP_LABEL_NUMBITS);
+        (void) fwrite(acLabel, sizeof(char), iLen, pFData);
+        (void) fwrite(&stYUM.iNumBits,
+                      sizeof(stYUM.iNumBits),
+                      1,
+                      pFData);
 
-    /* write number of IFs */
-    iLen = strlen(YAPP_SP_LABEL_NUMIFS);
-    (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
-    (void) strcpy(acLabel, YAPP_SP_LABEL_NUMIFS);
-    (void) fwrite(acLabel, sizeof(char), iLen, pFData);
-    (void) fwrite(&stYUM.iNumIFs,
-                  sizeof(stYUM.iNumIFs),
-                  1,
-                  pFData);
+        /* write number of IFs */
+        iLen = strlen(YAPP_SP_LABEL_NUMIFS);
+        (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
+        (void) strcpy(acLabel, YAPP_SP_LABEL_NUMIFS);
+        (void) fwrite(acLabel, sizeof(char), iLen, pFData);
+        (void) fwrite(&stYUM.iNumIFs,
+                      sizeof(stYUM.iNumIFs),
+                      1,
+                      pFData);
 
-    /* write sampling time in seconds */
-    iLen = strlen(YAPP_SP_LABEL_TSAMP);
-    (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
-    (void) strcpy(acLabel, YAPP_SP_LABEL_TSAMP);
-    (void) fwrite(acLabel, sizeof(char), iLen, pFData);
-    double dTSampInSec = stYUM.dTSamp / 1e3;
-    (void) fwrite(&dTSampInSec,
-                  sizeof(dTSampInSec),
-                  1,
-                  pFData);
+        /* write sampling time in seconds */
+        iLen = strlen(YAPP_SP_LABEL_TSAMP);
+        (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
+        (void) strcpy(acLabel, YAPP_SP_LABEL_TSAMP);
+        (void) fwrite(acLabel, sizeof(char), iLen, pFData);
+        double dTSampInSec = stYUM.dTSamp / 1e3;
+        (void) fwrite(&dTSampInSec,
+                      sizeof(dTSampInSec),
+                      1,
+                      pFData);
 
-    /* write timestamp of first sample (MJD) */
-    iLen = strlen(YAPP_SP_LABEL_TSTART);
-    (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
-    (void) strcpy(acLabel, YAPP_SP_LABEL_TSTART);
-    (void) fwrite(acLabel, sizeof(char), iLen, pFData);
-    (void) fwrite(&stYUM.dTStart,
-                  sizeof(stYUM.dTStart),
-                  1,
-                  pFData);
+        /* write timestamp of first sample (MJD) */
+        iLen = strlen(YAPP_SP_LABEL_TSTART);
+        (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
+        (void) strcpy(acLabel, YAPP_SP_LABEL_TSTART);
+        (void) fwrite(acLabel, sizeof(char), iLen, pFData);
+        (void) fwrite(&stYUM.dTStart,
+                      sizeof(stYUM.dTStart),
+                      1,
+                      pFData);
 
-    /* write telescope ID */
-    iLen = strlen(YAPP_SP_LABEL_OBSID);
-    (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
-    (void) strcpy(acLabel, YAPP_SP_LABEL_OBSID);
-    (void) fwrite(acLabel, sizeof(char), iLen, pFData);
-    iTemp = YAPP_SP_GetObsIDFromName(stYUM.acSite);
-    if (YAPP_RET_ERROR == iTemp)
-    {
-        /* could not identify observatory, set it to 'unknown/fake' */
-        (void) printf("WARNING: "
-                      "Identifying observatory failed, setting site to %s!\n",
-                      YAPP_SP_OBS_FAKE);
-        iTemp = YAPP_SP_OBSID_FAKE;
-    }
-    (void) fwrite(&iTemp,
-                  sizeof(iTemp),
-                  1,
-                  pFData);
+        /* write telescope ID */
+        iLen = strlen(YAPP_SP_LABEL_OBSID);
+        (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
+        (void) strcpy(acLabel, YAPP_SP_LABEL_OBSID);
+        (void) fwrite(acLabel, sizeof(char), iLen, pFData);
+        iTemp = YAPP_SP_GetObsIDFromName(stYUM.acSite);
+        if (YAPP_RET_ERROR == iTemp)
+        {
+            /* could not identify observatory, set it to 'unknown/fake' */
+            (void) printf("WARNING: "
+                          "Identifying observatory failed, setting site to %s!\n",
+                          YAPP_SP_OBS_FAKE);
+            iTemp = YAPP_SP_OBSID_FAKE;
+        }
+        (void) fwrite(&iTemp,
+                      sizeof(iTemp),
+                      1,
+                      pFData);
 
-    /* write backend ID */
-    iLen = strlen(YAPP_SP_LABEL_BEID);
-    (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
-    (void) strcpy(acLabel, YAPP_SP_LABEL_BEID);
-    (void) fwrite(acLabel, sizeof(char), iLen, pFData);
-    (void) fwrite(&stYUM.iBackendID,
-                  sizeof(stYUM.iBackendID),
-                  1,
-                  pFData);
+        /* write backend ID */
+        iLen = strlen(YAPP_SP_LABEL_BEID);
+        (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
+        (void) strcpy(acLabel, YAPP_SP_LABEL_BEID);
+        (void) fwrite(acLabel, sizeof(char), iLen, pFData);
+        (void) fwrite(&stYUM.iBackendID,
+                      sizeof(stYUM.iBackendID),
+                      1,
+                      pFData);
 
-    /* write source RA (J2000) */
-    iLen = strlen(YAPP_SP_LABEL_SRCRA);
-    (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
-    (void) strcpy(acLabel, YAPP_SP_LABEL_SRCRA);
-    (void) fwrite(acLabel, sizeof(char), iLen, pFData);
-    (void) fwrite(&stYUM.dSourceRA,
-                  sizeof(stYUM.dSourceRA),
-                  1,
-                  pFData);
+        /* write source RA (J2000) */
+        iLen = strlen(YAPP_SP_LABEL_SRCRA);
+        (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
+        (void) strcpy(acLabel, YAPP_SP_LABEL_SRCRA);
+        (void) fwrite(acLabel, sizeof(char), iLen, pFData);
+        (void) fwrite(&stYUM.dSourceRA,
+                      sizeof(stYUM.dSourceRA),
+                      1,
+                      pFData);
 
-    /* write source declination (J2000) */
-    iLen = strlen(YAPP_SP_LABEL_SRCDEC);
-    (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
-    (void) strcpy(acLabel, YAPP_SP_LABEL_SRCDEC);
-    (void) fwrite(acLabel, sizeof(char), iLen, pFData);
-    (void) fwrite(&stYUM.dSourceDec,
-                  sizeof(stYUM.dSourceDec), 1, pFData);
+        /* write source declination (J2000) */
+        iLen = strlen(YAPP_SP_LABEL_SRCDEC);
+        (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
+        (void) strcpy(acLabel, YAPP_SP_LABEL_SRCDEC);
+        (void) fwrite(acLabel, sizeof(char), iLen, pFData);
+        (void) fwrite(&stYUM.dSourceDec,
+                      sizeof(stYUM.dSourceDec), 1, pFData);
 
-    /* write azimuth start */
-    iLen = strlen(YAPP_SP_LABEL_AZSTART);
-    (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
-    (void) strcpy(acLabel, YAPP_SP_LABEL_AZSTART);
-    (void) fwrite(acLabel, sizeof(char), iLen, pFData);
-    (void) fwrite(&stYUM.dAzStart,
-                  sizeof(stYUM.dAzStart),
-                  1,
-                  pFData);
+        /* write azimuth start */
+        iLen = strlen(YAPP_SP_LABEL_AZSTART);
+        (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
+        (void) strcpy(acLabel, YAPP_SP_LABEL_AZSTART);
+        (void) fwrite(acLabel, sizeof(char), iLen, pFData);
+        (void) fwrite(&stYUM.dAzStart,
+                      sizeof(stYUM.dAzStart),
+                      1,
+                      pFData);
 
-    /* write ZA start */
-    iLen = strlen(YAPP_SP_LABEL_ZASTART);
-    (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
-    (void) strcpy(acLabel, YAPP_SP_LABEL_ZASTART);
-    (void) fwrite(acLabel, sizeof(char), iLen, pFData);
-    (void) fwrite(&stYUM.dZAStart,
-                  sizeof(stYUM.dZAStart),
-                  1,
-                  pFData);
+        /* write ZA start */
+        iLen = strlen(YAPP_SP_LABEL_ZASTART);
+        (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
+        (void) strcpy(acLabel, YAPP_SP_LABEL_ZASTART);
+        (void) fwrite(acLabel, sizeof(char), iLen, pFData);
+        (void) fwrite(&stYUM.dZAStart,
+                      sizeof(stYUM.dZAStart),
+                      1,
+                      pFData);
 
-    /* write reference DM */
-    iLen = strlen(YAPP_SP_LABEL_DM);
-    (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
-    (void) strcpy(acLabel, YAPP_SP_LABEL_DM);
-    (void) fwrite(acLabel, sizeof(char), iLen, pFData);
-    (void) fwrite(&stYUM.dDM, sizeof(stYUM.dDM), 1, pFData);
+        /* write reference DM */
+        iLen = strlen(YAPP_SP_LABEL_DM);
+        (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
+        (void) strcpy(acLabel, YAPP_SP_LABEL_DM);
+        (void) fwrite(acLabel, sizeof(char), iLen, pFData);
+        (void) fwrite(&stYUM.dDM, sizeof(stYUM.dDM), 1, pFData);
 
 #if 0
-    /* write barycentric flag */
-    iLen = strlen(YAPP_SP_LABEL_FLAGBARY);
-    (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
-    (void) strcpy(acLabel, YAPP_SP_LABEL_FLAGBARY);
-    (void) fwrite(acLabel, sizeof(char), iLen, pFData);
-    (void) fwrite(&stYUM.iFlagBary,
-                  sizeof(stYUM.iFlagBary),
-                  1,
-                  pFData);
+        /* write barycentric flag */
+        iLen = strlen(YAPP_SP_LABEL_FLAGBARY);
+        (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
+        (void) strcpy(acLabel, YAPP_SP_LABEL_FLAGBARY);
+        (void) fwrite(acLabel, sizeof(char), iLen, pFData);
+        (void) fwrite(&stYUM.iFlagBary,
+                      sizeof(stYUM.iFlagBary),
+                      1,
+                      pFData);
 #endif
 
-    /* write header end tag */
-    iLen = strlen(YAPP_SP_LABEL_HDREND);
-    (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
-    (void) strcpy(acLabel, YAPP_SP_LABEL_HDREND);
-    (void) fwrite(acLabel, sizeof(char), iLen, pFData);
+        /* write header end tag */
+        iLen = strlen(YAPP_SP_LABEL_HDREND);
+        (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
+        (void) strcpy(acLabel, YAPP_SP_LABEL_HDREND);
+        (void) fwrite(acLabel, sizeof(char), iLen, pFData);
 
-    (void) fclose(pFData);
+        (void) fclose(pFData);
+    }
+    else if (YAPP_FORMAT_DTS_DAT == iFormat)
+    {
+        char *pcFilename = NULL;
+        FILE *pFInf = NULL;
+        char acFileInf[LEN_GENSTRING] = {0};
+        char acTemp[LEN_GENSTRING] = {0};
+
+        pcFilename = YAPP_GetFilenameFromPath(pcFileData, EXT_TIM);
+
+        (void) strcpy(acFileInf, pcFilename);
+        (void) strcat(acFileInf, EXT_INF);
+        pFInf = fopen(acFileInf, "w");
+        if (NULL == pFInf)
+        {
+            (void) fprintf(stderr,
+                           "ERROR: Opening file %s failed! %s.\n",
+                           acFileInf,
+                           strerror(errno));
+            return EXIT_FAILURE;
+        }
+
+        (void) fprintf(pFInf,
+                       " Data file name without suffix          =  %s\n",
+                       pcFilename);
+        (void) fprintf(pFInf,
+                       " Telescope used                         =  %s\n",
+                       stYUM.acSite);
+        /* TODO: make this a string */
+        (void) fprintf(pFInf,
+                       " Instrument used                        =  %d\n",
+                       stYUM.iBackendID);
+        (void) fprintf(pFInf,
+                       " Object being observed                  =  %s\n",
+                       stYUM.acPulsar);
+        YAPP_RADouble2String(stYUM.dSourceRA, acTemp);
+        (void) fprintf(pFInf,
+                       " J2000 Right Ascension (hh:mm:ss.ssss)  =  %s\n",
+                       acTemp);
+        YAPP_DecDouble2String(stYUM.dSourceDec, acTemp);
+        (void) fprintf(pFInf,
+                       " J2000 Declination     (dd:mm:ss.ssss)  =  %s\n",
+                       acTemp);
+        //(void) fprintf(pFInf, " Data observed by                       =  \n");//WAGNER
+        (void) fprintf(pFInf,
+                       " Epoch of observation (MJD)             =  %.15g\n",
+                       stYUM.dTStart);
+        (void) fprintf(pFInf,
+                       " Barycentered?           (1=yes, 0=no)  =  %d\n",
+                       stYUM.iFlagBary);
+        (void) fprintf(pFInf,
+                       " Number of bins in the time series      =  %d\n",
+                       stYUM.iTimeSamps);
+        (void) fprintf(pFInf,
+                       " Width of each time series bin (sec)    =  %.10g\n",
+                       stYUM.dTSamp * 1e-3);
+        (void) fprintf(pFInf,
+                       " Any breaks in the data? (1=yes, 0=no)  =  0\n");
+        (void) fprintf(pFInf,
+                       " Type of observation (EM band)          =  Radio\n");
+        //(void) fprintf(pFInf, " Beam diameter (arcsec)                 =  \n");
+        (void) fprintf(pFInf,
+                       " Dispersion measure (cm-3 pc)           =  %g\n",
+                       stYUM.dDM);
+        (void) fprintf(pFInf,
+                       " Central freq of low channel (Mhz)      =  %.10g\n",
+                       stYUM.fFCentre);
+        (void) fprintf(pFInf,
+                       " Total bandwidth (Mhz)                  =  %.10g\n",
+                       stYUM.fBW);
+        (void) fprintf(pFInf,
+                       " Number of channels                     =  %d\n",
+                       stYUM.iNumChans);
+        (void) fprintf(pFInf,
+                       " Channel bandwidth (Mhz)                =  %.10g\n",
+                       stYUM.fChanBW);
+
+        (void) fclose(pFInf);
+    }
 
     return EXIT_SUCCESS;
 }
