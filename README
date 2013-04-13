@@ -1,4 +1,4 @@
-Yet Another Pulsar Processor (YAPP) 3.1-beta
+Yet Another Pulsar Processor (YAPP) 3.2-beta
 -------------------------------------------------------------------------------
 README
 
@@ -26,6 +26,7 @@ YAPP also comes with the following utilities:
 
     yapp_fits2fil       : Converts PSRFITS data to SIGPROC '.fil'
     yapp_dat2tim        : Converts PRESTO '.dat' to SIGPROC '.tim'
+    yapp_tim2dat        : Converts SIGPROC '.tim' to PRESTO '.dat'
 
 The supported file formats are are DAS '.spec', SIGPROC '.fil', and SIGPROC
 '.tim', with partial support for PSRFITS and PRESTO '.dat'.

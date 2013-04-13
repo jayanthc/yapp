@@ -123,6 +123,10 @@ int main(int argc, char *argv[])
                       stYUM.acSite);
         (void) printf("Field name                        : %s\n",
                       stYUM.acPulsar);
+        (void) printf("Right Ascension                   : %g degrees\n",
+                      stYUM.dSourceRA);
+        (void) printf("Declination                       : %g degrees\n",
+                      stYUM.dSourceDec);
         (void) printf("Start time                        : %.15g MJD\n",
                       stYUM.dTStart);
         if ((YAPP_FORMAT_SPEC == iFormat)
