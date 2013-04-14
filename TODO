@@ -2,12 +2,10 @@ TODO
 ----
 
 
-1. tim2dat --> dat2tim: Fails!
-2. Web page for tim2dat.
-3. RFI mask generator.
-4. Program to remove running mean/baseline - manual fitting?
-5. yapp equivalent to realfft.
-6. Incoherent summation (stacking).
+1. RFI mask generator.
+2. Program to remove running mean/baseline - manual fitting?
+3. yapp equivalent to realfft.
+4. Incoherent summation (stacking).
 
 
 all:
