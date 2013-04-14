@@ -252,6 +252,21 @@ YAPP_PF_LABEL_TSAMP	src/yapp_psrfits.h	24;"	d
 YAPP_PF_LABEL_TSTART	src/yapp_psrfits.h	27;"	d
 YAPP_PF_LABEL_TSTARTOFF	src/yapp_psrfits.h	29;"	d
 YAPP_PF_LABEL_TSTARTSEC	src/yapp_psrfits.h	28;"	d
+YAPP_PR_LABEL_BACKEND	src/yapp_presto.h	16;"	d
+YAPP_PR_LABEL_BARY	src/yapp_presto.h	21;"	d
+YAPP_PR_LABEL_BW	src/yapp_presto.h	26;"	d
+YAPP_PR_LABEL_CHANBW	src/yapp_presto.h	28;"	d
+YAPP_PR_LABEL_DM	src/yapp_presto.h	24;"	d
+YAPP_PR_LABEL_FMIN	src/yapp_presto.h	25;"	d
+YAPP_PR_LABEL_NCHANS	src/yapp_presto.h	27;"	d
+YAPP_PR_LABEL_NSAMPS	src/yapp_presto.h	22;"	d
+YAPP_PR_LABEL_SITE	src/yapp_presto.h	15;"	d
+YAPP_PR_LABEL_SRCDEC	src/yapp_presto.h	19;"	d
+YAPP_PR_LABEL_SRCNAME	src/yapp_presto.h	17;"	d
+YAPP_PR_LABEL_SRCRA	src/yapp_presto.h	18;"	d
+YAPP_PR_LABEL_TSAMP	src/yapp_presto.h	23;"	d
+YAPP_PR_LABEL_TSTART	src/yapp_presto.h	20;"	d
+YAPP_PR_LEN_LABEL	src/yapp_presto.h	13;"	d
 YAPP_RADouble2String	src/yapp_common.c	/^void YAPP_RADouble2String(double dRA, char *pcRA)$/;"	f
 YAPP_RAString2Double	src/yapp_common.c	/^double YAPP_RAString2Double(char *pcRA)$/;"	f
 YAPP_RET_ERROR	src/yapp.h	41;"	d
@@ -328,6 +343,7 @@ __YAPP_DAT2TIM_H__	utilities/yapp_dat2tim.h	10;"	d
 __YAPP_FITS2FIL_H__	utilities/yapp_fits2fil.h	10;"	d
 __YAPP_FT_H__	src/yapp_ft.h	10;"	d
 __YAPP_H__	src/yapp.h	10;"	d
+__YAPP_PRESTO_H__	src/yapp_presto.h	10;"	d
 __YAPP_PSRFITS_H__	src/yapp_psrfits.h	10;"	d
 __YAPP_SIGPROC_H__	src/yapp_sigproc.h	10;"	d
 __YAPP_TIM2DAT_H__	utilities/yapp_tim2dat.h	10;"	d

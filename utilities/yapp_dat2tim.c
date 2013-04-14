@@ -121,6 +121,13 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
+    /* update the number of channels, etc. to YAPP convention */
+    stYUM.iNumChans = 1;
+    stYUM.fFMin = stYUM.fFCentre;
+    stYUM.fFMax = stYUM.fFCentre;
+    stYUM.fChanBW = stYUM.fBW;
+    stYUM.cIsBandFlipped = YAPP_FALSE;
+
     (void) strcpy(acFileTim, pcFilename);
     free(pcFilename);
     (void) strcat(acFileTim, EXT_TIM);
