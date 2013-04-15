@@ -361,13 +361,20 @@ int main(int argc, char *argv[])
     /* populate the YUM structure for output */
     stYUM.fFMax = pafMaxFreq[0];
     stYUM.fFMin = pafMinFreq[iNumBands-1];
-    stYUM.fBW = stYUM.fFMax - stYUM.fFMin;
+    /* NOTE: min and max are centre frequencies of channels */
+    stYUM.fBW = stYUM.fFMax - stYUM.fFMin + stYUM.fChanBW;
     /* spoof filterbank-related parameters so that YAPP_ReadSIGPROCHeader()
        will compute the minimum and maximum frequencies correctly for the
-       output .tim file */
-    stYUM.iNumChans = 1;
-    stYUM.fChanBW = stYUM.fBW;
-    stYUM.cIsBandFlipped = YAPP_FALSE;
+       output .tim file
+       NOTE: the number of channels and channel bandwidth need to be modified
+       here to preserve the min and max frequencies and bandwidth */
+    /* TODO:  (ideal solution: use YAPP data format and convert to tim/dat
+       at the end. */
+    stYUM.iNumChans = (int) roundf(stYUM.fBW / stYUM.fChanBW);
+    stYUM.fChanBW = stYUM.fBW / stYUM.iNumChans;
+    //stYUM.iNumChans = 1;
+    //stYUM.fChanBW = stYUM.fBW;
+    //stYUM.cIsBandFlipped = YAPP_FALSE;
     /* write metadata to disk */
     iRet = YAPP_WriteMetadata(acFileOut, iFormat, stYUM);
     if (iRet != YAPP_RET_SUCCESS)

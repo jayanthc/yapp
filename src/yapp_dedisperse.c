@@ -826,10 +826,6 @@ int main(int argc, char *argv[])
         stYUMOut.dDM = dDM;
         if (YAPP_FORMAT_DTS_TIM == iOutputFormat)
         {
-            stYUMOut.fFMin = stYUMOut.fFCentre;
-            stYUMOut.fFMax = stYUMOut.fFCentre;
-            stYUMOut.iNumChans = 1;
-            stYUMOut.fChanBW = stYUM.fBW;
             stYUMOut.cIsBandFlipped = YAPP_FALSE;
         }
 

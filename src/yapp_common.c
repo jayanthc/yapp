@@ -962,9 +962,6 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
                          1,
                          g_pFData);
             pstYUM->iHeaderLen += sizeof(pstYUM->iNumChans);
-            /* set number of good channels to number of channels - no support for
-               SIGPROC ignore files yet */
-            pstYUM->iNumGoodChans = pstYUM->iNumChans;
         }
         else if (0 == strcmp(acLabel, YAPP_SP_LABEL_FCHAN1))
         {
@@ -1201,16 +1198,8 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
     {
         pstYUM->cIsBandFlipped = YAPP_FALSE;
         pstYUM->fFMin = fFCh1;
-        if (1 == pstYUM->iNumChans)
-        {
-            /* kludge to handle .tim files */
-            pstYUM->fFMax = pstYUM->fFMin;
-        }
-        else
-        {
-            pstYUM->fFMax = pstYUM->fFMin
-                            + ((pstYUM->iNumChans - 1) * pstYUM->fChanBW);
-        }
+        pstYUM->fFMax = pstYUM->fFMin
+                        + ((pstYUM->iNumChans - 1) * pstYUM->fChanBW);
     }
 
     if (YAPP_TRUE == pstYUM->iFlagSplicedData)
@@ -1247,17 +1236,9 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
     }
 
     /* calculate bandwidth and centre frequency */
-    if (1 == pstYUM->iNumChans)
-    {
-        /* kludge to handle .tim files */
-        pstYUM->fBW = pstYUM->fChanBW;
-    }
-    else
-    {
-        /* NOTE: max and min are the _centre_ frequencies of the bins, so the
-                 total bandwidth would be (max+chanbw/2)-(min-chanbw/2) */
-        pstYUM->fBW = (pstYUM->fFMax - pstYUM->fFMin) + pstYUM->fChanBW;
-    }
+    /* NOTE: max and min are the _centre_ frequencies of the bins, so the
+             total bandwidth would be (max+chanbw/2)-(min-chanbw/2) */
+    pstYUM->fBW = (pstYUM->fFMax - pstYUM->fFMin) + pstYUM->fChanBW;
     if (0 == (pstYUM->iNumChans % 2))   /* even number of channels */
     {
         pstYUM->fFCentre = (pstYUM->fFMin - (pstYUM->fChanBW / 2))
@@ -1265,17 +1246,9 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
     }
     else                                /* odd number of channels */
     {
-        /* kludge to handle .tim files */
-        if (1 == pstYUM->iNumChans)
-        {
-            pstYUM->fFCentre = pstYUM->fFMin;
-        }
-        else
-        {
-            pstYUM->fFCentre = pstYUM->fFMin
-                               + (((float) pstYUM->iNumChans / 2)
-                                  * pstYUM->fChanBW);
-        }
+        pstYUM->fFCentre = pstYUM->fFMin
+                           + (((float) pstYUM->iNumChans / 2)
+                              * pstYUM->fChanBW);
     }
 
     /* TODO: find out the discontinuities and print them as well, also
@@ -1293,29 +1266,37 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
         return YAPP_RET_ERROR;
     }
     pstYUM->lDataSizeTotal = (long) stFileStats.st_size - pstYUM->iHeaderLen;
-    if (YAPP_FORMAT_DTS_TIM == iFormat)
+    if (YAPP_FORMAT_FIL == iFormat)
     {
-        pstYUM->iNumChans = 1;
+        pstYUM->iTimeSamps = (int) (pstYUM->lDataSizeTotal
+                                    / (pstYUM->iNumChans * pstYUM->fSampSize));
     }
-    pstYUM->iTimeSamps = (int) (pstYUM->lDataSizeTotal / (pstYUM->iNumChans * pstYUM->fSampSize));
-
-    /* call all channels good - no support for SIGPROC ignore files yet */
-    pstYUM->pcIsChanGood = (char *) YAPP_Malloc(pstYUM->iNumChans,
-                                                sizeof(char),
-                                                YAPP_FALSE);
-    if (NULL == pstYUM->pcIsChanGood)
+    else
     {
-        (void) fprintf(stderr,
-                       "ERROR: Memory allocation for channel goodness "
-                       "flag failed! %s!\n",
-                       strerror(errno));
-        return YAPP_RET_ERROR;
+        pstYUM->iTimeSamps = (int) (pstYUM->lDataSizeTotal
+                                    / pstYUM->fSampSize);
     }
 
-    /* read the channel goodness flags */
-    for (i = 0; i < pstYUM->iNumChans; ++i)
+    if (YAPP_FORMAT_FIL == iFormat)
     {
-        pstYUM->pcIsChanGood[i] = YAPP_TRUE;
+        /* call all channels good - no support for SIGPROC ignore files yet */
+        pstYUM->pcIsChanGood = (char *) YAPP_Malloc(pstYUM->iNumChans,
+                                                    sizeof(char),
+                                                    YAPP_FALSE);
+        if (NULL == pstYUM->pcIsChanGood)
+        {
+            (void) fprintf(stderr,
+                           "ERROR: Memory allocation for channel goodness "
+                           "flag failed! %s!\n",
+                           strerror(errno));
+            return YAPP_RET_ERROR;
+        }
+
+        /* read the channel goodness flags */
+        for (i = 0; i < pstYUM->iNumChans; ++i)
+        {
+            pstYUM->pcIsChanGood[i] = YAPP_TRUE;
+        }
     }
 
     /* set number of good channels to number of channels - no support for
@@ -1809,25 +1790,11 @@ int YAPP_ReadPRESTOHeaderFile(char *pcFileData, YUM_t *pstYUM)
 
     /* calculate bandwidth (even though we have read it) and centre
        frequency */
-    if (1 == pstYUM->iNumChans)
-    {
-        pstYUM->fFMax = pstYUM->fFMin;
-    }
-    else
-    {
-        pstYUM->fFMax = pstYUM->fFMin
-                        + ((pstYUM->iNumChans - 1) * pstYUM->fChanBW);
-    }
-    if (1 == pstYUM->iNumChans)
-    {
-        pstYUM->fBW = pstYUM->fChanBW;
-    }
-    else
-    {
-        /* NOTE: max and min are the _centre_ frequencies of the bins, so the
-                 total bandwidth would be (max+chanbw/2)-(min-chanbw/2) */
-        pstYUM->fBW = (pstYUM->fFMax - pstYUM->fFMin) + pstYUM->fChanBW;
-    }
+    pstYUM->fFMax = pstYUM->fFMin
+                    + ((pstYUM->iNumChans - 1) * pstYUM->fChanBW);
+    /* NOTE: max and min are the _centre_ frequencies of the bins, so the
+             total bandwidth would be (max+chanbw/2)-(min-chanbw/2) */
+    pstYUM->fBW = (pstYUM->fFMax - pstYUM->fFMin) + pstYUM->fChanBW;
     if (0 == (pstYUM->iNumChans % 2))   /* even number of channels */
     {
         pstYUM->fFCentre = (pstYUM->fFMin - (pstYUM->fChanBW / 2))
@@ -1835,16 +1802,9 @@ int YAPP_ReadPRESTOHeaderFile(char *pcFileData, YUM_t *pstYUM)
     }
     else                                /* odd number of channels */
     {
-        if (1 == pstYUM->iNumChans)
-        {
-            pstYUM->fFCentre = pstYUM->fFMin;
-        }
-        else
-        {
-            pstYUM->fFCentre = pstYUM->fFMin
-                               + (((float) pstYUM->iNumChans / 2)
-                                  * pstYUM->fChanBW);
-        }
+        pstYUM->fFCentre = pstYUM->fFMin
+                           + (((float) pstYUM->iNumChans / 2)
+                              * pstYUM->fChanBW);
     }
 
     pstYUM->iNumBits = YAPP_SAMPSIZE_32;    /* single-precision floating-point */
@@ -2266,7 +2226,7 @@ int YAPP_WriteMetadata(char *pcFileData, int iFormat, YUM_t stYUM)
                        stYUM.dDM);
         (void) fprintf(pFInf,
                        " Central freq of low channel (Mhz)      =  %.10g\n",
-                       stYUM.fFCentre);
+                       stYUM.fFMin);
         (void) fprintf(pFInf,
                        " Total bandwidth (Mhz)                  =  %.10g\n",
                        stYUM.fBW);
