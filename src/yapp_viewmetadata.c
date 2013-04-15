@@ -129,30 +129,20 @@ int main(int argc, char *argv[])
                       stYUM.dSourceDec);
         (void) printf("Start time                        : %.15g MJD\n",
                       stYUM.dTStart);
-        if ((YAPP_FORMAT_SPEC == iFormat)
-            || (YAPP_FORMAT_FIL == iFormat)
-            || (YAPP_FORMAT_PSRFITS == iFormat))
-        {
-            (void) printf("Centre frequency                  : %.10g MHz\n",
-                          stYUM.fFCentre);
-            (void) printf("Bandwidth                         : %.10g MHz\n",
-                          stYUM.fBW);
-        }
+        (void) printf("Centre frequency                  : %.10g MHz\n",
+                      stYUM.fFCentre);
+        (void) printf("Bandwidth                         : %.10g MHz\n",
+                      stYUM.fBW);
         (void) printf("Sampling interval                 : %.10g ms\n",
                       stYUM.dTSamp);
         /* TODO: think about order - changing might cause problems in
            headerless .fil */
-        if ((YAPP_FORMAT_SPEC == iFormat)
-            || (YAPP_FORMAT_FIL == iFormat)
-            || (YAPP_FORMAT_PSRFITS == iFormat))
-        {
-            (void) printf("Number of channels                : %d\n",
-                          stYUM.iNumChans);
-            (void) printf("Number of good channels           : %d\n",
-                          stYUM.iNumGoodChans);
-            (void) printf("Channel bandwidth                 : %.10g MHz\n",
-                          stYUM.fChanBW);
-        }
+        (void) printf("Number of channels                : %d\n",
+                      stYUM.iNumChans);
+        (void) printf("Number of good channels           : %d\n",
+                      stYUM.iNumGoodChans);
+        (void) printf("Channel bandwidth                 : %.10g MHz\n",
+                      stYUM.fChanBW);
         (void) printf("Lowest frequency                  : %.10g MHz\n",
                       stYUM.fFMin);
         (void) printf("Highest frequency                 : %.10g MHz\n",
@@ -192,14 +182,22 @@ int main(int argc, char *argv[])
             (void) printf("Number of polarizations           : %d\n",
                           stYUM.iNumPol);
         }
-        if (YAPP_FORMAT_DTS_TIM == iFormat)
+        if ((stYUM.dDM != 0.0) || (YAPP_FORMAT_DTS_TIM == iFormat))
         {
             (void) printf("DM used in dedispersion           : %g\n",
                           stYUM.dDM);
         }
         (void) printf("Duration of data in\n");
-        (void) printf("    Bytes                         : %ld\n",
-                      (stYUM.lDataSizeTotal / stYUM.iNumChans));
+        if (iFormat != YAPP_FORMAT_DTS_TIM)
+        {
+            (void) printf("    Bytes                         : %ld\n",
+                          (stYUM.lDataSizeTotal / stYUM.iNumChans));
+        }
+        else
+        {
+            (void) printf("    Bytes                         : %ld\n",
+                          stYUM.lDataSizeTotal);
+        }
         (void) printf("    Time samples                  : %d\n",
                       stYUM.iTimeSamps);
         (void) printf("    Time                          : %g s\n",
