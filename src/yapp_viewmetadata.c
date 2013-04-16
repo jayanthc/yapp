@@ -187,6 +187,8 @@ int main(int argc, char *argv[])
             (void) printf("DM used in dedispersion           : %g\n",
                           stYUM.dDM);
         }
+        (void) printf("Barycentric                       : %s\n",
+                      stYUM.iFlagBary ? "Yes" : "No");
         (void) printf("Duration of data in\n");
         if (iFormat != YAPP_FORMAT_DTS_TIM)
         {
