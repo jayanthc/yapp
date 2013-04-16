@@ -2,7 +2,7 @@ TODO
 ----
 
 
-1. RFI mask generator.
+1. RFI mask generator - manual/automatic?
 2. Program to remove running mean/baseline - manual fitting?
 3. yapp equivalent to realfft.
 4. Incoherent summation (stacking).
