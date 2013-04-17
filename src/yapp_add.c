@@ -451,7 +451,7 @@ int main(int argc, char *argv[])
     {
         /* read data */
         (void) printf("\rReading data block %d of %d.",
-                      iReadBlockCount,
+                      iReadBlockCount + 1,
                       iTotNumReads);
         (void) fflush(stdout);
         for (i = 0; i < iNumBands; ++i)
