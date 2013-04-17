@@ -111,9 +111,8 @@ int main(int argc, char *argv[])
         return YAPP_RET_ERROR;
     }
 
-    pcFilename = YAPP_GetFilenameFromPath(pcFileData, EXT_DAT);
 
-    iRet = YAPP_ReadPRESTOHeaderFile(pcFilename, &stYUM);
+    iRet = YAPP_ReadPRESTOHeaderFile(pcFileData, &stYUM);
     if (iRet != EXIT_SUCCESS)
     {
         fprintf(stderr,
@@ -121,6 +120,7 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
+    pcFilename = YAPP_GetFilenameFromPath(pcFileData, EXT_DAT);
     (void) strcpy(acFileTim, pcFilename);
     free(pcFilename);
     (void) strcat(acFileTim, EXT_TIM);

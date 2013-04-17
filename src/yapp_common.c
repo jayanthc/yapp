@@ -620,7 +620,6 @@ double YAPP_DecString2Double(char *pcDec)
 {
     double dDec = 0.0;
     char *pcTemp = NULL;
-    int iFlagNeg = YAPP_FALSE;
 
     /* extract degrees */
     pcTemp = strtok(pcDec, ":");
@@ -1321,7 +1320,7 @@ int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM)
                        acFileHeader);
         return YAPP_RET_ERROR;
     }
-    (void) strcpy(pcExt, ".fhd");
+    (void) strcpy(pcExt, EXT_FHD);
 
     /* open the header file for reading */
     pFHdr = fopen(acFileHeader, "r");
@@ -1484,16 +1483,26 @@ int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM)
 int YAPP_ReadPRESTOHeaderFile(char *pcFileData, YUM_t *pstYUM)
 {
     size_t iLen = 0;
-    char *pcKey = NULL;
     char *pcVal = NULL;
     char* pcLine = NULL;
     FILE *pFInf = NULL;
     char acFileInf[LEN_GENSTRING] = {0};
     char acTemp[LEN_GENSTRING] = {0};
+    struct stat stFileStats = {0};
+    int iRet = YAPP_RET_SUCCESS;
+    char *pcExt = NULL;
 
-    /* build the header file name and open the file */
-    (void) strcpy(acFileInf, pcFileData);
-    (void) strcat(acFileInf, ".inf");
+    /* build the header file name */
+    (void) strncpy(acFileInf, pcFileData, LEN_GENSTRING);
+    pcExt = strrchr(acFileInf, '.');
+    if (NULL == pcExt)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Could not locate extension in file name %s!\n",
+                       acFileInf);
+        return YAPP_RET_ERROR;
+    }
+    (void) strcpy(pcExt, EXT_INF);
     pFInf = fopen(acFileInf, "r");
     if (NULL == pFInf)
     {
@@ -1591,7 +1600,20 @@ int YAPP_ReadPRESTOHeaderFile(char *pcFileData, YUM_t *pstYUM)
                               * pstYUM->fChanBW);
     }
 
-    pstYUM->iNumBits = YAPP_SAMPSIZE_32;    /* single-precision floating-point */
+    pstYUM->iNumBits = YAPP_SAMPSIZE_32;    /* single-precision
+                                               floating-point */
+    pstYUM->fSampSize = ((float) pstYUM->iNumBits) / YAPP_BYTE2BIT_FACTOR;
+
+    iRet = stat(pcFileData, &stFileStats);
+    if (iRet != YAPP_RET_SUCCESS)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Failed to stat %s: %s!\n",
+                       pcFileData,
+                       strerror(errno));
+        return YAPP_RET_ERROR;
+    }
+    pstYUM->lDataSizeTotal = (long) stFileStats.st_size;
 
     free(pcLine);
     (void) fclose(pFInf);
