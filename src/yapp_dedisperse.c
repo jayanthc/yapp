@@ -63,7 +63,6 @@ float *g_pfYAxis = NULL;
 
 int main(int argc, char *argv[])
 {
-    FILE *pFCfg = NULL;
     FILE *pFDedispData = NULL;
     char *pcFileSpec = NULL;
     char acFileDedisp[LEN_GENSTRING] = {0};
@@ -91,10 +90,6 @@ int main(int argc, char *argv[])
     double dTNextBF = 0.0;
     double dTSamp = 0.0;        /* holds sampling time in ms */
     double dTSampInSec = 0.0;   /* holds sampling time in s */
-    YAPP_SIGPROC_HEADER stHeader = {{0}};
-    char acLabel[LEN_GENSTRING] = {0};
-    int iLen = 0;
-    int iTemp = 0;
     double dTNow = 0.0;
     int iTimeSect = 0;
     int iBadTimeSect = 0;

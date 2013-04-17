@@ -275,6 +275,14 @@ int main(int argc, char *argv[])
                        pcFileData);
         return YAPP_RET_ERROR;
     }
+    /* kludge: the rest of the code expects stYUM.iNumChans = 1 for time series
+       data, so make it 1 */
+    if ((YAPP_FORMAT_DTS_TIM == iFormat)
+        || (YAPP_FORMAT_DTS_DAT == iFormat)
+        || (YAPP_FORMAT_DTS_DDS == iFormat))
+    {
+        stYUM.iNumChans = 1;
+    }
 
     /* convert sampling interval to seconds */
     dTSampInSec = stYUM.dTSamp / 1e3;

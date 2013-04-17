@@ -102,7 +102,8 @@ int main(int argc, char *argv[])
         if (!((YAPP_FORMAT_PSRFITS == iFormat)
               || (YAPP_FORMAT_FIL == iFormat)
               || (YAPP_FORMAT_SPEC == iFormat)
-              || (YAPP_FORMAT_DTS_TIM == iFormat)))
+              || (YAPP_FORMAT_DTS_TIM == iFormat)
+              || (YAPP_FORMAT_DTS_DAT == iFormat)))
         {
             (void) fprintf(stderr,
                            "ERROR: Invalid file type!\n");
@@ -183,7 +184,9 @@ int main(int argc, char *argv[])
             (void) printf("Number of polarizations           : %d\n",
                           stYUM.iNumPol);
         }
-        if ((stYUM.dDM != 0.0) || (YAPP_FORMAT_DTS_TIM == iFormat))
+        if ((stYUM.dDM != 0.0)
+            || (YAPP_FORMAT_DTS_TIM == iFormat)
+            || (YAPP_FORMAT_DTS_DAT == iFormat))
         {
             (void) printf("DM used in dedispersion           : %g\n",
                           stYUM.dDM);
@@ -191,7 +194,8 @@ int main(int argc, char *argv[])
         (void) printf("Barycentric                       : %s\n",
                       stYUM.iFlagBary ? "Yes" : "No");
         (void) printf("Duration of data in\n");
-        if (iFormat != YAPP_FORMAT_DTS_TIM)
+        if (!((YAPP_FORMAT_DTS_TIM == iFormat)
+              || (YAPP_FORMAT_DTS_DAT == iFormat)))
         {
             (void) printf("    Bytes                         : %ld\n",
                           (stYUM.lDataSizeTotal / stYUM.iNumChans));
@@ -206,7 +210,8 @@ int main(int argc, char *argv[])
         (void) printf("    Time                          : %g s\n",
                       (stYUM.iTimeSamps * (stYUM.dTSamp / 1e3)));
         if (!((YAPP_FORMAT_PSRFITS == iFormat)
-              || (YAPP_FORMAT_SPEC == iFormat)))
+              || (YAPP_FORMAT_SPEC == iFormat)
+              || (YAPP_FORMAT_DTS_DAT == iFormat)))
         {
             (void) printf("Length of header                  : %d\n",
                           stYUM.iHeaderLen);

@@ -233,7 +233,8 @@ int main(int argc, char *argv[])
     }
     if (!((YAPP_FORMAT_FIL == iFormat)
           || (YAPP_FORMAT_SPEC == iFormat)
-          || (YAPP_FORMAT_DTS_TIM == iFormat)))
+          || (YAPP_FORMAT_DTS_TIM == iFormat)
+          || (YAPP_FORMAT_DTS_DAT == iFormat)))
     {
         (void) fprintf(stderr,
                        "ERROR: Invalid file type!\n");
@@ -248,6 +249,14 @@ int main(int argc, char *argv[])
                        "ERROR: Reading metadata failed for file %s!\n",
                        pcFileData);
         return YAPP_RET_ERROR;
+    }
+    /* kludge: the rest of the code expects stYUM.iNumChans = 1 for time series
+       data, so make it 1 */
+    if ((YAPP_FORMAT_DTS_TIM == iFormat)
+        || (YAPP_FORMAT_DTS_DAT == iFormat)
+        || (YAPP_FORMAT_DTS_DDS == iFormat))
+    {
+        stYUM.iNumChans = 1;
     }
 
     /* convert sampling interval to seconds */
@@ -353,7 +362,8 @@ int main(int argc, char *argv[])
         return YAPP_RET_ERROR;
     }
     if (!((YAPP_FORMAT_DTS_TIM == iFormat)
-          || (YAPP_FORMAT_DTS_DDS != iFormat)))
+          || (YAPP_FORMAT_DTS_DAT == iFormat)
+          || (YAPP_FORMAT_DTS_DDS == iFormat)))
     {
         fStatBW = stYUM.iNumGoodChans * stYUM.fChanBW;  /* in MHz */
         (void) printf("Usable bandwidth                  : %g MHz\n", fStatBW);
@@ -470,6 +480,7 @@ int main(int argc, char *argv[])
     }
 
     if (!((YAPP_FORMAT_DTS_TIM == iFormat)
+          || (YAPP_FORMAT_DTS_DAT == iFormat)
           || (YAPP_FORMAT_DTS_DDS == iFormat)))
     {
         /* set up the image plot's Y-axis (frequency) */
@@ -711,6 +722,7 @@ int main(int argc, char *argv[])
         }
 
         if (!((YAPP_FORMAT_DTS_TIM == iFormat)
+              || (YAPP_FORMAT_DTS_DAT == iFormat)
               || (YAPP_FORMAT_DTS_DDS == iFormat)))
         {
             /* get the transpose of the two-dimensional array */

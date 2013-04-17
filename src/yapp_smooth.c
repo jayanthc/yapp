@@ -208,6 +208,9 @@ int main(int argc, char *argv[])
         return YAPP_RET_ERROR;
     }
     if (iFormat != YAPP_FORMAT_DTS_TIM)
+    //if (!((YAPP_FORMAT_DTS_TIM == iFormat)
+    //      || (YAPP_FORMAT_DTS_DAT == iFormat)))
+    // this creates a file with .tim ext - make it .dat, and copy .inf
     {
         (void) fprintf(stderr,
                        "ERROR: Invalid file type!\n");
