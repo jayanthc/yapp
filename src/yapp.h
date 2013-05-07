@@ -101,6 +101,7 @@ enum tagFileFormats
 #define YAPP_BYTE2BIT_FACTOR        8
 
 #define INFIX_SMOOTH                "smooth"
+#define INFIX_SUB                   "sub"
 #define INFIX_MEDFILTER             "medfilt"
 #define INFIX_FILTER                "filt"
 #define INFIX_DEDISPERSE            "dm"

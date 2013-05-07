@@ -1,9 +1,9 @@
 /*
- * @file yapp_medfilter.c
+ * @file yapp_basesub.c
  * Program to baseline-subtract dedispersed time series data.
  *
  * @verbatim
- * Usage: yapp_medfilter [options] <data-file>
+ * Usage: yapp_basesub [options] <data-file>
  *     -h  --help                           Display this usage information
  *     -s  --skip <time>                    The length of data in seconds, to be
  *                                          skipped
@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
     double dTSampInSec = 0.0;   /* holds sampling time in s */
     long lBytesToSkip = 0;
     long lBytesToProc = 0;
-    int iTimeSampsSkip = 0;
+    int iTimeSampsToSkip = 0;
     int iTimeSampsToProc = 0;
     int iBlockSize = 0;
     int iOutBlockSize = 0;
@@ -94,7 +94,7 @@ int main(int argc, char *argv[])
     const char *pcProgName = NULL;
     int iNextOpt = 0;
     /* valid short options */
-    const char* const pcOptsShort = "hs:w:t:giev";
+    const char* const pcOptsShort = "hs:p:w:giev";
     /* valid long options */
     const struct option stOptsLong[] = {
         { "help",                   0, NULL, 'h' },
@@ -225,20 +225,18 @@ int main(int argc, char *argv[])
     /* convert sampling interval to seconds */
     dTSampInSec = stYUM.dTSamp / 1e3;
 
+    /* calculate bytes to skip and read */
     if (0.0 == dDataProcTime)
     {
-        dDataProcTime = stYUM.iTimeSamps * dTSampInSec;
+        dDataProcTime = (stYUM.iTimeSamps * dTSampInSec) - dDataSkipTime;
     }
-
     /* check if the input time duration is less than the length of the
        data */
-    if (dDataProcTime > (stYUM.iTimeSamps * dTSampInSec))
+    else if (dDataProcTime > (stYUM.iTimeSamps * dTSampInSec))
     {
         (void) fprintf(stderr,
-                       "ERROR: Input time is longer than length of "
+                       "WARNING: Input time is longer than length of "
                        "data!\n");
-        YAPP_CleanUp();
-        return YAPP_RET_ERROR;
     }
 
     lBytesToSkip = (long) floor((dDataSkipTime / dTSampInSec)
@@ -268,10 +266,11 @@ int main(int argc, char *argv[])
 
     if (lBytesToSkip >= stYUM.lDataSizeTotal)
     {
-        (void) printf("WARNING: Data to be skipped is greater than or equal to "
-                      "the size of the file! Terminating.\n");
+        (void) fprintf(stderr,
+                       "ERROR: Data to be skipped is greater than or equal to "
+                       "the size of the file!\n");
         YAPP_CleanUp();
-        return YAPP_RET_SUCCESS;
+        return YAPP_RET_ERROR;
     }
 
     if ((lBytesToSkip + lBytesToProc) > stYUM.lDataSizeTotal)
@@ -284,19 +283,24 @@ int main(int argc, char *argv[])
                       lBytesToProc);
     }
 
-    iTimeSampsSkip = (int) (lBytesToSkip / (stYUM.fSampSize));
+    iTimeSampsToSkip = (int) (lBytesToSkip / (stYUM.fSampSize));
     (void) printf("Skipping\n"
                   "    %ld of %ld bytes\n"
                   "    %d of %d time samples\n"
                   "    %.10g of %.10g seconds\n",
                   lBytesToSkip,
                   stYUM.lDataSizeTotal,
-                  iTimeSampsSkip,
+                  iTimeSampsToSkip,
                   stYUM.iTimeSamps,
-                  (iTimeSampsSkip * dTSampInSec),
+                  (iTimeSampsToSkip * dTSampInSec),
                   (stYUM.iTimeSamps * dTSampInSec));
 
     iTimeSampsToProc = (int) (lBytesToProc / (stYUM.fSampSize));
+    /* change block size according to the number of samples to be processed */
+    if (iTimeSampsToProc < iBlockSize)
+    {
+        iBlockSize = (int) ceil(dDataProcTime / dTSampInSec);
+    }
     /* calculate the actual number of samples that will be processed in one
        iteration */
     iOutBlockSize = iBlockSize - (iSampsPerWin - 1);
@@ -344,7 +348,7 @@ int main(int argc, char *argv[])
     if (NULL == g_pfBuf)
     {
         (void) fprintf(stderr,
-                       "ERROR: Memory allocation for buffer failed! %s!\n",
+                       "ERROR: Memory allocation failed! %s!\n",
                        strerror(errno));
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
@@ -355,10 +359,10 @@ int main(int argc, char *argv[])
         cIsLastBlock = YAPP_TRUE;
     }
 
-    /* open the time series data file for reading */
+    /* open the time series data file for writing */
     pcFileOut = YAPP_GetFilenameFromPath(pcFileData, EXT_TIM);
     (void) sprintf(acFileOut,
-                   "%s.%s%gs%s",
+                   "%s.%s%g%s",
                    pcFileOut,
                    INFIX_MEDFILTER,
                    fWidth,
