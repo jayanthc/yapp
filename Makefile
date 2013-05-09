@@ -88,7 +88,11 @@ all: yapp_makever \
 	 yapp_dat2tim.o \
 	 yapp_dat2tim \
 	 yapp_tim2dat.o \
-	 yapp_tim2dat
+	 yapp_tim2dat \
+	 yapp_subtract.o \
+	 yapp_subtract \
+	 yapp_siftpulses.o \
+	 yapp_siftpulses
 
 yapp_makever: $(SRCDIR)/yapp_makever.c
 	$(CC) $(CFLAGS_L) $< -o $(IDIR)/$@
@@ -170,6 +174,13 @@ yapp_add: $(IDIR)/yapp_add.o $(IDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
 	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) $(LFLAGS_CFITSIO) -o $(BINDIR)/$@
 
+yapp_subtract.o: $(SRCDIR)/yapp_subtract.c $(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h
+	$(CC) $(CFLAGS_C) $(DDEBUG) $< -o $(IDIR)/$@
+
+yapp_subtract: $(IDIR)/yapp_subtract.o $(IDIR)/yapp_version.o \
+	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
+	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) $(LFLAGS_CFITSIO) -o $(BINDIR)/$@
+
 yapp_fits2fil.o: $(UTILDIR)/yapp_fits2fil.c $(UTILDIR)/yapp_fits2fil.h \
 	$(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h $(SRCDIR)/yapp_psrfits.h
 	$(CC) $(CFLAGS_C) -I$(SRCDIR) $(DDEBUG) $< -o $(UTILDIR)/$@
@@ -193,6 +204,13 @@ yapp_tim2dat.o: $(UTILDIR)/yapp_tim2dat.c $(UTILDIR)/yapp_tim2dat.h \
 yapp_tim2dat: $(UTILDIR)/yapp_tim2dat.o $(SRCDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
 	$(CC) $^ $(LFLAGS_MATH) $(LFLAGS_CFITSIO) -o $(BINDIR)/$@
+
+yapp_siftpulses.o: $(SRCDIR)/yapp_siftpulses.c $(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h
+	$(CC) $(CFLAGS_C) $(DDEBUG) $< -o $(IDIR)/$@
+
+yapp_siftpulses: $(IDIR)/yapp_siftpulses.o $(IDIR)/yapp_version.o \
+	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
+	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) $(LFLAGS_CFITSIO) -o $(BINDIR)/$@
 
 # install the man pages
 install:
@@ -220,4 +238,6 @@ clean:
 	$(DELCMD) $(UTILDIR)/yapp_fits2fil.o
 	$(DELCMD) $(UTILDIR)/yapp_dat2tim.o
 	$(DELCMD) $(UTILDIR)/yapp_tim2dat.o
+	$(DELCMD) $(IDIR)/yapp_subtract.o
+	$(DELCMD) $(IDIR)/yapp_siftpulses.o
 

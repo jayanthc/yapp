@@ -1,0 +1,83 @@
+.\#
+.\# Yet Another Pulsar Processor Commands
+.\# yapp_siftpulses Manual Page
+.\#
+.\# Created by Jayanth Chennamangalam on 2013.05.09
+.\#
+
+.TH YAPP_SIFTPULSES 1 "2013-05-09" "YAPP 3.3-beta" \
+"Yet Another Pulsar Processor"
+
+
+.SH NAME
+yapp_siftpulses \- searches for signal excursions beyond a specified threshold
+
+
+.SH SYNOPSIS
+.B yapp_siftpulses
+[options]
+.I data-file-dm0 ... data-file-dmN-1
+
+
+.SH DESCRIPTION
+Searches for signal excursions beyond a specified threshold, in a series of \
+time series data, dedispersed for a range of Dispersion Measures (DMs). The \
+time series files can be input in any order of DM. The data files should be \
+in the SIGPROC .tim format.
+
+
+.SH OPTIONS
+.TP
+.B \-h, --help
+Display a short help text.
+.TP
+.B \-n, --nsamp \fIsamples
+Number of time samples read in one block (default is 4096 samples).
+.TP
+.B \-g, --graphics
+Turn on plotting.
+.TP
+.B \-t, --threshold
+Threshold in sigmas.
+.TP
+.B \-i, --invert
+Invert background and foreground colours in plots.
+.TP
+.B \-e, --non-interactive
+Run in non-interactive mode.
+.TP
+.B \-v, --version
+Display the version.
+
+
+.TP
+The data file name may be a composed of standard shell wildcards such as * or \
+?.
+
+
+.SH EXAMPLE
+.TP
+Sifts the time series in data.dm0.tim, data.dm1.tim, ..., data.dm100.tim for \
+pulses above a 6-sigma threshold, assuming that there are no other files in \
+the current directory that  match the wildcard expansion of 'data.dm*.tim'.
+.TP
+yapp_siftpulses data.dm*.tim
+
+
+.SH SEE ALSO
+.BR yapp_dat2tim (1),
+.BR yapp_tim2dat (1),
+.BR yapp_viewmetadata (1),
+.BR yapp_viewdata (1),
+.BR yapp_dedisperse (1),
+.BR yapp_smooth (1),
+.BR yapp_filter (1),
+.BR yapp_add (1),
+.BR yapp_fold (1),
+.BR yapp_subtract (1)
+
+
+.SH AUTHOR
+.TP 
+Written by Jayanth Chennamangalam. http://jayanthc.github.com/yapp/
+
