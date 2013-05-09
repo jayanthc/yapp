@@ -1,4 +1,4 @@
-Yet Another Pulsar Processor (YAPP) 3.2-beta
+Yet Another Pulsar Processor (YAPP) 3.3-beta
 -------------------------------------------------------------------------------
 README
 
@@ -21,6 +21,9 @@ The YAPP tools available with this release are:
                           multiple frequency bands
     yapp_fold           : Folds filterbank and dedispersed time series data and
                           plots folded profile to PGPLOT device.
+    yapp_subtract       : Subtracts two dedispersed time series files.
+    yapp_siftpulses     : Sifts multiple dedispersed time series files for
+                          bright pulses.
 
 YAPP also comes with the following utilities:
 
@@ -29,7 +32,7 @@ YAPP also comes with the following utilities:
     yapp_tim2dat        : Converts SIGPROC '.tim' to PRESTO '.dat'
 
 The supported file formats are are DAS '.spec', SIGPROC '.fil', and SIGPROC
-'.tim', with partial support for PSRFITS and PRESTO '.dat'.
+'.tim', with limited support for PSRFITS and PRESTO '.dat'.
 
 For detailed usage instructions, refer the man pages and/or online
 documentation.

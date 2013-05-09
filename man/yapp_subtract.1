@@ -1,0 +1,73 @@
+.\#
+.\# Yet Another Pulsar Processor Commands
+.\# yapp_subtract Manual Page
+.\#
+.\# Created by Jayanth Chennamangalam on 2013.05.09
+.\#
+
+.TH YAPP_SUBTRACT 1 "2013-05-09" "YAPP 3.3-beta" \
+"Yet Another Pulsar Processor"
+
+
+.SH NAME
+yapp_subtract \- subtract two dedispersed time series files
+
+
+.SH SYNOPSIS
+.B yapp_subtract
+[options]
+.I data-file-A data-file-B
+
+
+.SH DESCRIPTION
+Subtracts one time series data from another. This is useful in subtracting a \
+smoothed version of a time series from itself (baseline subtraction). The \
+data files should be in the SIGPROC .tim format.
+
+
+.SH OPTIONS
+.TP
+.B \-h, --help
+Display a short help text.
+.TP
+.B \-n, --nsamp \fIsamples
+Number of time samples read in one block (default is 4096 samples).
+.TP
+.B \-g, --graphics
+Turn on plotting.
+.TP
+.B \-i, --invert
+Invert background and foreground colours in plots.
+.TP
+.B \-e, --non-interactive
+Run in non-interactive mode.
+.TP
+.B \-v, --version
+Display the version.
+
+
+.SH EXAMPLE
+.TP
+Subtracts the time series in data.smooth1000.tim from data.tim with graphics \
+not turned on. The output is written to data.sub.tim.
+.TP
+yapp_subtract data.tim data.smooth1000.tim
+
+
+.SH SEE ALSO
+.BR yapp_dat2tim (1),
+.BR yapp_tim2dat (1),
+.BR yapp_viewmetadata (1),
+.BR yapp_viewdata (1),
+.BR yapp_dedisperse (1),
+.BR yapp_smooth (1),
+.BR yapp_filter (1),
+.BR yapp_add (1),
+.BR yapp_fold (1),
+.BR yapp_siftpulses(1)
+
+
+.SH AUTHOR
+.TP 
+Written by Jayanth Chennamangalam. http://jayanthc.github.com/yapp/
+

@@ -166,8 +166,8 @@ PrintUsage	src/yapp_dedisplaw.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	src/yapp_filter.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	src/yapp_fold.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	src/yapp_ft.c	/^void PrintUsage(const char *pcProgName)$/;"	f
-PrintUsage	src/yapp_genspplot.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	src/yapp_pulsarsnd.c	/^void PrintUsage(const char *pcProgName)$/;"	f
+PrintUsage	src/yapp_siftpulses.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	src/yapp_smooth.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	src/yapp_subtract.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	src/yapp_viewdata.c	/^void PrintUsage(const char *pcProgName)$/;"	f
@@ -175,7 +175,6 @@ PrintUsage	src/yapp_viewmetadata.c	/^void PrintUsage(const char *pcProgName)$/;"
 PrintUsage	utilities/yapp_dat2tim.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	utilities/yapp_fits2fil.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	utilities/yapp_tim2dat.c	/^void PrintUsage(const char *pcProgName)$/;"	f
-Pulse_t	src/yapp_genspplot.c	/^} Pulse_t;$/;"	t	typeref:struct:tagPulse	file:
 RET_ERROR	src/yapp_makever.c	20;"	d	file:
 RET_SUCCESS	src/yapp_makever.c	19;"	d	file:
 ReadData	src/yapp_ft.c	/^int ReadData(char cIsFirst, int iNTaps, int iNFFT)$/;"	f
@@ -365,7 +364,6 @@ dSourceDec	src/yapp.h	/^    double dSourceDec;$/;"	m	struct:YUM_s
 dSourceDec	src/yapp_sigproc.h	/^    double dSourceDec;$/;"	m	struct:tagSIGPROCHeader
 dSourceRA	src/yapp.h	/^    double dSourceRA;$/;"	m	struct:YUM_s
 dSourceRA	src/yapp_sigproc.h	/^    double dSourceRA;$/;"	m	struct:tagSIGPROCHeader
-dT	src/yapp_genspplot.c	/^    double dT;$/;"	m	struct:tagPulse	file:
 dTBFInt	src/yapp.h	/^    double dTBFInt;         \/* in s *\/$/;"	m	struct:YUM_s
 dTNextBF	src/yapp.h	/^    double dTNextBF;        \/* in s *\/$/;"	m	struct:YUM_s
 dTSamp	src/yapp.h	/^    double dTSamp;          \/* in ms *\/$/;"	m	struct:YUM_s
@@ -376,11 +374,9 @@ dZAStart	src/yapp.h	/^    double dZAStart;$/;"	m	struct:YUM_s
 dZAStart	src/yapp_sigproc.h	/^    double dZAStart;$/;"	m	struct:tagSIGPROCHeader
 fBW	src/yapp.h	/^    float fBW;              \/* in MHz *\/$/;"	m	struct:YUM_s
 fChanBW	src/yapp.h	/^    float fChanBW;          \/* in MHz *\/$/;"	m	struct:YUM_s
-fDM	src/yapp_genspplot.c	/^    float fDM;$/;"	m	struct:tagPulse	file:
 fFCentre	src/yapp.h	/^    float fFCentre;         \/* in MHz *\/$/;"	m	struct:YUM_s
 fFMax	src/yapp.h	/^    float fFMax;        \/* in MHz *\/$/;"	m	struct:YUM_s
 fFMin	src/yapp.h	/^    float fFMin;        \/* in MHz *\/$/;"	m	struct:YUM_s
-fSNR	src/yapp_genspplot.c	/^    float fSNR;$/;"	m	struct:tagPulse	file:
 fSampSize	src/yapp.h	/^    float fSampSize;$/;"	m	struct:YUM_s
 g_aaafCMap	src/colourmap.c	/^const float g_aaafCMap[NUM_CMAPS][CMAP_LEVELS][3] = {$/;"	v
 g_aacSP_ObsNames	src/yapp_common.c	/^const char g_aacSP_ObsNames[YAPP_SP_NUMOBS][LEN_GENSTRING] = {$/;"	v
@@ -402,7 +398,6 @@ g_pFDataB	src/yapp_subtract.c	/^FILE *g_pFDataB;$/;"	v
 g_pFDataSec	utilities/yapp_fits2fil.c	/^FILE *g_pFDataSec = NULL;$/;"	v
 g_padBadTimes	src/yapp_dedisperse.c	/^double (*g_padBadTimes)[][NUM_BAD_BOUNDS] = NULL;$/;"	v
 g_padBadTimes	src/yapp_dedisplaw.c	/^double (*g_padBadTimes)[][NUM_BAD_BOUNDS] = NULL;$/;"	v
-g_pastPulses	src/yapp_genspplot.c	/^Pulse_t *g_pastPulses = NULL;$/;"	v
 g_pcFilter	src/yapp_filter.c	/^char *g_pcFilter = NULL;$/;"	v
 g_pcIsChanGood	src/yapp_dedisplaw.c	/^char *g_pcIsChanGood = NULL;$/;"	v
 g_pcIsTimeGood	src/yapp_dedisperse.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
@@ -433,7 +428,7 @@ g_pfDedispData	src/yapp_dedisperse.c	/^float *g_pfDedispData = NULL;$/;"	v
 g_pfDedispData	src/yapp_dedisplaw.c	/^float *g_pfDedispData = NULL;$/;"	v
 g_pfOutBuf	src/yapp_add.c	/^float *g_pfOutBuf = NULL;$/;"	v
 g_pfOutBuf	src/yapp_basesub.c	/^float *g_pfOutBuf = NULL;$/;"	v
-g_pfOutBuf	src/yapp_genspplot.c	/^float *g_pfOutBuf = NULL;$/;"	v
+g_pfOutBuf	src/yapp_siftpulses.c	/^float *g_pfOutBuf = NULL;$/;"	v
 g_pfOutBuf	src/yapp_smooth.c	/^float *g_pfOutBuf = NULL;$/;"	v
 g_pfOutBuf	src/yapp_subtract.c	/^float *g_pfOutBuf = NULL;$/;"	v
 g_pfPFBCoeff	src/yapp_ft.c	/^float* g_pfPFBCoeff = NULL;$/;"	v
@@ -455,7 +450,7 @@ g_pfXAxis	src/yapp_dedisperse.c	/^float *g_pfXAxis = NULL;$/;"	v
 g_pfXAxis	src/yapp_dedisplaw.c	/^float *g_pfXAxis = NULL;$/;"	v
 g_pfXAxis	src/yapp_filter.c	/^float *g_pfXAxis = NULL;$/;"	v
 g_pfXAxis	src/yapp_ft.c	/^float *g_pfXAxis = NULL;$/;"	v
-g_pfXAxis	src/yapp_genspplot.c	/^float *g_pfXAxis = NULL;$/;"	v
+g_pfXAxis	src/yapp_siftpulses.c	/^float *g_pfXAxis = NULL;$/;"	v
 g_pfXAxis	src/yapp_smooth.c	/^float *g_pfXAxis = NULL;$/;"	v
 g_pfXAxis	src/yapp_subtract.c	/^float *g_pfXAxis = NULL;$/;"	v
 g_pfXAxis	src/yapp_viewdata.c	/^float *g_pfXAxis = NULL;$/;"	v
@@ -472,7 +467,7 @@ g_piOffsetTab	src/yapp_dedisperse.c	/^int *g_piOffsetTab = NULL;$/;"	v
 g_ppFDedispCfg	src/yapp_dedisplaw.c	/^FILE **g_ppFDedispCfg = NULL;$/;"	v
 g_ppFDedispData	src/yapp_dedisplaw.c	/^FILE **g_ppFDedispData = NULL;$/;"	v
 g_ppfBuf	src/yapp_add.c	/^float **g_ppfBuf = NULL;$/;"	v
-g_ppfBuf	src/yapp_genspplot.c	/^float **g_ppfBuf = NULL;$/;"	v
+g_ppfBuf	src/yapp_siftpulses.c	/^float **g_ppfBuf = NULL;$/;"	v
 g_pvBuf	utilities/yapp_fits2fil.c	/^void *g_pvBuf = NULL;$/;"	v
 g_pvPolSum	utilities/yapp_fits2fil.c	/^void *g_pvPolSum = NULL;$/;"	v
 g_pvPolX	utilities/yapp_fits2fil.c	/^void *g_pvPolX = NULL;$/;"	v
@@ -510,9 +505,9 @@ main	src/yapp_dedisplaw.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/yapp_filter.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/yapp_fold.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/yapp_ft.c	/^int main(int argc, char *argv[])$/;"	f
-main	src/yapp_genspplot.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/yapp_makever.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/yapp_pulsarsnd.c	/^int main(int argc, char *argv[])$/;"	f
+main	src/yapp_siftpulses.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/yapp_smooth.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/yapp_subtract.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/yapp_viewdata.c	/^int main(int argc, char *argv[])$/;"	f
@@ -531,5 +526,4 @@ pfcDataY	src/yapp_ft.h	/^    fftwf_complex *pfcDataY;    \/* unpacked pol-Y data
 tagFileFormats	src/yapp.h	/^enum tagFileFormats$/;"	g
 tagObservatory	src/yapp_sigproc.h	/^enum tagObservatory$/;"	g
 tagPFBData	src/yapp_ft.h	/^typedef struct tagPFBData$/;"	s
-tagPulse	src/yapp_genspplot.c	/^typedef struct tagPulse$/;"	s	file:
 tagSIGPROCHeader	src/yapp_sigproc.h	/^typedef struct tagSIGPROCHeader$/;"	s

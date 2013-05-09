@@ -92,8 +92,8 @@ all: yapp_makever \
 	 yapp_tim2dat \
 	 yapp_subtract.o \
 	 yapp_subtract \
-	 yapp_genspplot.o \
-	 yapp_genspplot \
+	 yapp_siftpulses.o \
+	 yapp_siftpulses \
 	 tags
 #	 yapp_dedisplaw.o \
 	 set_colours.o \
@@ -214,10 +214,10 @@ yapp_tim2dat: $(UTILDIR)/yapp_tim2dat.o $(SRCDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
 	$(CC) $^ $(LFLAGS_MATH) $(LFLAGS_CFITSIO) -o $(BINDIR)/$@
 
-yapp_genspplot.o: $(SRCDIR)/yapp_genspplot.c $(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h
+yapp_siftpulses.o: $(SRCDIR)/yapp_siftpulses.c $(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h
 	$(CC) $(CFLAGS_C) $(DDEBUG) $< -o $(IDIR)/$@
 
-yapp_genspplot: $(IDIR)/yapp_genspplot.o $(IDIR)/yapp_version.o \
+yapp_siftpulses: $(IDIR)/yapp_siftpulses.o $(IDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
 	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) $(LFLAGS_CFITSIO) -o $(BINDIR)/$@
 
@@ -290,7 +290,7 @@ clean:
 	$(DELCMD) $(UTILDIR)/yapp_dat2tim.o
 	$(DELCMD) $(UTILDIR)/yapp_tim2dat.o
 	$(DELCMD) $(IDIR)/yapp_subtract.o
-	$(DELCMD) $(IDIR)/yapp_genspplot.o
+	$(DELCMD) $(IDIR)/yapp_siftpulses.o
 #	$(DELCMD) $(IDIR)/set_colours.o
 #	$(DELCMD) $(IDIR)/yapp_dedisplaw.o
 #	$(DELCMD) $(IDIR)/reorderdds.o
