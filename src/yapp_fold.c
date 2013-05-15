@@ -442,21 +442,24 @@ int main(int argc, char *argv[])
         (void) printf("Expected noise RMS                : %g\n", fNoiseRMS);
     }
 
-    /* allocate memory for the time sample goodness flag array */
-    g_pcIsTimeGood = (char *) YAPP_Malloc(iTimeSampsToProc,
-                                          sizeof(char),
-                                          YAPP_FALSE);
-    if (NULL == g_pcIsTimeGood)
+    if (YAPP_FORMAT_SPEC == iFormat)
     {
-        (void) fprintf(stderr,
-                       "ERROR: Memory allocation for time sample goodness "
-                       "flag array failed! %s!\n",
-                       strerror(errno));
-        YAPP_CleanUp();
-        return YAPP_RET_ERROR;
+        /* allocate memory for the time sample goodness flag array */
+        g_pcIsTimeGood = (char *) YAPP_Malloc(iTimeSampsToProc,
+                                              sizeof(char),
+                                              YAPP_FALSE);
+        if (NULL == g_pcIsTimeGood)
+        {
+            (void) fprintf(stderr,
+                           "ERROR: Memory allocation for time sample goodness "
+                           "flag array failed! %s!\n",
+                           strerror(errno));
+            YAPP_CleanUp();
+            return YAPP_RET_ERROR;
+        }
+        /* set all elements to 'YAPP_TRUE' */
+        (void) memset(g_pcIsTimeGood, YAPP_TRUE, iTimeSampsToProc);
     }
-    /* set all elements to 'YAPP_TRUE' */
-    (void) memset(g_pcIsTimeGood, YAPP_TRUE, iTimeSampsToProc);
 
     /* open the data file for reading */
     g_pFData = fopen(pcFileData, "r");
