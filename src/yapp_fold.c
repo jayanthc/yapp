@@ -18,6 +18,7 @@
  *                                          profile
  *     -m  --colour-map <name>              Colour map for plotting
  *                                          (default is 'jet')
+ *     -f  --file                           Plot to file, instead of to screen
  *     -i  --invert                         Invert the background and foreground
  *                                          colours in plots
  *     -e  --non-interactive                Run in non-interactive mode
@@ -56,6 +57,7 @@ float *g_pfYAxis = NULL;
 int main(int argc, char *argv[])
 {
     char *pcFileData = NULL;
+    FILE *pFProfile = NULL;
     int iFormat = DEF_FORMAT;
     double dDataSkipTime = 0.0;
     double dDataProcTime = 0.0;
@@ -111,12 +113,16 @@ int main(int argc, char *argv[])
     int m = 0;
     char acLabel[LEN_GENSTRING] = {0};
     int iColourMap = DEF_CMAP;
+    char cPlotToFile = YAPP_FALSE;
+    char *pcFilename = NULL;
+    char acDev[LEN_GENSTRING] = {0};
+    char acFileProf[LEN_GENSTRING] = {0};
     int iInvCols = YAPP_FALSE;
     char cIsNonInteractive = YAPP_FALSE;
     const char *pcProgName = NULL;
     int iNextOpt = 0;
     /* valid short options */
-    const char* const pcOptsShort = "hs:p:t:w:m:iev";
+    const char* const pcOptsShort = "hs:p:t:w:m:fiev";
     /* valid long options */
     const struct option stOptsLong[] = {
         { "help",                   0, NULL, 'h' },
@@ -125,6 +131,7 @@ int main(int argc, char *argv[])
         { "period",                 1, NULL, 't' },
         { "waterfall",              1, NULL, 'w' },
         { "colour-map",             1, NULL, 'm' },
+        { "file",                   0, NULL, 'f' },
         { "invert",                 0, NULL, 'i' },
         { "non-interactive",        0, NULL, 'e' },
         { "version",                0, NULL, 'v' },
@@ -177,6 +184,11 @@ int main(int argc, char *argv[])
             case 'm':   /* -m or --colour-map */
                 /* set option */
                 iColourMap = GetColourMapFromName(optarg);
+                break;
+
+            case 'f':   /* -f or --file */
+                /* set option */
+                cPlotToFile = YAPP_TRUE;
                 break;
 
             case 'i':  /* -i or --invert */
@@ -246,7 +258,8 @@ int main(int argc, char *argv[])
     }
     if (!((YAPP_FORMAT_FIL == iFormat)
           || (YAPP_FORMAT_SPEC == iFormat)
-          || (YAPP_FORMAT_DTS_TIM == iFormat)))
+          || (YAPP_FORMAT_DTS_TIM == iFormat)
+          || (YAPP_FORMAT_DTS_DAT == iFormat)))
     {
         (void) fprintf(stderr,
                        "ERROR: Invalid file type!\n");
@@ -258,7 +271,7 @@ int main(int argc, char *argv[])
     {
         (void) fprintf(stderr,
                        "ERROR: "
-                       "Waterfall plots can be shown only for .tim files!\n");
+                       "Unsupported file type for waterfall plots!\n");
         PrintUsage(pcProgName);
         return YAPP_RET_ERROR;
     }
@@ -275,8 +288,7 @@ int main(int argc, char *argv[])
     /* kludge: the rest of the code expects stYUM.iNumChans = 1 for time series
        data, so make it 1 */
     if ((YAPP_FORMAT_DTS_TIM == iFormat)
-        || (YAPP_FORMAT_DTS_DAT == iFormat)
-        || (YAPP_FORMAT_DTS_DDS == iFormat))
+        || (YAPP_FORMAT_DTS_DAT == iFormat))
     {
         stYUM.iNumChans = 1;
     }
@@ -434,7 +446,7 @@ int main(int argc, char *argv[])
         return YAPP_RET_ERROR;
     }
     if (!((YAPP_FORMAT_DTS_TIM == iFormat)
-          || (YAPP_FORMAT_DTS_DDS != iFormat)))
+          || (YAPP_FORMAT_DTS_DAT == iFormat)))
     {
         fStatBW = stYUM.iNumGoodChans * stYUM.fChanBW;  /* in MHz */
         (void) printf("Usable bandwidth                  : %g MHz\n", fStatBW);
@@ -507,7 +519,21 @@ int main(int argc, char *argv[])
     }
 
     /* open the PGPLOT graphics device */
-    g_iPGDev = cpgopen(PG_DEV);
+    if (cPlotToFile)
+    {
+        /* build the name of the PGPLOT device */
+        pcFilename = YAPP_GetFilenameFromPath(pcFileData);
+        (void) strcpy(acDev, pcFilename);
+        (void) strcat(acDev, ".");
+        (void) strcat(acDev, INFIX_FOLD);
+        (void) strcat(acDev, EXT_PS);
+        (void) strcat(acDev, PG_DEV_PS);
+        g_iPGDev = cpgopen(acDev);
+    }
+    else
+    {
+        g_iPGDev = cpgopen(PG_DEV);
+    }
     if (g_iPGDev <= 0)
     {
         (void) fprintf(stderr,
@@ -563,7 +589,8 @@ int main(int argc, char *argv[])
     }
     dPhaseStep = g_pdPhase[1];
 
-    if (YAPP_FORMAT_DTS_TIM == iFormat)
+    if ((YAPP_FORMAT_DTS_TIM == iFormat)
+        || (YAPP_FORMAT_DTS_DAT == iFormat))    /* time series format */
     {
         /* allocate memory for the accumulation buffer */
         if (0 == iNumPulses)
@@ -600,7 +627,7 @@ int main(int argc, char *argv[])
             }
         }
     }
-    else
+    else    /* filterbank format */
     {
         g_pfProfBuf = (float *) YAPP_Malloc((size_t) stYUM.iNumChans * iSampsPerPeriod,
                                             sizeof(float),
@@ -653,6 +680,23 @@ int main(int argc, char *argv[])
         }
     }
 
+    /* build the name of the output profile file */
+    (void) strcpy(acFileProf, pcFilename);
+    (void) strcat(acFileProf, EXT_YAPP_PROFILE);
+
+    /* open the output profile file */
+    pFProfile = fopen(acFileProf, "w");
+    if (NULL == pFProfile)
+    {
+        fprintf(stderr,
+                "ERROR: Opening file %s failed! %s.\n",
+                acFileProf,
+                strerror(errno));
+        cpgclos();
+        YAPP_CleanUp();
+        return YAPP_RET_ERROR;
+    }
+
     while (iNumReads > 0)
     {
         /* read data */
@@ -665,6 +709,8 @@ int main(int argc, char *argv[])
         if (YAPP_RET_ERROR == iReadItems)
         {
             (void) fprintf(stderr, "ERROR: Reading data failed!\n");
+            (void) fclose(pFProfile);
+            cpgclos();
             YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
@@ -719,6 +765,8 @@ int main(int argc, char *argv[])
                         (void) fprintf(stderr,
                                        "ERROR: Beam flip time section anomaly "
                                        "detected!\n");
+                        (void) fclose(pFProfile);
+                        cpgclos();
                         YAPP_CleanUp();
                         return YAPP_RET_ERROR;
                     }
@@ -744,7 +792,8 @@ int main(int argc, char *argv[])
             }
         }
 
-        if (YAPP_FORMAT_DTS_TIM == iFormat)
+        if ((YAPP_FORMAT_DTS_TIM == iFormat)
+            || (YAPP_FORMAT_DTS_DAT == iFormat))    /* time series format */
         {
             fMeanNoise = YAPP_CalcMean(g_pfBuf, iNumSamps);
             fRMSNoise = YAPP_CalcRMS(g_pfBuf, iNumSamps, fMeanNoise);
@@ -779,7 +828,7 @@ int main(int argc, char *argv[])
                 }
             }
         }
-        else
+        else    /* filterbank format */
         {
             fMeanNoise = YAPP_CalcMean(g_pfBuf, iNumSamps * stYUM.iNumChans);
             fRMSNoise = YAPP_CalcRMS(g_pfBuf,
@@ -805,7 +854,8 @@ int main(int argc, char *argv[])
             }
         }
 
-        if (YAPP_FORMAT_DTS_TIM == iFormat)
+        if ((YAPP_FORMAT_DTS_TIM == iFormat)
+            || (YAPP_FORMAT_DTS_DAT == iFormat))    /* time series format */
         {
             if (0 == iNumPulses)
             {
@@ -885,7 +935,7 @@ int main(int argc, char *argv[])
                        iColourMap);
             }
         }
-        else
+        else    /* filterbank format */
         {
             fDataMinOld = fDataMin;
             fDataMaxOld = fDataMax;
@@ -945,9 +995,12 @@ int main(int argc, char *argv[])
                    iColourMap);
         }
 
-        /* display the plot number */
-        (void) sprintf(acLabel, "%d / %d", iReadBlockCount, iTotNumReads);
-        cpgmtxt("T", -1.5, 0.99, 1.0, acLabel);
+        if (!cPlotToFile)
+        {
+            /* display the plot number */
+            (void) sprintf(acLabel, "%d / %d", iReadBlockCount, iTotNumReads);
+            cpgmtxt("T", -1.5, 0.99, 1.0, acLabel);
+        }
 
         if (!(cIsLastBlock))
         {
@@ -1013,6 +1066,7 @@ int main(int argc, char *argv[])
                         cpgsci(PG_CI_DEF);  /* reset colour index to black */
                         (void) usleep(PG_BUT_CL_SLEEP);
 
+                        (void) fclose(pFProfile);
                         cpgclos();
                         YAPP_CleanUp();
                         return YAPP_RET_SUCCESS;
@@ -1033,8 +1087,24 @@ int main(int argc, char *argv[])
         cIsFirst = YAPP_FALSE;
     }
 
+    /* write profile to file */
+    /* NOTE: no support for filterbank format data */
+    if ((YAPP_FORMAT_DTS_TIM == iFormat)
+        || (YAPP_FORMAT_DTS_DAT == iFormat))    /* time series format */
+    {
+        /* NOTE: no support for waterfall data */
+        if (0 == iNumPulses)
+        {
+            for (i = 0; i < iSampsPerPeriod; ++i)
+            {
+                fprintf(pFProfile, "%.10g\n", g_pfProfBuf[i]);
+            }
+        }
+    }
+
     (void) printf("DONE!\n");
 
+    (void) fclose(pFProfile);
     cpgclos();
     YAPP_CleanUp();
 
@@ -1074,6 +1144,8 @@ void PrintUsage(const char *pcProgName)
     (void) printf("Colour map for plotting\n");
     (void) printf("                                         ");
     (void) printf("(default is 'jet')\n");
+    (void) printf("    -f  --file                           ");
+    (void) printf("Plot to file, instead of to screen\n");
     (void) printf("    -i  --invert                         ");
     (void) printf("Invert background and foreground\n");
     (void) printf("                                         ");

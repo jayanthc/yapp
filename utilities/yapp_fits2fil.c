@@ -177,7 +177,7 @@ int main(int argc, char *argv[])
             }
 
             /* build output file name */
-            pcFileOut = YAPP_GetFilenameFromPath(pcFileSpec, EXT_PSRFITS);
+            pcFileOut = YAPP_GetFilenameFromPath(pcFileSpec);
             (void) strcpy(acFileOut, pcFileOut);
             if ((YAPP_MAX_NPOL == stYUM.iNumPol)
                 && (!cToSum))

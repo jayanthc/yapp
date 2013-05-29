@@ -119,7 +119,7 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    pcFilename = YAPP_GetFilenameFromPath(pcFileData, EXT_TIM);
+    pcFilename = YAPP_GetFilenameFromPath(pcFileData);
     (void) strcpy(acFileDat, pcFilename);
     (void) strcat(acFileDat, EXT_DAT);
     iRet = YAPP_WriteMetadata(acFileDat, YAPP_FORMAT_DTS_DAT, stYUM);

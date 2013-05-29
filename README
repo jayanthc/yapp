@@ -19,8 +19,7 @@ The YAPP tools available with this release are:
                           frequency-domain filter.
     yapp_add            : Coherently add dedispersed time series data from
                           multiple frequency bands
-    yapp_fold           : Folds filterbank and dedispersed time series data and
-                          plots folded profile to PGPLOT device.
+    yapp_fold           : Folds filterbank and dedispersed time series data.
     yapp_subtract       : Subtracts two dedispersed time series files.
     yapp_siftpulses     : Sifts multiple dedispersed time series files for
                           bright pulses.
@@ -32,7 +31,7 @@ YAPP also comes with the following utilities:
     yapp_tim2dat        : Converts SIGPROC '.tim' to PRESTO '.dat'
 
 The supported file formats are are DAS '.spec', SIGPROC '.fil', and SIGPROC
-'.tim', with limited support for PSRFITS and PRESTO '.dat'.
+'.tim', with limited support for DAS '.dds', PSRFITS, and PRESTO '.dat'.
 
 For detailed usage instructions, refer the man pages and/or online
 documentation.

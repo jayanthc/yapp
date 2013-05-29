@@ -91,7 +91,7 @@ int YAPP_GetFileType(char *pcFile)
 /*
  * Extracts the filename from a given path, minus the extension
  */
-char* YAPP_GetFilenameFromPath(char *pcPath, char *pcExt)
+char* YAPP_GetFilenameFromPath(char *pcPath)
 {
     char *pcPos = NULL;
     char *pcPosPrev = NULL;
@@ -114,6 +114,9 @@ char* YAPP_GetFilenameFromPath(char *pcPath, char *pcExt)
     {
         pcPos = pcPath;
     }
+
+    /* find the extension */
+    char *pcExt = strrchr(pcPos, '.');
 
     /* allocate memory for the filename */
     pcFilename = (char *) YAPP_Malloc((strlen(pcPos) - strlen(pcExt) + 1),
@@ -1972,7 +1975,7 @@ int YAPP_WriteMetadata(char *pcFileData, int iFormat, YUM_t stYUM)
         char acFileInf[LEN_GENSTRING] = {0};
         char acTemp[LEN_GENSTRING] = {0};
 
-        pcFilename = YAPP_GetFilenameFromPath(pcFileData, EXT_TIM);
+        pcFilename = YAPP_GetFilenameFromPath(pcFileData);
 
         (void) strcpy(acFileInf, pcFilename);
         (void) strcat(acFileInf, EXT_INF);

@@ -72,6 +72,7 @@
 #define EXT_TIM                     ".tim"
 #define EXT_DAT                     ".dat"
 #define EXT_INF                     ".inf"
+#define EXT_YAPP_PROFILE            ".ypr"
 
 enum tagFileFormats
 {
@@ -101,6 +102,7 @@ enum tagFileFormats
 #define INFIX_FILTER                "filt"
 #define INFIX_DEDISPERSE            "dm"
 #define INFIX_ADD                   "sum"
+#define INFIX_FOLD                  "fold"
 
 #define SUFFIX_CFG                  "_cfg"
 
@@ -421,9 +423,8 @@ int YAPP_GetFileType(char *pcFile);
  * responsible for freeing the returned memory.
  *
  * @param[in]   pcPath      Path to the file
- * @param[in]   pcExt       Extension that is to be stripped
  */
-char* YAPP_GetFilenameFromPath(char *pcPath, char *pcExt);
+char* YAPP_GetFilenameFromPath(char *pcPath);
 
 /**
  * Extracts the filename from the given path, with the extension. Caller is
