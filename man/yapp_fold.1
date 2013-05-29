@@ -30,8 +30,11 @@ supported:
 a .fhd configuration file is present in the same directory)
 .br
 3. SIGPROC .tim time series format
+.br
+4. PRESTO .dat time series format
 .P
-This program does not create any output file.
+This program creates an ASCII output file (with extension .ypr) of the folded \
+profile for time series input, and no output file for filterbank input.
 
 
 .SH OPTIONS
@@ -51,6 +54,9 @@ Folding period in milliseconds.
 .B \-w, --waterfall \fInumpulses
 Show a waterfall plot (pulse number versus phase) instead of a folded profile.
 .TP
+.B \-f, --file
+Plot to file, instead of to screen.
+.TP
 .B \-i, --invert
 Invert background and foreground colours in plots.
 .TP
@@ -67,9 +73,11 @@ The flag \-t (or --period) is a required argument.
 
 .SH EXAMPLE
 .TP
-Folds the data in data.tim with a period of 89.3 ms, in interactive mode.
+Folds the data in data.tim with a period of 89.3 ms, in non-interactive mode, \
+with the folded profile plot written to 'data.fold.ps', and the folded \
+profile data written to the ASCII file 'data.ypr'.
 .TP
-yapp_fold -t 89.3 data.tim
+yapp_fold -t 89.3 -e -f data.tim
 
 
 .SH SEE ALSO

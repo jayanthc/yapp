@@ -18,6 +18,7 @@
  *                                          profile
  *     -m  --colour-map <name>              Colour map for plotting
  *                                          (default is 'jet')
+ *     -f  --file                           Plot to file, instead of to screen
  *     -i  --invert                         Invert the background and foreground
  *                                          colours in plots
  *     -e  --non-interactive                Run in non-interactive mode
@@ -1160,6 +1161,8 @@ void PrintUsage(const char *pcProgName)
     (void) printf("Colour map for plotting\n");
     (void) printf("                                         ");
     (void) printf("(default is 'jet')\n");
+    (void) printf("    -f  --file                           ");
+    (void) printf("Plot to file, instead of to screen\n");
     (void) printf("    -i  --invert                         ");
     (void) printf("Invert background and foreground\n");
     (void) printf("                                         ");
