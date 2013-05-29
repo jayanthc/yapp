@@ -54,8 +54,11 @@
                  headerless version, provided a <code>.fhd</code> configuration
                  file is present in the same directory)</li>
              <li>SIGPROC <code>.tim</code> time series format</li>
+             <li>PRESTO <code>.dat</code> time series format</li>
            </ul>
-           <p>This program does not create any output file.</p>
+           <p>This program creates an ASCII output file (with extension
+              <code>.ypr</code>) of the folded profile for time series input,
+              and no output file for filterbank input.</p>
         <p>Usage:</p> 
         <code>yapp_fold [options] <i>data-file</i></code>
         <ul>
@@ -90,6 +93,7 @@
                 <li>'winter'</li>
               </ul>
           </li>
+          <li><code>-f</code> or <code>--file</code>: Plot to file, instead of to screen.</li>
           <li><code>-i</code> or <code>--invert</code>: Invert background and
               foreground colours in plots (default is white on black).</li>
           <li><code>-e</code> or <code>--non-interactive</code>: Run in
@@ -100,8 +104,10 @@
            argument.</p> 
        <p>Example:</p>
        <p>Folds the data in <code>data.tim</code> with a period of 89.3 ms, in
-          interactive mode.</p>
-       <code>yapp_fold -t 89.3 data.tim</code>
+          non-interactive mode, with the folded profile plot written to
+          <code>data.fold.ps</code>, and the folded profile data written to the
+          ASCII file <code>data.ypr</code>.</p>
+       <code>yapp_fold -t 89.3 -e -f data.tim</code>
        <p>&nbsp;</p>
        <p>&nbsp;</p>
       </section>
