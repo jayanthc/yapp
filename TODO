@@ -3,9 +3,11 @@ TODO
 
 
 1. RFI mask generator - manual/automatic?
-2. Program to remove running mean/baseline - manual fitting?
+2. Program to remove running mean/baseline - manual polynomial fitting?
 3. yapp equivalent to realfft.
 4. Incoherent summation (stacking).
+5. Memory usage management - create ~/.yapp/yapp.conf or some such to fix
+   an upper limit on the amount of memory the YAPP programs can use.
 
 
 all:

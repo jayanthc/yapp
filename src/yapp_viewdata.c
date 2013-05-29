@@ -99,6 +99,11 @@ int main(int argc, char *argv[])
     float fButY = 0.0;
     char cCurChar = 0;
     int iNumSamps = 0;
+    double dPeriod = 0.0;
+    double dStartPhase = 0.0;
+    double dPhase = 0.0;
+    long int lSampCount = 0;
+    int iSampsPerPeriod = 0;
     int iDiff = 0;
     int i = 0;
     int j = 0;
@@ -112,7 +117,7 @@ int main(int argc, char *argv[])
     const char *pcProgName = NULL;
     int iNextOpt = 0;
     /* valid short options */
-    const char* const pcOptsShort = "hs:p:n:c:m:iev";
+    const char* const pcOptsShort = "hs:p:n:c:t:r:m:iev";
     /* valid long options */
     const struct option stOptsLong[] = {
         { "help",                   0, NULL, 'h' },
@@ -120,6 +125,8 @@ int main(int argc, char *argv[])
         { "proc",                   1, NULL, 'p' },
         { "nsamp",                  1, NULL, 'n' },
         { "clip-level",             1, NULL, 'c' },
+        { "period",                 1, NULL, 't' },
+        { "phase",                  1, NULL, 'r' },
         { "colour-map",             1, NULL, 'm' },
         { "invert",                 0, NULL, 'i' },
         { "non-interactive",        0, NULL, 'e' },
@@ -167,6 +174,16 @@ int main(int argc, char *argv[])
             case 'c':   /* -c or --clip-level */
                 /* set option */
                 fClipLevel = (float) atof(optarg);
+                break;
+
+            case 't':   /* -t or --period */
+                /* set option */
+                dPeriod = atof(optarg);
+                break;
+
+            case 'r':   /* -r or --phase */
+                /* set option */
+                dStartPhase = atof(optarg);
                 break;
 
             case 'm':   /* -m or --colour-map */
@@ -288,6 +305,8 @@ int main(int argc, char *argv[])
                            * stYUM.iNumChans
                            * stYUM.fSampSize);
 
+    /* calculate the number of bins in one profile */
+    iSampsPerPeriod = (int) round(dPeriod / stYUM.dTSamp);
     if (lBytesToSkip >= stYUM.lDataSizeTotal)
     {
         (void) fprintf(stderr,
@@ -792,6 +811,24 @@ int main(int argc, char *argv[])
             cpgbox("BCNST", 0.0, 0, "BCNST", 0.0, 0);
             cpgsci(PG_CI_PLOT);
             cpgline(iBlockSize, g_pfXAxis, g_pfBuf);
+            cpgsci(PG_CI_DEF);
+        }
+
+        if (dPeriod != 0.0)
+        {
+            cpgsci(7);
+            for (i = 0; i < iNumSamps; ++i)
+            {
+                /* compute the phase */
+                dPhase = (double) lSampCount * (stYUM.dTSamp / dPeriod);
+                dPhase = dPhase - floor(dPhase);
+                if (fabs(dPhase - dStartPhase) < 0.0000725)
+                {
+                    //cpgpt1(g_pfXAxis[i], g_pfBuf[i], 3);
+                    cpgerry(1, &g_pfXAxis[i], &fDataMax, &fDataMin, 0.0);
+                }
+                ++lSampCount;
+            }
             cpgsci(PG_CI_DEF);
         }
 

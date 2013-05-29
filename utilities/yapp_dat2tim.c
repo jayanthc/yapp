@@ -120,7 +120,7 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    pcFilename = YAPP_GetFilenameFromPath(pcFileData, EXT_DAT);
+    pcFilename = YAPP_GetFilenameFromPath(pcFileData);
     (void) strcpy(acFileTim, pcFilename);
     free(pcFilename);
     (void) strcat(acFileTim, EXT_TIM);

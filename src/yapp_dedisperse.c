@@ -679,7 +679,7 @@ int main(int argc, char *argv[])
         if (cIsPlotToFile)
         {
             /* build the name of the PGPLOT device */
-            pcFilename = YAPP_GetFilenameFromPath(pcFileSpec, EXT_DYNSPEC);
+            pcFilename = YAPP_GetFilenameFromPath(pcFileSpec);
             (void) strcpy(acDev, pcFilename);
             (void) strcat(acDev, PLOT_DDS_SUFFIX);
             (void) strcat(acDev, EXT_PS);
@@ -773,14 +773,7 @@ int main(int argc, char *argv[])
 
     /* generate dedispersed data file name and config file name from the input
        file name */
-    if (YAPP_FORMAT_FIL == iFormat)
-    {
-        pcFilename = YAPP_GetFilenameFromPath(pcFileSpec, EXT_FIL);
-    }
-    else
-    {
-        pcFilename = YAPP_GetFilenameFromPath(pcFileSpec, EXT_DYNSPEC);
-    }
+    pcFilename = YAPP_GetFilenameFromPath(pcFileSpec);
     if (YAPP_FORMAT_DTS_TIM == iOutputFormat)
     {
         (void) sprintf(acFileDedisp,

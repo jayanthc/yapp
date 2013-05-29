@@ -401,7 +401,7 @@ int main(int argc, char *argv[])
     }
 
     /* open the time series data file for reading */
-    pcFileOut = YAPP_GetFilenameFromPath(pcFileData, EXT_TIM);
+    pcFileOut = YAPP_GetFilenameFromPath(pcFileData);
     (void) sprintf(acFileOut,
                    "%s.%s%s",
                    pcFileOut,

@@ -351,7 +351,7 @@ int main(int argc, char *argv[])
     }
 
     /* open the time series data file for writing */
-    pcFileOut = YAPP_GetFilenameFromPath(argv[optind], EXT_TIM);
+    pcFileOut = YAPP_GetFilenameFromPath(argv[optind]);
     (void) sprintf(acFileOut,
                    "%s.%s%s",
                    pcFileOut,
