@@ -16,6 +16,10 @@
  *                                          (default is 10.0)
  *     -l  --law <law>                      Dispersion law
  *                                          (default is 2.0)
+ *     -b  --nsubband <nsubband>            Number of sub-bands
+ *                                          (must be < number of channels)
+ *     -u  --subband <subband>              Sub-band to dedisperse
+ *                                          (within [0, nsubband))
  *     -o  --out-format <format>            Output format - 'dds', 'tim', or
  *                                          'fil'
  *                                          (default is 'tim')
@@ -122,6 +126,8 @@ int main(int argc, char *argv[])
     char *pcFilename = NULL;
     int iNumSamps = 0;
     int iDiff = 0;
+    int iNumSubBands = 0;
+    int iSubBand = 0;
     float fButX = 0.0;
     float fButY = 0.0;
     char cCurChar = 0;
@@ -140,7 +146,7 @@ int main(int argc, char *argv[])
     const char *pcProgName = NULL;
     int iNextOpt = 0;
     /* valid short options */
-    const char* const pcOptsShort = "hs:p:n:d:l:o:gm:iev";
+    const char* const pcOptsShort = "hs:p:n:d:l:b:u:o:gm:iev";
     /* valid long options */
     const struct option stOptsLong[] = {
         { "help",                   0, NULL, 'h' },
@@ -149,6 +155,8 @@ int main(int argc, char *argv[])
         { "nsamp",                  1, NULL, 'n' },
         { "dm",                     1, NULL, 'd' },
         { "law",                    1, NULL, 'l' },
+        { "nsubband",               1, NULL, 'b' },
+        { "subband",                1, NULL, 'u' },
         { "out-format",             1, NULL, 'o' },
         { "graphics",               0, NULL, 'g' },
         { "colour-map",             1, NULL, 'm' },
@@ -199,6 +207,21 @@ int main(int argc, char *argv[])
                 /* set option */
                 dDM = atof(optarg);
                 cIsDMGiven = YAPP_TRUE;
+                break;
+
+            case 'l':   /* -l or --law */
+                /* set option */
+                fLaw = atof(optarg);
+                break;
+
+            case 'b':   /* -b or --nsubband */
+                /* set option */
+                iNumSubBands = atoi(optarg);
+                break;
+
+            case 'u':   /* -u or --subband */
+                /* set option */
+                iSubBand = atoi(optarg);
                 break;
 
             case 'o':   /* -o or --out-format */
@@ -280,6 +303,15 @@ int main(int argc, char *argv[])
         return YAPP_RET_ERROR;
     }
 
+    if (iSubBand >= iNumSubBands)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Sub-band number inconsistent with number of "
+                       "sub-bands!\n");
+        PrintUsage(pcProgName);
+        return YAPP_RET_ERROR;
+    }
+
     /* register the signal-handling function */
     iRet = YAPP_RegisterSignalHandlers();
     if (iRet != YAPP_RET_SUCCESS)
@@ -316,6 +348,7 @@ int main(int argc, char *argv[])
                        pcFileSpec);
         return YAPP_RET_ERROR;
     }
+
     dTSamp = stYUM.dTSamp;
     /* convert sampling interval to seconds */
     dTSampInSec = stYUM.dTSamp / 1e3;
@@ -327,6 +360,17 @@ int main(int argc, char *argv[])
     pfTimeSectGain = stYUM.pfBFGain;    /* for .spec */
     dTNextBF = stYUM.dTNextBF;          /* for .spec */
     iNumChans = stYUM.iNumChans;
+
+    /* some more user-input validation */
+    if (iNumSubBands > iNumChans)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Invalid number of sub-bands! Number of "
+                       "sub-bands must be less than or equal to number of "
+                       "channels!\n");
+        PrintUsage(pcProgName);
+        return YAPP_RET_ERROR;
+    }
 
     iRet = YAPP_CalcDelays(dDM, stYUM, fLaw, &iMaxOffset);
     if (iRet != YAPP_RET_SUCCESS)
@@ -523,6 +567,25 @@ int main(int argc, char *argv[])
     }
     /* set all elements to 'YAPP_TRUE' */
     (void) memset(g_pcIsTimeGood, YAPP_TRUE, iTimeSampsToProc);
+
+    /* kludge: simulate sub-band dedispersion by marking other channels as bad
+       so that they don't go into the summation */
+    /* NOTE: this will not work with data in which there are actual bad
+       channels */
+    int iChansPerSubBand = (int) ((float) iNumChans / iNumSubBands);
+    int iStartChan = iSubBand * iChansPerSubBand;
+    int iEndChan = (iSubBand + 1) * iChansPerSubBand;
+    for (i = 0; i < iNumChans; ++i)
+    {
+        if ((i >= iStartChan) && (i < iEndChan))
+        {
+            stYUM.pcIsChanGood[i] = YAPP_TRUE;
+        }
+        else
+        {
+            stYUM.pcIsChanGood[i] = YAPP_FALSE;
+        }
+    }
 
     /* open the data file for reading */
     g_pFData = fopen(pcFileSpec, "r");
@@ -1360,6 +1423,14 @@ void PrintUsage(const char *pcProgName)
     (void) printf("Dispersion law\n");
     (void) printf("                                         ");
     (void) printf("(default is 2.0)\n");
+    (void) printf("    -b  --nsubband <nsubband>            ");
+    (void) printf("Number of sub-bands\n");
+    (void) printf("                                         ");
+    (void) printf("(must be < number of channels)\n");
+    (void) printf("    -u  --subband <subband>              ");
+    (void) printf("Sub-band to dedisperse\n");
+    (void) printf("                                         ");
+    (void) printf("(within [0, nsubband))\n");
     (void) printf("    -o  --out-format <format>            ");
     (void) printf("Output format - 'dds', 'tim', or 'fil'\n");
     (void) printf("                                         ");
