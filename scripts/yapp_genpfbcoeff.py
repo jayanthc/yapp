@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# yapp_gencoeff.py
+# yapp_genpfbcoeff.py
 # Generate PFB filter coefficients for yapp_ft. The filter coefficients array
 # may contain duplicates for optimised reading from the GPU.
 #
