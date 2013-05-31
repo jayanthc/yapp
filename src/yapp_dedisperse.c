@@ -128,6 +128,9 @@ int main(int argc, char *argv[])
     int iDiff = 0;
     int iNumSubBands = 0;
     int iSubBand = 0;
+    int iChansPerSubBand = 0;
+    int iStartChan = 0;
+    int iEndChan = 0;
     float fButX = 0.0;
     float fButY = 0.0;
     char cCurChar = 0;
@@ -303,22 +306,24 @@ int main(int argc, char *argv[])
         return YAPP_RET_ERROR;
     }
 
-    if (iSubBand >= iNumSubBands)
+    if (iNumSubBands > 0)
     {
-        (void) fprintf(stderr,
-                       "ERROR: Sub-band number inconsistent with number of "
-                       "sub-bands!\n");
-        PrintUsage(pcProgName);
-        return YAPP_RET_ERROR;
-    }
-
-    if ((iNumSubBands > 0) && (iOutputFormat != YAPP_FORMAT_DTS_TIM))
-    {
-        (void) fprintf(stderr,
-                       "ERROR: Sub-band dedispersion support only for .tim "
-                       "output!\n");
-        PrintUsage(pcProgName);
-        return YAPP_RET_ERROR;
+        if (iSubBand >= iNumSubBands)
+        {
+            (void) fprintf(stderr,
+                           "ERROR: Sub-band number inconsistent with number of "
+                           "sub-bands!\n");
+            PrintUsage(pcProgName);
+            return YAPP_RET_ERROR;
+        }
+        if (iOutputFormat != YAPP_FORMAT_DTS_TIM)
+        {
+            (void) fprintf(stderr,
+                           "ERROR: Sub-band dedispersion support only for .tim "
+                           "output!\n");
+            PrintUsage(pcProgName);
+            return YAPP_RET_ERROR;
+        }
     }
 
     /* register the signal-handling function */
@@ -371,14 +376,27 @@ int main(int argc, char *argv[])
     iNumChans = stYUM.iNumChans;
 
     /* some more user-input validation */
-    if (iNumSubBands > iNumChans)
+    if (iNumSubBands > 0)
     {
-        (void) fprintf(stderr,
-                       "ERROR: Invalid number of sub-bands! Number of "
-                       "sub-bands must be less than or equal to number of "
-                       "channels!\n");
-        PrintUsage(pcProgName);
-        return YAPP_RET_ERROR;
+        if (iNumSubBands > iNumChans)
+        {
+            (void) fprintf(stderr,
+                           "ERROR: Invalid number of sub-bands! Number of "
+                           "sub-bands must be less than or equal to number of "
+                           "channels!\n");
+            PrintUsage(pcProgName);
+            return YAPP_RET_ERROR;
+        }
+
+        /* there should be an integer number of sub-bands within the band */
+        if ((iNumChans % iNumSubBands) != 0)
+        {
+            (void) fprintf(stderr,
+                           "ERROR: Invalid number of sub-bands! Number of "
+                           "sub-bands must be a factor of number of channels!\n");
+            PrintUsage(pcProgName);
+            return YAPP_RET_ERROR;
+        }
     }
 
     iRet = YAPP_CalcDelays(dDM, stYUM, fLaw, &iMaxOffset);
@@ -581,18 +599,21 @@ int main(int argc, char *argv[])
        so that they don't go into the summation */
     /* NOTE: this will not work with data in which there are actual bad
        channels */
-    int iChansPerSubBand = (int) ((float) iNumChans / iNumSubBands);
-    int iStartChan = iSubBand * iChansPerSubBand;
-    int iEndChan = (iSubBand + 1) * iChansPerSubBand;
-    for (i = 0; i < iNumChans; ++i)
+    if (iNumSubBands > 0)
     {
-        if ((i >= iStartChan) && (i < iEndChan))
+        iChansPerSubBand = (int) ((float) iNumChans / iNumSubBands);
+        iStartChan = iSubBand * iChansPerSubBand;
+        iEndChan = (iSubBand + 1) * iChansPerSubBand;
+        for (i = 0; i < iNumChans; ++i)
         {
-            stYUM.pcIsChanGood[i] = YAPP_TRUE;
-        }
-        else
-        {
-            stYUM.pcIsChanGood[i] = YAPP_FALSE;
+            if ((i >= iStartChan) && (i < iEndChan))
+            {
+                stYUM.pcIsChanGood[i] = YAPP_TRUE;
+            }
+            else
+            {
+                stYUM.pcIsChanGood[i] = YAPP_FALSE;
+            }
         }
     }
 
@@ -890,6 +911,31 @@ int main(int argc, char *argv[])
         if (YAPP_FORMAT_DTS_TIM == iOutputFormat)
         {
             stYUMOut.cIsBandFlipped = YAPP_FALSE;
+        }
+
+        /* if doing sub-band dedispersion, update the number of channels,
+           bandwidth, etc. */
+        if (iNumSubBands > 0)
+        {
+            stYUMOut.iNumChans = iChansPerSubBand;
+            stYUMOut.iNumGoodChans = iChansPerSubBand;
+            stYUMOut.fBW = stYUMOut.iNumChans * stYUMOut.fChanBW;
+            stYUMOut.fFMin = stYUM.fFMin
+                             + (iStartChan * stYUMOut.fChanBW);
+            stYUMOut.fFMax = stYUMOut.fFMin
+                            + ((stYUMOut.iNumChans - 1) * stYUMOut.fChanBW);
+            if (0 == (stYUMOut.iNumChans % 2))   /* even number of channels */
+            {
+                stYUMOut.fFCentre = (stYUMOut.fFMin - (stYUMOut.fChanBW / 2))
+                                   + ((stYUMOut.iNumChans / 2)
+                                      * stYUMOut.fChanBW);
+            }
+            else                                /* odd number of channels */
+            {
+                stYUMOut.fFCentre = stYUMOut.fFMin
+                                   + (((float) stYUMOut.iNumChans / 2)
+                                      * stYUMOut.fChanBW);
+            }
         }
 
         /* write metadata to disk */

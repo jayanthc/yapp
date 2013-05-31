@@ -76,7 +76,7 @@ for o, a in Opts:
         PrintUsage(ProgName)
         sys.exit(1)
 
-NBins = len(open(sys.argv[optind]).readlines())
+NBins = len(open(sys.argv[optind]).readlines()) - 1
 x = numpy.array([float(i) / NBins for i in range(NBins)])
 
 onBin = int(on * NBins)
@@ -85,15 +85,23 @@ offBin = int(off * NBins)
 NBands = len(sys.argv) - optind
 SMean = numpy.zeros(NBands)
 
-f = numpy.array([11.2, 12.5, 13.8, 15.0, 16.3, 17.6])
+Bands = []
+for fileProf in sys.argv[optind:]:
+    # read the centre frequency
+    Bands.append([float((open(fileProf).readline())[21:-5]), fileProf])
+Bands.sort()
+
+f = numpy.zeros(NBands)
+for i in range(NBands):
+    f[i] = Bands[i][0]
 
 # create calibrated folded profile subplot
 plotter.subplot(121)
 
-i = 0
-for fileProf in sys.argv[optind:]:
+for i in range(NBands):
     # read raw profile
-    prof = numpy.fromfile(fileProf, dtype=numpy.float32, sep="\n")
+    prof = numpy.loadtxt(Bands[i][1], dtype=numpy.float32,                    \
+                         comments="#", delimiter="\n")
 
     # extract the off-pulse regions
     baseline = prof.copy()
@@ -129,10 +137,15 @@ for fileProf in sys.argv[optind:]:
     plotter.ylabel("Flux Density (mJy)")
     i = i + 1
 
-plotter.legend(loc="upper left")
+plotter.legend(loc="best")
 
 # create flux density versus frequency subplot
 plotter.subplot(122)
+
+f = numpy.log10(f)
+# make sure the values within log10 are > 0
+SMean = SMean + abs(min(SMean)) + 1
+SMean = numpy.log10(SMean)
 
 # do a linear fit
 specIdxFit = numpy.polyfit(f, SMean, 1)
@@ -144,8 +157,9 @@ ticks, labels = plotter.yticks()
 plotter.yticks(ticks, map(lambda val: "%.3f" % val, ticks * 1e3))
 plotter.xlabel("Frequency (GHz)")
 plotter.ylabel("Mean Flux Density (mJy)")
-#plotter.ylabel("Mean Flux Density ($\mu$Jy)")
 
+# make sure the values within log10 are > 0
+specIdxLine = specIdxLine + abs(min(specIdxLine)) + 1
 specIdx = (math.log10(specIdxLine[0]) - math.log10(specIdxLine[-1]))          \
           / (math.log10(f[0]) - math.log10(f[-1]))
 

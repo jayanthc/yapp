@@ -693,19 +693,6 @@ int main(int argc, char *argv[])
     (void) strcpy(acFileProf, pcFilename);
     (void) strcat(acFileProf, EXT_YAPP_PROFILE);
 
-    /* open the output profile file */
-    pFProfile = fopen(acFileProf, "w");
-    if (NULL == pFProfile)
-    {
-        fprintf(stderr,
-                "ERROR: Opening file %s failed! %s.\n",
-                acFileProf,
-                strerror(errno));
-        cpgclos();
-        YAPP_CleanUp();
-        return YAPP_RET_ERROR;
-    }
-
     while (iNumReads > 0)
     {
         /* read data */
@@ -718,7 +705,6 @@ int main(int argc, char *argv[])
         if (YAPP_RET_ERROR == iReadItems)
         {
             (void) fprintf(stderr, "ERROR: Reading data failed!\n");
-            (void) fclose(pFProfile);
             cpgclos();
             YAPP_CleanUp();
             return YAPP_RET_ERROR;
@@ -774,7 +760,6 @@ int main(int argc, char *argv[])
                         (void) fprintf(stderr,
                                        "ERROR: Beam flip time section anomaly "
                                        "detected!\n");
-                        (void) fclose(pFProfile);
                         cpgclos();
                         YAPP_CleanUp();
                         return YAPP_RET_ERROR;
@@ -1083,7 +1068,6 @@ int main(int argc, char *argv[])
                         cpgsci(PG_CI_DEF);  /* reset colour index to black */
                         (void) usleep(PG_BUT_CL_SLEEP);
 
-                        (void) fclose(pFProfile);
                         cpgclos();
                         YAPP_CleanUp();
                         return YAPP_RET_SUCCESS;
@@ -1112,16 +1096,35 @@ int main(int argc, char *argv[])
         /* NOTE: no support for waterfall data */
         if (0 == iNumPulses)
         {
+            /* open the output profile file */
+            pFProfile = fopen(acFileProf, "w");
+            if (NULL == pFProfile)
+            {
+                fprintf(stderr,
+                        "ERROR: Opening file %s failed! %s.\n",
+                        acFileProf,
+                        strerror(errno));
+                cpgclos();
+                YAPP_CleanUp();
+                return YAPP_RET_ERROR;
+            }
+
+            /* write centre frequency */
+            (void) fprintf(pFProfile,
+                           "# Centre frequency = %.10g MHz\n",
+                           stYUM.fFCentre);
+            /* write profile bins */
             for (i = 0; i < iSampsPerPeriod; ++i)
             {
-                fprintf(pFProfile, "%.10g\n", g_pfProfBuf[i]);
+                (void) fprintf(pFProfile, "%.10g\n", g_pfProfBuf[i]);
             }
+
+            (void) fclose(pFProfile);
         }
     }
 
     (void) printf("DONE!\n");
 
-    (void) fclose(pFProfile);
     cpgclos();
     YAPP_CleanUp();
 

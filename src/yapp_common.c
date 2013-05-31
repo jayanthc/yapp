@@ -574,7 +574,7 @@ int YAPP_ReadPSRFITSHeader(char *pcFileSpec, YUM_t *pstYUM)
     else                                /* odd number of channels */
     {
         pstYUM->fFCentre = pstYUM->fFMin
-                           + ((pstYUM->iNumChans / 2) * pstYUM->fChanBW);
+                           + (((float) pstYUM->iNumChans / 2) * pstYUM->fChanBW);
     }
 
     /* calculate the size of data */

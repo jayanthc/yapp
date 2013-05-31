@@ -1,7 +1,8 @@
 #!/usr/bin/python
 
-# yapp_calcspecidx.py
-# Calculate spectral index from a series of folded profiles.
+# yapp_stackprof.py
+# Calibrate folded sub-band profiles and create a 2D plot of
+#   frequency versus phase.
 
 import sys
 import getopt
@@ -76,7 +77,7 @@ for o, a in Opts:
         PrintUsage(ProgName)
         sys.exit(1)
 
-NBins = len(open(sys.argv[optind]).readlines())
+NBins = len(open(sys.argv[optind]).readlines()) - 1
 x = numpy.array([float(i) / NBins for i in range(NBins)])
 
 onBin = int(on * NBins)
@@ -84,15 +85,23 @@ offBin = int(off * NBins)
 
 NBands = len(sys.argv) - optind
 
-f = numpy.array([11.2, 12.5, 13.8, 15.0, 16.3, 17.6])
+Bands = []
+for fileProf in sys.argv[optind:]:
+    # read the centre frequency
+    Bands.append([float((open(fileProf).readline())[21:-5]), fileProf])
+Bands.sort()
+
+f = numpy.zeros(NBands)
+for i in range(NBands):
+    f[i] = Bands[i][0]
 
 profImg = numpy.zeros(NBands * NBins)
 profImg.shape = (NBands, NBins)
 
-i = 0
-for fileProf in sys.argv[optind:]:
+for i in range(NBands):
     # read raw profile
-    profImg[i] = numpy.fromfile(fileProf, dtype=numpy.float32, sep="\n")
+    profImg[i] = numpy.loadtxt(Bands[i][1], dtype=numpy.float32,              \
+                               comments="#", delimiter="\n")
 
     # extract the off-pulse regions
     baseline = profImg[i].copy()
@@ -116,11 +125,9 @@ for fileProf in sys.argv[optind:]:
     # calibrate the profile
     profImg[i] = (profImg[i] - y) * C
 
-    # increment the index
-    i = i + 1
-
 img = plotter.pcolormesh(x, f, profImg, cmap="hot")
-plotter.colorbar(img, orientation="vertical").set_label("Flux Density (Jy)")
+cbar = plotter.colorbar(img, orientation="vertical")
+cbar.set_label("Flux Density (mJy)")
 plotter.xlabel("Phase")
 plotter.ylabel("Frequency (GHz)")
 plotter.show()
