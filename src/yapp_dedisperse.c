@@ -312,6 +312,15 @@ int main(int argc, char *argv[])
         return YAPP_RET_ERROR;
     }
 
+    if ((iNumSubBands > 0) && (iOutputFormat != YAPP_FORMAT_DTS_TIM))
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Sub-band dedispersion support only for .tim "
+                       "output!\n");
+        PrintUsage(pcProgName);
+        return YAPP_RET_ERROR;
+    }
+
     /* register the signal-handling function */
     iRet = YAPP_RegisterSignalHandlers();
     if (iRet != YAPP_RET_SUCCESS)
@@ -834,32 +843,35 @@ int main(int argc, char *argv[])
     /* generate dedispersed data file name and config file name from the input
        file name */
     pcFilename = YAPP_GetFilenameFromPath(pcFileSpec);
-    if (YAPP_FORMAT_DTS_TIM == iOutputFormat)
+    if (0 == iNumSubBands)  /* not doing sub-band dedispersion */
     {
         (void) sprintf(acFileDedisp,
-                       "%s.%s%g%s",
+                       "%s.%s%g",
+                       pcFilename,
+                       INFIX_DEDISPERSE,
+                       dDM);
+    }
+    else
+    {
+        (void) sprintf(acFileDedisp,
+                       "%s.%s%g.%s%d",
                        pcFilename,
                        INFIX_DEDISPERSE,
                        dDM,
-                       EXT_TIM);
+                       INFIX_SUBBAND,
+                       iSubBand);
+    }
+    if (YAPP_FORMAT_DTS_TIM == iOutputFormat)
+    {
+        (void) strcat(acFileDedisp, EXT_TIM);
     }
     else if (YAPP_FORMAT_DTS_DDS == iOutputFormat)
     {
-        (void) sprintf(acFileDedisp,
-                       "%s.%s%g%s",
-                       pcFilename,
-                       INFIX_DEDISPERSE,
-                       dDM,
-                       EXT_DEDISPSPEC);
+        (void) strcat(acFileDedisp, EXT_DEDISPSPEC);
     }
     else    /* if filterbank */
     {
-        (void) sprintf(acFileDedisp,
-                       "%s.%s%g%s",
-                       pcFilename,
-                       INFIX_DEDISPERSE,
-                       dDM,
-                       EXT_FIL);
+        (void) strcat(acFileDedisp, EXT_FIL);
     }
 
     /* add header for .fil or .tim file format */
