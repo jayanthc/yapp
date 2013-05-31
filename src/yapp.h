@@ -106,6 +106,7 @@ enum tagFileFormats
 #define INFIX_MEDFILTER             "medfilt"
 #define INFIX_FILTER                "filt"
 #define INFIX_DEDISPERSE            "dm"
+#define INFIX_SUBBAND               "band"
 #define INFIX_ADD                   "sum"
 #define INFIX_FOLD                  "fold"
 
