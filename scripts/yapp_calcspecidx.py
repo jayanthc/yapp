@@ -17,8 +17,6 @@ def PrintUsage(ProgName):
     print "    -T  --tsys <tsys>          System temperature in K"
     print "    -G  --gain <gain>          Gain in K/Jy"
     print "    -p  --npol <npol>          Number of polarisations"
-    print "    -t  --tobs <tobs>          Length of observation in s"
-    print "    -B  --bw <bw>              Bandwidth in Hz"
     print "    -n  --onstart <phase>      Start phase of pulse"
     print "    -f  --onstop <phase>       End phase of pulse"
     print "    -b  --basefit              Do polynomial fit baseline subtraction"
@@ -29,9 +27,8 @@ polyfit = False
 
 # get the command line arguments
 ProgName = sys.argv[0]
-OptsShort = "hT:G:p:t:B:n:f:b"
-OptsLong = ["help", "tsys=", "gain=", "npol=", "tobs=", "bw=", "onstart=",
-            "onstop=", "basefit"]
+OptsShort = "hT:G:p:n:f:b"
+OptsLong = ["help", "tsys=", "gain=", "npol=", "onstart=", "onstop=", "basefit"]
 
 # get the arguments using the getopt module
 try:
@@ -57,12 +54,6 @@ for o, a in Opts:
     elif o in ("-p", "--npol"):
         NPol = int(a)
         optind = optind + 2
-    elif o in ("-t", "--tobs"):
-        tObs = float(a)
-        optind = optind + 2
-    elif o in ("-B", "--bw"):
-        BW = float(a)
-        optind = optind + 2
     elif o in ("-n", "--onstart"):
         on = float(a)
         optind = optind + 2
@@ -76,7 +67,7 @@ for o, a in Opts:
         PrintUsage(ProgName)
         sys.exit(1)
 
-NBins = len(open(sys.argv[optind]).readlines()) - 1
+NBins = len(open(sys.argv[optind]).readlines()) - 3
 x = numpy.array([float(i) / NBins for i in range(NBins)])
 
 onBin = int(on * NBins)
@@ -85,15 +76,25 @@ offBin = int(off * NBins)
 NBands = len(sys.argv) - optind
 SMean = numpy.zeros(NBands)
 
+# read the centre frequencies
 Bands = []
 for fileProf in sys.argv[optind:]:
-    # read the centre frequency
-    Bands.append([float((open(fileProf).readline())[21:-5]), fileProf])
+    Bands.append([float((open(fileProf).readline())[37:-5]), fileProf])
 Bands.sort()
 
 f = numpy.zeros(NBands)
 for i in range(NBands):
     f[i] = Bands[i][0]
+
+# read the bandwidth and duration of observation from the first file
+hdr = open(sys.argv[optind])
+# skip centre frequency
+hdr.readline()
+# read bandwidth in MHz and convert to Hz
+BW = float((hdr.readline())[37:-5]) * 1e6
+# read duration in seconds
+tObs = float((hdr.readline())[37:-3])
+hdr.close()
 
 # create calibrated folded profile subplot
 plotter.subplot(121)
@@ -129,7 +130,7 @@ for i in range(NBands):
     SPeak = numpy.max(prof)
     SMean[i] = numpy.sum(prof[onBin:offBin]) / NBins
 
-    plotLabel = str(f[i]) + " GHz"
+    plotLabel = str(f[i]) + " MHz"
     plotter.plot(x, prof, label=plotLabel)
     ticks, labels = plotter.yticks()
     plotter.yticks(ticks, map(lambda val: "%.1f" % val, ticks * 1e3))
@@ -142,6 +143,9 @@ plotter.legend(loc="best")
 # create flux density versus frequency subplot
 plotter.subplot(122)
 
+#blah = f.copy()
+#bleh = SMean.copy()
+
 f = numpy.log10(f)
 # make sure the values within log10 are > 0
 SMean = SMean + abs(min(SMean)) + 1
@@ -153,10 +157,10 @@ specIdxLine = specIdxFit[0] * f + specIdxFit[1]
 
 plotter.scatter(f, SMean)
 plotter.plot(f, specIdxLine, "r")
-ticks, labels = plotter.yticks()
-plotter.yticks(ticks, map(lambda val: "%.3f" % val, ticks * 1e3))
-plotter.xlabel("Frequency (GHz)")
-plotter.ylabel("Mean Flux Density (mJy)")
+#ticks, labels = plotter.yticks()
+#plotter.yticks(ticks, map(lambda val: "%.3f" % val, ticks * 1e3))
+plotter.xlabel("log10(Frequency (MHz))")
+plotter.ylabel("log10(Mean Flux Density (Jy) + X)")
 
 # make sure the values within log10 are > 0
 specIdxLine = specIdxLine + abs(min(specIdxLine)) + 1

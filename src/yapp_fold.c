@@ -1109,10 +1109,16 @@ int main(int argc, char *argv[])
                 return YAPP_RET_ERROR;
             }
 
-            /* write centre frequency */
+            /* write necessary metadata */
             (void) fprintf(pFProfile,
-                           "# Centre frequency = %.10g MHz\n",
-                           stYUM.fFCentre);
+                           "# Centre frequency                  : %.10g MHz\n",
+                            stYUM.fFCentre);
+            (void) fprintf(pFProfile,
+                           "# Bandwidth                         : %.10g MHz\n",
+                           stYUM.fBW);
+            (void) fprintf(pFProfile,
+                           "# Duration of data                  : %g s\n",
+                           (stYUM.iTimeSamps * (stYUM.dTSamp / 1e3)));
             /* write profile bins */
             for (i = 0; i < iSampsPerPeriod; ++i)
             {

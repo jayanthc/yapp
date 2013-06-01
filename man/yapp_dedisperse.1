@@ -5,7 +5,7 @@
 .\# Created by Jayanth Chennamangalam on 2012.12.18
 .\#
 
-.TH YAPP_DEDISPERSE 1 "2013-05-09" "YAPP 3.3-beta" \
+.TH YAPP_DEDISPERSE 1 "2013-05-31" "YAPP 3.3-beta" \
 "Yet Another Pulsar Processor"
 
 
@@ -33,6 +33,8 @@ non-frequency-collapsed SIGPROC '.fil'. In the case of the latter, \
 irrespective of the original format of the data, the output samples are \
 single-precision floats. The start MJD of the output reflects dispersion \
 delay correction with respect to infinite frequency.
+.P
+Sub-band dedispersion is also supported, but only one sub-band at a time.
 
 
 .SH OPTIONS
@@ -54,6 +56,12 @@ DM at which to dedisperse (default is 0.0).
 .TP
 .B \-l, --law \fIlaw
 Dispersion law (default is 2.0).
+.TP
+.B \-b, --nsubband \fInsubband
+Number of sub-bands (factor of number of channels, must be < number of channels)
+.TP
+.B \-u, --subband \fIsubband
+Sub-band to dedisperse (within [0, nsubband))
 .TP
 .B \-o, --out-format \fIformat
 Output format - 'dds', 'tim', or 'fil' (default is 'tim').
@@ -77,12 +85,19 @@ Run in non-interactive mode.
 Display the version.
 
 
-.SH EXAMPLE
+.SH EXAMPLES
 .TP
 Dedisperse the data in data.fil with a DM of 13.2952, with graphics turned \
 on, and in non-interactive mode. The output is written to data.dm13.2952.tim.
 .TP
 yapp_dedisperse -d 13.2952 -g -e data.fil
+.TP
+Treat the 1024-channel filterbank data in data.fil as being made up of 16 \
+sub-bands, and dedisperse the first 64-channel sub-band (lowest in frequency) \
+with a DM of 13.2952, with graphics turned off. It is assumed that the band \
+is not flipped. The output is written to data.dm13.2952.band0.tim.
+.TP
+yapp_dedisperse -d 13.2952 -b 16 -u 0 data.fil
 
 
 .SH SEE ALSO
