@@ -18,8 +18,6 @@ def PrintUsage(ProgName):
     print "    -T  --tsys <tsys>          System temperature in K"
     print "    -G  --gain <gain>          Gain in K/Jy"
     print "    -p  --npol <npol>          Number of polarisations"
-    print "    -t  --tobs <tobs>          Length of observation in s"
-    print "    -B  --bw <bw>              Bandwidth in Hz"
     print "    -n  --onstart <phase>      Start phase of pulse"
     print "    -f  --onstop <phase>       End phase of pulse"
     print "    -b  --basefit              Do polynomial fit baseline subtraction"
@@ -30,9 +28,8 @@ polyfit = False
 
 # get the command line arguments
 ProgName = sys.argv[0]
-OptsShort = "hT:G:p:t:B:n:f:b"
-OptsLong = ["help", "tsys=", "gain=", "npol=", "tobs=", "bw=", "onstart=",
-            "onstop=", "basefit"]
+OptsShort = "hT:G:p:n:f:b"
+OptsLong = ["help", "tsys=", "gain=", "npol=", "onstart=", "onstop=", "basefit"]
 
 # get the arguments using the getopt module
 try:
@@ -58,12 +55,6 @@ for o, a in Opts:
     elif o in ("-p", "--npol"):
         NPol = int(a)
         optind = optind + 2
-    elif o in ("-t", "--tobs"):
-        tObs = float(a)
-        optind = optind + 2
-    elif o in ("-B", "--bw"):
-        BW = float(a)
-        optind = optind + 2
     elif o in ("-n", "--onstart"):
         on = float(a)
         optind = optind + 2
@@ -77,7 +68,7 @@ for o, a in Opts:
         PrintUsage(ProgName)
         sys.exit(1)
 
-NBins = len(open(sys.argv[optind]).readlines()) - 1
+NBins = len(open(sys.argv[optind]).readlines()) - 3
 x = numpy.array([float(i) / NBins for i in range(NBins)])
 
 onBin = int(on * NBins)
@@ -85,15 +76,25 @@ offBin = int(off * NBins)
 
 NBands = len(sys.argv) - optind
 
+# read the centre frequencies
 Bands = []
 for fileProf in sys.argv[optind:]:
-    # read the centre frequency
-    Bands.append([float((open(fileProf).readline())[21:-5]), fileProf])
+    Bands.append([float((open(fileProf).readline())[37:-5]), fileProf])
 Bands.sort()
 
 f = numpy.zeros(NBands)
 for i in range(NBands):
     f[i] = Bands[i][0]
+
+# read the bandwidth and duration of observation from the first file
+hdr = open(sys.argv[optind])
+# skip centre frequency
+hdr.readline()
+# read bandwidth in MHz and convert to Hz
+BW = float((hdr.readline())[37:-5]) * 1e6
+# read duration in seconds
+tObs = float((hdr.readline())[37:-3])
+hdr.close()
 
 profImg = numpy.zeros(NBands * NBins)
 profImg.shape = (NBands, NBins)
@@ -127,8 +128,8 @@ for i in range(NBands):
 
 img = plotter.pcolormesh(x, f, profImg, cmap="hot")
 cbar = plotter.colorbar(img, orientation="vertical")
-cbar.set_label("Flux Density (mJy)")
+cbar.set_label("Flux Density (Jy)")
 plotter.xlabel("Phase")
-plotter.ylabel("Frequency (GHz)")
+plotter.ylabel("Frequency (MHz)")
 plotter.show()
 
