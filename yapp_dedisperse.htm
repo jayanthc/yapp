@@ -60,6 +60,7 @@
            the data, the output samples are single-precision floats. The start
            MJD of the output reflects dispersion delay correction with respect
            to infinite frequency.</p>
+        <p>Sub-band dedispersion is also supported, but only one sub-band at a time.</p>
         <p>Usage:</p> 
         <code>yapp_dedisperse [options] <i>data-file</i></code>
         <ul>
@@ -76,6 +77,11 @@
               to dedisperse (default is 0.0).</li>
           <li><code>-l</code> or <code>--law <i>law</i></code>: Dispersion law
               (default is 2.0).</li>
+          <li><code>-b</code> or <code>--nsubband <i>nsubband</i></code>:
+               Number of sub-bands (factor of number of channels, must be &lt;
+               number of channels)</li>
+          <li><code>-u</code> or <code>--subband <i>subband</i></code>:
+              Sub-band to dedisperse (within [0, nsubband))</li>
           <li><code>-o</code> or <code>--out-format <i>format</i></code>:
               Output format - 'dds', 'tim', or 'fil' (default is 'tim').</li>
           <li><code>-g</code> or <code>--graphics</code>: Turn on plotting.</li>
@@ -109,6 +115,12 @@
        with graphics turned on, and in non-interactive mode. The output is
        written to <code>data.tim</code>.</p>
        <code>yapp_dedisperse -d 13.2952 -g -e data.fil</code>
+       <p>Treat the 1024-channel filterbank data in <code>data.fil</code> as being made up
+          of 16 sub-bands, and dedisperse the first 64-channel sub-band (lowest
+          in frequency) with a DM of 13.2952, with graphics turned off. It is
+          assumed that the band is not flipped. The output is written to
+          <code>data.dm13.2952.band0.tim</code>.</p>
+       <code>yapp_dedisperse -d 13.2952 -b 16 -u 0 data.fil</code>
        <p>&nbsp;</p>
        <p>&nbsp;</p>
       </section>
