@@ -913,6 +913,7 @@ int main(int argc, char *argv[])
             stYUMOut.cIsBandFlipped = YAPP_FALSE;
         }
 
+        /* TODO: check if the time samples are same for all files */
         /* if doing sub-band dedispersion, update the number of channels,
            bandwidth, etc. */
         if (iNumSubBands > 0)

@@ -5,7 +5,7 @@
  *  the pulsar signal.
  *
  * @verbatim
- * Usage: yapp_stacktim [options] <data-file-maxfreq> ... <data-file-minfreq>
+ * Usage: yapp_stacktim [options] <data-file-0> ... <data-file-N-1>
  *     -h  --help                           Display this usage information
  *     -n  --nsamp <samples>                Number of samples read in one block
  *                                          (default is 4096 samples)
@@ -278,13 +278,13 @@ int main(int argc, char *argv[])
         (void) fseek(ppFIn[i-optind], (long) stYUM.iHeaderLen, SEEK_SET);
     }
 
-    /* sort the input files and centre frequency array in descending frequency
+    /* sort the input files and centre frequency array in ascending frequency
        order */
     for (i = 0; i < iNumBands; ++i)
     {
         for (j = i; j < iNumBands; ++j)
         {
-            if (pafCenFreq[j] > pafCenFreq[i])
+            if (pafCenFreq[j] < pafCenFreq[i])
             {
                 /* swap centre frequencies */
                 fTemp = pafCenFreq[i];
@@ -341,14 +341,16 @@ int main(int argc, char *argv[])
                    EXT_FIL);
 
     /* populate the YUM structure for output */
-    stYUM.fFMax = pafCenFreq[0];
-    stYUM.fFMin = pafCenFreq[iNumBands-1];
+    stYUM.fFMin = pafCenFreq[0];
+    stYUM.fFMax = pafCenFreq[iNumBands-1];
+    stYUM.fFCentre = stYUM.fFMin + (stYUM.fFMax - stYUM.fFMin) / 2;
     stYUM.fChanBW = stYUM.fBW;
     /* NOTE: min and max are centre frequencies of channels */
     stYUM.fBW = stYUM.fFMax - stYUM.fFMin + stYUM.fChanBW;
     stYUM.iNumChans = iNumBands;
     stYUM.cIsBandFlipped = YAPP_FALSE;
     /* write metadata to disk */
+    iFormat = YAPP_FORMAT_FIL;
     iRet = YAPP_WriteMetadata(acFileOut, iFormat, stYUM);
     if (iRet != YAPP_RET_SUCCESS)
     {
@@ -405,6 +407,17 @@ int main(int argc, char *argv[])
                            "ERROR: Memory allocation for X-axis failed! %s!\n",
                            strerror(errno));
             (void) fclose(pFOut);
+            YAPP_CleanUp();
+            return YAPP_RET_ERROR;
+        }
+        g_pfXAxisOld = (float *) YAPP_Malloc(iBlockSize,
+                                             sizeof(float),
+                                             YAPP_FALSE);
+        if (NULL == g_pfXAxisOld)
+        {
+            (void) fprintf(stderr,
+                           "ERROR: Memory allocation for X-axis failed! %s!\n",
+                           strerror(errno));
             YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
@@ -478,8 +491,13 @@ int main(int argc, char *argv[])
         --iNumReads;
         ++iReadBlockCount;
 
+        /* zero the output buffer */
+        (void) memset(g_pfOutBuf,
+                      '\0',
+                      sizeof(float) * iNumBands * iBlockSize);
+
         /* construct filterbank data */
-        for (i = 0; i < iBlockSize; ++i)
+        for (i = 0; i < iNumSamps; ++i)
         {
             pfSpectrum = g_pfOutBuf + i * iNumBands;
             for (j = 0; j < iNumBands; ++j)
@@ -678,8 +696,7 @@ int main(int argc, char *argv[])
  */
 void PrintUsage(const char *pcProgName)
 {
-    (void) printf("Usage: %s [options] <data-file-maxfreq> ... "
-                  "<data-file-minfreq>\n",
+    (void) printf("Usage: %s [options] <data-file-0> ...<data-file-1\n",
                   pcProgName);
     (void) printf("    -h  --help                           ");
     (void) printf("Display this usage information\n");
