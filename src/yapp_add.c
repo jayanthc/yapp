@@ -66,6 +66,9 @@ int main(int argc, char *argv[])
     char cCurChar = 0;
     int iNumSamps = 0;
     int iDiff = 0;
+    float fTemp = 0.0;
+    int iTemp = 0;
+    FILE *pFTemp = NULL;
     int *paiOffset = NULL;
     int i = 0;
     int j = 0;
@@ -256,6 +259,7 @@ int main(int argc, char *argv[])
     paiOffset[0] = 0;
     for (i = 1; i < iNumBands; ++i)
     {
+    #if 0
         /* basic check to see if the files are in proper frequency order */
         /* NOTE: this program supports frequency overlap, so compare with
                  pafMaxFreq[i-1] instead of pafMinFreq[i-1] */
@@ -266,6 +270,7 @@ int main(int argc, char *argv[])
             YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
+        #endif
         paiOffset[i] = CalcOffset(pafMaxFreq[0],
                                   pafMaxFreq[i],
                                   stYUM.dTSamp,
@@ -317,6 +322,39 @@ int main(int argc, char *argv[])
                      SEEK_CUR);
     }
 
+/* TODO: sorting bug */
+#if 1
+    /* sort the input files, maximum and minimum frequency arrays, and offset
+       array in descending frequency order */
+    for (i = 0; i < iNumBands; ++i)
+    {
+        for (j = i; j < iNumBands; ++j)
+        {
+            if (pafMaxFreq[j] > pafMaxFreq[i])
+            {
+                /* swap maximum frequencies */
+                fTemp = pafMaxFreq[i];
+                pafMaxFreq[i] = pafMaxFreq[j];
+                pafMaxFreq[j] = fTemp;
+
+                /* swap minimum frequencies */
+                fTemp = pafMinFreq[i];
+                pafMinFreq[i] = pafMinFreq[j];
+                pafMinFreq[j] = fTemp;
+
+                /* swap offsets */
+                iTemp = paiOffset[i];
+                paiOffset[i] = paiOffset[j];
+                paiOffset[j] = iTemp;
+
+                /* swap file handles */
+                pFTemp = ppFIn[i];
+                ppFIn[i] = ppFIn[j];
+                ppFIn[j] = pFTemp;
+            }
+        }
+    }
+#endif
     /* allocate memory for the buffer pointer array */
     g_ppfBuf = (float **) YAPP_Malloc((size_t) iNumBands,
                                       sizeof(float *),
@@ -546,7 +584,7 @@ int main(int argc, char *argv[])
                     g_pfXAxis[iBlockSize-1],
                     fDataMin,
                     fDataMax);
-            cpglab("Time (s)", "", "After Smoothing");
+            cpglab("Time (s)", "", "");
             cpgbox("BCNST", 0.0, 0, "BCNST", 0.0, 0);
             cpgsci(PG_CI_PLOT);
             cpgline(iBlockSize, g_pfXAxis, g_pfOutBuf);

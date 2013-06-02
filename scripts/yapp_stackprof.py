@@ -68,6 +68,14 @@ for o, a in Opts:
         PrintUsage(ProgName)
         sys.exit(1)
 
+# user input validation
+if (1 == len(sys.argv)):
+    ErrMsg = "No input given"
+    sys.stderr.write("ERROR: " + str(ErrMsg) + "!\n")
+    # print usage information and exit
+    PrintUsage(ProgName)
+    sys.exit(1)
+
 NBins = len(open(sys.argv[optind]).readlines()) - 4
 x = numpy.array([float(i) / NBins for i in range(NBins)])
 
