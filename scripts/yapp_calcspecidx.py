@@ -67,7 +67,7 @@ for o, a in Opts:
         PrintUsage(ProgName)
         sys.exit(1)
 
-NBins = len(open(sys.argv[optind]).readlines()) - 3
+NBins = len(open(sys.argv[optind]).readlines()) - 4
 x = numpy.array([float(i) / NBins for i in range(NBins)])
 
 onBin = int(on * NBins)
@@ -90,7 +90,9 @@ for i in range(NBands):
 hdr = open(sys.argv[optind])
 # skip centre frequency
 hdr.readline()
-# read bandwidth in MHz and convert to Hz
+# read the original channel bandwidth in MHz
+ChanBW = float((hdr.readline())[37:-5])
+# read the bandwidth in MHz and convert to Hz
 BW = float((hdr.readline())[37:-5]) * 1e6
 # read duration in seconds
 tObs = float((hdr.readline())[37:-3])

@@ -109,6 +109,7 @@ enum tagFileFormats
 #define INFIX_SUBBAND               "band"
 #define INFIX_ADD                   "sum"
 #define INFIX_FOLD                  "fold"
+#define INFIX_STACK                 "stack"
 
 #define SUFFIX_CFG                  "_cfg"
 

@@ -68,7 +68,7 @@ for o, a in Opts:
         PrintUsage(ProgName)
         sys.exit(1)
 
-NBins = len(open(sys.argv[optind]).readlines()) - 3
+NBins = len(open(sys.argv[optind]).readlines()) - 4
 x = numpy.array([float(i) / NBins for i in range(NBins)])
 
 onBin = int(on * NBins)
@@ -90,7 +90,9 @@ for i in range(NBands):
 hdr = open(sys.argv[optind])
 # skip centre frequency
 hdr.readline()
-# read bandwidth in MHz and convert to Hz
+# read the original channel bandwidth in MHz
+ChanBW = float((hdr.readline())[37:-5])
+# read the bandwidth in MHz and convert to Hz
 BW = float((hdr.readline())[37:-5]) * 1e6
 # read duration in seconds
 tObs = float((hdr.readline())[37:-3])
@@ -126,10 +128,18 @@ for i in range(NBands):
     # calibrate the profile
     profImg[i] = (profImg[i] - y) * C
 
-img = plotter.pcolormesh(x, f, profImg, cmap="hot")
-cbar = plotter.colorbar(img, orientation="vertical")
-cbar.set_label("Flux Density (Jy)")
+# matplotlib.pyplot.imshow() does not align the rows correctly with respect to
+# the centre frequency of the channels, so compute the lowest frequency per
+# channel, to pass to imshow()
+for i in range(NBands):
+    f[i] = f[i] - ((BW * 1e-6) / 2) + (ChanBW / 2)      # BW is in MHz
+
+img = plotter.imshow(profImg, origin="lower", aspect="auto", \
+                 interpolation="nearest", cmap="jet")
+img.set_extent([min(x), max(x), min(f), max(f) + (BW * 1e-6)])
 plotter.xlabel("Phase")
 plotter.ylabel("Frequency (MHz)")
+cbar = plotter.colorbar(img, orientation="vertical")
+cbar.set_label("Flux Density (Jy)")
 plotter.show()
 

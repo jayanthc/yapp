@@ -527,11 +527,12 @@ int main(int argc, char *argv[])
         (void) fseek(g_pFData, lBytesToSkip, SEEK_SET);
     }
 
+    pcFilename = YAPP_GetFilenameFromPath(pcFileData);
+
     /* open the PGPLOT graphics device */
     if (cPlotToFile)
     {
         /* build the name of the PGPLOT device */
-        pcFilename = YAPP_GetFilenameFromPath(pcFileData);
         (void) strcpy(acDev, pcFilename);
         (void) strcat(acDev, ".");
         (void) strcat(acDev, INFIX_FOLD);
@@ -1113,6 +1114,9 @@ int main(int argc, char *argv[])
             (void) fprintf(pFProfile,
                            "# Centre frequency                  : %.10g MHz\n",
                             stYUM.fFCentre);
+            (void) fprintf(pFProfile,
+                           "# Original channel bandwidth        : %.10g MHz\n",
+                            stYUM.fChanBW);
             (void) fprintf(pFProfile,
                            "# Bandwidth                         : %.10g MHz\n",
                            stYUM.fBW);
