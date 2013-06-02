@@ -500,20 +500,30 @@ int main(int argc, char *argv[])
 
         /* calculate statistics */
         /* original signal */
-        fMeanOrig = YAPP_CalcMean(g_pfBuf, iNumSamps - (iSampsPerWin - 1));
+        fMeanOrig = YAPP_CalcMean(g_pfBuf,
+                                  iNumSamps - (iSampsPerWin - 1),
+                                  0,
+                                  1);
         fMeanOrigAll += fMeanOrig;
         fRMSOrig = YAPP_CalcRMS(g_pfBuf,
                                 iNumSamps - (iSampsPerWin - 1),
+                                0,
+                                1,
                                 fMeanOrig);
         fRMSOrig *= fRMSOrig;
         fRMSOrig *= (iNumSamps - (iSampsPerWin - 1) - 1);
         fRMSOrigAll += fRMSOrig;
 
         /* baseline-subtracted signal */
-        fMeanBaseSubed = YAPP_CalcMean(g_pfOutBuf, iNumSamps - (iSampsPerWin - 1));
+        fMeanBaseSubed = YAPP_CalcMean(g_pfOutBuf,
+                                       iNumSamps - (iSampsPerWin - 1),
+                                       0,
+                                       1);
         fMeanBaseSubedAll += fMeanBaseSubed;
         fRMSBaseSubed = YAPP_CalcRMS(g_pfOutBuf,
-                                     iNumSamps - (iSampsPerWin - 1), 
+                                     iNumSamps - (iSampsPerWin - 1),
+                                     0,
+                                     1
                                      fMeanBaseSubed);
         fRMSBaseSubed *= fRMSBaseSubed;
         fRMSBaseSubed *= (iNumSamps - (iSampsPerWin - 1) - 1);

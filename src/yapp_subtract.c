@@ -537,21 +537,25 @@ int main(int argc, char *argv[])
                       pFOut);
 
         /* original signal */
-        fMeanOrig = YAPP_CalcMean(g_pfBufA, iNumSamps);
+        fMeanOrig = YAPP_CalcMean(g_pfBufA, iNumSamps, 0, 1);
         fMeanOrigAll += fMeanOrig;
         fRMSOrig = YAPP_CalcRMS(g_pfBufA,
                                 iNumSamps,
+                                0,
+                                1,
                                 fMeanOrig);
         fRMSOrig *= fRMSOrig;
         fRMSOrig *= (iNumSamps - 1);
         fRMSOrigAll += fRMSOrig;
 
         /* output signal */
-        fMeanSubed = YAPP_CalcMean(g_pfOutBuf, iNumSamps);
+        fMeanSubed = YAPP_CalcMean(g_pfOutBuf, iNumSamps, 0, 1);
         fMeanSubedAll += fMeanSubed;
         fRMSSubed = YAPP_CalcRMS(g_pfOutBuf,
-                                    iNumSamps,
-                                    fMeanSubed);
+                                 iNumSamps,
+                                 0,
+                                 1,
+                                 fMeanSubed);
         fRMSSubed *= fRMSSubed;
         fRMSSubed *= (iNumSamps - 1);
         fRMSSubedAll += fRMSSubed;

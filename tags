@@ -193,9 +193,9 @@ VER_BUILD_DELIM	src/yapp_makever.c	28;"	d	file:
 VER_BUILD_PREFIX	src/yapp_makever.c	27;"	d	file:
 YAPP_BYTE2BIT_FACTOR	src/yapp.h	102;"	d
 YAPP_CalcDelays	src/yapp_dedisperse.c	/^int YAPP_CalcDelays(double dDM,$/;"	f
-YAPP_CalcMean	src/yapp_common.c	/^float YAPP_CalcMean(float *pfBuf, int iLength)$/;"	f
+YAPP_CalcMean	src/yapp_common.c	/^float YAPP_CalcMean(float *pfBuf, int iLength, int iOffset, int iStride)$/;"	f
 YAPP_CalcMedian	src/yapp_common.c	/^float YAPP_CalcMedian(float *pfBuf, int iLength, float fOldMedian)$/;"	f
-YAPP_CalcRMS	src/yapp_common.c	/^float YAPP_CalcRMS(float *pfBuf, int iLength, float fMean)$/;"	f
+YAPP_CalcRMS	src/yapp_common.c	/^float YAPP_CalcRMS(float *pfBuf,$/;"	f
 YAPP_CalcRunningMean	src/yapp_common.c	/^float YAPP_CalcRunningMean(float *pfBuf, int iLength, float fOldMean)$/;"	f
 YAPP_CalcThresholdInSigmas	src/yapp_common.c	/^double YAPP_CalcThresholdInSigmas(int iTimeSamps)$/;"	f
 YAPP_CleanUp	src/yapp_common.c	/^void YAPP_CleanUp()$/;"	f

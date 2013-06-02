@@ -564,9 +564,13 @@ double YAPP_RAString2Double(char *pcRA);
 double YAPP_DecString2Double(char *pcDec);
 void YAPP_RADouble2String(double dRA, char *pcRA);
 void YAPP_DecDouble2String(double dDec, char *pcDec);
-float YAPP_CalcMean(float *pfBuf, int iLength);
+float YAPP_CalcMean(float *pfBuf, int iLength, int iOffset, int iStride);
 float YAPP_CalcRunningMean(float *pfBuf, int iLength, float fOldMean);
-float YAPP_CalcRMS(float *pfBuf, int iLength, float fMean);
+float YAPP_CalcRMS(float *pfBuf,
+                   int iLength,
+                   int iOffset,
+                   int iStride,
+                   float fMean);
 int YAPP_Compare(float *pfA, float *pfB);
 float YAPP_CalcMedian(float *pfBuf, int iLength, float fOldMedian);
 /*

@@ -1023,12 +1023,12 @@ int main(int argc, char *argv[])
                 pfSpectrum = pfPriBuf + i * iNumChans;
                 for (j = 0; j < iNumChans; ++j)
                 {
-                    g_pfPlotBuf[l] = pfSpectrum[j];
                     l = m + k * iBlockSize;
+                    g_pfPlotBuf[l] = pfSpectrum[j];
                     ++k;
                 }
                 k = 0;
-                l = ++m;
+                ++m;
             }
 
             Plot2D(g_pfPlotBuf, fDataMin, fDataMax,
@@ -1272,12 +1272,12 @@ int main(int argc, char *argv[])
                 pfSpectrum = pfPriBuf + i * iNumChans;
                 for (j = 0; j < iNumChans; ++j)
                 {
-                    g_pfPlotBuf[l] = pfSpectrum[j];
                     l = m + k * iBlockSize;
+                    g_pfPlotBuf[l] = pfSpectrum[j];
                     ++k;
                 }
                 k = 0;
-                l = ++m;
+                ++m;
             }
 
             Plot2D(g_pfPlotBuf, fDataMin, fDataMax,

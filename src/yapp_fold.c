@@ -351,6 +351,7 @@ int main(int argc, char *argv[])
         int iNumFold = (int) floor((double) MAX_SIZE_BLOCK_FOLD
                                    / iSampsPerPeriod);
         /* TODO: check for isampsperperiod > maxsizeblock */
+        /* TODO: might want to normalize by iNumFold instead of DEF_FOLD_PULSES */
         iBlockSize = iNumFold * iSampsPerPeriod;
      //   printf("ispp = %d, inf = %d, ibs = %d, inp = %d\n", iSampsPerPeriod, iNumFold, iBlockSize, iNumPulses);
         if (iNumPulses != 0)
@@ -795,8 +796,8 @@ int main(int argc, char *argv[])
         if ((YAPP_FORMAT_DTS_TIM == iFormat)
             || (YAPP_FORMAT_DTS_DAT == iFormat))    /* time series format */
         {
-            fMeanNoise = YAPP_CalcMean(g_pfBuf, iNumSamps);
-            fRMSNoise = YAPP_CalcRMS(g_pfBuf, iNumSamps, fMeanNoise);
+            fMeanNoise = YAPP_CalcMean(g_pfBuf, iNumSamps, 0, 1);
+            fRMSNoise = YAPP_CalcRMS(g_pfBuf, iNumSamps, 0, 1, fMeanNoise);
 
             /* fold data */
             if (0 == iNumPulses)
@@ -832,10 +833,8 @@ int main(int argc, char *argv[])
         }
         else    /* filterbank format */
         {
-            fMeanNoise = YAPP_CalcMean(g_pfBuf, iNumSamps * stYUM.iNumChans);
-            fRMSNoise = YAPP_CalcRMS(g_pfBuf,
-                                     iNumSamps * stYUM.iNumChans,
-                                     fMeanNoise);
+            float afMeanNoise[stYUM.iNumChans];
+            float afRMSNoise[stYUM.iNumChans];
 
             /* fold data */
             for (i = 0; i < iNumSamps; ++i)
@@ -849,7 +848,23 @@ int main(int argc, char *argv[])
                 pfProfSpec = g_pfProfBuf + j * stYUM.iNumChans;
                 for (k = 0; k < stYUM.iNumChans; ++k)
                 {
-                    pfProfSpec[k] += (((pfSpectrum[k] - fMeanNoise) / fRMSNoise)
+                    /* calculate these per channel, at the first sample
+                       of the block */
+                    if (0 == i)
+                    {
+                        afMeanNoise[k] = YAPP_CalcMean(g_pfBuf,
+                                                       iNumSamps,
+                                                       k,
+                                                       stYUM.iNumChans);
+                        afRMSNoise[k] = YAPP_CalcRMS(g_pfBuf,
+                                                     iNumSamps,
+                                                     k,
+                                                     stYUM.iNumChans,
+                                                     fMeanNoise);
+                    }
+
+                    pfProfSpec[k] += (((pfSpectrum[k] - afMeanNoise[k])
+                                       / afRMSNoise[k])
                                       / DEF_FOLD_PULSES);
                 }
                 ++lSampCount;
@@ -976,12 +991,12 @@ int main(int argc, char *argv[])
                 pfProfSpec = g_pfProfBuf + i * stYUM.iNumChans;
                 for (j = 0; j < stYUM.iNumChans; ++j)
                 {
-                    g_pfPlotBuf[l] = pfProfSpec[j];
                     l = m + k * iSampsPerPeriod;
+                    g_pfPlotBuf[l] = pfProfSpec[j];
                     ++k;
                 }
                 k = 0;
-                l = ++m;
+                ++m;
             }
 
             if (!cIsFirst)
