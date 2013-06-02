@@ -1,27 +1,29 @@
 /*
- * @file yapp_add.c
- * Program to coherently add dedispersed time series data for different
- *  frequency bands.
+ * @file yapp_stacktim.c
+ * Program to stack multiple sub-band time series to form a filterbank file.
+ *  This is useful when using 0-DM sub-band time series to see dispersion of
+ *  the pulsar signal.
  *
  * @verbatim
- * Usage: yapp_add [options] <data-file-maxfreq> ... <data-file-minfreq>
+ * Usage: yapp_stacktim [options] <data-file-0> ... <data-file-N-1>
  *     -h  --help                           Display this usage information
  *     -n  --nsamp <samples>                Number of samples read in one block
  *                                          (default is 4096 samples)
  *     -g  --graphics                       Turn on plotting
+ *     -m  --colour-map <name>              Colour map for plotting
+ *                                          (default is 'jet')
  *     -i  --invert                         Invert the background and foreground
  *                                          colours in plots
  *     -e  --non-interactive                Run in non-interactive mode
  *     -v  --version                        Display the version @endverbatim
  *
  * @author Jayanth Chennamangalam
- * @date 2013.03.24
+ * @date 2013.05.30
  */
 
 #include "yapp.h"
 #include "yapp_sigproc.h"   /* for SIGPROC filterbank file format support */
-
-int CalcOffset(float fFMax, float fFMin, double dTSamp, double dDM);
+#include "colourmap.h"
 
 /**
  * The build version string, maintained in the file version.c, which is
@@ -36,7 +38,9 @@ extern int g_iPGDev;
    termination, such as those triggered by SIGINT or SIGTERM */
 float **g_ppfBuf = NULL;
 float *g_pfOutBuf = NULL;
+float *g_pfPlotBuf = NULL;
 float *g_pfXAxis = NULL;
+float *g_pfXAxisOld = NULL;
 
 int main(int argc, char *argv[])
 {
@@ -47,12 +51,12 @@ int main(int argc, char *argv[])
     char acFileOut[LEN_GENSTRING] = {0};
     int iFormat = DEF_FORMAT;
     YUM_t stYUM = {{0}};
-    float *pafMaxFreq = NULL;
-    float *pafMinFreq = NULL;
+    float *pafCenFreq = NULL;
     int iBlockSize = DEF_SIZE_BLOCK;
     int iTotSampsPerBlock = 0;  /* iBlockSize */
     int iDataSizePerBlock = 0;  /* fSampSize * iBlockSize */
     double dTSampInSec = 0.0;   /* holds sampling time in s */
+    float *pfSpectrum = NULL;
     int iNumReads = 0;
     int iTotNumReads = 0;
     int iReadBlockCount = 0;
@@ -66,11 +70,17 @@ int main(int argc, char *argv[])
     char cCurChar = 0;
     int iNumSamps = 0;
     int iDiff = 0;
-    int *paiOffset = NULL;
+    float fTemp = 0.0;
+    FILE *pFTemp = NULL;
+    char cIsFirst = YAPP_TRUE;
     int i = 0;
     int j = 0;
+    int k = 0;
+    int l = 0;
+    int m = 0;
     char acLabel[LEN_GENSTRING] = {0};
     char cHasGraphics = YAPP_FALSE;
+    int iColourMap = DEF_CMAP;
     int iInvCols = YAPP_FALSE;
     char cIsNonInteractive = YAPP_FALSE;
     const char *pcProgName = NULL;
@@ -157,7 +167,7 @@ int main(int argc, char *argv[])
         return YAPP_RET_ERROR;
     }
 
-    /* only one file - no need to add */
+    /* only one file - can't stack */
     iNumBands = argc - optind;
     if (iNumBands == 1)
     {
@@ -199,36 +209,13 @@ int main(int argc, char *argv[])
     /* read metadata */
     /* NOTE: it is assumed that all files correspond to a single observation.
              the only information taken from all files except the last one is
-             the highest frequency. general metadata is read from the last
+             the centre frequency. general metadata is read from the last
              file */
     /* allocate memory for the frequency array */
-    pafMaxFreq = (float *) YAPP_Malloc((size_t) iNumBands,
+    pafCenFreq = (float *) YAPP_Malloc((size_t) iNumBands,
                                     sizeof(float),
                                     YAPP_FALSE);
-    if (NULL == pafMaxFreq)
-    {
-        (void) fprintf(stderr,
-                       "ERROR: Memory allocation failed! %s!\n",
-                       strerror(errno));
-        YAPP_CleanUp();
-        return YAPP_RET_ERROR;
-    }
-    pafMinFreq = (float *) YAPP_Malloc((size_t) iNumBands,
-                                    sizeof(float),
-                                    YAPP_FALSE);
-    if (NULL == pafMinFreq)
-    {
-        (void) fprintf(stderr,
-                       "ERROR: Memory allocation failed! %s!\n",
-                       strerror(errno));
-        YAPP_CleanUp();
-        return YAPP_RET_ERROR;
-    }
-    /* allocate memory for the offsets array */
-    paiOffset = (int *) YAPP_Malloc((size_t) iNumBands,
-                                    sizeof(int),
-                                    YAPP_FALSE);
-    if (NULL == paiOffset)
+    if (NULL == pafCenFreq)
     {
         (void) fprintf(stderr,
                        "ERROR: Memory allocation failed! %s!\n",
@@ -248,28 +235,7 @@ int main(int argc, char *argv[])
             YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
-        pafMaxFreq[i-optind] = stYUM.fFMax;
-        pafMinFreq[i-optind] = stYUM.fFMin;
-    }
-    /* calculate the maximum offsets in each band, relative to the highest
-       frequency one */
-    paiOffset[0] = 0;
-    for (i = 1; i < iNumBands; ++i)
-    {
-        /* basic check to see if the files are in proper frequency order */
-        /* NOTE: this program supports frequency overlap, so compare with
-                 pafMaxFreq[i-1] instead of pafMinFreq[i-1] */
-        if (stYUM.fFMax > pafMaxFreq[i-1])
-        {
-            (void) fprintf(stderr,
-                           "ERROR: Files not in correct order!\n");
-            YAPP_CleanUp();
-            return YAPP_RET_ERROR;
-        }
-        paiOffset[i] = CalcOffset(pafMaxFreq[0],
-                                  pafMaxFreq[i],
-                                  stYUM.dTSamp,
-                                  stYUM.dDM);
+        pafCenFreq[i-optind] = stYUM.fFCentre;
     }
 
     /* convert sampling interval to seconds */
@@ -310,11 +276,27 @@ int main(int argc, char *argv[])
 
         /* skip the header */
         (void) fseek(ppFIn[i-optind], (long) stYUM.iHeaderLen, SEEK_SET);
+    }
 
-        /* skip the offsets */
-        (void) fseek(ppFIn[i-optind],
-                     (long) (paiOffset[i-optind] * stYUM.fSampSize),
-                     SEEK_CUR);
+    /* sort the input files and centre frequency array in ascending frequency
+       order */
+    for (i = 0; i < iNumBands; ++i)
+    {
+        for (j = i; j < iNumBands; ++j)
+        {
+            if (pafCenFreq[j] < pafCenFreq[i])
+            {
+                /* swap centre frequencies */
+                fTemp = pafCenFreq[i];
+                pafCenFreq[i] = pafCenFreq[j];
+                pafCenFreq[j] = fTemp;
+
+                /* swap file handles */
+                pFTemp = ppFIn[i];
+                ppFIn[i] = ppFIn[j];
+                ppFIn[j] = pFTemp;
+            }
+        }
     }
 
     /* allocate memory for the buffer pointer array */
@@ -355,22 +337,20 @@ int main(int argc, char *argv[])
     (void) sprintf(acFileOut,
                    "%s.%s%s",
                    pcFileOut,
-                   INFIX_ADD,
-                   EXT_TIM);
+                   INFIX_STACK,
+                   EXT_FIL);
 
     /* populate the YUM structure for output */
-    stYUM.fFMax = pafMaxFreq[0];
-    stYUM.fFMin = pafMinFreq[iNumBands-1];
+    stYUM.fFMin = pafCenFreq[0];
+    stYUM.fFMax = pafCenFreq[iNumBands-1];
+    stYUM.fFCentre = stYUM.fFMin + (stYUM.fFMax - stYUM.fFMin) / 2;
+    stYUM.fChanBW = stYUM.fBW;
     /* NOTE: min and max are centre frequencies of channels */
     stYUM.fBW = stYUM.fFMax - stYUM.fFMin + stYUM.fChanBW;
-    /* spoof filterbank-related parameters so that YAPP_ReadSIGPROCHeader()
-       will compute the minimum and maximum frequencies correctly for the
-       output .tim file
-       NOTE: the number of channels and channel bandwidth need to be modified
-       here to preserve the min and max frequencies and bandwidth */
-    stYUM.iNumChans = (int) roundf(stYUM.fBW / stYUM.fChanBW);
-    stYUM.fChanBW = stYUM.fBW / stYUM.iNumChans;
+    stYUM.iNumChans = iNumBands;
+    stYUM.cIsBandFlipped = YAPP_FALSE;
     /* write metadata to disk */
+    iFormat = YAPP_FORMAT_FIL;
     iRet = YAPP_WriteMetadata(acFileOut, iFormat, stYUM);
     if (iRet != YAPP_RET_SUCCESS)
     {
@@ -430,10 +410,21 @@ int main(int argc, char *argv[])
             YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
+        g_pfXAxisOld = (float *) YAPP_Malloc(iBlockSize,
+                                             sizeof(float),
+                                             YAPP_FALSE);
+        if (NULL == g_pfXAxisOld)
+        {
+            (void) fprintf(stderr,
+                           "ERROR: Memory allocation for X-axis failed! %s!\n",
+                           strerror(errno));
+            YAPP_CleanUp();
+            return YAPP_RET_ERROR;
+        }
     }
 
-    /* allocate memory for the accumulation buffer */
-    g_pfOutBuf = (float *) YAPP_Malloc((size_t) iBlockSize,
+    /* allocate memory for the filterbank buffer */
+    g_pfOutBuf = (float *) YAPP_Malloc((size_t) stYUM.iNumChans * iBlockSize,
                                        sizeof(float),
                                        YAPP_TRUE);
     if (NULL == g_pfOutBuf)
@@ -443,6 +434,20 @@ int main(int argc, char *argv[])
                        "%s!\n",
                        strerror(errno));
         (void) fclose(pFOut);
+        YAPP_CleanUp();
+        return YAPP_RET_ERROR;
+    }
+
+    /* allocate memory for the cpgimag() plotting buffer */
+    g_pfPlotBuf = (float *) YAPP_Malloc((stYUM.iNumChans * iBlockSize),
+                                        sizeof(float),
+                                        YAPP_FALSE);
+    if (NULL == g_pfPlotBuf)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Memory allocation for plot buffer failed! "
+                       "%s!\n",
+                       strerror(errno));
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
@@ -486,28 +491,32 @@ int main(int argc, char *argv[])
         --iNumReads;
         ++iReadBlockCount;
 
-        /* zero the accumulator */
-        (void) memset(g_pfOutBuf, '\0', sizeof(float) * iBlockSize);
-        /* sum the time series */
-        for (i = 0; i < iBlockSize; ++i)
+        /* zero the output buffer */
+        (void) memset(g_pfOutBuf,
+                      '\0',
+                      sizeof(float) * iNumBands * iBlockSize);
+
+        /* construct filterbank data */
+        for (i = 0; i < iNumSamps; ++i)
         {
+            pfSpectrum = g_pfOutBuf + i * iNumBands;
             for (j = 0; j < iNumBands; ++j)
             {
-                g_pfOutBuf[i] += g_ppfBuf[j][i];
+                pfSpectrum[j] = g_ppfBuf[j][i];
             }
         }
 
         /* write summed data to file */
         (void) fwrite(g_pfOutBuf,
                       sizeof(float),
-                      (long) iNumSamps,
+                      (long) iNumSamps * iNumBands,
                       pFOut);
 
         if (cHasGraphics)
         {
             fDataMin = g_pfOutBuf[0];
             fDataMax = g_pfOutBuf[0];
-            for (i = 0; i < iNumSamps; ++i)
+            for (i = 0; i < (iNumSamps * iNumBands); ++i)
             {
                 if (g_pfOutBuf[i] < fDataMin)
                 {
@@ -526,26 +535,63 @@ int main(int argc, char *argv[])
                           fDataMax);
             #endif
 
-            /* erase just before plotting, to reduce flicker */
-            cpgeras();
             for (i = 0; i < iBlockSize; ++i)
             {
+                g_pfXAxisOld[i] = g_pfXAxis[i];
                 g_pfXAxis[i] = (float) (((iReadBlockCount - 1)
                                             * iBlockSize
                                             * dTSampInSec)
                                            + (i * dTSampInSec));
             }
 
-            cpgsvp(PG_VP_ML, PG_VP_MR, PG_VP_MB, PG_VP_MT);
-            cpgswin(g_pfXAxis[0],
-                    g_pfXAxis[iBlockSize-1],
-                    fDataMin,
-                    fDataMax);
-            cpglab("Time (s)", "", "");
-            cpgbox("BCNST", 0.0, 0, "BCNST", 0.0, 0);
-            cpgsci(PG_CI_PLOT);
-            cpgline(iBlockSize, g_pfXAxis, g_pfOutBuf);
+            /* get the transpose of the two-dimensional array */
+            i = 0;
+            j = 0;
+            k = 0;
+            for (l = 0; l < iBlockSize; ++l)
+            {
+                pfSpectrum = g_pfOutBuf + l * stYUM.iNumChans;
+                for (m = 0; m < stYUM.iNumChans; ++m)
+                {
+                    j = k + i * iBlockSize;
+                    g_pfPlotBuf[j] = pfSpectrum[m];
+                    ++i;
+                }
+                i = 0;
+                ++k;
+            }
+
+            /* erase the previous x-axis */
+            if (!cIsFirst && !cIsNonInteractive)   /* kludge */
+            {
+                cpgsvp(PG_2D_VP_ML, PG_2D_VP_MR, PG_2D_VP_MB, PG_2D_VP_MT);
+                cpgswin(g_pfXAxisOld[0],
+                        g_pfXAxisOld[iBlockSize-1],
+                        pafCenFreq[0],
+                        pafCenFreq[stYUM.iNumChans-1]);
+            }
+            cpgsci(0);      /* background */
+            cpgaxis("N",
+                    g_pfXAxisOld[0], pafCenFreq[0],
+                    g_pfXAxisOld[iBlockSize-1], pafCenFreq[0],
+                    g_pfXAxisOld[0], g_pfXAxisOld[iBlockSize-1],
+                    0.0,
+                    0,
+                    0.5,
+                    0.0,
+                    0.5,
+                    0.5,
+                    0);
+            cpgbox("CST", 0.0, 0, "CST", 0.0, 0);
+            cIsFirst = YAPP_FALSE;
             cpgsci(PG_CI_DEF);
+            Plot2D(g_pfPlotBuf, fDataMin, fDataMax,
+                   g_pfXAxis, iBlockSize, dTSampInSec,
+                   pafCenFreq, stYUM.iNumChans, stYUM.fChanBW,
+                   "Time - Start Time (s)",
+                   "Frequency (MHz)",
+                   "Dynamic Spectrum",
+                   iColourMap);
 
             /* display the plot number */
             /* TODO: bug - in maximized window, plot not proper  */
@@ -646,30 +692,11 @@ int main(int argc, char *argv[])
 
 
 /*
- * Calculate start offset for a band
- */
-int CalcOffset(float fFMax, float fFMin, double dTSamp, double dDM)
-{
-    double dDelay = 0.0;
-    int iOffset = 0;
-
-    dDelay = (double) -4.148741601e6
-             * (((double) 1.0 / pow(fFMax, 2.0))
-                - ((double) 1.0 / pow(fFMin, 2.0)))
-             * dDM;    /* in ms */
-    iOffset = (int) (dDelay / dTSamp);
-
-    return iOffset;
-}
-
-
-/*
  * Prints usage information
  */
 void PrintUsage(const char *pcProgName)
 {
-    (void) printf("Usage: %s [options] <data-file-maxfreq> ... "
-                  "<data-file-minfreq>\n",
+    (void) printf("Usage: %s [options] <data-file-0> ...<data-file-1\n",
                   pcProgName);
     (void) printf("    -h  --help                           ");
     (void) printf("Display this usage information\n");
@@ -679,6 +706,10 @@ void PrintUsage(const char *pcProgName)
     (void) printf("(default is 4096 samples)\n");
     (void) printf("    -g  --graphics                       ");
     (void) printf("Turn on plotting\n");
+    (void) printf("    -m  --colour-map <name>              ");
+    (void) printf("Colour map for plotting\n");
+    (void) printf("                                         ");
+    (void) printf("(default is 'jet')\n");
     (void) printf("    -i  --invert                         ");
     (void) printf("Invert background and foreground\n");
     (void) printf("                                         ");

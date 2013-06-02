@@ -69,7 +69,7 @@ for o, a in Opts:
         sys.exit(1)
 
 if (0.0 == TSamp):
-    ErrMsg = "Sampling time not specified!"
+    ErrMsg = "Sampling time not specified"
     sys.stderr.write("ERROR: " + str(ErrMsg) + "!\n")
     # print usage information and exit
     PrintUsage(ProgName)

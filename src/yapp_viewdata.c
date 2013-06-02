@@ -733,12 +733,12 @@ int main(int argc, char *argv[])
                 pfSpectrum = g_pfBuf + l * stYUM.iNumChans;
                 for (m = 0; m < stYUM.iNumChans; ++m)
                 {
-                    g_pfPlotBuf[j] = pfSpectrum[m];
                     j = k + i * iBlockSize;
+                    g_pfPlotBuf[j] = pfSpectrum[m];
                     ++i;
                 }
                 i = 0;
-                j = ++k;
+                ++k;
             }
 
             /* erase the previous x-axis */

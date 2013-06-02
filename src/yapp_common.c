@@ -2079,12 +2079,12 @@ int YAPP_Smooth(float* pfInBuf,
 /*
  * Calculate signal mean
  */
-float YAPP_CalcMean(float *pfBuf, int iLength)
+float YAPP_CalcMean(float *pfBuf, int iLength, int iOffset, int iStride)
 {
     float fMean = 0.0;
     int i = 0;
 
-    for (i = 0; i < iLength; ++i)
+    for (i = iOffset; i < iLength; i += iStride)
     {
         fMean += pfBuf[i];
     }
@@ -2097,12 +2097,16 @@ float YAPP_CalcMean(float *pfBuf, int iLength)
 /*
  * Calculate signal standard deviation
  */
-float YAPP_CalcRMS(float *pfBuf, int iLength, float fMean)
+float YAPP_CalcRMS(float *pfBuf,
+                   int iLength,
+                   int iOffset,
+                   int iStride,
+                   float fMean)
 {
     float fRMS = 0.0;
     int i = 0;
 
-    for (i = 0; i < iLength; ++i)
+    for (i = iOffset; i < iLength; i += iStride)
     {
         fRMS += powf((pfBuf[i] - fMean), 2);
     }
@@ -2230,7 +2234,7 @@ int YAPP_RegisterSignalHandlers()
  */
 void YAPP_HandleStopSignals(int iSigNo)
 {
-    printf("\n");
+    (void) printf("\n");
 
     /* clean up */
     YAPP_CleanUp();

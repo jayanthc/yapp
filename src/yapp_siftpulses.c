@@ -424,8 +424,8 @@ int main(int argc, char *argv[])
             for (i = 0; i < iNumDMs; ++i)
             {
                 /* TODO: compute the median instead of the mean */
-                fMedian = YAPP_CalcMean(g_ppfBuf[i], iNumSamps);
-                fRMS = YAPP_CalcRMS(g_ppfBuf[i], iNumSamps, fMedian);
+                fMedian = YAPP_CalcMean(g_ppfBuf[i], iNumSamps, 0, 1);
+                fRMS = YAPP_CalcRMS(g_ppfBuf[i], iNumSamps, 0, 1, fMedian);
             }
             (void) printf("Mean: %g\n", fMedian);
             (void) printf("Standard deviation: %g\n", fRMS);

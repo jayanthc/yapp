@@ -1,8 +1,8 @@
 .\#
 .\# Yet Another Pulsar Processor Commands
-.\# yapp_siftpulses Manual Page
+.\# yapp_stacktim Manual Page
 .\#
-.\# Created by Jayanth Chennamangalam on 2013.05.09
+.\# Created by Jayanth Chennamangalam on 2013.06.02
 .\#
 
 .TH YAPP_SIFTPULSES 1 "2013-06-02" "YAPP 3.4-beta" \
@@ -10,20 +10,19 @@
 
 
 .SH NAME
-yapp_siftpulses \- searches for signal excursions beyond a specified threshold
+yapp_stacktim \- stack time series data to form filterbank data
 
 
 .SH SYNOPSIS
-.B yapp_siftpulses
+.B yapp_stacktim
 [options]
-.I data-file-dm0 ... data-file-dmN-1
+.I data-file-0 ... data-file-N-1
 
 
 .SH DESCRIPTION
-Searches for signal excursions beyond a specified threshold, in a series of \
-time series data, dedispersed for a range of Dispersion Measures (DMs). The \
-time series files can be input in any order of DM. The data files should be \
-in the SIGPROC .tim format.
+Stacks time series data (such as those created using sub-band dedispersion) \
+to form filterbank data. The time series files can be input in any order of \
+frequency. The data files should be in the SIGPROC .tim format.
 
 
 .SH OPTIONS
@@ -34,11 +33,14 @@ Display a short help text.
 .B \-n, --nsamp \fIsamples
 Number of time samples read in one block (default is 4096 samples).
 .TP
-.B \-t, --threshold
-Threshold in sigmas.
-.TP
 .B \-g, --graphics
 Turn on plotting.
+.TP
+.B \-m, --colour-map \fIname
+Colour map for plotting. Supports some of the standard MATLAB colour maps, \
+plus a few more. Valid colour map names are 'autumn', 'blue', 'bone', \
+\'cool', 'copper', 'gray', 'gray-inv', 'hot', 'jet', 'pink', 'spring', \
+\'summer', and 'winter' (default is 'jet').
 .TP
 .B \-i, --invert
 Invert background and foreground colours in plots.
@@ -57,11 +59,11 @@ The data file name may be a composed of standard shell wildcards such as * or \
 
 .SH EXAMPLE
 .TP
-Sifts the time series in data.dm0.tim, data.dm1.tim, ..., data.dm100.tim for \
-pulses above a 6-sigma threshold, assuming that there are no other files in \
-the current directory that match the wildcard expansion of 'data.dm*.tim'.
+Stacks the time series in data.band0.tim, data.band1.tim, ..., \
+data.band100.tim, assuming that there are no other files in the current \
+directory that match the wildcard expansion of 'data.band*.tim'.
 .TP
-yapp_siftpulses -t 6 data.dm*.tim
+yapp_stacktim data.band*.tim
 
 
 .SH SEE ALSO

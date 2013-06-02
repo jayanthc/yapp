@@ -104,6 +104,7 @@ enum tagFileFormats
 #define INFIX_SUBBAND               "band"
 #define INFIX_ADD                   "sum"
 #define INFIX_FOLD                  "fold"
+#define INFIX_STACK                 "stack"
 
 #define SUFFIX_CFG                  "_cfg"
 
@@ -550,8 +551,12 @@ double YAPP_RAString2Double(char *pcRA);
 double YAPP_DecString2Double(char *pcDec);
 void YAPP_RADouble2String(double dRA, char *pcRA);
 void YAPP_DecDouble2String(double dDec, char *pcDec);
-float YAPP_CalcMean(float *pfBuf, int iLength);
-float YAPP_CalcRMS(float *pfBuf, int iLength, float fMean);
+float YAPP_CalcMean(float *pfBuf, int iLength, int iOffset, int iStride);
+float YAPP_CalcRMS(float *pfBuf,
+                   int iLength,
+                   int iOffset,
+                   int iStride,
+                   float fMean);
 /*
  * The memory allocator
  */
