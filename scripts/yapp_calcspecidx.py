@@ -20,15 +20,18 @@ def PrintUsage(ProgName):
     print "    -n  --onstart <phase>      Start phase of pulse"
     print "    -f  --onstop <phase>       End phase of pulse"
     print "    -b  --basefit              Do polynomial fit baseline subtraction"
+    print "    -l  --show-legend          Show legend"
     return
 
 # defaults
-polyfit = False
+doPolyfit = False
+showLegend = False
 
 # get the command line arguments
 ProgName = sys.argv[0]
-OptsShort = "hT:G:p:n:f:b"
-OptsLong = ["help", "tsys=", "gain=", "npol=", "onstart=", "onstop=", "basefit"]
+OptsShort = "hT:G:p:n:f:bl"
+OptsLong = ["help", "tsys=", "gain=", "npol=", "onstart=", "onstop=",         \
+            "basefit", "show-legend"]
 
 # get the arguments using the getopt module
 try:
@@ -61,7 +64,10 @@ for o, a in Opts:
         off = float(a)
         optind = optind + 2
     elif o in ("-b", "--basefit"):
-        polyfit = True
+        doPolyfit = True
+        optind = optind + 1
+    elif o in ("-l", "--show-legend"):
+        showLegend = True
         optind = optind + 1
     else:
         PrintUsage(ProgName)
@@ -118,7 +124,7 @@ for i in range(NBands):
     baseline = prof.copy()
     baseline[onBin:offBin] = numpy.median(prof)
 
-    if polyfit:
+    if doPolyfit:
         # flatten the baseline using a 4th-degree polynomial fit 
         fit = numpy.polyfit(x, baseline, 4)
         y = fit[0] * x**4 + fit[1] * x**3 + fit[2] * x**2 + fit[3] * x + fit[4]
@@ -148,7 +154,8 @@ for i in range(NBands):
     plotter.ylabel("Flux Density (mJy)")
     i = i + 1
 
-plotter.legend(loc="best")
+if showLegend:
+    plotter.legend(loc="best")
 
 # create flux density versus frequency subplot
 plotter.subplot(122)

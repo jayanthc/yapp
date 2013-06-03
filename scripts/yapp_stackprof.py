@@ -21,15 +21,18 @@ def PrintUsage(ProgName):
     print "    -n  --onstart <phase>      Start phase of pulse"
     print "    -f  --onstop <phase>       End phase of pulse"
     print "    -b  --basefit              Do polynomial fit baseline subtraction"
+    print "    -l  --line                 1D stacked plots instead of 2D image"
     return
 
 # defaults
-polyfit = False
+doPolyfit = False
+showLinePlot = False
 
 # get the command line arguments
 ProgName = sys.argv[0]
-OptsShort = "hT:G:p:n:f:b"
-OptsLong = ["help", "tsys=", "gain=", "npol=", "onstart=", "onstop=", "basefit"]
+OptsShort = "hT:G:p:n:f:bl"
+OptsLong = ["help", "tsys=", "gain=", "npol=", "onstart=", "onstop=",         \
+            "basefit", "line"]
 
 # get the arguments using the getopt module
 try:
@@ -62,7 +65,10 @@ for o, a in Opts:
         off = float(a)
         optind = optind + 2
     elif o in ("-b", "--basefit"):
-        polyfit = True
+        doPolyfit = True
+        optind = optind + 1
+    elif o in ("-l", "--line"):
+        showLinePlot = True
         optind = optind + 1
     else:
         PrintUsage(ProgName)
@@ -118,7 +124,7 @@ for i in range(NBands):
     baseline = profImg[i].copy()
     baseline[onBin:offBin] = numpy.median(profImg[i])
 
-    if polyfit:
+    if doPolyfit:
         # flatten the baseline using a 4th-degree polynomial fit 
         fit = numpy.polyfit(x, baseline, 4)
         y = fit[0] * x**4 + fit[1] * x**3 + fit[2] * x**2 + fit[3] * x + fit[4]
@@ -142,12 +148,27 @@ for i in range(NBands):
 for i in range(NBands):
     f[i] = f[i] - ((BW * 1e-6) / 2) + (ChanBW / 2)      # BW is in MHz
 
-img = plotter.imshow(profImg, origin="lower", aspect="auto", \
-                 interpolation="nearest", cmap="jet")
-img.set_extent([min(x), max(x), min(f), max(f) + (BW * 1e-6)])
+if showLinePlot:
+    offset = 2 * numpy.std(profImg)
+    if NBands < 10:
+        numTicks = NBands
+    else:
+        numTicks = 10   # don't want more than 10 ticks on the y-axis
+    step = int(math.ceil(float(NBands) / numTicks))
+    yticks = numpy.array([i * offset for i in range(0, NBands, step)])
+    ylabels = f[::step]
+    for i in range(NBands):
+        profImg[i] = profImg[i] + (i * offset)
+        plotter.plot(x, profImg[i])
+        plotter.yticks(yticks, map(lambda val: "%.1f" % val, f))
+else:
+    img = plotter.imshow(profImg, origin="lower", aspect="auto", \
+                     interpolation="nearest", cmap="jet")
+    img.set_extent([min(x), max(x), min(f), max(f) + (BW * 1e-6)])
+    cbar = plotter.colorbar(img, orientation="vertical")
+    cbar.set_label("Flux Density (Jy)")
+
 plotter.xlabel("Phase")
 plotter.ylabel("Frequency (MHz)")
-cbar = plotter.colorbar(img, orientation="vertical")
-cbar.set_label("Flux Density (Jy)")
 plotter.show()
 
