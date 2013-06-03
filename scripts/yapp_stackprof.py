@@ -149,7 +149,7 @@ for i in range(NBands):
     f[i] = f[i] - ((BW * 1e-6) / 2) + (ChanBW / 2)      # BW is in MHz
 
 if showLinePlot:
-    offset = numpy.amax(profImg) / 10
+    offset = 2 * numpy.std(profImg)
     if NBands < 10:
         numTicks = NBands
     else:

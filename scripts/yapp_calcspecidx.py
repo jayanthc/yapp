@@ -165,6 +165,7 @@ plotter.subplot(122)
 
 f = numpy.log10(f)
 # make sure the values within log10 are > 0
+SMeanOrig = SMean.copy()
 SMean = SMean + abs(min(SMean)) + 1
 SMean = numpy.log10(SMean)
 
@@ -175,7 +176,7 @@ specIdxLine = specIdxFit[0] * f + specIdxFit[1]
 plotter.scatter(f, SMean)
 plotter.plot(f, specIdxLine, "r")
 #ticks, labels = plotter.yticks()
-#plotter.yticks(ticks, map(lambda val: "%.3f" % val, ticks * 1e3))
+#plotter.yticks(SMeanOrig, map(lambda val: "%.1f" % val, SMeanOrig * 1e3))
 plotter.xlabel("log10(Frequency (MHz))")
 plotter.ylabel("log10(Mean Flux Density (Jy) + X)")
 
