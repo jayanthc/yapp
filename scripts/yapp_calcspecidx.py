@@ -115,6 +115,7 @@ hdr.close()
 # create calibrated folded profile subplot
 plotter.subplot(121)
 
+print "Mean flux densities:"
 for i in range(NBands):
     # read raw profile
     prof = numpy.loadtxt(Bands[i][1], dtype=numpy.float32,                    \
@@ -145,6 +146,7 @@ for i in range(NBands):
     # calculate peak and mean flux density
     SPeak = numpy.max(prof)
     SMean[i] = numpy.sum(prof[onBin:offBin]) / NBins
+    print str("%.1f" % f[i]) + " MHz: ", str("%.1f" % (SMean[i] * 1e6)) + " uJy"
 
     plotLabel = str(f[i]) + " MHz"
     plotter.plot(x, prof, label=plotLabel)
@@ -160,13 +162,9 @@ if showLegend:
 # create flux density versus frequency subplot
 plotter.subplot(122)
 
-#blah = f.copy()
-#bleh = SMean.copy()
-
 f = numpy.log10(f)
-# make sure the values within log10 are > 0
-SMeanOrig = SMean.copy()
-SMean = SMean + abs(min(SMean)) + 1
+# make sure the values within log10 are > 0 by converting to microJy
+SMean = SMean * 1e6
 SMean = numpy.log10(SMean)
 
 # do a linear fit
@@ -175,10 +173,21 @@ specIdxLine = specIdxFit[0] * f + specIdxFit[1]
 
 plotter.scatter(f, SMean)
 plotter.plot(f, specIdxLine, "r")
-#ticks, labels = plotter.yticks()
-#plotter.yticks(SMeanOrig, map(lambda val: "%.1f" % val, SMeanOrig * 1e3))
-plotter.xlabel("log10(Frequency (MHz))")
-plotter.ylabel("log10(Mean Flux Density (Jy) + X)")
+# get the y-axis tick labels in non-log10
+ticks, labels = plotter.yticks()
+labels = [str("%.1f" % i) for i in 10**ticks]
+plotter.yticks(ticks, labels)
+plotter.ylabel("Mean Flux Density ($\mu$Jy)")
+# get the x-axis tick labels in non-log10
+ticks, labels = plotter.xticks()
+# convert units as appropriate
+if min(10**f) > 1e3:    # if 10**f is in 1000 MHz (1 GHz)
+    labels = [str("%.1f" % (i * 1e-3)) for i in 10**ticks]
+    plotter.xlabel("Frequency (GHz)")
+else:
+    labels = [str("%.1f" % i) for i in 10**ticks]
+    plotter.xlabel("Frequency (MHz)")
+plotter.xticks(ticks, labels)
 
 # make sure the values within log10 are > 0
 specIdxLine = specIdxLine + abs(min(specIdxLine)) + 1
