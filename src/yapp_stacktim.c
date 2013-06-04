@@ -696,7 +696,7 @@ int main(int argc, char *argv[])
  */
 void PrintUsage(const char *pcProgName)
 {
-    (void) printf("Usage: %s [options] <data-file-0> ...<data-file-1\n",
+    (void) printf("Usage: %s [options] <data-file-0> ...<data-file-1>\n",
                   pcProgName);
     (void) printf("    -h  --help                           ");
     (void) printf("Display this usage information\n");
