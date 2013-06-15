@@ -17,15 +17,24 @@ import matplotlib.pyplot as plotter
 def PrintUsage(ProgName):
     "Prints usage information."
     print "Usage: " + ProgName + " [options]"
-    print "    -h  --help                 Display this usage information"
-    print "    -n  --nfft <nfft>          Length of FFT used in yapp_filter"
-    print "                               (default is 4096)"
-    print "    -t  --tsamp <tsamp>        Sampling time in seconds"
-    print "    -l  --lower <freq>         Lower cut-off frequency in Hz"
-    print "                               (default is 0.1 Hz)"
-    print "    -u  --upper <freq>         Upper cut-off frequency in Hz"
-    print "                               (default is 1000 Hz)"
-    print "    -g  --graphics             Turn on graphics"
+    print "    -h  --help                           ",                        \
+          "Display this usage information"
+    print "    -n  --nfft <nfft>                    ",                        \
+          "Length of FFT used in yapp_filter\n",                              \
+          "                                         ",                        \
+          "(default is 4096)"
+    print "    -t  --tsamp <tsamp>                  ",                        \
+          "Sampling time in seconds"
+    print "    -l  --lower <freq>                   ",                        \
+          "Lower cut-off frequency in Hz\n",                                  \
+          "                                         ",                        \
+          "(default is 0.1 Hz)"
+    print "    -u  --upper <freq>                   ",                        \
+          "Upper cut-off frequency in Hz\n",                                  \
+          "                                         ",                        \
+          "(default is 1000 Hz)"
+    print "    -g  --graphics                       ",                        \
+          "Turn on graphics"
     return
 
 # default values
