@@ -39,6 +39,7 @@ YAPP includes the following scripts:
                               series files corresponding to multiple bands.
     yapp_stackprof.py       : Stacks folded profiles from multiple bands to
                               show a plot of phase versus frequency.
+    yapp_addprof.py         : Add [calibrated] profiles from two polarisations.
 
 The supported file formats are are DAS '.spec', SIGPROC '.fil', and SIGPROC
 '.tim', with limited support for DAS '.dds', PSRFITS, and PRESTO '.dat'.

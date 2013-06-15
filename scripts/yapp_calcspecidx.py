@@ -166,8 +166,11 @@ for i in range(NBands):
     # calculate peak and mean flux density
     SPeak = numpy.max(prof)
     SMean[i] = numpy.sum(prof[onBin:offBin]) / NBins
-    DeltaSMean[i] = numpy.sqrt(((len(prof[onBin:offBin]) * DeltaS[i] * DeltaS[i]) / (NBins * NBins)))# + (2 * DeltaS[i]))
-    print str("%.3f" % f[i]) + " MHz: ", str("%.3f" % (SMean[i] * 1e6)) + "+/-" + str("%.3f" % (DeltaSMean[i] * 1e6)) + " uJy"
+    lenPulse = len(prof[onBin:offBin])
+    # derived using propagation of errors
+    DeltaSMean[i] = (DeltaS[i] * numpy.sqrt(lenPulse + 2)) / NBins
+    print str("%.3f" % f[i]) + " MHz: ", str("%.3f" % (SMean[i] * 1e6))       \
+          + "+/-" + str("%.3f" % (DeltaSMean[i] * 1e6)) + " uJy"
 
     plotLabel = str(f[i]) + " MHz"
     plotter.plot(x, prof, label=plotLabel)
