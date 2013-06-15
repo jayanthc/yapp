@@ -1,0 +1,104 @@
+<!doctype html>
+<!-- Created by Jayanth Chennamangalam -->
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+    <meta name="author" content="Jayanth Chennamangalam" />
+    <meta name="description" content="Yet Another Pulsar Processor" />
+    <link rel="stylesheet" href="css/default.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Della+Respira" />
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Yanone+Kaffeesatz" />
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Titillium+Web" />
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Ubuntu+Mono" />
+    <title>Yet Another Pulsar Processor | yapp_add</title>
+
+<!-- Google Analytics begin -->
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-22544628-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+<!-- Google Analytics end -->
+
+  </head>
+  <body>
+    <nav>
+      <ul>
+        <li><a href="index.htm">home</a></li>
+        <li><a href="about.htm">about</a></li>
+        <li><a href="screenshots.htm">screenshots</a></li>
+        <li><a href="download.htm">download</a></li>
+        <li><a href="doc.htm">documentation</a></li>
+        <li><a href="contact.htm">contact</a></li>
+      </ul>
+    </nav>
+    <header>
+    yapp_stacktim
+    </header>
+    <article>
+      <section>
+        <p>Stacks time series data (such as those created using sub-band
+           dedispersion) to form filterbank data. The time series files can be
+           input in any order of frequency. The data files should be in the
+           SIGPROC <code>.tim</code> format.</p>
+        <p>Usage:</p> 
+        <code>yapp_stacktim [options] <i>data-file-0 ... data-file-N-1</i></code>
+        <ul>
+          <li><code>-h</code> or <code>--help</code>: Display this usage
+              information.</li>
+          <li><code>-n</code> or <code>--nsamp <i>samples</i></code>:
+              Number of time samples read in one block (default is 4096
+              samples).</li>
+          <li><code>-g</code> or <code>--graphics</code>: Turn on plotting.</li>
+          <li><code>-m</code> or <code>--colour-map <i>name</i></code>: Colour
+              map for plotting. Supports some of the standard MATLAB colour
+              maps, plus a few more. Valid colour map names are given below
+              (default is 'jet').
+              <ul>
+                <li>'autumn'</li>
+                <li>'blue'</li>
+                <li>'bone'</li>
+                <li>'cool'</li>
+                <li>'copper'</li>
+                <li>'gray'</li>
+                <li>'gray-inv'</li>
+                <li>'hot'</li>
+                <li>'jet'</li>
+                <li>'pink'</li>
+                <li>'spring'</li>
+                <li>'summer'</li>
+                <li>'winter'</li>
+              </ul>
+          <li><code>-i</code> or <code>--invert</code>: Invert background and
+              foreground colours in plots (default is white on black).</li>
+          <li><code>-e</code> or <code>--non-interactive</code>: Run in
+              non-interactive mode.</li>
+          <li><code>-v</code> or <code>--version</code>: Display the version.</li>
+       </ul>
+       <p>The data file name may be a composed of standard shell wildcards such
+          as <code>*</code> or <code>?</code>.</p>
+       <p>Example:</p>
+       <p>Stacks the time series in <code>data.band0.tim</code>, <code>data.band1.tim</code>,
+          ..., <code>data.band100.tim</code>, assuming that there are no other
+          files in the current directory that match the wildcard expansion of
+          '<code>data.band*.tim</code>'.</p>
+       <code>yapp_stacktim data.band*.tim</code>
+       <p>&nbsp;</p>
+       <p>&nbsp;</p>
+      </section>
+    </article>
+    <footer>
+    YAPP is released under <a href="http://www.wtfpl.net/">WTFPLv2</a>:
+    Copy, modify, and share! <a href="ack.htm">Credits</a>.
+    </footer>
+  </body>
+</html>
+
