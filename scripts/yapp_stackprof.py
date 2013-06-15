@@ -9,30 +9,43 @@ import getopt
 import math
 import numpy
 import matplotlib.pyplot as plotter
+import yapp_common as yapp
 
 # function definitions
 def PrintUsage(ProgName):
     "Prints usage information."
     print "Usage: " + ProgName + " [options] <data-files>"
-    print "    -h  --help                 Display this usage information"
-    print "    -T  --tsys <tsys>          System temperature in K"
-    print "    -G  --gain <gain>          Gain in K/Jy"
-    print "    -p  --npol <npol>          Number of polarisations"
-    print "    -n  --onstart <phase>      Start phase of pulse"
-    print "    -f  --onstop <phase>       End phase of pulse"
-    print "    -b  --basefit              Do polynomial fit baseline subtraction"
-    print "    -l  --line                 1D stacked plots instead of 2D image"
+    print "    -h  --help                           ",                        \
+          "Display this usage information"
+    print "    -T  --tsys <tsys>                    ",                        \
+          "System temperature in K"
+    print "    -G  --gain <gain>                    ",                        \
+          "Gain in K/Jy"
+    print "    -p  --npol <npol>                    ",                        \
+          "Number of polarisations"
+    print "    -n  --onstart <phase>                ",                        \
+          "Start phase of pulse"
+    print "    -f  --onstop <phase>                 ",                        \
+          "End phase of pulse"
+    print "    -b  --basefit <order>                ",                        \
+          "Do polynomial-fit baseline subtraction\n",                         \
+          "                                         ",                        \
+          "with given order"
+    print "    -l  --line                           ",                        \
+          "1D stacked plots instead of 2D image"
     return
 
-# defaults
-doPolyfit = False
+# constant
+HeaderLines = 4
+
+# default
 showLinePlot = False
 
 # get the command line arguments
 ProgName = sys.argv[0]
-OptsShort = "hT:G:p:n:f:bl"
+OptsShort = "hT:G:p:n:f:b:l"
 OptsLong = ["help", "tsys=", "gain=", "npol=", "onstart=", "onstop=",         \
-            "basefit", "line"]
+            "basefit=", "line"]
 
 # get the arguments using the getopt module
 try:
@@ -65,8 +78,8 @@ for o, a in Opts:
         off = float(a)
         optind = optind + 2
     elif o in ("-b", "--basefit"):
-        doPolyfit = True
-        optind = optind + 1
+        polyOrder = int(a)
+        optind = optind + 2
     elif o in ("-l", "--line"):
         showLinePlot = True
         optind = optind + 1
@@ -82,7 +95,7 @@ if (1 == len(sys.argv)):
     PrintUsage(ProgName)
     sys.exit(1)
 
-NBins = len(open(sys.argv[optind]).readlines()) - 4
+NBins = len(open(sys.argv[optind]).readlines()) - HeaderLines
 x = numpy.array([float(i) / NBins for i in range(NBins)])
 
 onBin = int(on * NBins)
@@ -120,27 +133,10 @@ for i in range(NBands):
     profImg[i] = numpy.loadtxt(Bands[i][1], dtype=numpy.float32,              \
                                comments="#", delimiter="\n")
 
-    # extract the off-pulse regions
-    baseline = profImg[i].copy()
-    baseline[onBin:offBin] = numpy.median(profImg[i])
-
-    if doPolyfit:
-        # flatten the baseline using a 4th-degree polynomial fit 
-        fit = numpy.polyfit(x, baseline, 4)
-        y = fit[0] * x**4 + fit[1] * x**3 + fit[2] * x**2 + fit[3] * x + fit[4]
-    else:
-        y = numpy.median(baseline)
-
-    # calculate the mean and RMS of the off-pulse region
-    baseline = baseline - y
-    offMean = numpy.mean(baseline)
-    offRMS = numpy.std(baseline)
-
-    # compute the calibration factor using eq. (7.12), Lorimer & Kramer
-    C = Tsys / (offRMS * G * math.sqrt(NPol * (tObs / NBins) * BW))
-
-    # calibrate the profile
-    profImg[i] = (profImg[i] - y) * C
+    # get the calibrated profile (and ignore the 1-sigma error)
+    (profImg[i], _) = yapp.DoCal(profImg[i], onBin, offBin,                   \
+                                 Tsys, G, NPol, tObs, NBins, BW,              \
+                                 polyOrder)
 
 # matplotlib.pyplot.imshow() does not align the rows correctly with respect to
 # the centre frequency of the channels, so compute the lowest frequency per

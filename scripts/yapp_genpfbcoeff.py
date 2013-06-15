@@ -17,14 +17,20 @@ import matplotlib.pyplot as plotter
 def PrintUsage(ProgName):
     "Prints usage information."
     print "Usage: " + ProgName + " [options]"
-    print "    -h  --help                 Display this usage information"
-    print "    -n  --nfft <nfft>          Length of the Fourier transform"
-    print "                               (default is 4096)"
-    print "    -t  --ntaps <ntaps>        Number of taps in PFB"
-    print "                               (default is 8)"
+    print "    -h  --help                           ",                        \
+          "Display this usage information"
+    print "    -n  --nfft <nfft>                    ",                        \
+          "Length of the Fourier transform\n",                                \
+          "                                         ",                        \
+          "(default is 4096)"
+    print "    -t  --ntaps <ntaps>                  ",                        \
+          "Number of taps in PFB\n",                                          \
+          "                                         ",                        \
+          "(default is 8)"
 #    print "    -b  --nsubbands <value>    Number of sub-bands in data"
 #    print "                               (default is 1)"
-    print "    -g  --graphics             Turn on graphics"
+    print "    -g  --graphics                       ",                        \
+          "Turn on graphics"
     return
 
 # default values
