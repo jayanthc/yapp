@@ -35,9 +35,6 @@ def PrintUsage(ProgName):
           "Show legend"
     return
 
-# constant
-HeaderLines = 4
-
 # defaults
 doCal = True
 Tsys = 0.0
@@ -101,12 +98,6 @@ if (0.0 == Tsys):
     doCal = False
     print "WARNING: No Tsys given. No calibration will be performed!"
 
-NBins = len(open(sys.argv[optind]).readlines()) - HeaderLines
-x = numpy.array([float(i) / NBins for i in range(NBins)])
-
-onBin = int(on * NBins)
-offBin = int(off * NBins)
-
 NBands = len(sys.argv) - optind
 SMean = numpy.zeros(NBands)
 
@@ -132,6 +123,21 @@ BW = float((hdr.readline())[37:-5]) * 1e6
 tObs = float((hdr.readline())[37:-3])
 hdr.close()
 
+# count the number of header lines in the first file (assume to be the same for
+#    all files)
+HeaderLines = 0
+hdr = open(sys.argv[optind])
+for line in hdr:
+    if ("#" == line[0]):
+        HeaderLines = HeaderLines + 1
+hdr.close()
+
+NBins = len(open(sys.argv[optind]).readlines()) - HeaderLines
+x = numpy.array([float(i) / NBins for i in range(NBins)])
+
+onBin = int(on * NBins)
+offBin = int(off * NBins)
+
 # create calibrated folded profile subplot
 plotter.subplot(121)
 
@@ -139,7 +145,6 @@ plotter.subplot(121)
 DeltaS = numpy.zeros(NBands)
 DeltaSMean = numpy.zeros(NBands)
 
-print "Mean flux densities:"
 for i in range(NBands):
     # read raw profile
     prof = numpy.loadtxt(Bands[i][1], dtype=numpy.float32,                    \
@@ -158,10 +163,20 @@ for i in range(NBands):
         # copy the header lines from the original file
         for  j in range(HeaderLines):
             fdest.write(fsrc.readline())
+        # add the 1-sigma error in S
+        fdest.write("# Standard deviation of S           : "
+                    + str("%.3f" % (DeltaS[i] * 1e6)) + " uJy\n")
         fsrc.close()
         # write the calibrated profile
         prof.tofile(fdest, "\n", "%.10f")
         fdest.close()
+    else:
+        hdr = open(Bands[i][1])
+        for h, line in enumerate(hdr):
+            if (4 == h):
+                # read 1-sigma error in S and convert to Jy
+                DeltaS[i] = float(line[37:-5]) * 1e-6
+        hdr.close()
 
     # calculate peak and mean flux density
     SPeak = numpy.max(prof)
@@ -169,7 +184,9 @@ for i in range(NBands):
     lenPulse = len(prof[onBin:offBin])
     # derived using propagation of errors
     DeltaSMean[i] = (DeltaS[i] * numpy.sqrt(lenPulse + 2)) / NBins
-    print str("%.3f" % f[i]) + " MHz: ", str("%.3f" % (SMean[i] * 1e6))       \
+    print str("%.3f" % f[i]) + " MHz: "                                       \
+          + "DeltaS = " + str("%.3f" % (DeltaS[i] * 1e6)) + " uJy; "          \
+          + "SMean = " + str("%.3f" % (SMean[i] * 1e6))                       \
           + "+/-" + str("%.3f" % (DeltaSMean[i] * 1e6)) + " uJy"
 
     plotLabel = str(f[i]) + " MHz"
@@ -186,42 +203,34 @@ if showLegend:
 # create flux density versus frequency subplot
 plotter.subplot(122)
 
-f = numpy.log10(f)
 # make sure the values within log10 are > 0 by converting to microJy
 SMean = SMean * 1e6
-SMean = numpy.log10(SMean)
 DeltaSMean = DeltaSMean * 1e6
-DeltaSMean = numpy.log10(DeltaSMean)
 
-# do a linear fit
-specIdxFit = numpy.polyfit(f, SMean, 1)
-specIdxLine = specIdxFit[0] * f + specIdxFit[1]
+# do a linear fit to the log10 values to calculate the spectral index
+specIdxFit = numpy.polyfit(numpy.log10(f), numpy.log10(SMean), 1)
+specIdxLine = specIdxFit[0] * numpy.log10(f) + specIdxFit[1]
+# compute the spectral index
+specIdx = (specIdxLine[0] - specIdxLine[-1])          \
+          / (math.log10(f[0]) - math.log10(f[-1]))
+print "Spectral index = ", specIdx
 
-#plotter.scatter(f, SMean)
 plotter.errorbar(f, SMean, yerr=DeltaSMean, fmt="bo")
-plotter.plot(f, specIdxLine, "r")
 # get the y-axis tick labels in non-log10
 ticks, labels = plotter.yticks()
-labels = [str("%.1f" % i) for i in 10**ticks]
+labels = [str("%.1f" % i) for i in ticks]
 plotter.yticks(ticks, labels)
 plotter.ylabel("Mean Flux Density ($\mu$Jy)")
 # get the x-axis tick labels in non-log10
 ticks, labels = plotter.xticks()
 # convert units as appropriate
-if min(10**f) > 1e3:    # if 10**f is in 1000 MHz (1 GHz)
-    labels = [str("%.1f" % (i * 1e-3)) for i in 10**ticks]
+if min(f) > 1e3:    # if f is in 1000 MHz (1 GHz)
+    labels = [str("%.1f" % (i * 1e-3)) for i in ticks]
     plotter.xlabel("Frequency (GHz)")
 else:
-    labels = [str("%.1f" % i) for i in 10**ticks]
+    labels = [str("%.1f" % i) for i in ticks]
     plotter.xlabel("Frequency (MHz)")
 plotter.xticks(ticks, labels)
-
-# make sure the values within log10 are > 0
-specIdxLine = specIdxLine + abs(min(specIdxLine)) + 1
-specIdx = (math.log10(specIdxLine[0]) - math.log10(specIdxLine[-1]))          \
-          / (math.log10(f[0]) - math.log10(f[-1]))
-
-print "Spectral index = ", specIdx
 
 plotter.show()
 

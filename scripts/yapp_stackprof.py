@@ -35,10 +35,9 @@ def PrintUsage(ProgName):
           "1D stacked plots instead of 2D image"
     return
 
-# constant
-HeaderLines = 4
-
-# default
+# defaults
+doCal = True
+Tsys = 0.0
 showLinePlot = False
 
 # get the command line arguments
@@ -95,11 +94,9 @@ if (1 == len(sys.argv)):
     PrintUsage(ProgName)
     sys.exit(1)
 
-NBins = len(open(sys.argv[optind]).readlines()) - HeaderLines
-x = numpy.array([float(i) / NBins for i in range(NBins)])
-
-onBin = int(on * NBins)
-offBin = int(off * NBins)
+if (0.0 == Tsys):
+    doCal = False
+    print "WARNING: No Tsys given. No calibration will be performed!"
 
 NBands = len(sys.argv) - optind
 
@@ -125,6 +122,22 @@ BW = float((hdr.readline())[37:-5]) * 1e6
 tObs = float((hdr.readline())[37:-3])
 hdr.close()
 
+# count the number of header lines in the first file (assume to be the same for
+#    all files)
+HeaderLines = 0
+hdr = open(sys.argv[optind])
+for line in hdr:
+    if ("#" == line[0]):
+        HeaderLines = HeaderLines + 1
+hdr.close()
+
+NBins = len(open(sys.argv[optind]).readlines()) - HeaderLines
+x = numpy.array([float(i) / NBins for i in range(NBins)])
+
+if (doCal):
+    onBin = int(on * NBins)
+    offBin = int(off * NBins)
+
 profImg = numpy.zeros(NBands * NBins)
 profImg.shape = (NBands, NBins)
 
@@ -132,11 +145,11 @@ for i in range(NBands):
     # read raw profile
     profImg[i] = numpy.loadtxt(Bands[i][1], dtype=numpy.float32,              \
                                comments="#", delimiter="\n")
-
-    # get the calibrated profile (and ignore the 1-sigma error)
-    (profImg[i], _) = yapp.DoCal(profImg[i], onBin, offBin,                   \
-                                 Tsys, G, NPol, tObs, NBins, BW,              \
-                                 polyOrder)
+    if (doCal):
+        # get the calibrated profile (and ignore the 1-sigma error)
+        (profImg[i], _) = yapp.DoCal(profImg[i], onBin, offBin,               \
+                                     Tsys, G, NPol, tObs, NBins, BW,          \
+                                     polyOrder)
 
 # matplotlib.pyplot.imshow() does not align the rows correctly with respect to
 # the centre frequency of the channels, so compute the lowest frequency per
