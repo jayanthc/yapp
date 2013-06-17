@@ -20,11 +20,9 @@ def PrintUsage(ProgName):
           "Turn on graphics"
     return
 
-# constant
-HeaderLines = 4
-
 # default
 showPlot = False        # plot flag
+writeStd = False        # write standard deviation in output file
 
 # get the command line arguments
 ProgName = sys.argv[0]
@@ -61,6 +59,38 @@ if (1 == len(sys.argv)):
     PrintUsage(ProgName)
     sys.exit(1)
 
+# TODO: make the header reading proper
+# count the number of header lines in the first file (assume to be the same for
+#    all files)
+HeaderLines = 0
+hdr = open(sys.argv[optind])
+for line in hdr:
+    if ("#" == line[0]):
+        HeaderLines = HeaderLines + 1
+hdr.close()
+
+# get the standard deviations from the two polarizations and compute that of the
+#   sum
+if (5 == HeaderLines):
+    # open pol0
+    hdr = open(sys.argv[optind])
+    for i, line in enumerate(hdr):
+        if (4 == i):
+            # read 1-sigma error in S and convert to Jy
+            DeltaS0 = float(line[37:-5]) * 1e-6
+    hdr.close()
+    # open pol1
+    hdr = open(sys.argv[optind+1])
+    for i, line in enumerate(hdr):
+        if (4 == i):
+            # read 1-sigma error in S and convert to Jy
+            DeltaS1 = float(line[37:-5]) * 1e-6
+    hdr.close()
+    # compute standard deviation of the sum (assume the two polarizations are
+    #   independent random variables, so that the covariance is 0)
+    DeltaS = math.sqrt((DeltaS0 * DeltaS0) + (DeltaS1 * DeltaS1))
+    writeStd = True
+
 NBins = len(open(sys.argv[optind]).readlines()) - HeaderLines
 x = numpy.array([float(i) / NBins for i in range(NBins)])
 
@@ -77,13 +107,22 @@ profSum = prof0 + prof1
 fileSumProf = os.path.splitext(sys.argv[optind])[0] + ".sum.ypr"
 fsrc = open(sys.argv[optind], "r")
 fdest = open(fileSumProf, "w")
-# copy the header lines from the original file
-for  j in range(HeaderLines):
-    fdest.write(fsrc.readline())
-fsrc.close()
+# TODO: make proper
+# copy the header lines (- standard deviation) from the original file, if
+#   adding calibrated data, otherwise copy all header lines
+if (writeStd):
+    for  j in range(HeaderLines-1):
+        fdest.write(fsrc.readline())
+    # write the new standard deviation
+    fdest.write("# Standard deviation of S           : "
+                + str("%.3f" % (DeltaS * 1e6)) + " uJy\n")
+else:
+    for  j in range(HeaderLines):
+        fdest.write(fsrc.readline())
 # write the calibrated profile
 profSum.tofile(fdest, "\n", "%.10f")
 fdest.close()
+fsrc.close()
 
 # make plots
 if (showPlot):
