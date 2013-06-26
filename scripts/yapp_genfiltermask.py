@@ -115,7 +115,7 @@ MaskFilename = "yapp_mask_"                                                   \
                + str(NFFT) + "_"                                              \
                + str(TSamp) + "_"                                             \
                + str(FLow) + "_"                                              \
-               + str(FHigh) + ".dat" 
+               + str(FHigh) + ".dat"
 Mask.astype('uint8').tofile(MaskFilename)
 # plot the mask
 if (Plot):
