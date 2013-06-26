@@ -10,7 +10,7 @@ import numpy
 #
 # perform calibration
 #
-def DoCal(prof, onBin, offBin, Tsys, G, NPol, tObs, NBins, BW, polyOrder):
+def DoCal(prof, onBin, offBin, Tsys, G, NPol, tObs, NBins, BW, polyOrder, Gamma):
     # extract the off-pulse regions
     baseline = prof.copy()
     baseline[onBin:offBin] = numpy.median(prof)
@@ -30,6 +30,7 @@ def DoCal(prof, onBin, offBin, Tsys, G, NPol, tObs, NBins, BW, polyOrder):
 
     # compute the calibration factor using eq. (7.12), Lorimer & Kramer
     C = Tsys / (offRMS * G * numpy.sqrt(NPol * (tObs / NBins) * BW))
+    C = C / numpy.sqrt(Gamma)
     DeltaS = C * offRMS
 
     # calibrate the profile

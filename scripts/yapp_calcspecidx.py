@@ -146,6 +146,12 @@ plotter.subplot(121)
 DeltaS = numpy.zeros(NBands)
 DeltaSMean = numpy.zeros(NBands)
 
+#if 0
+#Gamma = [0.94, 0.82, 0.89, 0.83, 0.84, 0.84]
+#if 1
+#Gamma = [0.92, 0.82, 0.90, 0.85, 0.88, 0.89]
+Gamma = [1.00, 1.00, 1.00, 1.00, 1.00]
+
 for i in range(NBands):
     # read raw profile
     prof = numpy.loadtxt(Bands[i][1], dtype=numpy.float32,                    \
@@ -154,7 +160,7 @@ for i in range(NBands):
     if (doCal):
         (prof, DeltaS[i]) = yapp.DoCal(prof, onBin, offBin,                   \
                                        Tsys, G, NPol, tObs, NBins, BW,        \
-                                       polyOrder)
+                                       polyOrder, Gamma[i])
 
         # write the calibrated profiles to disk
         # build filename
