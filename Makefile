@@ -9,8 +9,8 @@
 CC = gcc
 
 # include path for other libraries
-#CFLAGS_INC_PGPLOT =# define if needed (as -I[...])
-CFLAGS_INC_PGPLOT =-I/opt/local/include# define if needed (as -I[...])
+CFLAGS_INC_PGPLOT =# define if needed (as -I[...])
+#CFLAGS_INC_PGPLOT =-I/opt/local/include# define if needed (as -I[...])
 CFLAGS_INC_FFTW3 =# define if needed (as -I[...])
 CFLAGS_INC_CFITSIO =# define if needed (as -I[...])
 
@@ -37,8 +37,8 @@ DDEBUG = -DDEBUG
 endif
 
 # linker flags
-#LFLAGS_PGPLOT_DIR =# define if not in $PATH (as -L[...])
-LFLAGS_PGPLOT_DIR =-L/opt/local/lib# define if not in $PATH (as -L[...])
+LFLAGS_PGPLOT_DIR =# define if not in $PATH (as -L[...])
+#LFLAGS_PGPLOT_DIR =-L/opt/local/lib# define if not in $PATH (as -L[...])
 LFLAGS_FFTW3_DIR =# define if not in $PATH (as -L[...])
 LFLAGS_CFITSIO_DIR =# define if not in $PATH (as -L[...])
 LFLAGS_FFTW3 = $(LFLAGS_FFTW3_DIR) -lfftw3f
