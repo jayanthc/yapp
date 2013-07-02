@@ -9,7 +9,8 @@
 CC = gcc
 
 # include path for other libraries
-CFLAGS_INC_PGPLOT =# define if needed (as -I[...])
+#CFLAGS_INC_PGPLOT =# define if needed (as -I[...])
+CFLAGS_INC_PGPLOT =-I/opt/local/include# define if needed (as -I[...])
 CFLAGS_INC_FFTW3 =# define if needed (as -I[...])
 CFLAGS_INC_CFITSIO =# define if needed (as -I[...])
 
@@ -36,7 +37,8 @@ DDEBUG = -DDEBUG
 endif
 
 # linker flags
-LFLAGS_PGPLOT_DIR =# define if not in $PATH (as -L[...])
+#LFLAGS_PGPLOT_DIR =# define if not in $PATH (as -L[...])
+LFLAGS_PGPLOT_DIR =-L/opt/local/lib# define if not in $PATH (as -L[...])
 LFLAGS_FFTW3_DIR =# define if not in $PATH (as -L[...])
 LFLAGS_CFITSIO_DIR =# define if not in $PATH (as -L[...])
 LFLAGS_FFTW3 = $(LFLAGS_FFTW3_DIR) -lfftw3f
@@ -45,7 +47,7 @@ LFLAGS_CFITSIO = $(LFLAGS_CFITSIO_DIR) -lcfitsio
 # append '-lX11' (and possibly the path to the library) to the line below.
 # libgfortran may also be needed in some case, in which case append
 # '-lgfortran' (and possibly the path to the library) to the line below
-LFLAGS_PGPLOT = $(LFLAGS_PGPLOT_DIR) -lpgplot -lcpgplot
+LFLAGS_PGPLOT = $(LFLAGS_PGPLOT_DIR) -lcpgplot
 LFLAGS_MATH = -lm
 LFLAGS_SNDFILE = -lsndfile
 

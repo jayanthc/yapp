@@ -886,7 +886,7 @@ const float g_aaafCMap[NUM_CMAPS][CMAP_LEVELS][3] = {
 /*
  * Sets the colour map
  */
-int SetColourMap(int iCMap, int iIsColInv, float fColMin, float fColMax)
+int SetColourMap(int iCMap, float fColMin, float fColMax)
 {
     int iColMin = 0;
     int iColMax = 0;
@@ -903,17 +903,6 @@ int SetColourMap(int iCMap, int iIsColInv, float fColMin, float fColMax)
     {
         (void) printf("WARNING: Device has no colour capability\n!");
         return EXIT_SUCCESS;
-    }
-
-    /* invert colours for hardcopy device, if it is not inverted already */
-    if (!(iIsColInv))
-    {
-        /* query hardcopy status */
-        cpgqinf("HARDCOPY", acQItem, &iLenQVal);
-        if (0 == strcmp(acQItem, "YES"))
-        {
-            /* TODO: this is a hardcopy device, so invert colours */
-        }
     }
 
     for (i = 0; i < 64; ++i)
@@ -1001,7 +990,9 @@ int GetColourMapFromName(char *pcCMapName)
 /*
  * void Plot2D(float* pfBuf, float fDataMin, float fDataMax,
  *             float* pfX, int iLenX, float fXStep,
- *             float* pfY, int iLenY, float fYStep)
+ *             float* pfY, int iLenY, float fYStep,
+ *             char* pcXLabel, char* pcYLabel, char* pcTitle,
+ *             int iColourMap)
  */
 void Plot2D(float* pfBuf, float fDataMin, float fDataMax,
             float* pfX, int iLenX, float fXStep,
@@ -1027,7 +1018,7 @@ void Plot2D(float* pfBuf, float fDataMin, float fDataMax,
     /* set the window boundaries in world co-ordinates */
     cpgswin(pfX[0], pfX[iLenX-1], pfY[0], pfY[iLenY-1]);
     /* set the colour map */
-    SetColourMap(iColourMap, 0, fDataMin, fDataMax);
+    SetColourMap(iColourMap, fDataMin, fDataMax);
     /* plot the image */
     cpgimag((const float *) pfBuf,  /* data to be plotted */
             iLenX,

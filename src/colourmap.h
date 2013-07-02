@@ -70,7 +70,7 @@ typedef enum CMap_e
 #define DEF_CMAP            CMAP_JET
 #define DEF_CMAP_STR        "jet"
 
-int SetColourMap(int iCMap, int iIsColInv, float fColMin, float fColMax);
+int SetColourMap(int iCMap, float fColMin, float fColMax);
 int GetColourMapFromName(char *pcCMapName);
 /*
  * Wrapper for PGPLOT grayscale plotting
