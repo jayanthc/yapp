@@ -55,6 +55,7 @@
               headerless version, provided a <code>.fhd</code> configuration
               file is present in the same directory)</li>
           <li>SIGPROC <code>.tim</code> time series format</li>
+          <li>PRESTO <code>.dat</code> time series format</li>
         </ul>
         <p>Usage:</p> 
         <code>yapp_viewmetadata [options] <i>data-files</i></code>
@@ -71,9 +72,9 @@
           expected that a file with metadata information, named <code>data.fhd</code>
           is present in the same directory as the data file.</p>
        <code>yapp_viewmetadata data.fil</code>
-       <p>The following displays the metadata for all DAS filterbank files in
-          the current working directory.</p>
-       <code>yapp_viewmetadata *.spec</code>
+       <p>The following displays the metadata for all PRESTO dedispersed time
+          series files in the <code>/data</code> directory.</p>
+       <code>yapp_viewmetadata /data/*.dat</code>
        <p>&nbsp;</p>
        <p>&nbsp;</p>
       </section>

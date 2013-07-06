@@ -45,15 +45,15 @@
     </header>
     <article>
       <section>
-        <p>This program performs Fourier transform and optionally polyphase
-           filtering on baseband (raw voltage time series) data. In other words,
-           this is a software spectrometer. The input is expected to be 8-bit,
-           complex, dual-polarization data. The output is written in the
-           headerless SIGPROC <code>.fil</code> format, along with a
-           <code>.fhd</code> configuration file that can be read by
-           <a href="yapp_viewmetadata.htm">yapp_viewmetadata</a> and
-           <a href="yapp_viewdata.htm">yapp_viewdata</a>.</p>
-        <p>If running with PFB on, this program requires a filter coefficients
+        <p>This program performs a plain old Fourier transform or a polyphase
+           filter bank operation on baseband (raw voltage time series) data. In
+           other words, this is a software spectrometer. The input is expected
+           to be 8-bit, complex, dual-polarization data, interleaved in the
+           following manner:</p>
+        <code>polXre0 | polXim0 | polYre0 | polYim0 | polXre1 | polXim1 | polYre1 | polYim1 | ...</code>
+        <p>The output is written in the headerless SIGPROC <code>.fil</code>
+           format, along with a <code>.fhd</code> configuration file.</p>
+        <p>If doing PFB, this program requires a filter coefficients
            file to be present in the current directory. Filter coefficients
            files can be created using the <a href="yapp_genpfbcoeff.htm">yapp_genpfbcoeff.py</a>
            Python script.</p>
@@ -71,8 +71,7 @@
               time in seconds.</li>
           <li><code>-f</code> or <code>--centre-freq <i>freq</i></code>: Centre
               frequency of the observing band in MHz.</li>
-          <li><code>-b</code> or <code>--pfb</code>: Turn polyphase filtering
-              on.</li>
+          <li><code>-b</code> or <code>--pfb</code>: Do polyphase filter bank.</li>
           <li><code>-t</code> or <code>--ntaps <i>ntaps</i></code>: Number of
               taps in the PFB (default is 8).</li>
           <li><code>-n</code> or <code>--nfft <i>N</i></code>: Number of points
@@ -94,7 +93,7 @@
            <code>-f</code> (or <code>--centre-freq</code>) are required
            arguments.</p> 
         <p>Example:</p>
-        <p>The following performs an 8-tap polyphase filtering followed by a
+        <p>The following performs an 8-tap pre-filtering followed by a
            1024-point Fourier transform on the data in <code>rawdata.dat</code>.
            The spectra thus produced are accumulated to a length of 10, and the
            output is written to a headerless SIGPROC filterbank file named

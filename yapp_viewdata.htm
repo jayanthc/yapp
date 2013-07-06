@@ -53,6 +53,7 @@
               headerless version, provided a <code>.fhd</code> configuration
               file is present in the same directory)</li>
           <li>SIGPROC <code>.tim</code> time series format</li>
+          <li>PRESTO <code>.dat</code> time series format</li>
         </ul>
         <p>Usage:</p> 
         <code>yapp_viewdata [options] <i>data-file</i></code>
@@ -99,6 +100,10 @@
           <code>data.fil</code>, with 8192 time samples per plot, and using the
           'copper' colour map.</p>
        <code>yapp_viewdata -n 8192 -m copper data.fil</code>
+       <p>The following displays the contents of the PRESTO dedispersed time
+          series file <code>data.dat</code> in the <code>/data</code>
+          directory.</p>
+       <code>yapp_viewmetadata /data/data.dat</code>
        <p>&nbsp;</p>
        <p>&nbsp;</p>
       </section>
