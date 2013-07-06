@@ -13,7 +13,7 @@
  *                                          (default is all)
  *     -l  --tsamp <tsamp>                  Sampling time in s
  *     -f  --centre-freq <freq>             Centre frequency of observing band
- *     -b  --pfb                            Turn PFB on
+ *     -b  --pfb                            Do polyphase filter bank
  *     -t  --ntaps <ntaps>                  Number of taps in the PFB
  *                                          (default is 8)
  *     -n  --nfft <nfft>                    Number of points in FFT
@@ -60,7 +60,7 @@ float *g_pfSumPowX = NULL;
 float *g_pfSumPowY = NULL;
 float *g_pfSumStokesRe = NULL;
 float *g_pfSumStokesIm = NULL;
-char g_cIsPFBOn = YAPP_FALSE;
+char g_cDoPFB = YAPP_FALSE;
 char g_acFileData[LEN_GENSTRING] = {0};
 char g_acFileCoeff[LEN_GENSTRING] = {0};
 int g_iFileData = 0;
@@ -172,7 +172,7 @@ int main(int argc, char *argv[])
 
             case 'b':   /* -b or --pfb */
                 /* set option */
-                g_cIsPFBOn = YAPP_TRUE;
+                g_cDoPFB = YAPP_TRUE;
                 break;
 
             case 't':   /* -t or --ntaps */
@@ -256,7 +256,7 @@ int main(int argc, char *argv[])
         return YAPP_RET_ERROR;
     }
 
-    if ((g_cIsPFBOn) && (1 == iNTaps))
+    if ((g_cDoPFB) && (1 == iNTaps))
     {
         /* set default number of taps */
         iNTaps = NUM_TAPS;
@@ -579,7 +579,7 @@ int main(int argc, char *argv[])
         --iNumReads;
         ++iReadBlockCount;
 
-        if (g_cIsPFBOn)
+        if (g_cDoPFB)
         {
             /* do pfb */
             (void) DoPFB(iNTaps, iNFFT);
@@ -807,7 +807,7 @@ int InitPFB(int iNTaps, int iNFFT)
     int i = 0;
     int iRet = YAPP_RET_SUCCESS;
 
-    if (g_cIsPFBOn)
+    if (g_cDoPFB)
     {
         int iFileCoeff = 0;
 
@@ -1222,7 +1222,7 @@ void PrintUsage(const char *pcProgName)
     (void) printf("                                         ");
     (void) printf("in MHz\n");
     (void) printf("    -b  --pfb                            ");
-    (void) printf("Turn PFB on\n");
+    (void) printf("Do polyphase filter bank\n");
     (void) printf("    -t  --ntaps <ntaps>                  ");
     (void) printf("Number of taps in the PFB\n");
     (void) printf("                                         ");

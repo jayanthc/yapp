@@ -5,13 +5,12 @@
 .\# Created by Jayanth Chennamangalam on 2012.10.14
 .\#
 
-.TH YAPP_FT 1 "2013-06-02" "YAPP 3.4-beta" \
+.TH YAPP_FT 1 "2013-07-06" "YAPP 3.4-beta" \
 "Yet Another Pulsar Processor"
 
 
 .SH NAME
-yapp_ft \- perform Fourier transform and optionally polyphase filtering on \
-baseband data
+yapp_ft \- perform Fourier transform or PFB on baseband data
 
 
 .SH SYNOPSIS
@@ -21,12 +20,15 @@ baseband data
 
 
 .SH DESCRIPTION
-This program performs Fourier transform and optionally polyphase filtering on \
-baseband (raw voltage time series) data. In other words, this is a software \
-spectrometer. The input is expected to be 8-bit, complex, dual-polarization \
-data. The output is written in the headerless SIGPROC .fil format, along with \
-a .fhd configuration file that can be read by yapp_viewmetadata and \
-yapp_viewdata.
+This program performs a plain old Fourier transform or a polyphase filter \
+bank operation on baseband (raw voltage time series) data. In other words, \
+this is a software spectrometer. The input is expected to be 8-bit, complex, \
+dual-polarization data, interleaved in the following manner:
+.TP
+polXre0 | polXim0 | polYre0 | polYim0 | polXre1 | polXim1 | polYre1 | polYim1 | ...
+.TP
+The output is written in the headerless SIGPROC .fil format, along with \
+a .fhd configuration file.
 
 
 .SH OPTIONS
@@ -47,7 +49,7 @@ Sampling time in seconds.
 Centre frequency of the observing band in MHz.
 .TP
 .B \-b, --pfb
-Turn polyphase filtering on.
+Do polyphase filter bank.
 .TP
 .B \-t, --ntaps \fIntaps
 Number of taps in the PFB (default is 8).
@@ -82,14 +84,14 @@ The flags \-l (or --tsamp) and \-f (or --centre-freq) are required arguments.
 
 .SH FILES
 .TP
-If running with PFB on, this program requires a filter coefficients file to \
-be present in the current directory. Filter coefficients files can be created \
-using the yapp_genpfbcoeff.py Python script.
+If doing PFB, this program requires a filter coefficients file to be present \
+in the current directory. Filter coefficients files can be created using the \
+yapp_genpfbcoeff.py Python script.
 
 
 .SH EXAMPLE
 .TP
-The following performs an 8-tap polyphase filtering followed by a 1024-point \
+The following performs an 8-tap pre-filtering followed by a 1024-point \
 Fourier transform on the data in rawdata.dat. The spectra thus produced are \
 accumulated to a length of 10, and the output is written to a headerless \
 SIGPROC filterbank file named rawdata.dat.fil, and metadata is written to a \

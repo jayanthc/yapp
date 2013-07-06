@@ -5,7 +5,7 @@
 .\# Created by Jayanth Chennamangalam on 2010.09.23
 .\#
 
-.TH YAPP_VIEWMETADATA 1 "2013-06-02" "YAPP 3.4-beta" \
+.TH YAPP_VIEWMETADATA 1 "2013-07-06" "YAPP 3.4-beta" \
 "Yet Another Pulsar Processor"
 
 
@@ -20,9 +20,8 @@ yapp_viewmetadata \- view metadata/data header/configuration information
 
 
 .SH DESCRIPTION
-As the name indicates, this program is used to display metadata/data \
-header/configuration information associated with a data file. The following \
-file types are supported:
+As the name indicates, this program is used to display metadata associated \
+with a data file. The following file types are supported:
 .P
 1. Search-mode PSRFITS
 .br
@@ -32,6 +31,8 @@ file types are supported:
 a .fhd configuration file is present in the same directory)
 .br
 4. SIGPROC .tim time series format
+.br
+5. PRESTO .dat time series format
 
 
 .SH OPTIONS
@@ -56,10 +57,10 @@ data file.
 .TP
 yapp_viewmetadata data.fil
 .TP
-The following displays the metadata for all DAS filterbank files in the \
-current working directory.
+The following displays the metadata for all PRESTO dedispersed time series \
+files in the /data directory.
 .TP
-yapp_viewmetadata *.spec
+yapp_viewmetadata /data/*.dat
 
 
 .SH SEE ALSO
