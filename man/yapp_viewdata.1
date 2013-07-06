@@ -5,7 +5,7 @@
 .\# Created by Jayanth Chennamangalam on 2011.03.20
 .\#
 
-.TH YAPP_VIEWDATA 1 "2013-06-02" "YAPP 3.4-beta" \
+.TH YAPP_VIEWDATA 1 "2013-07-06" "YAPP 3.4-beta" \
 "Yet Another Pulsar Processor"
 
 
@@ -29,6 +29,9 @@ are supported:
 a .fhd configuration file is present in the same directory)
 .br
 3. SIGPROC .tim time series format
+.br
+4. PRESTO .dat time series format
+
 
 .SH OPTIONS
 .TP
@@ -69,6 +72,11 @@ This run displays the contents of the SIGPROC filterbank file data.fil, with \
 8192 time samples per plot, and using the 'copper' colour map.
 .TP
 yapp_viewdata -n 8192 -m copper data.fil
+.TP
+The following displays the contents of the PRESTO dedispersed time series \
+file data.dat in the /data directory.
+.TP
+yapp_viewmetadata /data/data.dat
 
 
 .SH SEE ALSO
