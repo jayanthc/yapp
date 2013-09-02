@@ -235,6 +235,10 @@ enum tagFileFormats
 #define PG_CI_DEF               1
 #define PG_CI_PLOT              11
 
+#define PLOT_WATERFALL          1
+#define PLOT_WATERFALL_GS       2
+#define WATERFALL_OFFSET_SCALE  0.5   
+
 #define YAPP_ERF_ENTRIES    1000    /* number of entries in the erf()
                                        lookup table */
 

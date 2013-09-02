@@ -726,31 +726,31 @@ void PrintUsage(const char *pcProgName)
 {
     (void) printf("Usage: %s [options] <data-file>\n",
                   pcProgName);
-    (void) printf("    -h  --help                           ");
+    (void) printf("    -h  --help                          ");
     (void) printf("Display this usage information\n");
-    (void) printf("    -s  --skip <time>                    ");
+    (void) printf("    -s  --skip <time>                   ");
     (void) printf("The length of data in seconds, to be\n");
-    (void) printf("                                         ");
+    (void) printf("                                        ");
     (void) printf("skipped\n");
-    (void) printf("                                         ");
+    (void) printf("                                        ");
     (void) printf("(default is 0 s)\n");
-    (void) printf("    -p  --proc <time>                    ");
+    (void) printf("    -p  --proc <time>                   ");
     (void) printf("The length of data in seconds, to be\n");
-    (void) printf("                                         ");
+    (void) printf("                                        ");
     (void) printf("processed\n");
-    (void) printf("                                         ");
+    (void) printf("                                        ");
     (void) printf("(default is all)\n");
-    (void) printf("    -f  --filter <file>                  ");
+    (void) printf("    -f  --filter <file>                 ");
     (void) printf("Filter mask filename\n");
-    (void) printf("    -g  --graphics                       ");
+    (void) printf("    -g  --graphics                      ");
     (void) printf("Turn on plotting\n");
-    (void) printf("    -i  --invert                         ");
+    (void) printf("    -i  --invert                        ");
     (void) printf("Invert background and foreground\n");
-    (void) printf("                                         ");
+    (void) printf("                                        ");
     (void) printf("colours in plots\n");
-    (void) printf("    -e  --non-interactive                ");
+    (void) printf("    -e  --non-interactive               ");
     (void) printf("Run in non-interactive mode\n");
-    (void) printf("    -v  --version                        ");
+    (void) printf("    -v  --version                       ");
     (void) printf("Display the version\n");
 
     return;

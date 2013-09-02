@@ -8,6 +8,7 @@ TODO
 4. Incoherent summation (stacking).
 5. Memory usage management - create ~/.yapp/yapp.conf or some such to fix
    an upper limit on the amount of memory the YAPP programs can use.
+6. Support the non-POSIX (OS X/BSD) SIGINFO for status reporting
 
 
 all:

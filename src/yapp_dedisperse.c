@@ -1034,7 +1034,7 @@ int main(int argc, char *argv[])
             Plot2D(g_pfPlotBuf, fDataMin, fDataMax,
                    g_pfXAxis, iBlockSize, dTSampInSec,
                    g_pfYAxis, iNumChans, fChanBW,
-                   "Time (s)", "Frequency (MHz)", "Before Dedispersion",
+                   "Time - Start Time (s)", "Frequency (MHz)", "Before Dedispersion",
                    iColourMap);
         }
 
@@ -1283,7 +1283,7 @@ int main(int argc, char *argv[])
             Plot2D(g_pfPlotBuf, fDataMin, fDataMax,
                    g_pfXAxis, iBlockSize, dTSampInSec,
                    g_pfYAxis, iNumChans, fChanBW,
-                   "Time (s)", "Frequency (MHz)", "After Dedispersion",
+                   "Time - Start Time (s)", "Frequency (MHz)", "After Dedispersion",
                    iColourMap);
         }
 
@@ -1335,7 +1335,7 @@ int main(int argc, char *argv[])
 
             cpgswin(g_pfXAxis[0], g_pfXAxis[iBlockSize-1], fDataMin, fDataMax);
             cpgbox("BCNST", 0.0, 0, "BCNST", 0.0, 0);
-            cpglab("Time (s)", "Total Power", "Dedipsersed Time Series");
+            cpglab("Time - Start Time (s)", "Total Power", "Dedipsersed Time Series");
             cpgsci(PG_CI_PLOT);
             cpgline(iBlockSize, g_pfXAxis, g_pfDedispData);
             cpgsci(PG_CI_DEF);
@@ -1458,55 +1458,55 @@ void PrintUsage(const char *pcProgName)
 {
     (void) printf("Usage: %s [options] <data-file>\n",
                   pcProgName);
-    (void) printf("    -h  --help                           ");
+    (void) printf("    -h  --help                          ");
     (void) printf("Display this usage information\n");
-    (void) printf("    -s  --skip <time>                    ");
+    (void) printf("    -s  --skip <time>                   ");
     (void) printf("The length of data in seconds, to be\n");
-    (void) printf("                                         ");
+    (void) printf("                                        ");
     (void) printf("skipped\n");
-    (void) printf("    -p  --proc <time>                    ");
+    (void) printf("    -p  --proc <time>                   ");
     (void) printf("The length of data in seconds, to be\n");
-    (void) printf("                                         ");
+    (void) printf("                                        ");
     (void) printf("processed\n");
-    (void) printf("                                         ");
+    (void) printf("                                        ");
     (void) printf("(default is all)\n");
-    (void) printf("    -n  --nsamp <samples>                ");
+    (void) printf("    -n  --nsamp <samples>               ");
     (void) printf("Number of samples read in one block\n");
-    (void) printf("                                         ");
+    (void) printf("                                        ");
     (void) printf("(default is 4096 samples)\n");
-    (void) printf("    -d  --dm <dm>                        ");
+    (void) printf("    -d  --dm <dm>                       ");
     (void) printf("DM at which to de-disperse\n");
-    (void) printf("                                         ");
+    (void) printf("                                        ");
     (void) printf("(default is 10.0)\n");
-    (void) printf("    -l  --law <law>                      ");
+    (void) printf("    -l  --law <law>                     ");
     (void) printf("Dispersion law\n");
-    (void) printf("                                         ");
+    (void) printf("                                        ");
     (void) printf("(default is 2.0)\n");
-    (void) printf("    -b  --nsubband <nsubband>            ");
+    (void) printf("    -b  --nsubband <nsubband>           ");
     (void) printf("Number of sub-bands\n");
-    (void) printf("                                         ");
+    (void) printf("                                        ");
     (void) printf("(must be < number of channels)\n");
-    (void) printf("    -u  --subband <subband>              ");
+    (void) printf("    -u  --subband <subband>             ");
     (void) printf("Sub-band to dedisperse\n");
-    (void) printf("                                         ");
+    (void) printf("                                        ");
     (void) printf("(within [0, nsubband))\n");
-    (void) printf("    -o  --out-format <format>            ");
+    (void) printf("    -o  --out-format <format>           ");
     (void) printf("Output format - 'dds', 'tim', or 'fil'\n");
-    (void) printf("                                         ");
+    (void) printf("                                        ");
     (void) printf("(default is 'tim')\n");
-    (void) printf("    -g  --graphics                       ");
+    (void) printf("    -g  --graphics                      ");
     (void) printf("Turn on plotting\n");
-    (void) printf("    -m  --colour-map <name>              ");
+    (void) printf("    -m  --colour-map <name>             ");
     (void) printf("Colour map for plotting\n");
-    (void) printf("                                         ");
+    (void) printf("                                        ");
     (void) printf("(default is 'jet')\n");
-    (void) printf("    -i  --invert                         ");
+    (void) printf("    -i  --invert                        ");
     (void) printf("Invert the background and foreground\n");
-    (void) printf("                                         ");
+    (void) printf("                                        ");
     (void) printf("colours in plots\n");
-    (void) printf("    -e  --non-interactive                ");
+    (void) printf("    -e  --non-interactive               ");
     (void) printf("Run in non-interactive mode\n");
-    (void) printf("    -v  --version                        ");
+    (void) printf("    -v  --version                       ");
     (void) printf("Display the version\n");
 
     return;

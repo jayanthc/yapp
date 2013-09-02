@@ -7,70 +7,30 @@
 # Based on vegas_gencoeff.py
 # Created by Jayanth Chennamangalam based on code by Sean McHugh, UCSB
 
+"""Usage: test.py [options]
+
+Options:
+    -h --help                         Display this usage information
+    -n --nfft <nfft>                  Length of the Fourier transform
+                                      [default: 4096]
+    -t --ntaps <ntaps>                Number of taps in PFB
+                                      [default: 8]
+    -g --graphics                     Turn on graphics
+
+"""
 import sys
-import getopt
+from docopt import docopt
 import math
 import numpy
 import matplotlib.pyplot as plotter
 
-# function definitions
-def PrintUsage(ProgName):
-    "Prints usage information."
-    print "Usage: " + ProgName + " [options]"
-    print "    -h  --help                           ",                        \
-          "Display this usage information"
-    print "    -n  --nfft <nfft>                    ",                        \
-          "Length of the Fourier transform\n",                                \
-          "                                         ",                        \
-          "(default is 4096)"
-    print "    -t  --ntaps <ntaps>                  ",                        \
-          "Number of taps in PFB\n",                                          \
-          "                                         ",                        \
-          "(default is 8)"
-#    print "    -b  --nsubbands <value>    Number of sub-bands in data"
-#    print "                               (default is 1)"
-    print "    -g  --graphics                       ",                        \
-          "Turn on graphics"
-    return
+args = docopt(__doc__, version="1.0.0")
 
 # default values
-NFFT = 4096                 # number of points in FFT
-NTaps = 8                   # number of taps in PFB
-NSubBands = 1               # number of sub-bands in data
-Plot = False                # plot flag
-
-# get the command line arguments
-ProgName = sys.argv[0]
-#OptsShort = "hn:t:b:g"
-#OptsLong = ["help", "nfft=", "ntaps=", "nsubbands=", "graphics"]
-OptsShort = "hn:t:g"
-OptsLong = ["help", "nfft=", "ntaps=", "graphics"]
-
-# get the arguments using the getopt module
-try:
-    (Opts, Args) = getopt.getopt(sys.argv[1:], OptsShort, OptsLong)
-except getopt.GetoptError, ErrMsg:
-    # print usage information and exit
-    sys.stderr.write("ERROR: " + str(ErrMsg) + "!\n")
-    PrintUsage(ProgName)
-    sys.exit(1)
-
-# parse the arguments
-for o, a in Opts:
-    if o in ("-h", "--help"):
-        PrintUsage(ProgName)
-        sys.exit()
-    elif o in ("-n", "--nfft"):
-        NFFT = int(a)
-    elif o in ("-t", "--ntaps"):
-        NTaps = int(a)
-    #elif o in ("-b", "--sub-bands"):
-    #    NSubBands = int(a)
-    elif o in ("-g", "--graphics"):
-        Plot = True
-    else:
-        PrintUsage(ProgName)
-        sys.exit(1)
+NFFT = int(args["--nfft"])      # number of points in FFT
+NTaps = int(args["--ntaps"])    # number of taps in PFB
+NSubBands = 1                   # number of sub-bands in data
+Plot = args["--graphics"]       # plot flag
 
 M = NTaps * NFFT
 
@@ -85,7 +45,7 @@ k = 0
 for i in range(len(PFBCoeff)):
     Coeff = float(PFBCoeff[i])
     for m in range(NSubBands):
-        PFBCoeffFloat32[k+m] = Coeff
+        PFBCoeffFloat32[k + m] = Coeff
     k = k + NSubBands
 
 # write the coefficients to disk and also plot it
@@ -103,4 +63,3 @@ FileCoeff.close()
 
 if (Plot):
     plotter.show()
-

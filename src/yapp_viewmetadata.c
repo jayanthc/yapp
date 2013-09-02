@@ -241,9 +241,9 @@ void PrintUsage(const char *pcProgName)
 {
     (void) printf("Usage: %s [options] <data-file>\n",
                   pcProgName);
-    (void) printf("    -h  --help                           ");
+    (void) printf("    -h  --help                          ");
     (void) printf("Display this usage information\n");
-    (void) printf("    -v  --version                        ");
+    (void) printf("    -v  --version                       ");
     (void) printf("Display the version\n");
 
     return;

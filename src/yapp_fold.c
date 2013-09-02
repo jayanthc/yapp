@@ -16,6 +16,9 @@
  *     -w  --waterfall <numpulses>          Show a waterfall plot (pulse number
  *                                          versus phase) instead of a folded
  *                                          profile
+ *     -x  --waterfallgs <numpulses>        Show a grayscale waterfall plot
+ *                                          (pulse number versus phase) instead
+ *                                          of a folded profile
  *     -m  --colour-map <name>              Colour map for plotting
  *                                          (default is 'jet')
  *     -f  --file                           Plot to file, instead of to screen
@@ -101,6 +104,7 @@ int main(int argc, char *argv[])
     double dPhaseStep = 0.0;
     int iSampsPerPeriod = 0;
     int iTotalPulses = 0;
+    int iWaterfallType = 0;
 //    double dPNorm = 0.0;
 //    float fAcc = -10.0;
     double dTime = 0.0;
@@ -125,7 +129,7 @@ int main(int argc, char *argv[])
     const char *pcProgName = NULL;
     int iNextOpt = 0;
     /* valid short options */
-    const char* const pcOptsShort = "hs:p:t:w:m:fiev";
+    const char* const pcOptsShort = "hs:p:t:w:x:m:fiev";
     /* valid long options */
     const struct option stOptsLong[] = {
         { "help",                   0, NULL, 'h' },
@@ -133,6 +137,7 @@ int main(int argc, char *argv[])
         { "proc",                   1, NULL, 'p' },
         { "period",                 1, NULL, 't' },
         { "waterfall",              1, NULL, 'w' },
+        { "waterfallgs",            1, NULL, 'x' },
         { "colour-map",             1, NULL, 'm' },
         { "file",                   0, NULL, 'f' },
         { "invert",                 0, NULL, 'i' },
@@ -173,6 +178,22 @@ int main(int argc, char *argv[])
             case 'w':   /* -w or --waterfall */
                 /* set option */
                 iNumPulses = atoi(optarg);
+                iWaterfallType = PLOT_WATERFALL;
+                /* validate - PGPLOT does not like iNumPulses = 1 */
+                if (iNumPulses < 2)
+                {
+                    (void) fprintf(stderr,
+                                   "ERROR: Number of waterfalled pulses must "
+                                   "be > 1!\n");
+                    PrintUsage(pcProgName);
+                    return YAPP_RET_ERROR;
+                }
+                break;
+
+            case 'x':   /* -x or --wfallgs */
+                /* set option */
+                iNumPulses = atoi(optarg);
+                iWaterfallType = PLOT_WATERFALL_GS;
                 /* validate - PGPLOT does not like iNumPulses = 1 */
                 if (iNumPulses < 2)
                 {
@@ -270,7 +291,8 @@ int main(int argc, char *argv[])
     }
 
     /* user input validation */
-    if ((YAPP_FORMAT_FIL == iFormat) && (iNumPulses != 0))
+    if (((YAPP_FORMAT_FIL == iFormat) || (YAPP_FORMAT_SPEC == iFormat))
+        && (iWaterfallType != 0))
     {
         (void) fprintf(stderr,
                        "ERROR: "
@@ -330,7 +352,7 @@ int main(int argc, char *argv[])
     iTotalPulses = (int) floor((double) stYUM.iTimeSamps / iSampsPerPeriod);
 
     /* compute the block size - a large multiple of iSampsPerPeriod */
-    if (0 == iNumPulses)
+    if (0 == iWaterfallType)
     {
         iBlockSize = DEF_FOLD_PULSES * iSampsPerPeriod;
     }
@@ -419,7 +441,7 @@ int main(int argc, char *argv[])
     iTotNumReads = iNumReads;
 
     /* optimisation - store some commonly used values in variables */
-    if (0 == iNumPulses)
+    if (0 == iWaterfallType)
     {
         iTotSampsPerBlock = stYUM.iNumChans * iBlockSize;
     }
@@ -604,7 +626,7 @@ int main(int argc, char *argv[])
         || (YAPP_FORMAT_DTS_DAT == iFormat))    /* time series format */
     {
         /* allocate memory for the accumulation buffer */
-        if (0 == iNumPulses)
+        if (0 == iWaterfallType)
         {
             g_pfProfBuf = (float *) YAPP_Malloc(iSampsPerPeriod,
                                                sizeof(float),
@@ -800,7 +822,7 @@ int main(int argc, char *argv[])
             fRMSNoise = YAPP_CalcRMS(g_pfBuf, iNumSamps, 0, 1, fMeanNoise);
 
             /* fold data */
-            if (0 == iNumPulses)
+            if (0 == iWaterfallType)
             {
                 for (i = 0; i < iNumSamps; ++i)
                 {
@@ -875,7 +897,7 @@ int main(int argc, char *argv[])
         if ((YAPP_FORMAT_DTS_TIM == iFormat)
             || (YAPP_FORMAT_DTS_DAT == iFormat))    /* time series format */
         {
-            if (0 == iNumPulses)
+            if (0 == iWaterfallType)
             {
                 cpgeras();
                 fDataMin = g_pfProfBuf[0];
@@ -939,18 +961,45 @@ int main(int argc, char *argv[])
                               fDataMax);
                 #endif
 
-                if (!cIsFirst)
+                if (PLOT_WATERFALL_GS == iWaterfallType)
                 {
-                    cpgsci(0);      /* background */
-                    cpgsvp(PG_WEDG_VP_ML, PG_WEDG_VP_MR, PG_WEDG_VP_MB, PG_WEDG_VP_MT);
-                    cpgwedg("TI", 0.0, 3.0, fDataMinOld, fDataMaxOld, "");
+                    /* plot grayscale waterfall plot */
+                    if (!cIsFirst)
+                    {
+                        cpgsci(0);      /* background */
+                        cpgsvp(PG_WEDG_VP_ML, PG_WEDG_VP_MR, PG_WEDG_VP_MB, PG_WEDG_VP_MT);
+                        cpgwedg("TI", 0.0, 3.0, fDataMinOld, fDataMaxOld, "");
+                        cpgsci(PG_CI_DEF);
+                    }
+                    Plot2D(g_pfBuf, fDataMin, fDataMax,
+                           g_pfPhase, iSampsPerPeriod, dPhaseStep,
+                           g_pfYAxis, iNumPulses, 1.0,
+                           "Phase", "", "",
+                           iColourMap);
+                }
+                else
+                {
+                    /* plot traditional waterfall plot */
+                    cpgeras();
+                    cpgsvp(PG_VP_ML, PG_VP_MR, PG_VP_MB, PG_VP_MT);
+                    cpgswin(g_pfPhase[0],
+                            g_pfPhase[iSampsPerPeriod-1],
+                            fDataMin,
+                            fDataMax + ((fDataMax - fDataMin) * WATERFALL_OFFSET_SCALE * iNumPulses));
+                    cpglab("Phase", "", "");
+                    cpgbox("BCNST", 0.0, 0, "BCNST", 0.0, 0);
+                    cpgsci(PG_CI_PLOT);
+                    for (i = 0; i < iNumPulses; ++i)
+                    {
+                        pfProfSpec = g_pfBuf + i * iSampsPerPeriod;
+                        for (j = 0; j < iSampsPerPeriod; ++j)
+                        {
+                            pfProfSpec[j] += (i * WATERFALL_OFFSET_SCALE * (fDataMax - fDataMin));
+                        }
+                        cpgline(iSampsPerPeriod, g_pfPhase, pfProfSpec);
+                    }
                     cpgsci(PG_CI_DEF);
                 }
-                Plot2D(g_pfBuf, fDataMin, fDataMax,
-                       g_pfPhase, iSampsPerPeriod, dPhaseStep,
-                       g_pfYAxis, iNumPulses, 1.0,
-                       "Phase", "Pulse Number", "Folded Dynamic Spectrum",
-                       iColourMap);
             }
         }
         else    /* filterbank format */
@@ -1110,7 +1159,7 @@ int main(int argc, char *argv[])
         || (YAPP_FORMAT_DTS_DAT == iFormat))    /* time series format */
     {
         /* NOTE: no support for waterfall data */
-        if (0 == iNumPulses)
+        if (0 == iWaterfallType)
         {
             /* open the output profile file */
             pFProfile = fopen(acFileProf, "w");
@@ -1163,41 +1212,47 @@ void PrintUsage(const char *pcProgName)
 {
     (void) printf("Usage: %s [options] <data-file>\n",
                   pcProgName);
-    (void) printf("    -h  --help                           ");
+    (void) printf("    -h  --help                          ");
     (void) printf("Display this usage information\n");
-    (void) printf("    -s  --skip <time>                    ");
+    (void) printf("    -s  --skip <time>                   ");
     (void) printf("The length of data in seconds, to be\n");
-    (void) printf("                                         ");
+    (void) printf("                                        ");
     (void) printf("skipped\n");
-    (void) printf("                                         ");
+    (void) printf("                                        ");
     (void) printf("(default is 0 s)\n");
-    (void) printf("    -p  --proc <time>                    ");
+    (void) printf("    -p  --proc <time>                   ");
     (void) printf("The length of data in seconds, to be\n");
-    (void) printf("                                         ");
+    (void) printf("                                        ");
     (void) printf("processed\n");
-    (void) printf("                                         ");
+    (void) printf("                                        ");
     (void) printf("(default is all)\n");
-    (void) printf("    -t  --period <period>                ");
+    (void) printf("    -t  --period <period>               ");
     (void) printf("Folding period in milliseconds\n");
-    (void) printf("    -w  --waterfall <numpulses>          ");
+    (void) printf("    -w  --waterfall <numpulses>         ");
     (void) printf("Show a waterfall plot (pulse number\n");
-    (void) printf("                                         ");
+    (void) printf("                                        ");
     (void) printf("versus phase) instead of a folded\n");
-    (void) printf("                                         ");
+    (void) printf("                                        ");
     (void) printf("profile\n");
-    (void) printf("    -m  --colour-map <name>              ");
+    (void) printf("    -x  --waterfallgs <numpulses>       ");
+    (void) printf("Show a grascale waterfall plot (pulse\n");
+    (void) printf("                                        ");
+    (void) printf("number versus phase) instead of a\n");
+    (void) printf("                                        ");
+    (void) printf("folded profile\n");
+    (void) printf("    -m  --colour-map <name>             ");
     (void) printf("Colour map for plotting\n");
-    (void) printf("                                         ");
+    (void) printf("                                        ");
     (void) printf("(default is 'jet')\n");
-    (void) printf("    -f  --file                           ");
+    (void) printf("    -f  --file                          ");
     (void) printf("Plot to file, instead of to screen\n");
-    (void) printf("    -i  --invert                         ");
+    (void) printf("    -i  --invert                        ");
     (void) printf("Invert background and foreground\n");
-    (void) printf("                                         ");
+    (void) printf("                                        ");
     (void) printf("colours in plots\n");
-    (void) printf("    -e  --non-interactive                ");
+    (void) printf("    -e  --non-interactive               ");
     (void) printf("Run in non-interactive mode\n");
-    (void) printf("    -v  --version                        ");
+    (void) printf("    -v  --version                       ");
     (void) printf("Display the version\n");
 
     return;

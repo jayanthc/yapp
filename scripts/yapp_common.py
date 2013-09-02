@@ -40,3 +40,4 @@ def DoCal(prof, onBin, offBin, Tsys, G, NPol, tObs, NBins, BW, polyOrder, Gamma)
 
     return (prof, DeltaS)
 
+

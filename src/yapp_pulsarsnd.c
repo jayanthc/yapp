@@ -331,17 +331,17 @@ int main(int argc, char *argv[])
 void PrintUsage(const char *pcProgName)
 {
     (void) printf("Usage: %s [options] <dedispersed-data-file>\n", pcProgName);
-    (void) printf("    -s  --samples <samples-per-sec>      ");
+    (void) printf("    -s  --samples <samples-per-sec>     ");
     (void) printf("Samples per second\n");
-    (void) printf("    -a  --ampfactor <amp-scale-factor>   ");
+    (void) printf("    -a  --ampfactor <amp-scale-factor>  ");
     (void) printf("Amplitude scale factor\n");
-    (void) printf("    -b  --header <header-bytes-to-skip>  ");
+    (void) printf("    -b  --header <header-bytes-to-skip> ");
     (void) printf("Header bytes to skip\n");
-    (void) printf("    -w  --swap                           ");
+    (void) printf("    -w  --swap                          ");
     (void) printf("Swap flag\n");
-    (void) printf("    -h  --help                           ");
+    (void) printf("    -h  --help                          ");
     (void) printf("Display this usage information\n");
-    (void) printf("    -v  --version                        ");
+    (void) printf("    -v  --version                       ");
     (void) printf("Display the version\n");
 
     return;
