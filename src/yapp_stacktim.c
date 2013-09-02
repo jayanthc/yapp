@@ -698,25 +698,25 @@ void PrintUsage(const char *pcProgName)
 {
     (void) printf("Usage: %s [options] <data-file-0> ...<data-file-1>\n",
                   pcProgName);
-    (void) printf("    -h  --help                           ");
+    (void) printf("    -h  --help                          ");
     (void) printf("Display this usage information\n");
-    (void) printf("    -n  --nsamp <samples>                ");
+    (void) printf("    -n  --nsamp <samples>               ");
     (void) printf("Number of samples read in one block\n");
-    (void) printf("                                         ");
+    (void) printf("                                        ");
     (void) printf("(default is 4096 samples)\n");
-    (void) printf("    -g  --graphics                       ");
+    (void) printf("    -g  --graphics                      ");
     (void) printf("Turn on plotting\n");
-    (void) printf("    -m  --colour-map <name>              ");
+    (void) printf("    -m  --colour-map <name>             ");
     (void) printf("Colour map for plotting\n");
-    (void) printf("                                         ");
+    (void) printf("                                        ");
     (void) printf("(default is 'jet')\n");
-    (void) printf("    -i  --invert                         ");
+    (void) printf("    -i  --invert                        ");
     (void) printf("Invert background and foreground\n");
-    (void) printf("                                         ");
+    (void) printf("                                        ");
     (void) printf("colours in plots\n");
-    (void) printf("    -e  --non-interactive                ");
+    (void) printf("    -e  --non-interactive               ");
     (void) printf("Run in non-interactive mode\n");
-    (void) printf("    -v  --version                        ");
+    (void) printf("    -v  --version                       ");
     (void) printf("Display the version\n");
 
     return;

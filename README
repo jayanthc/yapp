@@ -8,10 +8,9 @@ software.
 
 The YAPP tools available with this release are:
 
-    yapp_viewmetadata   : Prints metadata/data header/configuration information
-                          to standard output.
+    yapp_viewmetadata   : Prints metadata to standard output.
     yapp_viewdata       : Plots data to PGPLOT device.
-    yapp_ft             : Performs [PFB +] FFT on 8-bit, complex, dual-pol.
+    yapp_ft             : Performs PFB/FFT on 8-bit, complex, dual-pol.
                           baseband data.
     yapp_dedisperse     : Dedisperses filterbank format data.
     yapp_smooth         : Boxcar-smoothes dedispersed time series data
@@ -33,7 +32,8 @@ YAPP also comes with the following utilities:
 
 YAPP includes the following scripts:
 
-    yapp_genpfbcoeff.py     : Generate PFB co-efficients for yapp_ft.
+    yapp_genpfbcoeff.py     : Generate PFB pre-filter co-efficients for
+                              yapp_ft.
     yapp_genfiltermask.py   : Generate filter response for yapp_filter.
     yapp_calcspecidx.py     : Calculate spectral index from a sequence of time
                               series files corresponding to multiple bands.
@@ -58,5 +58,5 @@ PGPLOT/FFTW3/CFITSIO installation directories and/or a different choice of YAPP
 installation directory, the makefile may need to be modified by hand.
 
 Created by Jayanth Chennamangalam
-http://jayanthc.github.com/yapp/
+http://jayanthc.github.io/yapp/
 -------------------------------------------------------------------------------
