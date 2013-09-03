@@ -86,11 +86,9 @@ int main(int argc, char *argv[])
     float fSampSize = 0.0;      /* number of bits that make a sample */
     int iTotSampsPerBlock = 0;  /* iNumChans * iBlockSize */
     int iDataSizePerBlock = 0;  /* fSampSize * iNumChans * iBlockSize */
-    int iNumGoodChans = 0;
     int iEffcNumGoodChans = 0;
     float fStatBW = 0.0;
     float fNoiseRMS = 0.0;
-    double dNumSigmas = 0.0;
     double dTNextBF = 0.0;
     double dTSamp = 0.0;        /* holds sampling time in ms */
     double dTSampInSec = 0.0;   /* holds sampling time in s */
@@ -368,7 +366,6 @@ int main(int argc, char *argv[])
     dTSampInSec = stYUM.dTSamp / 1e3;
     fChanBW = stYUM.fChanBW;
     iTimeSamps = stYUM.iTimeSamps; 
-    iNumGoodChans = stYUM.iNumGoodChans;
     fSampSize = stYUM.fSampSize;
     lDataSizeTotal = stYUM.lDataSizeTotal;
     pfTimeSectGain = stYUM.pfBFGain;    /* for .spec */
@@ -567,19 +564,6 @@ int main(int argc, char *argv[])
                   iNumReads,
                   iBlockSize);
 
-    /* calculate the threshold */
-    dNumSigmas = YAPP_CalcThresholdInSigmas(iTimeSampsToProc);
-    if ((double) YAPP_RET_ERROR == dNumSigmas)
-    {
-        (void) fprintf(stderr, "ERROR: Threshold calculation failed!\n");
-        YAPP_CleanUp();
-        return YAPP_RET_ERROR;
-    }
-    fStatBW = iNumGoodChans * fChanBW;  /* in MHz */
-    (void) printf("Usable bandwidth                  : %g MHz\n", fStatBW);
-    fNoiseRMS = 1.0 / sqrt(fStatBW * dTSamp * 1e3);
-    (void) printf("Expected noise RMS                : %g\n", fNoiseRMS);
-
     /* allocate memory for the time sample goodness flag array */
     g_pcIsTimeGood = (char *) YAPP_Malloc((size_t) iTimeSampsToProc,
                                           sizeof(char),
@@ -595,27 +579,38 @@ int main(int argc, char *argv[])
     /* set all elements to 'YAPP_TRUE' */
     (void) memset(g_pcIsTimeGood, YAPP_TRUE, iTimeSampsToProc);
 
+    /* add header for .fil or .tim file format */
+    if ((YAPP_FORMAT_FIL == iOutputFormat)
+        || (YAPP_FORMAT_DTS_TIM == iOutputFormat))
+    {
+        /* populate the YUM structure */
+        (void) memcpy(&stYUMOut, &stYUM, sizeof(YUM_t));
+    }
+
     /* kludge: simulate sub-band dedispersion by marking other channels as bad
        so that they don't go into the summation */
-    /* NOTE: this will not work with data in which there are actual bad
-       channels */
     if (iNumSubBands > 0)
     {
-        iChansPerSubBand = (int) ((float) iNumChans / iNumSubBands);
+        /* compute the number of channels per sub-band. iNumChans is a multiple
+           of iNumSubBands */
+        iChansPerSubBand = iNumChans / iNumSubBands;
         iStartChan = iSubBand * iChansPerSubBand;
         iEndChan = (iSubBand + 1) * iChansPerSubBand;
+        stYUMOut.iNumGoodChans = iChansPerSubBand;
         for (i = 0; i < iNumChans; ++i)
         {
-            if ((i >= iStartChan) && (i < iEndChan))
-            {
-                stYUM.pcIsChanGood[i] = YAPP_TRUE;
-            }
-            else
+            if (!((i >= iStartChan) && (i < iEndChan)))
             {
                 stYUM.pcIsChanGood[i] = YAPP_FALSE;
+                --stYUMOut.iNumGoodChans;
             }
         }
     }
+
+    fStatBW = stYUMOut.iNumGoodChans * fChanBW;  /* in MHz */
+    (void) printf("Usable bandwidth                  : %g MHz\n", fStatBW);
+    fNoiseRMS = 1.0 / sqrt(fStatBW * dTSamp * 1e3);
+    (void) printf("Expected noise RMS                : %g\n", fNoiseRMS);
 
     /* open the data file for reading */
     g_pFData = fopen(pcFileSpec, "r");
@@ -898,12 +893,10 @@ int main(int argc, char *argv[])
         (void) strcat(acFileDedisp, EXT_FIL);
     }
 
-    /* add header for .fil or .tim file format */
+    /* update header for .fil or .tim file format */
     if ((YAPP_FORMAT_FIL == iOutputFormat)
         || (YAPP_FORMAT_DTS_TIM == iOutputFormat))
     {
-        /* populate the YUM structure */
-        (void) memcpy(&stYUMOut, &stYUM, sizeof(YUM_t)); 
         stYUMOut.iNumBits = YAPP_SAMPSIZE_32;
         /* enter the start time corrected for dispersion */
         stYUMOut.dTStart = stYUM.dTStart - (fStartOffset / 86400);
@@ -919,7 +912,6 @@ int main(int argc, char *argv[])
         if (iNumSubBands > 0)
         {
             stYUMOut.iNumChans = iChansPerSubBand;
-            stYUMOut.iNumGoodChans = iChansPerSubBand;
             stYUMOut.fBW = stYUMOut.iNumChans * stYUMOut.fChanBW;
             stYUMOut.fFMin = stYUM.fFMin
                              + (iStartChan * stYUMOut.fChanBW);
