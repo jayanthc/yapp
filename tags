@@ -1,11 +1,19 @@
 CAND_INFO	src/yapp.h	/^} CAND_INFO;$/
 CMap_t	src/colourmap.h	/^} CMap_t;$/
 GetColourMapFromName	src/colourmap.c	/^int GetColourMapFromName(char *pcCMapName)$/
+Myapp_dat2tim	utilities/yapp_dat2tim.c	/^int main(int argc, char *argv[])$/
+Myapp_fits2fil	utilities/yapp_fits2fil.c	/^int main(int argc, char *argv[])$/
 Myapp_pulsarsnd	src/yapp_pulsarsnd.c	/^int main(int argc, char *argv[])$/
+Myapp_tim2dat	utilities/yapp_tim2dat.c	/^int main(int argc, char *argv[])$/
 PFB_DATA	src/yapp_ft.h	/^} PFB_DATA;$/
 Plot2D	src/colourmap.c	/^void Plot2D(float* pfBuf, float fDataMin, float fD/
 PrintUsage	src/yapp_pulsarsnd.c	/^void PrintUsage(const char *pcProgName)$/
 SetColourMap	src/colourmap.c	/^int SetColourMap(int iCMap, float fColMin, float f/
+YAPP_CopyData	utilities/yapp_dat2tim.c	/^int YAPP_CopyData(char *pcFileData, FILE *pFTim)$/
 YAPP_SIGPROC_HEADER	src/yapp_sigproc.h	/^} YAPP_SIGPROC_HEADER;$/
+YAPP_WritePolSelection	utilities/yapp_fits2fil.c	/^int YAPP_WritePolSelection(int iNumBits, long int /
 YUM_t	src/yapp.h	/^} YUM_t;$/
+f	src/yapp_common.o	/^/
+read	src/yapp_ft.o	/^/
 tagFileFormats	src/yapp.h	/^enum tagFileFormats$/
+x	src/yapp_add.o	/^Οϊνώ/

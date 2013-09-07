@@ -8,8 +8,9 @@ TODO
 4. Incoherent summation (stacking).
 5. Memory usage management - create ~/.yapp/yapp.conf or some such to fix
    an upper limit on the amount of memory the YAPP programs can use.
-6. Support the non-POSIX (OS X/BSD) SIGINFO for status reporting
-
+6. Support the non-POSIX (OS X/BSD) SIGINFO for status reporting.
+7. Deprecate support for headerless .fil files.
+8. Fix clipping/thresholding.
 
 all:
 1. popt-ify all programs.

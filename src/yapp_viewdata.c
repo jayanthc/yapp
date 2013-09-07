@@ -15,6 +15,9 @@
  *                                          (default is 4096 samples)
  *     -c  --clip-level <level>             Number of sigmas above threshold;
  *                                          will clip anything above this level
+ *     -t  --period <period>                Period of the pulsar in ms
+ *     -r  --phase <phase>                  Phase of the pulse with respect to
+ *                                          the first sample
  *     -m  --colour-map <name>              Colour map for plotting
  *                                          (default is 'jet')
  *     -i  --invert                         Invert the background and foreground
@@ -102,8 +105,8 @@ int main(int argc, char *argv[])
     double dPeriod = 0.0;
     double dStartPhase = 0.0;
     double dPhase = 0.0;
+    double dMinPhaseDiff = 0.0;
     long int lSampCount = 0;
-    int iSampsPerPeriod = 0;
     int iDiff = 0;
     int i = 0;
     int j = 0;
@@ -305,8 +308,6 @@ int main(int argc, char *argv[])
                            * stYUM.iNumChans
                            * stYUM.fSampSize);
 
-    /* calculate the number of bins in one profile */
-    iSampsPerPeriod = (int) round(dPeriod / stYUM.dTSamp);
     if (lBytesToSkip >= stYUM.lDataSizeTotal)
     {
         (void) fprintf(stderr,
@@ -439,7 +440,6 @@ int main(int argc, char *argv[])
 
     if ((YAPP_FORMAT_FIL == iFormat) || (YAPP_FORMAT_DTS_TIM == iFormat))
     {
-        /* TODO: Need to do this only if the file contains the header */
         /* skip the header */
         (void) fseek(g_pFData, (long) stYUM.iHeaderLen, SEEK_SET);
         /* skip data, if any are to be skipped */
@@ -554,6 +554,12 @@ int main(int argc, char *argv[])
                        strerror(errno));
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
+    }
+
+    if (dPeriod != 0.0)
+    {
+        /* compute the phase difference between successive samples */
+        dMinPhaseDiff = (stYUM.dTSamp / dPeriod);
     }
 
     while (iNumReads > 0)
@@ -783,13 +789,6 @@ int main(int argc, char *argv[])
                     0.5,
                     0);
             cpgbox("CST", 0.0, 0, "CST", 0.0, 0);
-            #if 0
-            if (!cIsFirst)
-            {
-                cpgsvp(PG_WEDG_VP_ML, PG_WEDG_VP_MR, PG_WEDG_VP_MB, PG_WEDG_VP_MT);
-                cpgwedg("TI", 0.0, 3.0, fDataMinOld, fDataMaxOld, "");
-            }
-            #endif
             cIsFirst = YAPP_FALSE;
             cpgsci(PG_CI_DEF);
             Plot2D(g_pfPlotBuf, fDataMin, fDataMax,
@@ -822,9 +821,8 @@ int main(int argc, char *argv[])
                 /* compute the phase */
                 dPhase = (double) lSampCount * (stYUM.dTSamp / dPeriod);
                 dPhase = dPhase - floor(dPhase);
-                if (fabs(dPhase - dStartPhase) < 0.0000725)
+                if (fabs(dPhase - dStartPhase) < dMinPhaseDiff)
                 {
-                    //cpgpt1(g_pfXAxis[i], g_pfBuf[i], 3);
                     cpgerry(1, &g_pfXAxis[i], &fDataMax, &fDataMin, 0.0);
                 }
                 ++lSampCount;
@@ -955,6 +953,12 @@ void PrintUsage(const char *pcProgName)
     (void) printf("Number of sigmas above threshold; will\n");
     (void) printf("                                        ");
     (void) printf("clip anything above this level\n");
+    (void) printf("    -t  --period <period>               ");
+    (void) printf("Period of the pulsar in ms\n");
+    (void) printf("    -r  --phase <phase>                 ");
+    (void) printf("Phase of the pulse with respect to the\n");
+    (void) printf("                                        ");
+    (void) printf("first sample\n");
     (void) printf("    -m  --colour-map <name>             ");
     (void) printf("Colour map for plotting\n");
     (void) printf("                                        ");

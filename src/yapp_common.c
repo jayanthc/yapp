@@ -24,7 +24,7 @@ const char g_aacSP_ObsNames[YAPP_SP_NUMOBS][LEN_GENSTRING] = {
     YAPP_SP_OBS_EFFELSBERG,
 };
 
-extern const double g_aadErfLookup[YAPP_ERF_ENTRIES][3];
+extern const double g_aadErfLookup[YAPP_ERF_ENTRIES][2];
 
 /* global memory management */
 void* g_apvMemTable[YAPP_MAX_MEMTABLE] = {0};
@@ -198,7 +198,6 @@ double YAPP_CalcThresholdInSigmas(int iTimeSamps)
     double dErf = 0.0;
     double dNumSigmas = 0.0;
     double dErfRef = 0.0;
-    double dErfArgRef = 0.0;
     double dNumSigmasRef = 0.0;
     double dErfDiff = 0.0;
     double dErfDiffMin = 0.0;
@@ -213,7 +212,6 @@ double YAPP_CalcThresholdInSigmas(int iTimeSamps)
     dErf = 1 - 2 * dPOutlier;
 
     dErfRef = g_aadErfLookup[0][0];
-    dErfArgRef = g_aadErfLookup[0][1];
     dNumSigmasRef = g_aadErfLookup[0][2];
     dErfDiff = fabs(dErfRef - dErf);
     dErfDiffMin = dErfDiff;
@@ -224,7 +222,6 @@ double YAPP_CalcThresholdInSigmas(int iTimeSamps)
     for (i = 0; i < YAPP_ERF_ENTRIES; ++i)
     {
         dErfRef = g_aadErfLookup[i][0];
-        dErfArgRef = g_aadErfLookup[i][1];
         dNumSigmasRef = g_aadErfLookup[i][2];
 
         dErfDiff = fabs(dErfRef - dErf);
