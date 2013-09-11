@@ -16,8 +16,8 @@
  *     -c  --clip-level <level>             Number of sigmas above threshold;
  *                                          will clip anything above this level
  *     -t  --period <period>                Period of the pulsar in ms
- *     -r  --phase <phase>                  Phase of the pulse with respect to
- *                                          the first sample
+ *     -r  --phase <phase>                  Phase of the first pulse with
+ *                                          respect to the first sample
  *     -m  --colour-map <name>              Colour map for plotting
  *                                          (default is 'jet')
  *     -i  --invert                         Invert the background and foreground
@@ -954,9 +954,9 @@ void PrintUsage(const char *pcProgName)
     (void) printf("    -t  --period <period>               ");
     (void) printf("Period of the pulsar in ms\n");
     (void) printf("    -r  --phase <phase>                 ");
-    (void) printf("Phase of the pulse with respect to the\n");
+    (void) printf("Phase of the first pulse with respect to");
     (void) printf("                                        ");
-    (void) printf("first sample\n");
+    (void) printf("the first sample\n");
     (void) printf("    -m  --colour-map <name>             ");
     (void) printf("Colour map for plotting\n");
     (void) printf("                                        ");
