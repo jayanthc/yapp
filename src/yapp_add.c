@@ -199,7 +199,7 @@ int main(int argc, char *argv[])
     /* read metadata */
     /* NOTE: it is assumed that all files correspond to a single observation.
              the only information taken from all files except the last one is
-             the highest frequency. general metadata is read from the last
+             the highest frequency. common metadata is read from the last
              file */
     /* allocate memory for the frequency array */
     pafMaxFreq = (float *) YAPP_Malloc((size_t) iNumBands,

@@ -15,6 +15,9 @@
  *                                          (default is 4096 samples)
  *     -c  --clip-level <level>             Number of sigmas above threshold;
  *                                          will clip anything above this level
+ *     -t  --period <period>                Period of the pulsar in ms
+ *     -r  --phase <phase>                  Phase of the pulse with respect to
+ *                                          the first sample
  *     -m  --colour-map <name>              Colour map for plotting
  *                                          (default is 'jet')
  *     -i  --invert                         Invert the background and foreground
@@ -99,6 +102,11 @@ int main(int argc, char *argv[])
     float fButY = 0.0;
     char cCurChar = 0;
     int iNumSamps = 0;
+    double dPeriod = 0.0;
+    double dStartPhase = 0.0;
+    double dPhase = 0.0;
+    double dMinPhaseDiff = 0.0;
+    long int lSampCount = 0;
     int iDiff = 0;
     int i = 0;
     int j = 0;
@@ -112,7 +120,7 @@ int main(int argc, char *argv[])
     const char *pcProgName = NULL;
     int iNextOpt = 0;
     /* valid short options */
-    const char* const pcOptsShort = "hs:p:n:c:m:iev";
+    const char* const pcOptsShort = "hs:p:n:c:t:r:m:iev";
     /* valid long options */
     const struct option stOptsLong[] = {
         { "help",                   0, NULL, 'h' },
@@ -120,6 +128,8 @@ int main(int argc, char *argv[])
         { "proc",                   1, NULL, 'p' },
         { "nsamp",                  1, NULL, 'n' },
         { "clip-level",             1, NULL, 'c' },
+        { "period",                 1, NULL, 't' },
+        { "phase",                  1, NULL, 'r' },
         { "colour-map",             1, NULL, 'm' },
         { "invert",                 0, NULL, 'i' },
         { "non-interactive",        0, NULL, 'e' },
@@ -167,6 +177,16 @@ int main(int argc, char *argv[])
             case 'c':   /* -c or --clip-level */
                 /* set option */
                 fClipLevel = (float) atof(optarg);
+                break;
+
+            case 't':   /* -t or --period */
+                /* set option */
+                dPeriod = atof(optarg);
+                break;
+
+            case 'r':   /* -r or --phase */
+                /* set option */
+                dStartPhase = atof(optarg);
                 break;
 
             case 'm':   /* -m or --colour-map */
@@ -420,7 +440,6 @@ int main(int argc, char *argv[])
 
     if ((YAPP_FORMAT_FIL == iFormat) || (YAPP_FORMAT_DTS_TIM == iFormat))
     {
-        /* TODO: Need to do this only if the file contains the header */
         /* skip the header */
         (void) fseek(g_pFData, (long) stYUM.iHeaderLen, SEEK_SET);
         /* skip data, if any are to be skipped */
@@ -535,6 +554,12 @@ int main(int argc, char *argv[])
                        strerror(errno));
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
+    }
+
+    if (dPeriod != 0.0)
+    {
+        /* compute the phase difference between successive samples */
+        dMinPhaseDiff = (stYUM.dTSamp / dPeriod);
     }
 
     while (iNumReads > 0)
@@ -787,6 +812,23 @@ int main(int argc, char *argv[])
             cpgsci(PG_CI_DEF);
         }
 
+        if (dPeriod != 0.0)
+        {
+            cpgsci(7);
+            for (i = 0; i < iNumSamps; ++i)
+            {
+                /* compute the phase */
+                dPhase = (double) lSampCount * (stYUM.dTSamp / dPeriod);
+                dPhase = dPhase - floor(dPhase);
+                if (fabs(dPhase - dStartPhase) < dMinPhaseDiff)
+                {
+                    cpgerry(1, &g_pfXAxis[i], &fDataMax, &fDataMin, 0.0);
+                }
+                ++lSampCount;
+            }
+            cpgsci(PG_CI_DEF);
+        }
+
         /* display the plot number */
         (void) sprintf(acLabel, "%d / %d", iReadBlockCount, iTotNumReads);
         cpgmtxt("T", -1.5, 0.99, 1.0, acLabel);
@@ -909,6 +951,12 @@ void PrintUsage(const char *pcProgName)
     (void) printf("Number of sigmas above threshold; will\n");
     (void) printf("                                        ");
     (void) printf("clip anything above this level\n");
+    (void) printf("    -t  --period <period>               ");
+    (void) printf("Period of the pulsar in ms\n");
+    (void) printf("    -r  --phase <phase>                 ");
+    (void) printf("Phase of the pulse with respect to the\n");
+    (void) printf("                                        ");
+    (void) printf("first sample\n");
     (void) printf("    -m  --colour-map <name>             ");
     (void) printf("Colour map for plotting\n");
     (void) printf("                                        ");
