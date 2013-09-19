@@ -40,6 +40,9 @@ YAPP includes the following scripts:
     yapp_stackprof.py       : Stacks folded profiles from multiple bands to
                               show a plot of phase versus frequency.
     yapp_addprof.py         : Add [calibrated] profiles from two polarisations.
+    yapp_viewcand.rb        : Converts prepfold candidate plots in PS format to
+                              PNG, and generates a set of HTML pages displaying
+                              a tiled set of plots.
 
 The supported file formats are are DAS '.spec', SIGPROC '.fil', and SIGPROC
 '.tim', with limited support for DAS '.dds', PSRFITS, and PRESTO '.dat'.
@@ -48,7 +51,7 @@ For detailed usage instructions, refer the man pages and/or online
 documentation.
 
 System requirements: Linux/Mac OS, PGPLOT with C binding, FFTW3, CFITSIO,
-Python with Matplotlib
+Python with Matplotlib, ruby, mogrify
 
 Installation instructions: On a typical Ubuntu-based machine in which PGPLOT,
 FFTW3, and CFITSIO were installed via APT, running 'make' followed by
