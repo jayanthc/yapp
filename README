@@ -51,7 +51,7 @@ For detailed usage instructions, refer the man pages and/or online
 documentation.
 
 System requirements: Linux/Mac OS, PGPLOT with C binding, FFTW3, CFITSIO,
-Python with Matplotlib, ruby, mogrify
+Python with Matplotlib, Ruby, mogrify
 
 Installation instructions: On a typical Ubuntu-based machine in which PGPLOT,
 FFTW3, and CFITSIO were installed via APT, running 'make' followed by

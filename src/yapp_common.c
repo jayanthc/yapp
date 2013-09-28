@@ -878,6 +878,7 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
     float fFCh1 = 0.0;
     double dChanBW = 0.0;
     int iObsID = 0;
+    char acTemp[LEN_GENSTRING] = {0};
 
     assert((YAPP_FORMAT_FIL == iFormat) || (YAPP_FORMAT_DTS_TIM == iFormat));
 
@@ -974,6 +975,24 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
                          g_pFData);
             pstYUM->fChanBW = (float) dChanBW;
             pstYUM->iHeaderLen += sizeof(dChanBW);
+        }
+        else if (0 == strcmp(acLabel, YAPP_SP_LABEL_NUMBEAMS))
+        {
+            /* read number of beams */
+            iRet = fread(&pstYUM->iNumBeams,
+                         sizeof(pstYUM->iNumBeams),
+                         1,
+                         g_pFData);
+            pstYUM->iHeaderLen += sizeof(pstYUM->iNumBeams);
+        }
+        else if (0 == strcmp(acLabel, YAPP_SP_LABEL_BEAMID))
+        {
+            /* read beam identifier */
+            iRet = fread(&pstYUM->iBeamID,
+                         sizeof(pstYUM->iBeamID),
+                         1,
+                         g_pFData);
+            pstYUM->iHeaderLen += sizeof(pstYUM->iBeamID);
         }
         else if (0 == strcmp(acLabel, YAPP_SP_LABEL_NUMBITS))
         {
@@ -1083,6 +1102,14 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
                          1,
                          g_pFData);
             pstYUM->iHeaderLen += sizeof(pstYUM->iFlagBary);
+        }
+        else if (0 == strcmp(acLabel, YAPP_SP_LABEL_RAWFILENAME))
+        {
+			/* read raw data file name */
+            iRet = fread(&iLen, sizeof(iLen), 1, g_pFData);
+            iRet = fread(acTemp, sizeof(char), iLen, g_pFData);
+            acTemp[iLen] = '\0';
+            pstYUM->iHeaderLen += (sizeof(iLen) + iLen);
         }
         else if (0 == strcmp(acLabel, YAPP_SP_LABEL_FREQSTART))
         {

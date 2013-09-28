@@ -297,6 +297,8 @@ typedef struct YUM_s
     float *pfBFGain;
     int iNumBadTimes;
     double (*padBadTimes)[][NUM_BAD_BOUNDS];
+    int iNumBeams;
+    int iBeamID;
     int iNumBits;
     int iNumIFs;
     int iBackendID;
