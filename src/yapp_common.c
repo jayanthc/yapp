@@ -885,6 +885,7 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
     float fFCh1 = 0.0;
     double dChanBW = 0.0;
     int iObsID = 0;
+    char acTemp[LEN_GENSTRING] = {0};
 
     assert((YAPP_FORMAT_FIL == iFormat) || (YAPP_FORMAT_DTS_TIM == iFormat));
 
@@ -981,6 +982,24 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
                          g_pFData);
             pstYUM->fChanBW = (float) dChanBW;
             pstYUM->iHeaderLen += sizeof(dChanBW);
+        }
+        else if (0 == strcmp(acLabel, YAPP_SP_LABEL_NUMBEAMS))
+        {
+            /* read number of bits per sample */
+            iRet = fread(&pstYUM->iNumBeams,
+                         sizeof(pstYUM->iNumBeams),
+                         1,
+                         g_pFData);
+            pstYUM->iHeaderLen += sizeof(pstYUM->iNumBeams);
+        }
+        else if (0 == strcmp(acLabel, YAPP_SP_LABEL_BEAMID))
+        {
+            /* read number of bits per sample */
+            iRet = fread(&pstYUM->iBeamID,
+                         sizeof(pstYUM->iBeamID),
+                         1,
+                         g_pFData);
+            pstYUM->iHeaderLen += sizeof(pstYUM->iBeamID);
         }
         else if (0 == strcmp(acLabel, YAPP_SP_LABEL_NUMBITS))
         {
@@ -1090,6 +1109,13 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
                          1,
                          g_pFData);
             pstYUM->iHeaderLen += sizeof(pstYUM->iFlagBary);
+        }
+        else if (0 == strcmp(acLabel, YAPP_SP_LABEL_RAWFILENAME))
+        {
+            iRet = fread(&iLen, sizeof(iLen), 1, g_pFData);
+            iRet = fread(acTemp, sizeof(char), iLen, g_pFData);
+            acTemp[iLen] = '\0';
+            pstYUM->iHeaderLen += (sizeof(iLen) + iLen);
         }
         else if (0 == strcmp(acLabel, YAPP_SP_LABEL_FREQSTART))
         {
@@ -2290,6 +2316,66 @@ int YAPP_Smooth(float* pfInBuf,
 
     return YAPP_RET_SUCCESS;
 }
+
+
+/*
+ * Calculate the number of channels for a stacked filterbank file. Assumes
+ * input is in ascending order of frequency.
+ */
+int YAPP_CalcNumChans(int iNumBands,
+                      float *pafCenFreq,
+                      int iNumChansPerBand,
+                      float fChanBW,
+                      int *piChanPadding)
+{
+    int iNumChans = 0;
+    float fMaxThis = 0.0;
+    float fMinNext = 0.0;
+    int fDiff = 0.0;
+    int iInt = 0;
+    float fFrac = 0.0;
+    int i = 0;
+
+    /* iterate through the bands, and find out how many channels should be
+       removed (for overlap) or inserted (for gaps). also calculate the total
+       number of channels in the output filterbank */
+    for (i = 0; i < iNumBands - 1; ++i)
+    {
+        iNumChans += iNumChansPerBand;
+        fMaxThis = pafCenFreq[i] + ((iNumChansPerBand / 2) * fChanBW);
+        fMinNext = pafCenFreq[i+1] - ((iNumChansPerBand / 2) * fChanBW);
+        fDiff = fMinNext - fMaxThis;
+        /* check if fDiff is a multiple of fChanBW */
+        YAPP_GetIntFrac(fDiff, &iInt, &fFrac);
+        if (0.0 == fFrac)           /* multiple */
+        {
+            piChanPadding[i] = iInt;   /* works for exact match as well */
+        }
+        else                        /* not a multiple */
+        {
+            if (fDiff > 0.0)        /* gap */
+            {
+                piChanPadding[i] = iInt + roundf(fFrac);
+            }
+            else if (fDiff < 0.0)   /* overlap */
+            {
+                piChanPadding[i] = iInt - roundf(fFrac);
+            }
+        }
+        iNumChans += piChanPadding[i];
+    }
+
+    return iNumChans;
+}
+
+
+void YAPP_GetIntFrac(float fNum, int *piInt, float *pfFrac) 
+{                                     
+    *piInt = (int) fNum;
+    *pfFrac = fNum - (float) *piInt;
+
+    return; 
+} 
 
 
 /*

@@ -310,6 +310,8 @@ typedef struct YUM_s
     float *pfBFGain;
     int iNumBadTimes;
     double (*padBadTimes)[][NUM_BAD_BOUNDS];
+    int iNumBeams;
+    int iBeamID;
     int iNumBits;
     int iNumIFs;
     int iBackendID;
@@ -563,6 +565,20 @@ int YAPP_Smooth(float* pfInBuf,
                 int iBlockSize,
                 int iSampsPerWin,
                 float* pfOutBuf);
+
+/**
+ * Calculate number of channels for a stacked filterbank file
+ * @param[in]   iNumBands           Number of bands
+ * @param[in]   pafCenFreq          Centre frequencies of all bands
+ * @param[in]   iNumChansPerBand    Number of channels per band
+ * @param[in]   fChanBW             Channel bandwidth
+ * @param[out]  paiChanPadding      Number of channels to be padded in output
+ */
+int YAPP_CalcNumChans(int iNumBands,
+                      float *pafCenFreq,
+                      int iNumChansPerBand,
+                      float fChanBW,
+                      int *paiChanPadding);
 
 double YAPP_RAString2Double(char *pcRA);
 double YAPP_DecString2Double(char *pcDec);

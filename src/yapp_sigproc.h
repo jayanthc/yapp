@@ -16,6 +16,8 @@ typedef struct tagSIGPROCHeader
     int iNumChans;
     double dFChan1;     /* in MHz */
     double dChanBW;     /* in MHz */
+    int iNumBeams;
+    int iBeamID;
     int iNumBits;
     int iNumIFs;
     double dTSamp;      /* in seconds */
@@ -32,11 +34,14 @@ typedef struct tagSIGPROCHeader
 
 #define YAPP_SP_LABEL_HDRSTART      "HEADER_START"
 #define YAPP_SP_LABEL_HDREND        "HEADER_END"
+#define YAPP_SP_LABEL_RAWFILENAME   "rawdatafile"
 #define YAPP_SP_LABEL_SRCNAME       "source_name"
 #define YAPP_SP_LABEL_DATATYPE      "data_type"
 #define YAPP_SP_LABEL_NUMCHANS      "nchans"
 #define YAPP_SP_LABEL_FCHAN1        "fch1"
 #define YAPP_SP_LABEL_CHANBW        "foff"
+#define YAPP_SP_LABEL_NUMBEAMS      "nbeams"
+#define YAPP_SP_LABEL_BEAMID        "ibeam"
 #define YAPP_SP_LABEL_NUMBITS       "nbits"
 #define YAPP_SP_LABEL_NUMIFS        "nifs"
 #define YAPP_SP_LABEL_TSAMP         "tsamp"

@@ -807,7 +807,9 @@ int main(int argc, char *argv[])
        }
 
         /* set up the plot's X-axis */
-        g_pfXAxis = (float *) YAPP_Malloc((size_t) iBlockSize, sizeof(float), YAPP_FALSE);
+        g_pfXAxis = (float *) YAPP_Malloc((size_t) iBlockSize,
+                                          sizeof(float),
+                                          YAPP_FALSE);
         if (NULL == g_pfXAxis)
         {
             (void) fprintf(stderr,
@@ -1026,7 +1028,8 @@ int main(int argc, char *argv[])
             Plot2D(g_pfPlotBuf, fDataMin, fDataMax,
                    g_pfXAxis, iBlockSize, dTSampInSec,
                    g_pfYAxis, iNumChans, fChanBW,
-                   "Time - Start Time (s)", "Frequency (MHz)", "Before Dedispersion",
+                   "Time - Start Time (s)", "Frequency (MHz)",
+                   "Before Dedispersion",
                    iColourMap);
         }
 
