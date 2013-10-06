@@ -13,6 +13,8 @@
  *                                          (default is all)
  *     -n  --nsamp <samples>                Number of samples read in one block
  *                                          (default is 4096 samples)
+ *     -b  --nband <bands>                  Number of bands for spliced
+ *                                          filterbank files
  *     -c  --clip-level <level>             Number of sigmas above threshold;
  *                                          will clip anything above this level
  *     -t  --period <period>                Period of the pulsar in ms
@@ -75,7 +77,7 @@ int main(int argc, char *argv[])
     float fClipLevel = 0.0;
     double dNumSigmas = 0.0;
     double dTSampInSec = 0.0;   /* holds sampling time in s */
-    int iNumTicksY = PG_TICK_STEPS_Y;
+    int iNumBands = 0;
     double dTNow = 0.0;
     int iTimeSect = 0;
     int iBadTimeSect = 0;
@@ -97,7 +99,6 @@ int main(int argc, char *argv[])
     char cIsFirst = YAPP_TRUE;
     int iReadItems = 0;
     float fXStep = 0.0;
-    float fYStep = 0.0;
     float fButX = 0.0;
     float fButY = 0.0;
     char cCurChar = 0;
@@ -120,13 +121,14 @@ int main(int argc, char *argv[])
     const char *pcProgName = NULL;
     int iNextOpt = 0;
     /* valid short options */
-    const char* const pcOptsShort = "hs:p:n:c:t:r:m:iev";
+    const char* const pcOptsShort = "hs:p:n:b:c:t:r:m:iev";
     /* valid long options */
     const struct option stOptsLong[] = {
         { "help",                   0, NULL, 'h' },
         { "skip",                   1, NULL, 's' },
         { "proc",                   1, NULL, 'p' },
         { "nsamp",                  1, NULL, 'n' },
+        { "nband",                  1, NULL, 'b' },
         { "clip-level",             1, NULL, 'c' },
         { "period",                 1, NULL, 't' },
         { "phase",                  1, NULL, 'r' },
@@ -172,6 +174,11 @@ int main(int argc, char *argv[])
                     PrintUsage(pcProgName);
                     return YAPP_RET_ERROR;
                 }
+                break;
+
+            case 'b':   /* -b or --nband */
+                /* set option */
+                iNumBands = atoi(optarg);
                 break;
 
             case 'c':   /* -c or --clip-level */
@@ -284,6 +291,15 @@ int main(int argc, char *argv[])
 
     /* copy next beam-flip time */
     dTNextBF = stYUM.dTNextBF;
+
+    /* validate number of bands */
+    if ((YAPP_TRUE == stYUM.iFlagSplicedData) && (iNumBands <= 1))
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Number of bands must be > 1 for spliced "
+                       "data!\n");
+        return YAPP_RET_ERROR;
+    }
 
     /* calculate bytes to skip and read */
     if (0.0 == dDataProcTime)
@@ -533,14 +549,6 @@ int main(int argc, char *argv[])
     /* calculate the tick step sizes */
     fXStep = (int) ((((iBlockSize - 1) * dTSampInSec) - 0)
                     / PG_TICK_STEPS_X);
-    if (YAPP_FORMAT_FIL == iFormat)
-    {
-        if (YAPP_TRUE == stYUM.iFlagSplicedData)
-        {
-            iNumTicksY = stYUM.iNumBands + 1;
-        }
-        fYStep = (int) ((stYUM.fFMax - stYUM.fFMin) / iNumTicksY);
-    }
 
     /* allocate memory for the cpgimag() plotting buffer */
     g_pfPlotBuf = (float *) YAPP_Malloc((stYUM.iNumChans * iBlockSize),
@@ -949,6 +957,10 @@ void PrintUsage(const char *pcProgName)
     (void) printf("Number of samples read in one block\n");
     (void) printf("                                        ");
     (void) printf("(default is 4096 samples)\n");
+    (void) printf("    -b  --nband <bands>                 ");
+    (void) printf("Number of bands for spliced filterbank\n");
+    (void) printf("                                        ");
+    (void) printf("files\n");
     (void) printf("    -c  --clip-level <level>            ");
     (void) printf("Number of sigmas above threshold; will\n");
     (void) printf("                                        ");

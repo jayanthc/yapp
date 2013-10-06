@@ -985,7 +985,7 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
         }
         else if (0 == strcmp(acLabel, YAPP_SP_LABEL_NUMBEAMS))
         {
-            /* read number of bits per sample */
+            /* read number of beams */
             iRet = fread(&pstYUM->iNumBeams,
                          sizeof(pstYUM->iNumBeams),
                          1,
@@ -994,7 +994,7 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
         }
         else if (0 == strcmp(acLabel, YAPP_SP_LABEL_BEAMID))
         {
-            /* read number of bits per sample */
+            /* read beam identifier */
             iRet = fread(&pstYUM->iBeamID,
                          sizeof(pstYUM->iBeamID),
                          1,
@@ -1112,6 +1112,7 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
         }
         else if (0 == strcmp(acLabel, YAPP_SP_LABEL_RAWFILENAME))
         {
+			/* read raw data file name */
             iRet = fread(&iLen, sizeof(iLen), 1, g_pFData);
             iRet = fread(acTemp, sizeof(char), iLen, g_pFData);
             acTemp[iLen] = '\0';
@@ -2339,13 +2340,15 @@ int YAPP_CalcNumChans(int iNumBands,
     /* iterate through the bands, and find out how many channels should be
        removed (for overlap) or inserted (for gaps). also calculate the total
        number of channels in the output filterbank */
+    printf("*********nb = %d\n", iNumBands);
     for (i = 0; i < iNumBands - 1; ++i)
     {
         iNumChans += iNumChansPerBand;
+        printf("nc = %d\n", iNumChans);
         fMaxThis = pafCenFreq[i] + ((iNumChansPerBand / 2) * fChanBW);
         fMinNext = pafCenFreq[i+1] - ((iNumChansPerBand / 2) * fChanBW);
-        fDiff = fMinNext - fMaxThis;
-        /* check if fDiff is a multiple of fChanBW */
+        fDiff = (fMinNext - fMaxThis) / fChanBW;
+        /* check if fDiff is a multiple of iNumChansPerBand */
         YAPP_GetIntFrac(fDiff, &iInt, &fFrac);
         if (0.0 == fFrac)           /* multiple */
         {
@@ -2361,10 +2364,18 @@ int YAPP_CalcNumChans(int iNumBands,
             {
                 piChanPadding[i] = iInt - roundf(fFrac);
             }
+            else
+            {
+                piChanPadding[i] = 0;
+            }
         }
+        printf("pad = %d\n", piChanPadding[i]);
         iNumChans += piChanPadding[i];
+        printf("nc = %d\n", iNumChans);
     }
-
+    /* add number of channels in the last band */
+    iNumChans += iNumChansPerBand;
+    printf("nc = %d\n", iNumChans);
     return iNumChans;
 }
 

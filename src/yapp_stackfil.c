@@ -62,6 +62,7 @@ int main(int argc, char *argv[])
     int iNumReads = 0;
     int iTotNumReads = 0;
     int iReadBlockCount = 0;
+    int iOffset = 0;
     char cIsLastBlock = YAPP_FALSE;
     int iRet = YAPP_RET_SUCCESS;
     float fDataMin = 0.0;
@@ -349,16 +350,12 @@ int main(int argc, char *argv[])
                    EXT_FIL);
 
     /* populate the YUM structure for output */
-    stYUM.fFMin = pafCenFreq[0];
-    stYUM.fFMax = pafCenFreq[iNumBands-1];
-    stYUM.fFCentre = stYUM.fFMin + (stYUM.fFMax - stYUM.fFMin) / 2;
-    /* NOTE: min and max are centre frequencies of channels */
-    stYUM.fBW = stYUM.fFMax - stYUM.fFMin + stYUM.fChanBW;
+    stYUM.fFMin = pafCenFreq[0] - ((iNumChans / 2) * stYUM.fChanBW);
     /* calculate number of channels, and padding between bands, taking into
        account gaps, overlaps, and offsets */
     piChanPadding = (int *) YAPP_Malloc((size_t) iNumBands,
                                         sizeof(int),
-                                        YAPP_FALSE);
+                                        YAPP_TRUE);
     if (NULL == piChanPadding)
     {
         (void) fprintf(stderr,
@@ -372,6 +369,13 @@ int main(int argc, char *argv[])
                                         iNumChans,
                                         stYUM.fChanBW,
                                         piChanPadding);
+    /* TODO: this calculation does not match
+       fFMax = pafCenFreq[iNumBands-1] + ((iNumChans / 2) * stYUM.fChanBW).
+       consider padding? */
+    stYUM.fFMax = stYUM.fFMin + (stYUM.iNumChans * stYUM.fChanBW);
+    stYUM.fFCentre = stYUM.fFMin + (stYUM.fFMax - stYUM.fFMin) / 2;
+    /* NOTE: min and max are centre frequencies of channels */
+    stYUM.fBW = stYUM.fFMax - stYUM.fFMin + stYUM.fChanBW;
     stYUM.cIsBandFlipped = YAPP_FALSE;
     /* write metadata to disk */
     iFormat = YAPP_FORMAT_FIL;
@@ -542,33 +546,38 @@ int main(int argc, char *argv[])
         for (i = 0; i < iNumSamps; ++i)
         {
             pfSpectrum = g_pfOutBuf + i * iNumBands;
+            iOffset = 0;
             for (j = 0; j < iNumBands; ++j)
             {
                 for (k = iNumChansToSkip; k < iNumChans; ++k)
                 {
                     iInIdx = (i * iNumChans) + k;
-                    iOutIdx = (i * stYUM.iNumChans) + (j * iNumChans) + k;
+                    iOutIdx = (i * stYUM.iNumChans) + (j * iNumChans)
+                              + iOffset + (k - iNumChansToSkip);
                     pfSpectrum[iOutIdx] = g_ppfBuf[j][iInIdx];
-                    if (piChanPadding[j] > 0)       /* gap */
+                }
+                if (piChanPadding[j] > 0)       /* gap */
+                {
+                    for (l = 0 ; l < piChanPadding[j]; ++l)
                     {
-                        for (l = 0; l < piChanPadding[j]; ++l)
-                        {
-                            pfSpectrum[iOutIdx+l+1] = 0.0;
-                        }
-                        /* no channel-skipping needed */
-                        iNumChansToSkip = 0;
+                        iOutIdx = (i * stYUM.iNumChans) + (j * iNumChans)
+                                  + iOffset + k + l;
+                        pfSpectrum[iOutIdx] = 0.0;
                     }
-                    else if (piChanPadding[j] < 0)  /* overlap */
-                    {
-                        /* skip piChanPadding[j] channels in the next band */
-                        iNumChansToSkip = piChanPadding[j];
-                        break;
-                    }
-                    else                            /* exact match */
-                    {
-                        /* no channel-skipping needed */
-                        iNumChansToSkip = 0;
-                    }
+                    /* no channel-skipping needed */
+                    iNumChansToSkip = 0;
+                    iOffset += l;
+                }
+                else if (piChanPadding[j] < 0)  /* overlap */
+                {
+                    /* skip piChanPadding[j] channels in the next band */
+                    iNumChansToSkip = piChanPadding[j];
+                    break;
+                }
+                else                            /* exact match */
+                {
+                    /* no channel-skipping needed */
+                    iNumChansToSkip = 0;
                 }
             }
         }
@@ -634,13 +643,13 @@ int main(int argc, char *argv[])
                 cpgsvp(PG_2D_VP_ML, PG_2D_VP_MR, PG_2D_VP_MB, PG_2D_VP_MT);
                 cpgswin(g_pfXAxisOld[0],
                         g_pfXAxisOld[iBlockSize-1],
-                        pafCenFreq[0],
-                        pafCenFreq[stYUM.iNumChans-1]);
+                        stYUM.fFMin,
+                        stYUM.fFMax);
             }
             cpgsci(0);      /* background */
             cpgaxis("N",
-                    g_pfXAxisOld[0], pafCenFreq[0],
-                    g_pfXAxisOld[iBlockSize-1], pafCenFreq[0],
+                    g_pfXAxisOld[0], stYUM.fFMin,
+                    g_pfXAxisOld[iBlockSize-1], stYUM.fFMin,
                     g_pfXAxisOld[0], g_pfXAxisOld[iBlockSize-1],
                     0.0,
                     0,

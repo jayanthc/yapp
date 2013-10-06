@@ -580,6 +580,7 @@ int YAPP_CalcNumChans(int iNumBands,
                       float fChanBW,
                       int *paiChanPadding);
 
+void YAPP_GetIntFrac(float fNum, int *piInt, float *pfFrac);
 double YAPP_RAString2Double(char *pcRA);
 double YAPP_DecString2Double(char *pcDec);
 void YAPP_RADouble2String(double dRA, char *pcRA);

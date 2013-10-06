@@ -1,5 +1,5 @@
 /**
- * @file yapp_dedisp.c
+ * @file yapp_dedisperse.c
  * Program to dedisperse the input signal for the given value of DM.
  *
  * @verbatim
