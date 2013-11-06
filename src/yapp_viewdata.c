@@ -71,7 +71,6 @@ int main(int argc, char *argv[])
     float *pfTimeSectGain = NULL;
     int iBlockSize = DEF_SIZE_BLOCK;
     int iTotSampsPerBlock = 0;  /* iNumChans * iBlockSize */
-    int iDataSizePerBlock = 0;  /* fSampSize * iNumChans * iBlockSize */
     float fStatBW = 0.0;
     float fNoiseRMS = 0.0;
     float fClipLevel = 0.0;
@@ -94,11 +93,8 @@ int main(int argc, char *argv[])
     int iRet = YAPP_RET_SUCCESS;
     float fDataMin = 0.0;
     float fDataMax = 0.0;
-    float fDataMinOld = 0.0;
-    float fDataMaxOld = 0.0;
     char cIsFirst = YAPP_TRUE;
     int iReadItems = 0;
-    float fXStep = 0.0;
     float fButX = 0.0;
     float fButY = 0.0;
     char cCurChar = 0;
@@ -371,7 +367,6 @@ int main(int argc, char *argv[])
 
     /* optimisation - store some commonly used values in variables */
     iTotSampsPerBlock = stYUM.iNumChans * iBlockSize;
-    iDataSizePerBlock = (int) (stYUM.fSampSize * iTotSampsPerBlock);
 
     (void) printf("Processing\n"
                   "    %ld of %ld bytes\n"
@@ -546,10 +541,6 @@ int main(int argc, char *argv[])
         }
     }
 
-    /* calculate the tick step sizes */
-    fXStep = (int) ((((iBlockSize - 1) * dTSampInSec) - 0)
-                    / PG_TICK_STEPS_X);
-
     /* allocate memory for the cpgimag() plotting buffer */
     g_pfPlotBuf = (float *) YAPP_Malloc((stYUM.iNumChans * iBlockSize),
                                         sizeof(float),
@@ -717,8 +708,6 @@ int main(int argc, char *argv[])
         }
 
         pfSpectrum = g_pfBuf;
-        fDataMinOld = fDataMin;
-        fDataMaxOld = fDataMax;
         fDataMin = pfSpectrum[0];
         fDataMax = pfSpectrum[0];
         for (j = 0; j < iBlockSize; ++j)

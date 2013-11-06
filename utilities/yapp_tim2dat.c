@@ -163,7 +163,6 @@ int YAPP_CopyData(char *pcFileData, FILE *pFDat, int iOffset)
     off_t lByteCount = 0;
     char *pcBuf = NULL;
     int iRet = EXIT_SUCCESS;
-    int iWrit = 0;
 
     /* get the file size */
     iRet = stat(pcFileData, &stFileStats);
@@ -207,7 +206,7 @@ int YAPP_CopyData(char *pcFileData, FILE *pFDat, int iOffset)
     {
         iRet = fread(pcBuf, 1, SIZE_BUF, pFData);
         lByteCount += iRet;
-        iWrit = fwrite(pcBuf, 1, iRet, pFDat);
+        (void) fwrite(pcBuf, 1, iRet, pFDat);
     }
     while (SIZE_BUF == iRet);
 

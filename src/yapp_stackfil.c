@@ -56,7 +56,6 @@ int main(int argc, char *argv[])
     int iNumChans = 0;
     int iBlockSize = DEF_SIZE_BLOCK;
     int iTotSampsPerBlock = 0;  /* iNumChans * iBlockSize */
-    int iDataSizePerBlock = 0;  /* fSampSize * iNumChans * iBlockSize */
     double dTSampInSec = 0.0;   /* holds sampling time in s */
     float *pfSpectrum = NULL;
     int iNumReads = 0;
@@ -255,7 +254,6 @@ int main(int argc, char *argv[])
 
     /* optimisation - store some commonly used values in variables */
     iTotSampsPerBlock = iNumChans * iBlockSize;
-    iDataSizePerBlock = (int) (stYUM.fSampSize * iTotSampsPerBlock);
 
     /* open the time series data files for reading */
     /* allocate memory for the file pointer array */

@@ -212,7 +212,7 @@ double YAPP_CalcThresholdInSigmas(int iTimeSamps)
     dErf = 1 - 2 * dPOutlier;
 
     dErfRef = g_aadErfLookup[0][0];
-    dNumSigmasRef = g_aadErfLookup[0][2];
+    dNumSigmasRef = g_aadErfLookup[0][1];
     dErfDiff = fabs(dErfRef - dErf);
     dErfDiffMin = dErfDiff;
     dNumSigmas = dNumSigmasRef;
@@ -222,7 +222,7 @@ double YAPP_CalcThresholdInSigmas(int iTimeSamps)
     for (i = 0; i < YAPP_ERF_ENTRIES; ++i)
     {
         dErfRef = g_aadErfLookup[i][0];
-        dNumSigmasRef = g_aadErfLookup[i][2];
+        dNumSigmasRef = g_aadErfLookup[i][1];
 
         dErfDiff = fabs(dErfRef - dErf);
         if (dErfDiff < dErfDiffMin)
@@ -683,7 +683,6 @@ int YAPP_ReadDASCfg(char *pcFileSpec, YUM_t *pstYUM)
     FILE *pFCfg = NULL;
     char acFileCfg[LEN_GENSTRING] = {0};
     int iChanGoodness = (int) YAPP_TRUE;
-    double dTSampInSec = 0.0;   /* holds sampling time in s */
     int iBytesPerFrame = 0;
     int iChanBeg = 0;
     int iChanEnd = 0;
@@ -745,9 +744,6 @@ int YAPP_ReadDASCfg(char *pcFileSpec, YUM_t *pstYUM)
 
     /* convert the bandwidth to MHz */
     pstYUM->fBW /= 1000.0;
-
-    /* store a copy of the sampling interval in s */
-    dTSampInSec = pstYUM->dTSamp / 1000.0;
 
     /* calculate the number of channels */
     pstYUM->iNumChans = iChanEnd - iChanBeg + 1;

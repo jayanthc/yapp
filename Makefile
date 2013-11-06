@@ -15,7 +15,11 @@ else
 CFLAGS_INC_PGPLOT =# define if needed (as -I[...])
 endif
 CFLAGS_INC_FFTW3 =# define if needed (as -I[...])
+ifeq ($(OSTYPE), darwin12)
+CFLAGS_INC_CFITSIO =-I/usr/local/include# define if needed (as -I[...])
+else
 CFLAGS_INC_CFITSIO =# define if needed (as -I[...])
+endif
 
 CFLAGS = -std=gnu99 -pedantic -Wall $(CFLAGS_INC_PGPLOT) $(CFLAGS_INC_FFTW3)  \
 	$(CFLAGS_INC_CFITSIO)
@@ -46,7 +50,11 @@ else
 LFLAGS_PGPLOT_DIR =# define if not in $PATH (as -L[...])
 endif
 LFLAGS_FFTW3_DIR =# define if not in $PATH (as -L[...])
+ifeq ($(OSTYPE), darwin12)
+LFLAGS_CFITSIO_DIR =-L/usr/local/lib# define if not in $PATH (as -L[...])
+else
 LFLAGS_CFITSIO_DIR =# define if not in $PATH (as -L[...])
+endif
 LFLAGS_FFTW3 = $(LFLAGS_FFTW3_DIR) -lfftw3f
 LFLAGS_CFITSIO = $(LFLAGS_CFITSIO_DIR) -lcfitsio
 # in some cases, linking needs to be done with the X11 library, in which case

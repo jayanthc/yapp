@@ -2,7 +2,7 @@
  * @file yapp_ft.c
  * Program to compute [PFB +] FFT on either baseband (raw voltage time series)
  * data, creating a filterbank format file, or dedispersed time series data,
- * creating a spectrum file (also perform smoothing, optionally).
+ * creating a spectrum file.
  *
  * @verbatim
  * Usage: yapp_viewdata [options] <data-file>
@@ -15,8 +15,6 @@
  *                                          (default is all)
  *     -l  --tsamp <tsamp>                  Sampling time in s
  *     -f  --centre-freq <freq>             Centre frequency of observing band
- *     -w  --smooth                         Do boxcar window smoothing prior to
- *                                          Fourier transform
  *     -b  --pfb                            Do polyphase filter bank
  *     -t  --ntaps <ntaps>                  Number of taps in the PFB
  *                                          (default is 8)
@@ -95,7 +93,6 @@ int main(int argc, char *argv[])
     char cIsFirst = YAPP_TRUE;
     char cIsLastBlock = YAPP_FALSE;
     int iFormat = DEF_FORMAT;
-    char cDoSmoothing = YAPP_FALSE;
     int iRet = YAPP_RET_SUCCESS;
     float fDataMin = 0.0;
     float fDataMax = 0.0;
@@ -107,7 +104,6 @@ int main(int argc, char *argv[])
     long int lDataSizeTotal = 0;
     float fSampSize = 0.0; 
     int iTimeSamps = 0;
-    double dTSamp = 0.0;    /* in ms */
     char acFileSpec[LEN_GENSTRING] = {0};
     char acFileSpecHdr[LEN_GENSTRING] = {0};
     char acHdrBuf[LEN_GENSTRING] = {0};
@@ -121,7 +117,7 @@ int main(int argc, char *argv[])
     const char *pcProgName = NULL;
     int iNextOpt = 0;
     /* valid short options */
-    const char* const pcOptsShort = "hs:p:l:f:wbt:n:a:o:r:giev";
+    const char* const pcOptsShort = "hs:p:l:f:bt:n:a:o:r:giev";
     /* valid long options */
     const struct option stOptsLong[] = {
         { "help",                   0, NULL, 'h' },
@@ -129,7 +125,6 @@ int main(int argc, char *argv[])
         { "proc",                   1, NULL, 'p' },
         { "tsamp",                  1, NULL, 'l' },
         { "centre-freq",            1, NULL, 'f' },
-        { "smooth",                 0, NULL, 'w' },
         { "pfb",                    0, NULL, 'b' },
         { "ntaps",                  1, NULL, 't' },
         { "nfft",                   1, NULL, 'n' },
@@ -175,11 +170,6 @@ int main(int argc, char *argv[])
             case 'f':   /* -f or --centre-freq */
                 /* set option */
                 fFreqCen = atof(optarg);
-                break;
-
-            case 'w':   /* -w or --smooth */
-                /* set option */
-                cDoSmoothing = YAPP_TRUE;
                 break;
 
             case 'b':   /* -b or --pfb */
@@ -303,8 +293,6 @@ int main(int argc, char *argv[])
                        "ERROR: Invalid file type!\n");
         return YAPP_RET_ERROR;
     }
-
-    dTSamp = dTSampInSec * 1e3;
 
     iRet = stat(g_acFileData, &stFileStats);
     if (iRet != YAPP_RET_SUCCESS)
@@ -1248,10 +1236,6 @@ void PrintUsage(const char *pcProgName)
     (void) printf("Centre frequency of observing band,\n");
     (void) printf("                                        ");
     (void) printf("in MHz\n");
-    (void) printf("    -w  --smooth                        ");
-    (void) printf("Do boxcar window smoothing prior to\n");
-    (void) printf("                                        ");
-    (void) printf("Fourier transform\n");
     (void) printf("    -b  --pfb                           ");
     (void) printf("Do polyphase filter bank\n");
     (void) printf("    -t  --ntaps <ntaps>                 ");

@@ -51,7 +51,6 @@ int main(int argc, char *argv[])
     float *pafMinFreq = NULL;
     int iBlockSize = DEF_SIZE_BLOCK;
     int iTotSampsPerBlock = 0;  /* iBlockSize */
-    int iDataSizePerBlock = 0;  /* fSampSize * iBlockSize */
     double dTSampInSec = 0.0;   /* holds sampling time in s */
     int iNumReads = 0;
     int iTotNumReads = 0;
@@ -285,7 +284,6 @@ int main(int argc, char *argv[])
 
     /* optimisation - store some commonly used values in variables */
     iTotSampsPerBlock = iBlockSize;
-    iDataSizePerBlock = (int) (stYUM.fSampSize * iTotSampsPerBlock);
 
     /* open the time series data files for reading */
     /* allocate memory for the file pointer array */
