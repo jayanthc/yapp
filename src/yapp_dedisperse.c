@@ -85,7 +85,6 @@ int main(int argc, char *argv[])
     int iNumChans = 0;
     float fSampSize = 0.0;      /* number of bits that make a sample */
     int iTotSampsPerBlock = 0;  /* iNumChans * iBlockSize */
-    int iDataSizePerBlock = 0;  /* fSampSize * iNumChans * iBlockSize */
     int iEffcNumGoodChans = 0;
     float fStatBW = 0.0;
     float fNoiseRMS = 0.0;
@@ -110,10 +109,8 @@ int main(int argc, char *argv[])
     int iTimeSampsToProc = 0;
     int iBlockSize = DEF_SIZE_BLOCK;
     int iNumReads = 0;
-    int iTotNumReads = 0;
     int iReadBlockCount = 0;
     int iReadSmpCount = 0;         /* (iReadBlockCount - 1) * iBlockSize */
-    int iSecBufReadSampCount = 0;   /* iReadBlockCount * iBlockSize */
     char cIsLastBlock = YAPP_FALSE;
     long int lDataSizeTotal = 0;
     int iRet = YAPP_RET_SUCCESS;
@@ -541,11 +538,9 @@ int main(int argc, char *argv[])
 
     iTimeSampsToProc = (int) (lBytesToProc / (iNumChans * fSampSize));
     iNumReads = (int) ceilf(((float) iTimeSampsToProc) / iBlockSize);
-    iTotNumReads = iNumReads;
 
     /* optimisation - store some commonly used values in variables */
     iTotSampsPerBlock = iNumChans * iBlockSize;
-    iDataSizePerBlock = (int) (fSampSize * iTotSampsPerBlock);
 
     (void) printf("Processing\n"
                   "    %ld of %ld bytes\n"
@@ -1085,10 +1080,6 @@ int main(int argc, char *argv[])
                be iBlockSize for the last block, and should be iBlockSize for
                all other blocks */
             iNumSamps = iReadItems / iNumChans;
-
-            /* get the actual count of read samples, inclusive of those in the
-               first buffer */
-            iSecBufReadSampCount = iReadBlockCount * iBlockSize;
 
             if (YAPP_FORMAT_SPEC == iFormat)
             {

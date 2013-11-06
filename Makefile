@@ -45,7 +45,7 @@ LFLAGS_CFITSIO = $(LFLAGS_CFITSIO_DIR) -lcfitsio
 # append '-lX11' (and possibly the path to the library) to the line below.
 # libgfortran may also be needed in some case, in which case append
 # '-lgfortran' (and possibly the path to the library) to the line below
-LFLAGS_PGPLOT = $(LFLAGS_PGPLOT_DIR) -lpgplot -lcpgplot
+LFLAGS_PGPLOT = $(LFLAGS_PGPLOT_DIR) -lcpgplot
 LFLAGS_MATH = -lm
 
 # directories

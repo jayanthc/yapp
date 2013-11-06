@@ -69,7 +69,6 @@ int main(int argc, char *argv[])
     float *pfTimeSectGain = NULL;
     int iBlockSize = DEF_SIZE_BLOCK;
     int iTotSampsPerBlock = 0;
-    int iDataSizePerBlock = 0;
     float fStatBW = 0.0;
     float fNoiseRMS = 0.0;
     double dNumSigmas = 0.0;
@@ -443,7 +442,6 @@ int main(int argc, char *argv[])
     {
         iTotSampsPerBlock = iBlockSize;
     }
-    iDataSizePerBlock = (int) (stYUM.fSampSize * iTotSampsPerBlock);
 
     (void) printf("Processing\n"
                   "    %ld of %ld bytes\n"

@@ -60,7 +60,6 @@ int main(int argc, char *argv[])
     double dDataProcTime = 0.0;
     YUM_t stYUM = {{0}};
     int iTotSampsPerBlock = 0;  /* iBlockSize */
-    int iDataSizePerBlock = 0;  /* fSampSize * iBlockSize */
     double dTSampInSec = 0.0;   /* holds sampling time in s */
     long lBytesToSkip = 0;
     long lBytesToProc = 0;
@@ -69,7 +68,6 @@ int main(int argc, char *argv[])
     int iBlockSize = 0;
     int iFFTUsableSize = 0;
     int iNumReads = 0;
-    int iTotNumReads = 0;
     int iReadBlockCount = 0;
     char cIsLastBlock = YAPP_FALSE;
     int iRet = YAPP_RET_SUCCESS;
@@ -328,11 +326,9 @@ int main(int argc, char *argv[])
     iTimeSampsToProc = (int) (lBytesToProc / (stYUM.fSampSize));
     /* based on actual processed blocks, rather than read blocks */
     iNumReads = (int) ceilf(((float) iTimeSampsToProc) / iBlockSize);
-    iTotNumReads = iNumReads;
 
     /* optimisation - store some commonly used values in variables */
     iTotSampsPerBlock = iBlockSize;
-    iDataSizePerBlock = (int) (stYUM.fSampSize * iTotSampsPerBlock);
 
     (void) printf("Processing\n"
                   "    %ld of %ld bytes\n"

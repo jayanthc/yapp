@@ -101,7 +101,6 @@ int main(int argc, char *argv[])
     long int lDataSizeTotal = 0;
     float fSampSize = 0.0; 
     int iTimeSamps = 0;
-    double dTSamp = 0.0;    /* in ms */
     char acFileSpec[LEN_GENSTRING] = {0};
     char acFileSpecHdr[LEN_GENSTRING] = {0};
     char acHdrBuf[LEN_GENSTRING] = {0};
@@ -277,7 +276,6 @@ int main(int argc, char *argv[])
     /* get the input filename */
     (void) strncpy(g_acFileData, argv[optind], LEN_GENSTRING); 
 
-    dTSamp = dTSampInSec * 1e3;
 
     iRet = stat(g_acFileData, &stFileStats);
     if (iRet != YAPP_RET_SUCCESS)
