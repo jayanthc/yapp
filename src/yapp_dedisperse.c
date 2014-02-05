@@ -1,14 +1,14 @@
 /**
- * @file yapp_dedisp.c
+ * @file yapp_dedisperse.c
  * Program to dedisperse the input signal for the given value of DM.
  *
  * @verbatim
- * Usage: yapp_dedisp [options] <data-file>
+ * Usage: yapp_dedisperse [options] <data-file>
  *     -h  --help                           Display this usage information
- *     -s  --skip <time>                    The length of data in seconds, to be
- *                                          skipped
- *     -p  --proc <time>                    The length of data in seconds, to be
- *                                          processed
+ *     -s  --skip <time>                    The length of data in seconds, to
+ *                                          be skipped
+ *     -p  --proc <time>                    The length of data in seconds, to
+ *                                          be processed
  *                                          (default is all)
  *     -n  --nsamp <samples>                Number of samples read in one block
  *                                          (default is 4096 samples)
@@ -26,8 +26,8 @@
  *     -g  --graphics                       Turn on plotting
  *     -m  --colour-map <name>              Colour map for plotting
  *                                          (default is 'jet')
- *     -i  --invert                         Invert the background and foreground
- *                                          colours in plots
+ *     -i  --invert                         Invert the background and
+ *                                          foreground colours in plots
  *     -e  --non-interactive                Run in non-interactive mode
  *     -v  --version                        Display the version @endverbatim
  *
@@ -306,16 +306,16 @@ int main(int argc, char *argv[])
         if (iSubBand >= iNumSubBands)
         {
             (void) fprintf(stderr,
-                           "ERROR: Sub-band number inconsistent with number of "
-                           "sub-bands!\n");
+                           "ERROR: Sub-band number inconsistent with number "
+                           "of sub-bands!\n");
             PrintUsage(pcProgName);
             return YAPP_RET_ERROR;
         }
         if (iOutputFormat != YAPP_FORMAT_DTS_TIM)
         {
             (void) fprintf(stderr,
-                           "ERROR: Sub-band dedispersion support only for .tim "
-                           "output!\n");
+                           "ERROR: Sub-band dedispersion support only for "
+                           ".tim output!\n");
             PrintUsage(pcProgName);
             return YAPP_RET_ERROR;
         }
@@ -387,7 +387,8 @@ int main(int argc, char *argv[])
         {
             (void) fprintf(stderr,
                            "ERROR: Invalid number of sub-bands! Number of "
-                           "sub-bands must be a factor of number of channels!\n");
+                           "sub-bands must be a factor of number of "
+                           "channels!\n");
             PrintUsage(pcProgName);
             return YAPP_RET_ERROR;
         }
@@ -472,8 +473,8 @@ int main(int argc, char *argv[])
                be applied, and if the number of bytes to be processed is less
                than the block size, de-dispersion will be affected, as we don't
                have more than two block buffers. if both conditions are true,
-               force the number of bytes to be processed to be equivalent to the
-               block size/maximum offset */
+               force the number of bytes to be processed to be equivalent to
+               the block size/maximum offset */
             (void) printf("WARNING: Amount of data to be processed is less "
                           "than the calculated maximum offset! Will process "
                           "more data than what was requested.\n");
@@ -505,8 +506,8 @@ int main(int argc, char *argv[])
             if (lBytesToProc < (iBlockSize * iNumChans * sizeof(float)))
             {
                 /* here, iMaxOffset <=(eqv) lBytesToProc <(eqv) iBlockSize */
-                (void) printf("WARNING: Amount of data to be processed is less "
-                              "than the block size! Adjusting block size "
+                (void) printf("WARNING: Amount of data to be processed is "
+                              "less than the block size! Adjusting block size "
                               "accordingly.\n");
                 iBlockSize = lBytesToProc / (iNumChans * sizeof(float));
             }
@@ -520,7 +521,8 @@ int main(int argc, char *argv[])
         (void) printf("WARNING: Total data to be read (skipped and processed) "
                       "is more than the size of the file! ");
         lBytesToSkip = lDataSizeTotal - lBytesToProc;
-        (void) printf("Newly calculated size of data to be skipped: %ld bytes\n",
+        (void) printf("Newly calculated size of data to be skipped: %ld "
+                      "bytes\n",
                       lBytesToSkip);
     }
 
@@ -647,7 +649,9 @@ int main(int argc, char *argv[])
     }
 
     /* allocate memory for storing the dedispersed data */
-    g_pfDedispData = (float *) YAPP_Malloc((size_t) iBlockSize, sizeof(float), YAPP_FALSE);
+    g_pfDedispData = (float *) YAPP_Malloc((size_t) iBlockSize,
+                                           sizeof(float),
+                                           YAPP_FALSE);
     if (NULL == g_pfDedispData)
     {
         (void) fprintf(stderr,
@@ -813,7 +817,9 @@ int main(int argc, char *argv[])
         }
 
         /* set up the image plot's Y-axis (frequency) */
-        g_pfYAxis = (float *) YAPP_Malloc((size_t) iNumChans, sizeof(float), YAPP_FALSE);
+        g_pfYAxis = (float *) YAPP_Malloc((size_t) iNumChans,
+                                          sizeof(float),
+                                          YAPP_FALSE);
         if (NULL == g_pfYAxis)
         {
             (void) fprintf(stderr,
@@ -1265,7 +1271,9 @@ int main(int argc, char *argv[])
             Plot2D(g_pfPlotBuf, fDataMin, fDataMax,
                    g_pfXAxis, iBlockSize, dTSampInSec,
                    g_pfYAxis, iNumChans, fChanBW,
-                   "Time - Start Time (s)", "Frequency (MHz)", "After Dedispersion",
+                   "Time - Start Time (s)",
+                   "Frequency (MHz)",
+                   "After Dedispersion",
                    iColourMap);
         }
 
@@ -1317,7 +1325,9 @@ int main(int argc, char *argv[])
 
             cpgswin(g_pfXAxis[0], g_pfXAxis[iBlockSize-1], fDataMin, fDataMax);
             cpgbox("BCNST", 0.0, 0, "BCNST", 0.0, 0);
-            cpglab("Time - Start Time (s)", "Total Power", "Dedipsersed Time Series");
+            cpglab("Time - Start Time (s)",
+                   "Total Power",
+                   "Dedipsersed Time Series");
             cpgsci(PG_CI_PLOT);
             cpgline(iBlockSize, g_pfXAxis, g_pfDedispData);
             cpgsci(PG_CI_DEF);
@@ -1327,11 +1337,20 @@ int main(int argc, char *argv[])
                 if (!(cIsNonInteractive))
                 {
                     /* draw the 'next' and 'exit' buttons */
-                    cpgsvp(PG_VP_BUT_ML, PG_VP_BUT_MR, PG_VP_BUT_MB, PG_VP_BUT_MT);
+                    cpgsvp(PG_VP_BUT_ML,
+                           PG_VP_BUT_MR,
+                           PG_VP_BUT_MB,
+                           PG_VP_BUT_MT);
                     cpgswin(PG_BUT_L, PG_BUT_R, PG_BUT_B, PG_BUT_T);
                     cpgsci(PG_BUT_FILLCOL); /* set the fill colour */
-                    cpgrect(PG_BUTNEXT_L, PG_BUTNEXT_R, PG_BUTNEXT_B, PG_BUTNEXT_T);
-                    cpgrect(PG_BUTEXIT_L, PG_BUTEXIT_R, PG_BUTEXIT_B, PG_BUTEXIT_T);
+                    cpgrect(PG_BUTNEXT_L,
+                            PG_BUTNEXT_R,
+                            PG_BUTNEXT_B,
+                            PG_BUTNEXT_T);
+                    cpgrect(PG_BUTEXIT_L,
+                            PG_BUTEXIT_R,
+                            PG_BUTEXIT_B,
+                            PG_BUTEXIT_T);
                     cpgsci(0);  /* set colour index to white */
                     cpgtext(PG_BUTNEXT_TEXT_L, PG_BUTNEXT_TEXT_B, "Next");
                     cpgtext(PG_BUTEXIT_TEXT_L, PG_BUTEXIT_TEXT_B, "Exit");
@@ -1345,44 +1364,64 @@ int main(int argc, char *argv[])
                         if (0 == iRet)
                         {
                             (void) fprintf(stderr,
-                                           "WARNING: "
-                                           "Reading cursor parameters failed!\n");
+                                           "WARNING: Reading cursor "
+                                           "parameters failed!\n");
                             break;
                         }
 
-                        if (((fButX >= PG_BUTNEXT_L) && (fButX <= PG_BUTNEXT_R))
-                            && ((fButY >= PG_BUTNEXT_B) && (fButY <= PG_BUTNEXT_T)))
+                        if (((fButX >= PG_BUTNEXT_L)
+                             && (fButX <= PG_BUTNEXT_R))
+                            && ((fButY >= PG_BUTNEXT_B)
+                                && (fButY <= PG_BUTNEXT_T)))
                         {
                             /* animate button click */
                             cpgsci(PG_BUT_FILLCOL);
-                            cpgtext(PG_BUTNEXT_TEXT_L, PG_BUTNEXT_TEXT_B, "Next");
+                            cpgtext(PG_BUTNEXT_TEXT_L,
+                                    PG_BUTNEXT_TEXT_B,
+                                    "Next");
                             cpgsci(0);  /* set colour index to white */
-                            cpgtext(PG_BUTNEXT_CL_TEXT_L, PG_BUTNEXT_CL_TEXT_B, "Next");
+                            cpgtext(PG_BUTNEXT_CL_TEXT_L,
+                                    PG_BUTNEXT_CL_TEXT_B,
+                                    "Next");
                             (void) usleep(PG_BUT_CL_SLEEP);
                             cpgsci(PG_BUT_FILLCOL); /* set colour index to fill
                                                        colour */
-                            cpgtext(PG_BUTNEXT_CL_TEXT_L, PG_BUTNEXT_CL_TEXT_B, "Next");
+                            cpgtext(PG_BUTNEXT_CL_TEXT_L,
+                                    PG_BUTNEXT_CL_TEXT_B,
+                                    "Next");
                             cpgsci(0);  /* set colour index to white */
-                            cpgtext(PG_BUTNEXT_TEXT_L, PG_BUTNEXT_TEXT_B, "Next");
+                            cpgtext(PG_BUTNEXT_TEXT_L,
+                                    PG_BUTNEXT_TEXT_B,
+                                    "Next");
                             cpgsci(1);  /* reset colour index to black */
                             (void) usleep(PG_BUT_CL_SLEEP);
 
                             break;
                         }
-                        else if (((fButX >= PG_BUTEXIT_L) && (fButX <= PG_BUTEXIT_R))
-                            && ((fButY >= PG_BUTEXIT_B) && (fButY <= PG_BUTEXIT_T)))
+                        else if (((fButX >= PG_BUTEXIT_L)
+                                  && (fButX <= PG_BUTEXIT_R))
+                            && ((fButY >= PG_BUTEXIT_B)
+                                && (fButY <= PG_BUTEXIT_T)))
                         {
                             /* animate button click */
                             cpgsci(PG_BUT_FILLCOL);
-                            cpgtext(PG_BUTEXIT_TEXT_L, PG_BUTEXIT_TEXT_B, "Exit");
+                            cpgtext(PG_BUTEXIT_TEXT_L,
+                                    PG_BUTEXIT_TEXT_B,
+                                    "Exit");
                             cpgsci(0);  /* set colour index to white */
-                            cpgtext(PG_BUTEXIT_CL_TEXT_L, PG_BUTEXIT_CL_TEXT_B, "Exit");
+                            cpgtext(PG_BUTEXIT_CL_TEXT_L,
+                                    PG_BUTEXIT_CL_TEXT_B,
+                                    "Exit");
                             (void) usleep(PG_BUT_CL_SLEEP);
                             cpgsci(PG_BUT_FILLCOL); /* set colour index to fill
                                                        colour */
-                            cpgtext(PG_BUTEXIT_CL_TEXT_L, PG_BUTEXIT_CL_TEXT_B, "Exit");
+                            cpgtext(PG_BUTEXIT_CL_TEXT_L,
+                                    PG_BUTEXIT_CL_TEXT_B,
+                                    "Exit");
                             cpgsci(0);  /* set colour index to white */
-                            cpgtext(PG_BUTEXIT_TEXT_L, PG_BUTEXIT_TEXT_B, "Exit");
+                            cpgtext(PG_BUTEXIT_TEXT_L,
+                                    PG_BUTEXIT_TEXT_B,
+                                    "Exit");
                             cpgsci(1);  /* reset colour index to black */
                             (void) usleep(PG_BUT_CL_SLEEP);
 

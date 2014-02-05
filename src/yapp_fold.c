@@ -52,6 +52,7 @@ extern FILE *g_pFData;
 char *g_pcIsTimeGood = NULL;
 float *g_pfBuf = NULL;
 float *g_pfProfBuf = NULL;
+float *g_pf2DProfBuf = NULL;
 float *g_pfPlotBuf = NULL;
 double *g_pdPhase = NULL;
 float *g_pfPhase = NULL;
@@ -344,8 +345,8 @@ int main(int argc, char *argv[])
                            * stYUM.fSampSize);
 
     /* calculate the number of bins in one profile */
-    iSampsPerPeriod = (int) round(dPeriod / stYUM.dTSamp);
-    iTotalPulses = (int) floor((double) stYUM.iTimeSamps / iSampsPerPeriod);
+    iSampsPerPeriod = (int) floor(dPeriod / stYUM.dTSamp);
+    iTotalPulses = (int) ceil((double) stYUM.iTimeSamps / iSampsPerPeriod);
 
     /* compute the block size - a large multiple of iSampsPerPeriod */
     if (0 == iWaterfallType)
@@ -622,8 +623,8 @@ int main(int argc, char *argv[])
             if (NULL == g_pfProfBuf)
             {
                 (void) fprintf(stderr,
-                               "ERROR: Memory allocation for plot buffer failed! "
-                               "%s!\n",
+                               "ERROR: Memory allocation for plot buffer "
+                               "failed! %s!\n",
                                strerror(errno));
                 YAPP_CleanUp();
                 return YAPP_RET_ERROR;
@@ -631,6 +632,21 @@ int main(int argc, char *argv[])
         }
         else
         {
+            /* allocate memory for the buffer, based on the number of channels and time
+               samples */
+            g_pf2DProfBuf = (float *) YAPP_Malloc((size_t) iSampsPerPeriod
+                                                  * iNumPulses,
+                                                  sizeof(float),
+                                                  YAPP_TRUE);
+            if (NULL == g_pf2DProfBuf)
+            {
+                (void) fprintf(stderr,
+                               "ERROR: Memory allocation for plot buffer "
+                               "failed! %s!\n",
+                               strerror(errno));
+                YAPP_CleanUp();
+                return YAPP_RET_ERROR;
+            }
             g_pfYAxis = (float *) YAPP_Malloc(iNumPulses,
                                               sizeof(float),
                                               YAPP_FALSE);
@@ -821,6 +837,7 @@ int main(int argc, char *argv[])
             }
             else
             {
+                k = 0;
                 for (i = 0; i < iNumSamps; ++i)
                 {
                     /* compute the phase */
@@ -830,7 +847,13 @@ int main(int argc, char *argv[])
                     j = dPhase * iSampsPerPeriod;
                     g_pfBuf[i] += (((g_pfBuf[i] - fMeanNoise) / fRMSNoise)
                                    / iNumPulses);
+                    pfProfSpec = g_pf2DProfBuf + k * iSampsPerPeriod;
+                    pfProfSpec[j] += g_pfBuf[i];
                     ++lSampCount;
+                    if (lSampCount % iSampsPerPeriod == 0)
+                    {
+                        ++k;
+                    }
                 }
             }
         }
@@ -916,11 +939,11 @@ int main(int argc, char *argv[])
             {
                 fDataMinOld = fDataMin;
                 fDataMaxOld = fDataMax;
-                fDataMin = g_pfBuf[0];
-                fDataMax = g_pfBuf[0];
+                fDataMin = g_pf2DProfBuf[0];
+                fDataMax = g_pf2DProfBuf[0];
                 for (i = 0; i < iSampsPerPeriod; ++i)
                 {
-                    pfProfSpec = g_pfBuf + i * iNumPulses;
+                    pfProfSpec = g_pf2DProfBuf + i * iNumPulses;
                     for (j = 0; j < iNumPulses; ++j)
                     {
                         if (pfProfSpec[j] < fDataMin)
@@ -951,7 +974,8 @@ int main(int argc, char *argv[])
                         cpgwedg("TI", 0.0, 3.0, fDataMinOld, fDataMaxOld, "");
                         cpgsci(PG_CI_DEF);
                     }
-                    Plot2D(g_pfBuf, fDataMin, fDataMax,
+
+                    Plot2D(g_pf2DProfBuf, fDataMin, fDataMax,
                            g_pfPhase, iSampsPerPeriod, dPhaseStep,
                            g_pfYAxis, iNumPulses, 1.0,
                            "Phase", "", "",
