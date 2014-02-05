@@ -115,13 +115,13 @@ all: yapp_makever \
 	 yapp_stackfil.o \
 	 yapp_stackfil \
 	 tags
-#	 yapp_dedisplaw.o \
+#	 yapp_makeaudio.o \
+	 yapp_makeaudio \
+	 yapp_dedisplaw.o \
 	 set_colours.o \
 	 yapp_dedisplaw \
 	 reorderdds.o \
 	 reorderdds \
-	 yapp_pulsarsnd.o \
-	 yapp_pulsarsnd \
 
 yapp_makever: $(SRCDIR)/yapp_makever.c
 	$(CC) $(CFLAGS_L) $< -o $(IDIR)/$@
@@ -255,6 +255,13 @@ yapp_stackfil: $(IDIR)/yapp_stackfil.o $(IDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o $(IDIR)/colourmap.o
 	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) $(LFLAGS_CFITSIO) -o $(BINDIR)/$@
 
+yapp_makeaudio.o: $(SRCDIR)/yapp_makeaudio.c $(SRCDIR)/yapp.h
+	$(CC) $(CFLAGS_C) $(SRCDIR)/yapp_makeaudio.c -o $(IDIR)/$@
+
+yapp_makeaudio: $(IDIR)/yapp_makeaudio.o
+	$(CC) $(SRCDIR)/yapp_makeaudio.o $(IDIR)/yapp_version.o $(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o \
+		$(LFLAGS_MATH) $(LFLAGS_SNDFILE) $(LFLAGS_CFITSIO) -o $(BINDIR)/$@
+
 yapp_dedisplaw.o: $(SRCDIR)/yapp_dedisplaw.c $(SRCDIR)/yapp.h
 	$(CC) $(CFLAGS_C) $(DFC) $(DDEBUG) $(SRCDIR)/yapp_dedisplaw.c -o $(IDIR)/$@
 
@@ -278,13 +285,6 @@ reorderdds.o: $(SRCDIR)/reorderdds.c
 reorderdds: $(IDIR)/reorderdds.o
 	$(FC) $(IDIR)/reorderdds.o $(IDIR)/yapp_version.o $(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o \
 		$(IDIR)/set_colours.o $(LFLAGS_PGPLOT) $(LFLAGS_MATH) $(LFLAGS_CFITSIO) -o $(BINDIR)/$@
-
-yapp_pulsarsnd.o: $(SRCDIR)/yapp_pulsarsnd.c $(SRCDIR)/yapp.h
-	$(CC) $(CFLAGS_C) $(SRCDIR)/yapp_pulsarsnd.c -o $(IDIR)/$@
-
-yapp_pulsarsnd: $(IDIR)/yapp_pulsarsnd.o
-	$(CC) $(SRCDIR)/yapp_pulsarsnd.o $(IDIR)/yapp_version.o $(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o \
-		$(LFLAGS_MATH) $(LFLAGS_SNDFILE) -o $(BINDIR)/$@
 
 #gendispdata.o: $(SRCDIR)/gendispdata.c
 #	$(CC) $(CFLAGS_C) $(SRCDIR)/gendispdata.c -o $(IDIR)/$@
@@ -331,10 +331,10 @@ clean:
 	$(DELCMD) $(IDIR)/yapp_siftpulses.o
 	$(DELCMD) $(IDIR)/yapp_stacktim.o
 	$(DELCMD) $(IDIR)/yapp_stackfil.o
+	$(DELCMD) $(IDIR)/yapp_makeaudio.o
 #	$(DELCMD) $(IDIR)/set_colours.o
 #	$(DELCMD) $(IDIR)/yapp_dedisplaw.o
 #	$(DELCMD) $(IDIR)/reorderdds.o
-#	$(DELCMD) $(IDIR)/yapp_pulsarsnd.o
 #	$(DELCMD) $(IDIR)/killrfi.o
 #	$(DELCMD) $(IDIR)/gendispdata.o
 

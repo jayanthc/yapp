@@ -1,38 +1,28 @@
 /**
- * @file yapp_dedisperse.c
- * Program to dedisperse the input signal for the given value of DM.
+ * @file yapp_makerfimask.c
+ * Program to analyze the given filterbank data for statistical outliers caused
+ * by RFI.
  *
  * @verbatim
- * Usage: yapp_dedisperse [options] <data-file>
+ * Usage: yapp_makerfimask [options] <data-file>
  *     -h  --help                           Display this usage information
- *     -s  --skip <time>                    The length of data in seconds, to
- *                                          be skipped
- *     -p  --proc <time>                    The length of data in seconds, to
- *                                          be processed
+ *     -s  --skip <time>                    The length of data in seconds, to be
+ *                                          skipped
+ *     -p  --proc <time>                    The length of data in seconds, to be
+ *                                          processed
  *                                          (default is all)
  *     -n  --nsamp <samples>                Number of samples read in one block
  *                                          (default is 4096 samples)
- *     -d  --dm <dm>                        DM at which to de-disperse
- *                                          (default is 10.0)
- *     -l  --law <law>                      Dispersion law
- *                                          (default is 2.0)
- *     -b  --nsubband <nsubband>            Number of sub-bands
- *                                          (must be < number of channels)
- *     -u  --subband <subband>              Sub-band to dedisperse
- *                                          (within [0, nsubband))
- *     -o  --out-format <format>            Output format - 'dds', 'tim', or
- *                                          'fil'
- *                                          (default is 'tim')
  *     -g  --graphics                       Turn on plotting
  *     -m  --colour-map <name>              Colour map for plotting
  *                                          (default is 'jet')
- *     -i  --invert                         Invert the background and
- *                                          foreground colours in plots
+ *     -i  --invert                         Invert the background and foreground
+ *                                          colours in plots
  *     -e  --non-interactive                Run in non-interactive mode
  *     -v  --version                        Display the version @endverbatim
  *
  * @author Jayanth Chennamangalam
- * @date 2008.11.14
+ * @date 2013.11.06
  */
 
 #include "yapp.h"
@@ -67,7 +57,7 @@ float *g_pfYAxis = NULL;
 
 int main(int argc, char *argv[])
 {
-    FILE *pFDedispData = NULL;
+    FILE *pFData = NULL;
     char *pcFileSpec = NULL;
     char acFileDedisp[LEN_GENSTRING] = {0};
     int iFormat = DEF_FORMAT;
@@ -78,8 +68,6 @@ int main(int argc, char *argv[])
     YUM_t stYUM = {{0}};
     YUM_t stYUMOut = {{0}};
     char cIsDMGiven = YAPP_FALSE;
-    double dDM = 0.0;
-    float fLaw = DEF_LAW;
     float fChanBW = 0.0;
     int iMaxOffset = 0;
     int iNumChans = 0;
@@ -144,18 +132,13 @@ int main(int argc, char *argv[])
     const char *pcProgName = NULL;
     int iNextOpt = 0;
     /* valid short options */
-    const char* const pcOptsShort = "hs:p:n:d:l:b:u:o:gm:iev";
+    const char* const pcOptsShort = "hs:p:n:gm:iev";
     /* valid long options */
     const struct option stOptsLong[] = {
         { "help",                   0, NULL, 'h' },
         { "skip",                   1, NULL, 's' },
         { "proc",                   1, NULL, 'p' },
         { "nsamp",                  1, NULL, 'n' },
-        { "dm",                     1, NULL, 'd' },
-        { "law",                    1, NULL, 'l' },
-        { "nsubband",               1, NULL, 'b' },
-        { "subband",                1, NULL, 'u' },
-        { "out-format",             1, NULL, 'o' },
         { "graphics",               0, NULL, 'g' },
         { "colour-map",             1, NULL, 'm' },
         { "invert",                 0, NULL, 'i' },
@@ -196,51 +179,6 @@ int main(int argc, char *argv[])
                 {
                     (void) fprintf(stderr,
                                    "ERROR: Number of samples must be > 1!\n");
-                    PrintUsage(pcProgName);
-                    return YAPP_RET_ERROR;
-                }
-                break;
-
-            case 'd':   /* -d or --dm */
-                /* set option */
-                dDM = atof(optarg);
-                cIsDMGiven = YAPP_TRUE;
-                break;
-
-            case 'l':   /* -l or --law */
-                /* set option */
-                fLaw = atof(optarg);
-                break;
-
-            case 'b':   /* -b or --nsubband */
-                /* set option */
-                iNumSubBands = atoi(optarg);
-                break;
-
-            case 'u':   /* -u or --subband */
-                /* set option */
-                iSubBand = atoi(optarg);
-                break;
-
-            case 'o':   /* -o or --out-format */
-                /* set option */
-                if (0 == strcmp(optarg, YAPP_FORMATSTR_DTS_DDS))
-                {
-                    iOutputFormat = YAPP_FORMAT_DTS_DDS;
-                }
-                else if (0 == strcmp(optarg, YAPP_FORMATSTR_DTS_TIM))
-                {
-                    iOutputFormat = YAPP_FORMAT_DTS_TIM;
-                }
-                else if (0 == strcmp(optarg, YAPP_FORMATSTR_FIL))
-                {
-                    iOutputFormat = YAPP_FORMAT_FIL;
-                }
-                else
-                {
-                    (void) fprintf(stderr,
-                                   "ERROR: Format should be either 'dds' or "
-                                   "'tim'!\n");
                     PrintUsage(pcProgName);
                     return YAPP_RET_ERROR;
                 }
@@ -306,16 +244,16 @@ int main(int argc, char *argv[])
         if (iSubBand >= iNumSubBands)
         {
             (void) fprintf(stderr,
-                           "ERROR: Sub-band number inconsistent with number "
-                           "of sub-bands!\n");
+                           "ERROR: Sub-band number inconsistent with number of "
+                           "sub-bands!\n");
             PrintUsage(pcProgName);
             return YAPP_RET_ERROR;
         }
         if (iOutputFormat != YAPP_FORMAT_DTS_TIM)
         {
             (void) fprintf(stderr,
-                           "ERROR: Sub-band dedispersion support only for "
-                           ".tim output!\n");
+                           "ERROR: Sub-band dedispersion support only for .tim "
+                           "output!\n");
             PrintUsage(pcProgName);
             return YAPP_RET_ERROR;
         }
@@ -387,32 +325,11 @@ int main(int argc, char *argv[])
         {
             (void) fprintf(stderr,
                            "ERROR: Invalid number of sub-bands! Number of "
-                           "sub-bands must be a factor of number of "
-                           "channels!\n");
+                           "sub-bands must be a factor of number of channels!\n");
             PrintUsage(pcProgName);
             return YAPP_RET_ERROR;
         }
     }
-
-    iRet = YAPP_CalcDelays(dDM, stYUM, fLaw, &iMaxOffset);
-    if (iRet != YAPP_RET_SUCCESS)
-    {
-        (void) fprintf(stderr,
-                       "ERROR: Calculating delays failed!\n");
-        YAPP_CleanUp();
-        return YAPP_RET_ERROR;
-    }
-
-    /* calculate the corrected start time */
-    dDelay = (double) -4.148741601e6
-             * (((double) 1.0 / pow(INFINITY, fLaw))
-                - ((double) 1.0 / pow(stYUM.fFMax, fLaw)))
-                /* TODO: max or min? find out if we drop samples at the
-                   beginning of the scan for channels except highest freq.
-                   one */
-             * dDM;    /* in ms */
-    iStartOffset = (int) (dDelay / stYUM.dTSamp);
-    fStartOffset = iStartOffset * dTSampInSec;
 
     /* ensure that the block size is at least equivalent to the maximum offset,
        because we don't read beyond the second buffer */
@@ -476,8 +393,8 @@ int main(int argc, char *argv[])
                be applied, and if the number of bytes to be processed is less
                than the block size, de-dispersion will be affected, as we don't
                have more than two block buffers. if both conditions are true,
-               force the number of bytes to be processed to be equivalent to
-               the block size/maximum offset */
+               force the number of bytes to be processed to be equivalent to the
+               block size/maximum offset */
             (void) printf("WARNING: Amount of data to be processed is less "
                           "than the calculated maximum offset! Will process "
                           "more data than what was requested.\n");
@@ -509,8 +426,8 @@ int main(int argc, char *argv[])
             if (lBytesToProc < (iBlockSize * iNumChans * sizeof(float)))
             {
                 /* here, iMaxOffset <=(eqv) lBytesToProc <(eqv) iBlockSize */
-                (void) printf("WARNING: Amount of data to be processed is "
-                              "less than the block size! Adjusting block size "
+                (void) printf("WARNING: Amount of data to be processed is less "
+                              "than the block size! Adjusting block size "
                               "accordingly.\n");
                 iBlockSize = lBytesToProc / (iNumChans * sizeof(float));
             }
@@ -524,8 +441,7 @@ int main(int argc, char *argv[])
         (void) printf("WARNING: Total data to be read (skipped and processed) "
                       "is more than the size of the file! ");
         lBytesToSkip = lDataSizeTotal - lBytesToProc;
-        (void) printf("Newly calculated size of data to be skipped: %ld "
-                      "bytes\n",
+        (void) printf("Newly calculated size of data to be skipped: %ld bytes\n",
                       lBytesToSkip);
     }
 
@@ -652,9 +568,7 @@ int main(int argc, char *argv[])
     }
 
     /* allocate memory for storing the dedispersed data */
-    g_pfDedispData = (float *) YAPP_Malloc((size_t) iBlockSize,
-                                           sizeof(float),
-                                           YAPP_FALSE);
+    g_pfDedispData = (float *) YAPP_Malloc((size_t) iBlockSize, sizeof(float), YAPP_FALSE);
     if (NULL == g_pfDedispData)
     {
         (void) fprintf(stderr,
@@ -820,9 +734,7 @@ int main(int argc, char *argv[])
         }
 
         /* set up the image plot's Y-axis (frequency) */
-        g_pfYAxis = (float *) YAPP_Malloc((size_t) iNumChans,
-                                          sizeof(float),
-                                          YAPP_FALSE);
+        g_pfYAxis = (float *) YAPP_Malloc((size_t) iNumChans, sizeof(float), YAPP_FALSE);
         if (NULL == g_pfYAxis)
         {
             (void) fprintf(stderr,
@@ -947,8 +859,8 @@ int main(int argc, char *argv[])
     }
 
     /* open the output file for appending data */
-    pFDedispData = fopen(acFileDedisp, "a");
-    if (NULL == pFDedispData)
+    pFData = fopen(acFileDedisp, "a");
+    if (NULL == pFData)
     {
         fprintf(stderr,
                 "ERROR: Opening file %s failed! %s.\n",
@@ -1063,7 +975,7 @@ int main(int argc, char *argv[])
                 {
                     cpgclos();
                 }
-                (void) fclose(pFDedispData);
+                (void) fclose(pFData);
                 YAPP_CleanUp();
                 return YAPP_RET_ERROR;
             }
@@ -1128,7 +1040,7 @@ int main(int argc, char *argv[])
                             {
                                 cpgclos();
                             }
-                            (void) fclose(pFDedispData);
+                            (void) fclose(pFData);
                             YAPP_CleanUp();
                             return YAPP_RET_ERROR;
                         }
@@ -1162,60 +1074,7 @@ int main(int argc, char *argv[])
                       '\0',
                       (sizeof(float) * iBlockSize));
 
-        for (k = 0; k < iBlockSize; ++k)
-        {
-            pfSpectrum = pfPriBuf + k * iNumChans;
-            for (l = 0; l < iNumChans; ++l)
-            {
-                if (stYUM.pcIsChanGood[l])
-                {
-                    /* get the offset for the corresponding DM and frequency
-                       channel from the offset table */
-                    iOffset = g_piOffsetTab[l];
-                    /* apply the delay - shift all time samples up */
-                    if ((k + iOffset) >= iBlockSize)
-                    {
-                        if (!(cIsLastBlock))
-                        {
-                            m = k + iOffset - iBlockSize;
-                            pfOffsetSpec = pfSecBuf + m * iNumChans;
-                            pfSpectrum[l] = pfOffsetSpec[l];
-                            if (g_pcIsTimeGood[iReadSmpCount+k+iOffset])
-                            {
-                                g_pfDedispData[k] += pfSpectrum[l];
-                                ++iEffcNumGoodChans;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        pfOffsetSpec = pfPriBuf
-                                       + (k + iOffset) * iNumChans;
-                        pfSpectrum[l] = pfOffsetSpec[l];
-                        if (g_pcIsTimeGood[iReadSmpCount+k+iOffset])
-                        {
-                            g_pfDedispData[k] += pfSpectrum[l];
-                            ++iEffcNumGoodChans;
-                        }
-                    }
-                }
-            }
-
-            /* get the average over all the good channels */
-            if (iEffcNumGoodChans != 0)
-            {
-                g_pfDedispData[k] /= iEffcNumGoodChans;
-            }
-            else
-            {
-                g_pfDedispData[k] = 0.0;
-            }
-
-            g_pfDedispData[k] /= fNoiseRMS;
-
-            /* reset the effective number of good channels */
-            iEffcNumGoodChans = 0;
-        }
+        /* ... */
 
         if (cHasGraphics)
         {
@@ -1275,9 +1134,7 @@ int main(int argc, char *argv[])
             Plot2D(g_pfPlotBuf, fDataMin, fDataMax,
                    g_pfXAxis, iBlockSize, dTSampInSec,
                    g_pfYAxis, iNumChans, fChanBW,
-                   "Time - Start Time (s)",
-                   "Frequency (MHz)",
-                   "After Dedispersion",
+                   "Time - Start Time (s)", "Frequency (MHz)", "After Dedispersion",
                    iColourMap);
         }
 
@@ -1288,14 +1145,14 @@ int main(int argc, char *argv[])
             (void) fwrite(pfPriBuf,
                           sizeof(float),
                           iNumChans * iBlockSize,
-                          pFDedispData);
+                          pFData);
         }
         else
         {
             (void) fwrite(g_pfDedispData,
                           sizeof(float),
                           iBlockSize,
-                          pFDedispData);
+                          pFData);
         }
 
         if (cHasGraphics)
@@ -1329,9 +1186,7 @@ int main(int argc, char *argv[])
 
             cpgswin(g_pfXAxis[0], g_pfXAxis[iBlockSize-1], fDataMin, fDataMax);
             cpgbox("BCNST", 0.0, 0, "BCNST", 0.0, 0);
-            cpglab("Time - Start Time (s)",
-                   "Total Power",
-                   "Dedipsersed Time Series");
+            cpglab("Time - Start Time (s)", "Total Power", "Dedipsersed Time Series");
             cpgsci(PG_CI_PLOT);
             cpgline(iBlockSize, g_pfXAxis, g_pfDedispData);
             cpgsci(PG_CI_DEF);
@@ -1341,20 +1196,11 @@ int main(int argc, char *argv[])
                 if (!(cIsNonInteractive))
                 {
                     /* draw the 'next' and 'exit' buttons */
-                    cpgsvp(PG_VP_BUT_ML,
-                           PG_VP_BUT_MR,
-                           PG_VP_BUT_MB,
-                           PG_VP_BUT_MT);
+                    cpgsvp(PG_VP_BUT_ML, PG_VP_BUT_MR, PG_VP_BUT_MB, PG_VP_BUT_MT);
                     cpgswin(PG_BUT_L, PG_BUT_R, PG_BUT_B, PG_BUT_T);
                     cpgsci(PG_BUT_FILLCOL); /* set the fill colour */
-                    cpgrect(PG_BUTNEXT_L,
-                            PG_BUTNEXT_R,
-                            PG_BUTNEXT_B,
-                            PG_BUTNEXT_T);
-                    cpgrect(PG_BUTEXIT_L,
-                            PG_BUTEXIT_R,
-                            PG_BUTEXIT_B,
-                            PG_BUTEXIT_T);
+                    cpgrect(PG_BUTNEXT_L, PG_BUTNEXT_R, PG_BUTNEXT_B, PG_BUTNEXT_T);
+                    cpgrect(PG_BUTEXIT_L, PG_BUTEXIT_R, PG_BUTEXIT_B, PG_BUTEXIT_T);
                     cpgsci(0);  /* set colour index to white */
                     cpgtext(PG_BUTNEXT_TEXT_L, PG_BUTNEXT_TEXT_B, "Next");
                     cpgtext(PG_BUTEXIT_TEXT_L, PG_BUTEXIT_TEXT_B, "Exit");
@@ -1368,69 +1214,49 @@ int main(int argc, char *argv[])
                         if (0 == iRet)
                         {
                             (void) fprintf(stderr,
-                                           "WARNING: Reading cursor "
-                                           "parameters failed!\n");
+                                           "WARNING: "
+                                           "Reading cursor parameters failed!\n");
                             break;
                         }
 
-                        if (((fButX >= PG_BUTNEXT_L)
-                             && (fButX <= PG_BUTNEXT_R))
-                            && ((fButY >= PG_BUTNEXT_B)
-                                && (fButY <= PG_BUTNEXT_T)))
+                        if (((fButX >= PG_BUTNEXT_L) && (fButX <= PG_BUTNEXT_R))
+                            && ((fButY >= PG_BUTNEXT_B) && (fButY <= PG_BUTNEXT_T)))
                         {
                             /* animate button click */
                             cpgsci(PG_BUT_FILLCOL);
-                            cpgtext(PG_BUTNEXT_TEXT_L,
-                                    PG_BUTNEXT_TEXT_B,
-                                    "Next");
+                            cpgtext(PG_BUTNEXT_TEXT_L, PG_BUTNEXT_TEXT_B, "Next");
                             cpgsci(0);  /* set colour index to white */
-                            cpgtext(PG_BUTNEXT_CL_TEXT_L,
-                                    PG_BUTNEXT_CL_TEXT_B,
-                                    "Next");
+                            cpgtext(PG_BUTNEXT_CL_TEXT_L, PG_BUTNEXT_CL_TEXT_B, "Next");
                             (void) usleep(PG_BUT_CL_SLEEP);
                             cpgsci(PG_BUT_FILLCOL); /* set colour index to fill
                                                        colour */
-                            cpgtext(PG_BUTNEXT_CL_TEXT_L,
-                                    PG_BUTNEXT_CL_TEXT_B,
-                                    "Next");
+                            cpgtext(PG_BUTNEXT_CL_TEXT_L, PG_BUTNEXT_CL_TEXT_B, "Next");
                             cpgsci(0);  /* set colour index to white */
-                            cpgtext(PG_BUTNEXT_TEXT_L,
-                                    PG_BUTNEXT_TEXT_B,
-                                    "Next");
+                            cpgtext(PG_BUTNEXT_TEXT_L, PG_BUTNEXT_TEXT_B, "Next");
                             cpgsci(1);  /* reset colour index to black */
                             (void) usleep(PG_BUT_CL_SLEEP);
 
                             break;
                         }
-                        else if (((fButX >= PG_BUTEXIT_L)
-                                  && (fButX <= PG_BUTEXIT_R))
-                            && ((fButY >= PG_BUTEXIT_B)
-                                && (fButY <= PG_BUTEXIT_T)))
+                        else if (((fButX >= PG_BUTEXIT_L) && (fButX <= PG_BUTEXIT_R))
+                            && ((fButY >= PG_BUTEXIT_B) && (fButY <= PG_BUTEXIT_T)))
                         {
                             /* animate button click */
                             cpgsci(PG_BUT_FILLCOL);
-                            cpgtext(PG_BUTEXIT_TEXT_L,
-                                    PG_BUTEXIT_TEXT_B,
-                                    "Exit");
+                            cpgtext(PG_BUTEXIT_TEXT_L, PG_BUTEXIT_TEXT_B, "Exit");
                             cpgsci(0);  /* set colour index to white */
-                            cpgtext(PG_BUTEXIT_CL_TEXT_L,
-                                    PG_BUTEXIT_CL_TEXT_B,
-                                    "Exit");
+                            cpgtext(PG_BUTEXIT_CL_TEXT_L, PG_BUTEXIT_CL_TEXT_B, "Exit");
                             (void) usleep(PG_BUT_CL_SLEEP);
                             cpgsci(PG_BUT_FILLCOL); /* set colour index to fill
                                                        colour */
-                            cpgtext(PG_BUTEXIT_CL_TEXT_L,
-                                    PG_BUTEXIT_CL_TEXT_B,
-                                    "Exit");
+                            cpgtext(PG_BUTEXIT_CL_TEXT_L, PG_BUTEXIT_CL_TEXT_B, "Exit");
                             cpgsci(0);  /* set colour index to white */
-                            cpgtext(PG_BUTEXIT_TEXT_L,
-                                    PG_BUTEXIT_TEXT_B,
-                                    "Exit");
+                            cpgtext(PG_BUTEXIT_TEXT_L, PG_BUTEXIT_TEXT_B, "Exit");
                             cpgsci(1);  /* reset colour index to black */
                             (void) usleep(PG_BUT_CL_SLEEP);
 
                             cpgclos();
-                            (void) fclose(pFDedispData);
+                            (void) fclose(pFData);
                             YAPP_CleanUp();
                             return YAPP_RET_SUCCESS;
                         }
@@ -1470,7 +1296,7 @@ int main(int argc, char *argv[])
         cpgclos();
     }
 
-    (void) fclose(pFDedispData);
+    (void) fclose(pFData);
     YAPP_CleanUp();
 
     return YAPP_RET_SUCCESS;
@@ -1499,26 +1325,6 @@ void PrintUsage(const char *pcProgName)
     (void) printf("Number of samples read in one block\n");
     (void) printf("                                        ");
     (void) printf("(default is 4096 samples)\n");
-    (void) printf("    -d  --dm <dm>                       ");
-    (void) printf("DM at which to de-disperse\n");
-    (void) printf("                                        ");
-    (void) printf("(default is 10.0)\n");
-    (void) printf("    -l  --law <law>                     ");
-    (void) printf("Dispersion law\n");
-    (void) printf("                                        ");
-    (void) printf("(default is 2.0)\n");
-    (void) printf("    -b  --nsubband <nsubband>           ");
-    (void) printf("Number of sub-bands\n");
-    (void) printf("                                        ");
-    (void) printf("(must be < number of channels)\n");
-    (void) printf("    -u  --subband <subband>             ");
-    (void) printf("Sub-band to dedisperse\n");
-    (void) printf("                                        ");
-    (void) printf("(within [0, nsubband))\n");
-    (void) printf("    -o  --out-format <format>           ");
-    (void) printf("Output format - 'dds', 'tim', or 'fil'\n");
-    (void) printf("                                        ");
-    (void) printf("(default is 'tim')\n");
     (void) printf("    -g  --graphics                      ");
     (void) printf("Turn on plotting\n");
     (void) printf("    -m  --colour-map <name>             ");
@@ -1535,148 +1341,5 @@ void PrintUsage(const char *pcProgName)
     (void) printf("Display the version\n");
 
     return;
-}
-
-int YAPP_CalcDelays(double dDM,
-                    YUM_t stYUM,
-                    float fLaw,
-                    int* piMaxOffset)
-{
-    int i = 0;
-    float fF1 = 0.0;
-    float fF2 = 0.0;
-    double dDelay = 0.0;
-    float fFMaxCalc = stYUM.fFMax;     /* reference frequency */
-
-    g_piOffsetTab = (int *) YAPP_Malloc((size_t) stYUM.iNumChans,
-                                        sizeof(int),
-                                        YAPP_FALSE);
-    if (NULL == g_piOffsetTab)
-    {
-        (void) fprintf(stderr,
-                       "ERROR: Memory allocation failed! %s!\n",
-                       strerror(errno));
-        YAPP_CleanUp();
-        return YAPP_RET_ERROR;
-    }
-
-    /* calculate quadratic delays */
-    /* NOTE: delay may not be 0 for the highest frequency channel,
-       but the offset samples may be (depending on the sampling rate) */
-#ifdef DEBUG
-    {
-        FILE *pFFileDelaysQuad = NULL;
-
-        pFFileDelaysQuad = fopen(YAPP_FILE_DELAYS_QUAD, "w");
-        if (NULL == pFFileDelaysQuad)
-        {
-            fprintf(stderr,
-                    "ERROR: Opening file %s failed! %s.\n",
-                    YAPP_FILE_DELAYS_QUAD,
-                    strerror(errno));
-            YAPP_CleanUp();
-            return YAPP_RET_ERROR;
-        }
-#endif
-    if (dDM < 0)
-    {
-        if (stYUM.cIsBandFlipped)
-        {
-            fF1 = fFMaxCalc;
-            fF2 = stYUM.fFMax;
-            for (i = stYUM.iNumChans - 1; i >= 0; --i)
-            {
-                dDelay = (double) -4.148741601e6
-                         * (((double) 1.0 / pow(fF1, fLaw))
-                            - ((double) 1.0 / pow(fF2, fLaw)))
-                         * dDM;    /* in ms */
-                g_piOffsetTab[i] = (int) (dDelay / stYUM.dTSamp);
-#ifdef DEBUG
-                (void) fprintf(pFFileDelaysQuad,
-                               "%d %g %d\n",
-                               i,
-                               dDelay,
-                               g_piOffsetTab[i]);
-#endif
-                fF2 -= stYUM.fChanBW;
-            }
-            *piMaxOffset = g_piOffsetTab[0];
-        }
-        else
-        {
-            fF1 = fFMaxCalc;
-            fF2 = stYUM.fFMax;
-            for (i = 0; i < stYUM.iNumChans; ++i)
-            {
-                dDelay = (double) -4.148741601e6
-                         * (((double) 1.0 / pow(fF1, fLaw))
-                            - ((double) 1.0 / pow(fF2, fLaw)))
-                         * dDM;    /* in ms */
-                g_piOffsetTab[i] = (int) (dDelay / stYUM.dTSamp);
-#ifdef DEBUG
-                (void) fprintf(pFFileDelaysQuad,
-                               "%d %g %d\n",
-                               i,
-                               dDelay,
-                               g_piOffsetTab[i]);
-#endif
-                fF2 -= stYUM.fChanBW;
-            }
-            *piMaxOffset = g_piOffsetTab[stYUM.iNumChans-1];
-        }
-    }
-    else
-    {
-        if (stYUM.cIsBandFlipped)
-        {
-            fF1 = fFMaxCalc;
-            fF2 = stYUM.fFMax;
-            for (i = 0; i < stYUM.iNumChans; ++i)
-            {
-                dDelay = (double) -4.148741601e6
-                         * (((double) 1.0 / pow(fF1, fLaw))
-                            - ((double) 1.0 / pow(fF2, fLaw)))
-                         * dDM;    /* in ms */
-                g_piOffsetTab[i] = (int) (dDelay / stYUM.dTSamp);
-#ifdef DEBUG
-                (void) fprintf(pFFileDelaysQuad,
-                               "%d %g %d\n",
-                               i,
-                               dDelay,
-                               g_piOffsetTab[i]);
-#endif
-                fF2 -= stYUM.fChanBW;
-            }
-            *piMaxOffset = g_piOffsetTab[stYUM.iNumChans-1];
-        }
-        else
-        {
-            fF1 = fFMaxCalc;
-            fF2 = stYUM.fFMax;
-            for (i = stYUM.iNumChans - 1; i >= 0; --i)
-            {
-                dDelay = (double) -4.148741601e6
-                         * (((double) 1.0 / pow(fF1, fLaw))
-                            - ((double) 1.0 / pow(fF2, fLaw)))
-                         * dDM;    /* in ms */
-                g_piOffsetTab[i] = (int) (dDelay / stYUM.dTSamp);
-#ifdef DEBUG
-                (void) fprintf(pFFileDelaysQuad,
-                               "%d %g %d\n",
-                               i,
-                               dDelay,
-                               g_piOffsetTab[i]);
-#endif
-                fF2 -= stYUM.fChanBW;
-            }
-            *piMaxOffset = g_piOffsetTab[0];
-        }
-    }
-#ifdef DEBUG
-        (void) fclose(pFFileDelaysQuad);
-    }
-#endif
-
-    return YAPP_RET_SUCCESS;
 }
 

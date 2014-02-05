@@ -52,6 +52,7 @@ extern FILE *g_pFData;
 char *g_pcIsTimeGood = NULL;
 float *g_pfBuf = NULL;
 float *g_pfProfBuf = NULL;
+float *g_pf2DProfBuf = NULL;
 float *g_pfPlotBuf = NULL;
 double *g_pdPhase = NULL;
 float *g_pfPhase = NULL;
@@ -100,12 +101,16 @@ int main(int argc, char *argv[])
     int iNumSamps = 0;
     double dPeriod = 0.0;
     double dPhase = 0.0;
+    double dTurn = 0.0;
     double dPhaseStep = 0.0;
     int iSampsPerPeriod = 0;
+    double dSampsPerPeriod = 0.0;
+    double dSampsPerPeriodFrac = 0.0;
+    int iPaddingCadence = 0;
     int iTotalPulses = 0;
     int iWaterfallType = 0;
-//    double dPNorm = 0.0;
-//    float fAcc = -10.0;
+    //double dPNorm = 0.0;
+    //float fAcc = -1000.0;
     double dTime = 0.0;
     long int lSampCount = 0;
     float fMeanNoise = 0.0;
@@ -347,8 +352,12 @@ int main(int argc, char *argv[])
                            * stYUM.fSampSize);
 
     /* calculate the number of bins in one profile */
-    iSampsPerPeriod = (int) round(dPeriod / stYUM.dTSamp);
-    iTotalPulses = (int) floor((double) stYUM.iTimeSamps / iSampsPerPeriod);
+    /* TODO: take care of drift due to rounding */
+    iSampsPerPeriod = (int) floor(dPeriod / stYUM.dTSamp);
+    dSampsPerPeriodFrac = (dPeriod / stYUM.dTSamp) - iSampsPerPeriod;
+    iPaddingCadence = ((int) ((double) 1 / dSampsPerPeriodFrac)) * iSampsPerPeriod;
+    printf("=========================== %d, %d\n", iSampsPerPeriod, iPaddingCadence);
+    iTotalPulses = (int) ceil((double) stYUM.iTimeSamps / iSampsPerPeriod);
 
     /* compute the block size - a large multiple of iSampsPerPeriod */
     if (0 == iWaterfallType)
@@ -463,9 +472,9 @@ int main(int argc, char *argv[])
                   iNumReads,
                   iBlockSize);
 
-//    /* calculate normalisation quantity for acceleration */
-//    dPNorm = (dPeriod * 1e-3) / (1 + ((fAcc * stYUM.iTimeSamps * dTSampInSec)
-//                                      / (2 * YAPP_LIGHTSPEED)));
+    ///* calculate normalisation quantity for acceleration */
+    //dPNorm = (dPeriod * 1e-3) / (1 + ((fAcc * stYUM.iTimeSamps * dTSampInSec)
+    //                                  / (2 * YAPP_LIGHTSPEED)));
 
     /* calculate the threshold */
     dNumSigmas = YAPP_CalcThresholdInSigmas(iTimeSampsToProc);
@@ -632,8 +641,8 @@ int main(int argc, char *argv[])
             if (NULL == g_pfProfBuf)
             {
                 (void) fprintf(stderr,
-                               "ERROR: Memory allocation for plot buffer failed! "
-                               "%s!\n",
+                               "ERROR: Memory allocation for plot buffer "
+                               "failed! %s!\n",
                                strerror(errno));
                 YAPP_CleanUp();
                 return YAPP_RET_ERROR;
@@ -641,6 +650,21 @@ int main(int argc, char *argv[])
         }
         else
         {
+            /* allocate memory for the buffer, based on the number of channels and time
+               samples */
+            g_pf2DProfBuf = (float *) YAPP_Malloc((size_t) iSampsPerPeriod
+                                                  * iNumPulses,
+                                                  sizeof(float),
+                                                  YAPP_TRUE);
+            if (NULL == g_pf2DProfBuf)
+            {
+                (void) fprintf(stderr,
+                               "ERROR: Memory allocation for plot buffer "
+                               "failed! %s!\n",
+                               strerror(errno));
+                YAPP_CleanUp();
+                return YAPP_RET_ERROR;
+            }
             g_pfYAxis = (float *) YAPP_Malloc(iNumPulses,
                                               sizeof(float),
                                               YAPP_FALSE);
@@ -808,10 +832,10 @@ int main(int argc, char *argv[])
             }
         }
 
-        /* update the folding period based on the acceleration */
-    //    dPeriod = dPNorm * 1e3 * (1 + ((fAcc * dTime) / (2 * YAPP_LIGHTSPEED)));
-    //    iSampsPerPeriod = (int) round(dPeriod / stYUM.dTSamp);
-     //   printf("%.15g, %.15g, %d\n", dPNorm, dPeriod, iSampsPerPeriod);
+        ///* update the folding period based on the acceleration */
+        //dPeriod = dPNorm * 1e3 * (1 + ((fAcc * dTime) / (2 * YAPP_LIGHTSPEED)));
+        //iSampsPerPeriod = (int) round(dPeriod / stYUM.dTSamp);
+        //printf("%.15g, %.15g, %d\n", dPNorm, dPeriod, iSampsPerPeriod);
 
         if ((YAPP_FORMAT_DTS_TIM == iFormat)
             || (YAPP_FORMAT_DTS_DAT == iFormat))    /* time series format */
@@ -822,6 +846,8 @@ int main(int argc, char *argv[])
             /* fold data */
             if (0 == iWaterfallType)
             {
+                /* TODO: need to correct for slow drift due to rounding
+                         error */
                 for (i = 0; i < iNumSamps; ++i)
                 {
                     /* compute the phase */
@@ -837,6 +863,7 @@ int main(int argc, char *argv[])
             }
             else
             {
+                k = 0;
                 for (i = 0; i < iNumSamps; ++i)
                 {
                     /* compute the phase */
@@ -846,7 +873,13 @@ int main(int argc, char *argv[])
                     j = dPhase * iSampsPerPeriod;
                     g_pfBuf[i] += (((g_pfBuf[i] - fMeanNoise) / fRMSNoise)
                                    / iNumPulses);
+                    pfProfSpec = g_pf2DProfBuf + k * iSampsPerPeriod;
+                    pfProfSpec[j] += g_pfBuf[i];
                     ++lSampCount;
+                    if (lSampCount % iSampsPerPeriod == 0)
+                    {
+                        ++k;
+                    }
         dTime += dTSampInSec;
                 }
             }
@@ -934,11 +967,11 @@ int main(int argc, char *argv[])
             {
                 fDataMinOld = fDataMin;
                 fDataMaxOld = fDataMax;
-                fDataMin = g_pfBuf[0];
-                fDataMax = g_pfBuf[0];
+                fDataMin = g_pf2DProfBuf[0];
+                fDataMax = g_pf2DProfBuf[0];
                 for (i = 0; i < iSampsPerPeriod; ++i)
                 {
-                    pfProfSpec = g_pfBuf + i * iNumPulses;
+                    pfProfSpec = g_pf2DProfBuf + i * iNumPulses;
                     for (j = 0; j < iNumPulses; ++j)
                     {
                         if (pfProfSpec[j] < fDataMin)
@@ -969,7 +1002,8 @@ int main(int argc, char *argv[])
                         cpgwedg("TI", 0.0, 3.0, fDataMinOld, fDataMaxOld, "");
                         cpgsci(PG_CI_DEF);
                     }
-                    Plot2D(g_pfBuf, fDataMin, fDataMax,
+
+                    Plot2D(g_pf2DProfBuf, fDataMin, fDataMax,
                            g_pfPhase, iSampsPerPeriod, dPhaseStep,
                            g_pfYAxis, iNumPulses, 1.0,
                            "Phase", "", "",
