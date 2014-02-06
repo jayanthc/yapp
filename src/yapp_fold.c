@@ -838,6 +838,7 @@ int main(int argc, char *argv[])
             else
             {
                 k = 0;
+                pfProfSpec = g_pf2DProfBuf + k * iSampsPerPeriod;
                 for (i = 0; i < iNumSamps; ++i)
                 {
                     /* compute the phase */
@@ -847,12 +848,12 @@ int main(int argc, char *argv[])
                     j = dPhase * iSampsPerPeriod;
                     g_pfBuf[i] += (((g_pfBuf[i] - fMeanNoise) / fRMSNoise)
                                    / iNumPulses);
-                    pfProfSpec = g_pf2DProfBuf + k * iSampsPerPeriod;
                     pfProfSpec[j] += g_pfBuf[i];
                     ++lSampCount;
                     if (lSampCount % iSampsPerPeriod == 0)
                     {
                         ++k;
+                        pfProfSpec = g_pf2DProfBuf + k * iSampsPerPeriod;
                     }
                 }
             }

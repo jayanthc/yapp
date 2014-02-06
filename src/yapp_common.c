@@ -1054,6 +1054,11 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
                          sizeof(pstYUM->dSourceRA),
                          1,
                          g_pFData);
+            /* SIGPROC scales the RA and declination by 10000, so correct for
+               it */
+            pstYUM->dSourceRA /= YAPP_SP_RADEC_SCALE;
+            /* SIGPROC stores the RA in hours, so convert it to degrees */
+            pstYUM->dSourceRA *= YAPP_DEGPERHOUR; 
             pstYUM->iHeaderLen += sizeof(pstYUM->dSourceRA);
         }
         else if (0 == strcmp(acLabel, YAPP_SP_LABEL_SRCDEC))
@@ -1063,6 +1068,9 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
                          sizeof(pstYUM->dSourceDec),
                          1,
                          g_pFData);
+            /* SIGPROC scales the RA and declination by 10000, so correct for
+               it */
+            pstYUM->dSourceDec /= YAPP_SP_RADEC_SCALE;
             pstYUM->iHeaderLen += sizeof(pstYUM->dSourceDec);
         }
         else if (0 == strcmp(acLabel, YAPP_SP_LABEL_AZSTART))
@@ -1930,18 +1938,20 @@ int YAPP_WriteMetadata(char *pcFileData, int iFormat, YUM_t stYUM)
         (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
         (void) strcpy(acLabel, YAPP_SP_LABEL_SRCRA);
         (void) fwrite(acLabel, sizeof(char), iLen, pFData);
-        (void) fwrite(&stYUM.dSourceRA,
-                      sizeof(stYUM.dSourceRA),
-                      1,
-                      pFData);
+        /* SIGPROC requires the RA and declination be scaled by 10000 */
+        dTemp = stYUM.dSourceRA * YAPP_SP_RADEC_SCALE;
+        /* SIGPROC stores RA in hours, so convert from degrees to hours */
+        dTemp /= YAPP_DEGPERHOUR;
+        (void) fwrite(&dTemp, sizeof(dTemp), 1, pFData);
 
         /* write source declination (J2000) */
         iLen = strlen(YAPP_SP_LABEL_SRCDEC);
         (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
         (void) strcpy(acLabel, YAPP_SP_LABEL_SRCDEC);
         (void) fwrite(acLabel, sizeof(char), iLen, pFData);
-        (void) fwrite(&stYUM.dSourceDec,
-                      sizeof(stYUM.dSourceDec), 1, pFData);
+        /* SIGPROC requires the RA and declination be scaled by 10000 */
+        dTemp = stYUM.dSourceDec * YAPP_SP_RADEC_SCALE;
+        (void) fwrite(&dTemp, sizeof(dTemp), 1, pFData);
 
         /* write azimuth start */
         iLen = strlen(YAPP_SP_LABEL_AZSTART);
