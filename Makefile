@@ -9,13 +9,15 @@
 CC = gcc
 
 # include path for other libraries
-ifeq ($(OSTYPE), darwin12)
+#ifeq ($(OSTYPE), darwin13)
+ifeq ($(shell uname), Darwin)
 CFLAGS_INC_PGPLOT =-I/opt/local/include# define if needed (as -I[...])
 else
 CFLAGS_INC_PGPLOT =# define if needed (as -I[...])
 endif
 CFLAGS_INC_FFTW3 =# define if needed (as -I[...])
-ifeq ($(OSTYPE), darwin12)
+#ifeq ($(OSTYPE), darwin13)
+ifeq ($(shell uname), Darwin)
 CFLAGS_INC_CFITSIO =-I/usr/local/include# define if needed (as -I[...])
 else
 CFLAGS_INC_CFITSIO =# define if needed (as -I[...])
@@ -44,13 +46,15 @@ DDEBUG = -DDEBUG
 endif
 
 # linker flags
-ifeq ($(OSTYPE), darwin12)
+#ifeq ($(OSTYPE), darwin13)
+ifeq ($(shell uname), Darwin)
 LFLAGS_PGPLOT_DIR =-L/opt/local/lib# define if not in $PATH (as -L[...])
 else
 LFLAGS_PGPLOT_DIR =# define if not in $PATH (as -L[...])
 endif
 LFLAGS_FFTW3_DIR =# define if not in $PATH (as -L[...])
-ifeq ($(OSTYPE), darwin12)
+#ifeq ($(OSTYPE), darwin13)
+ifeq ($(shell uname), Darwin)
 LFLAGS_CFITSIO_DIR =-L/usr/local/lib# define if not in $PATH (as -L[...])
 else
 LFLAGS_CFITSIO_DIR =# define if not in $PATH (as -L[...])
@@ -295,7 +299,8 @@ reorderdds: $(IDIR)/reorderdds.o
 
 # create the tags file
 tags: $(SRCDIR)/yapp*.* $(SRCDIR)/colourmap* $(UTILDIR)/yapp*.*
-ifeq ($(OSTYPE), darwin12)
+#ifeq ($(OSTYPE), darwin13)
+ifeq ($(shell uname), Darwin)
 	/opt/local/bin/ctags $^
 else
 	ctags $^

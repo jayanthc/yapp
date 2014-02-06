@@ -83,5 +83,7 @@ enum tagObservatory
 #define YAPP_SP_OBS_GMRT        "GMRT"
 #define YAPP_SP_OBS_EFFELSBERG  "Effelsberg"
 
+#define YAPP_SP_RADEC_SCALE     10000
+
 #endif  /* __YAPP_SIGPROC_H__ */
 

@@ -104,7 +104,6 @@ int main(int argc, char *argv[])
     double dTurn = 0.0;
     double dPhaseStep = 0.0;
     int iSampsPerPeriod = 0;
-    double dSampsPerPeriod = 0.0;
     double dSampsPerPeriodFrac = 0.0;
     int iPaddingCadence = 0;
     int iTotalPulses = 0;
@@ -356,7 +355,6 @@ int main(int argc, char *argv[])
     iSampsPerPeriod = (int) floor(dPeriod / stYUM.dTSamp);
     dSampsPerPeriodFrac = (dPeriod / stYUM.dTSamp) - iSampsPerPeriod;
     iPaddingCadence = ((int) ((double) 1 / dSampsPerPeriodFrac)) * iSampsPerPeriod;
-    printf("=========================== %d, %d\n", iSampsPerPeriod, iPaddingCadence);
     iTotalPulses = (int) ceil((double) stYUM.iTimeSamps / iSampsPerPeriod);
 
     /* compute the block size - a large multiple of iSampsPerPeriod */
@@ -739,6 +737,8 @@ int main(int argc, char *argv[])
     (void) strcpy(acFileProf, pcFilename);
     (void) strcat(acFileProf, EXT_YAPP_PROFILE);
 
+    printf("=========================== %d, %d\n", iSampsPerPeriod, iNumPulses);
+
     while (iNumReads > 0)
     {
         /* read data */
@@ -864,6 +864,7 @@ int main(int argc, char *argv[])
             else
             {
                 k = 0;
+                pfProfSpec = g_pf2DProfBuf + k * iSampsPerPeriod;
                 for (i = 0; i < iNumSamps; ++i)
                 {
                     /* compute the phase */
@@ -873,12 +874,12 @@ int main(int argc, char *argv[])
                     j = dPhase * iSampsPerPeriod;
                     g_pfBuf[i] += (((g_pfBuf[i] - fMeanNoise) / fRMSNoise)
                                    / iNumPulses);
-                    pfProfSpec = g_pf2DProfBuf + k * iSampsPerPeriod;
                     pfProfSpec[j] += g_pfBuf[i];
                     ++lSampCount;
                     if (lSampCount % iSampsPerPeriod == 0)
                     {
                         ++k;
+                        pfProfSpec = g_pf2DProfBuf + k * iSampsPerPeriod;
                     }
         dTime += dTSampInSec;
                 }
