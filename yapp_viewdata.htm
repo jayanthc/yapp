@@ -55,6 +55,10 @@
           <li>SIGPROC <code>.tim</code> time series format</li>
           <li>PRESTO <code>.dat</code> time series format</li>
         </ul>
+        <p>For time series data, plots are scaled by the absolute minimum and
+           maximum values in the data. If  the  baseline is non-flat, the
+           <code>--no-abs-scale</code> option may need to be given for proper
+           viewing (see below).</p>
         <p>Usage:</p> 
         <code>yapp_viewdata [options] <i>data-file</i></code>
         <p>The options are:</p>
@@ -70,6 +74,8 @@
               samples).</li>
           <li><code>-c</code> or <code>--clip-level <i>level</i></code>: Number
               of sigmas above threshold; will clip anything above this level.</li>
+          <li><code>-a</code> or <code>--no-abs-scale</code>: Use relative
+              scale for plotting per block.</li>
           <li><code>-t</code> or <code>--period <i>period</i></code>: Period of
               the pulsar in ms.</li>
           <li><code>-r</code> or <code>--phase <i>phase</i></code>: Phase of the
