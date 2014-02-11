@@ -1892,7 +1892,7 @@ int YAPP_ReadData(FILE *pFData,
 {
     static char cIsFirst = YAPP_TRUE;
     static char *pcBuf = NULL;
-    int iReadItems;
+    int iReadItems = 0;
     int i = 0;
 
     /* kludgy way to reset the static variable cIsFirst */
@@ -2417,9 +2417,7 @@ void YAPP_GetIntFrac(float fNum, int *piInt, float *pfFrac)
 /*
  * Calculate statistics
  */
-int YAPP_CalcStats(char *pcFileData,
-                   int iFormat,
-                   YUM_t *pstYUM)
+int YAPP_CalcStats(char *pcFileData, int iFormat, YUM_t *pstYUM)
 {
     int iTotSampsPerBlock = 0;  /* iBlockSize */
     int iBlockSize = DEF_SIZE_BLOCK;
