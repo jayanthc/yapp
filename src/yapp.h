@@ -30,6 +30,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <errno.h>
+#include <float.h>
 
 #include <cpgplot.h>
 
@@ -318,6 +319,11 @@ typedef struct YUM_s
     double dTStart;     /* in MJD */
     float fSampSize;
     int iNumPol;
+    float fMin;
+    float fMax;
+    float fMean;
+    float fMedian;
+    float fRMS;
 
 #if 0
     /* DAS configuration information */
@@ -557,6 +563,7 @@ double YAPP_RAString2Double(char *pcRA);
 double YAPP_DecString2Double(char *pcDec);
 void YAPP_RADouble2String(double dRA, char *pcRA);
 void YAPP_DecDouble2String(double dDec, char *pcDec);
+int YAPP_CalcStats(char *pcFileData, int iFormat, YUM_t *pstYUM);
 float YAPP_CalcMean(float *pfBuf, int iLength, int iOffset, int iStride);
 float YAPP_CalcRMS(float *pfBuf,
                    int iLength,

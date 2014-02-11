@@ -15,6 +15,8 @@
  *                                          (default is 4096 samples)
  *     -c  --clip-level <level>             Number of sigmas above threshold;
  *                                          will clip anything above this level
+ *     -a  --no-abs-scale                   Use relative scale for plotting per
+ *                                          block
  *     -t  --period <period>                Period of the pulsar in ms
  *     -r  --phase <phase>                  Phase of the first pulse with
  *                                          respect to the first sample
@@ -72,6 +74,7 @@ int main(int argc, char *argv[])
     float fStatBW = 0.0;
     float fNoiseRMS = 0.0;
     float fClipLevel = 0.0;
+    char cUseAbsScale = YAPP_TRUE;
     double dNumSigmas = 0.0;
     double dTSampInSec = 0.0;   /* holds sampling time in s */
     double dTNow = 0.0;
@@ -114,7 +117,7 @@ int main(int argc, char *argv[])
     const char *pcProgName = NULL;
     int iNextOpt = 0;
     /* valid short options */
-    const char* const pcOptsShort = "hs:p:n:c:t:r:m:iev";
+    const char* const pcOptsShort = "hs:p:n:c:at:r:m:iev";
     /* valid long options */
     const struct option stOptsLong[] = {
         { "help",                   0, NULL, 'h' },
@@ -122,6 +125,7 @@ int main(int argc, char *argv[])
         { "proc",                   1, NULL, 'p' },
         { "nsamp",                  1, NULL, 'n' },
         { "clip-level",             1, NULL, 'c' },
+        { "no-abs-range",           0, NULL, 'a' },
         { "period",                 1, NULL, 't' },
         { "phase",                  1, NULL, 'r' },
         { "colour-map",             1, NULL, 'm' },
@@ -171,6 +175,11 @@ int main(int argc, char *argv[])
             case 'c':   /* -c or --clip-level */
                 /* set option */
                 fClipLevel = (float) atof(optarg);
+                break;
+
+            case 'a':   /* -a or --no-abs-range */
+                /* set option */
+                cUseAbsScale = YAPP_FALSE;
                 break;
 
             case 't':   /* -t or --period */
@@ -232,6 +241,15 @@ int main(int argc, char *argv[])
         (void) fprintf(stderr,
                        "ERROR: Handler registration failed!\n");
         return YAPP_RET_ERROR;
+    }
+
+    /* if absolute scaling is not used, can't clip */
+    if (!cUseAbsScale && fClipLevel != 0.0)
+    {
+        (void) fprintf(stderr,
+                       "WARNING: "
+                       "Cannot perform thresholding with relative scaling!\n");
+        fClipLevel = 0.0;
     }
 
     /* get the input filename */
@@ -688,32 +706,6 @@ int main(int argc, char *argv[])
             }
         }
 
-        pfSpectrum = g_pfBuf;
-        fDataMin = pfSpectrum[0];
-        fDataMax = pfSpectrum[0];
-        for (j = 0; j < iBlockSize; ++j)
-        {
-            pfSpectrum = g_pfBuf + j * stYUM.iNumChans;
-            for (k = 0; k < stYUM.iNumChans; ++k)
-            {
-                if (pfSpectrum[k] < fDataMin)
-                {
-                    fDataMin = pfSpectrum[k];
-                }
-                if (pfSpectrum[k] > fDataMax)
-                {
-                    fDataMax = pfSpectrum[k];
-                }
-            }
-        }
-
-        #ifdef DEBUG
-        (void) printf("Minimum value of data             : %g\n",
-                      fDataMin);
-        (void) printf("Maximum value of data             : %g\n",
-                      fDataMax);
-        #endif
-
         for (i = 0; i < iBlockSize; ++i)
         {
             g_pfXAxisOld[i] = g_pfXAxis[i];
@@ -728,6 +720,25 @@ int main(int argc, char *argv[])
               || (YAPP_FORMAT_DTS_DAT == iFormat)
               || (YAPP_FORMAT_DTS_DDS == iFormat)))
         {
+            pfSpectrum = g_pfBuf;
+            fDataMin = pfSpectrum[0];
+            fDataMax = pfSpectrum[0];
+            for (j = 0; j < iBlockSize; ++j)
+            {
+                pfSpectrum = g_pfBuf + j * stYUM.iNumChans;
+                for (k = 0; k < stYUM.iNumChans; ++k)
+                {
+                    if (pfSpectrum[k] < fDataMin)
+                    {
+                        fDataMin = pfSpectrum[k];
+                    }
+                    if (pfSpectrum[k] > fDataMax)
+                    {
+                        fDataMax = pfSpectrum[k];
+                    }
+                }
+            }
+
             /* get the transpose of the two-dimensional array */
             i = 0;
             j = 0;
@@ -780,6 +791,42 @@ int main(int argc, char *argv[])
             /* erase just before plotting, to reduce flicker */
             cpgeras();
             cpgsvp(PG_VP_ML, PG_VP_MR, PG_VP_MB, PG_VP_MT);
+            /* set minimum and maximum according to intrinsic values and clip
+               level */
+            if (cUseAbsScale)
+            {
+                if (fClipLevel != 0.0)
+                {
+                    fDataMin = stYUM.fMean - (3 * stYUM.fRMS);
+                    fDataMax = stYUM.fMean + (fClipLevel * stYUM.fRMS);
+                }
+                else
+                {
+                    fDataMin = stYUM.fMin;
+                    fDataMax = stYUM.fMax;
+                }
+            }
+            else
+            {
+                pfSpectrum = g_pfBuf;
+                fDataMin = pfSpectrum[0];
+                fDataMax = pfSpectrum[0];
+                for (j = 0; j < iBlockSize; ++j)
+                {
+                    pfSpectrum = g_pfBuf + j * stYUM.iNumChans;
+                    for (k = 0; k < stYUM.iNumChans; ++k)
+                    {
+                        if (pfSpectrum[k] < fDataMin)
+                        {
+                            fDataMin = pfSpectrum[k];
+                        }
+                        if (pfSpectrum[k] > fDataMax)
+                        {
+                            fDataMax = pfSpectrum[k];
+                        }
+                    }
+                }
+            }
             cpgswin(g_pfXAxis[0],
                     g_pfXAxis[iBlockSize-1],
                     fDataMin,
@@ -930,6 +977,10 @@ void PrintUsage(const char *pcProgName)
     (void) printf("Number of sigmas above threshold; will\n");
     (void) printf("                                        ");
     (void) printf("clip anything above this level\n");
+    (void) printf("    -a  --no-abs-scale                  ");
+    (void) printf("Use relative scale for plotting per\n");
+    (void) printf("                                        ");
+    (void) printf("block\n");
     (void) printf("    -t  --period <period>               ");
     (void) printf("Period of the pulsar in ms\n");
     (void) printf("    -r  --phase <phase>                 ");
