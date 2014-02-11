@@ -352,9 +352,10 @@ int main(int argc, char *argv[])
 
     /* calculate the number of bins in one profile */
     /* TODO: take care of drift due to rounding */
-    iSampsPerPeriod = (int) floor(dPeriod / stYUM.dTSamp);
-    dSampsPerPeriodFrac = (dPeriod / stYUM.dTSamp) - iSampsPerPeriod;
-    iPaddingCadence = ((int) ((double) 1 / dSampsPerPeriodFrac)) * iSampsPerPeriod;
+    //iSampsPerPeriod = (int) floor(dPeriod / stYUM.dTSamp);
+    iSampsPerPeriod = (int) ceil(dPeriod / stYUM.dTSamp);
+    dSampsPerPeriodFrac = (dPeriod / stYUM.dTSamp) - floor(dPeriod / stYUM.dTSamp);
+    iPaddingCadence = ((int) ((double) 1 / dSampsPerPeriodFrac));
     iTotalPulses = (int) ceil((double) stYUM.iTimeSamps / iSampsPerPeriod);
 
     /* compute the block size - a large multiple of iSampsPerPeriod */
@@ -737,7 +738,7 @@ int main(int argc, char *argv[])
     (void) strcpy(acFileProf, pcFilename);
     (void) strcat(acFileProf, EXT_YAPP_PROFILE);
 
-    printf("=========================== %d, %d\n", iSampsPerPeriod, iNumPulses);
+    printf("=========================== %d, %d\n", iSampsPerPeriod, iPaddingCadence);
 
     while (iNumReads > 0)
     {
@@ -848,6 +849,9 @@ int main(int argc, char *argv[])
             {
                 /* TODO: need to correct for slow drift due to rounding
                          error */
+                k = 0;
+                double rem = dSampsPerPeriodFrac;
+                double frac = 0.0;
                 for (i = 0; i < iNumSamps; ++i)
                 {
                     /* compute the phase */
@@ -855,10 +859,27 @@ int main(int argc, char *argv[])
                     dPhase = dPhase - floor(dPhase);
                     /* compute the index into the profile array */
                     j = dPhase * iSampsPerPeriod;
+#if 0
+                    if (j == iSampsPerPeriod - 1)
+                    {
+                        frac += rem;
+                        if (frac < 1.0)
+                        {
+                            j = 0;
+                        }
+                        else
+                        {
+                            frac -= floor(frac);
+                            //frac = 0.0;
+                        }
+                    }
+#endif
+                    printf("%ld, %d\n", lSampCount, j);
                     g_pfProfBuf[j] += (((g_pfBuf[i] - fMeanNoise) / fRMSNoise)
                                        / DEF_FOLD_PULSES);
                     ++lSampCount;
         dTime += dTSampInSec;
+                    k = (k + 1) % iSampsPerPeriod;
                 }
             }
             else

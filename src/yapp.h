@@ -77,6 +77,7 @@
 #define EXT_DAT                     ".dat"
 #define EXT_INF                     ".inf"
 #define EXT_YAPP_PROFILE            ".ypr"
+#define EXT_YAPP_STATS              ".yst"
 
 enum tagFileFormats
 {
@@ -332,6 +333,11 @@ typedef struct YUM_s
     double dTStart;     /* in MJD */
     float fSampSize;
     int iNumPol;
+    float fMin;
+    float fMax;
+    float fMean;
+    float fMedian;
+    float fRMS;
 
 #if 0
     /* DAS configuration information */

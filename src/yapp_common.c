@@ -36,6 +36,9 @@ int g_iPGDev = 0;
 /* data file */
 FILE *g_pFData = NULL;
 
+/* data buffer */
+static float *g_pfBuf = NULL;
+
 /*
  * Determine the file type
  */
@@ -340,7 +343,8 @@ int YAPP_ReadMetadata(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
             if (iRet != YAPP_RET_SUCCESS)
             {
                 (void) fprintf(stderr,
-                               "ERROR: Reading configuration information failed!\n");
+                               "ERROR: "
+                               "Reading configuration information failed!\n");
                 return YAPP_RET_ERROR;
             }
             break;
@@ -351,7 +355,15 @@ int YAPP_ReadMetadata(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
             if (iRet != YAPP_RET_SUCCESS)
             {
                 (void) fprintf(stderr,
-                               "ERROR: Reading filterbank file header failed!\n");
+                               "ERROR: "
+                               "Reading SIGPROC header failed!\n");
+                return YAPP_RET_ERROR;
+            }
+            iRet = YAPP_CalcStats(pcFileSpec, iFormat, pstYUM);
+            if (iRet != YAPP_RET_SUCCESS)
+            {
+                (void) fprintf(stderr,
+                               "ERROR: Calculating statistics failed!\n");
                 return YAPP_RET_ERROR;
             }
             break;
@@ -361,7 +373,14 @@ int YAPP_ReadMetadata(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
             if (iRet != YAPP_RET_SUCCESS)
             {
                 (void) fprintf(stderr,
-                               "ERROR: Reading PRESTO file header failed!\n");
+                               "ERROR: Reading PRESTO metadata failed!\n");
+                return YAPP_RET_ERROR;
+            }
+            iRet = YAPP_CalcStats(pcFileSpec, iFormat, pstYUM);
+            if (iRet != YAPP_RET_SUCCESS)
+            {
+                (void) fprintf(stderr,
+                               "ERROR: Calculating statistics failed!\n");
                 return YAPP_RET_ERROR;
             }
             break;
@@ -885,7 +904,7 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
 
     assert((YAPP_FORMAT_FIL == iFormat) || (YAPP_FORMAT_DTS_TIM == iFormat));
 
-    /* open the dynamic spectrum data file for reading */
+    /* open the data file for reading */
     g_pFData = fopen(pcFileSpec, "r");
     if (NULL == g_pFData)
     {
@@ -893,7 +912,6 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
                        "ERROR: Opening file %s failed! %s.\n",
                        pcFileSpec,
                        strerror(errno));
-        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
 
@@ -910,7 +928,6 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
         {
             (void) fprintf(stderr,
                            "ERROR: Reading header file failed!\n");
-            YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
         return YAPP_RET_SUCCESS;
@@ -921,7 +938,6 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
     {
         (void) fprintf(stderr,
                        "ERROR: Missing label %s!\n", YAPP_SP_LABEL_HDRSTART);
-        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
     pstYUM->iHeaderLen += (sizeof(iLen) + iLen);
@@ -1146,7 +1162,6 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
                 (void) fprintf(stderr,
                                "ERROR: Unexpected label %s found!",
                                acLabel);
-                YAPP_CleanUp();
                 return YAPP_RET_ERROR;
             }
 
@@ -1161,7 +1176,6 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
                                "ERROR: Memory allocation for frequency "
                                " channel array failed! %s!\n",
                                strerror(errno));
-                YAPP_CleanUp();
                 return YAPP_RET_ERROR;
             }
 
@@ -1190,7 +1204,6 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
                         (void) fprintf(stderr,
                                        "WARNING: Unknown field label %s "
                                        "encountered!\n", acLabel);
-                        YAPP_CleanUp();
                         return YAPP_RET_ERROR;
                     }
                 }
@@ -1879,8 +1892,15 @@ int YAPP_ReadData(FILE *pFData,
 {
     static char cIsFirst = YAPP_TRUE;
     static char *pcBuf = NULL;
-    int iReadItems = 0;
+    int iReadItems;
     int i = 0;
+
+    /* kludgy way to reset the static variable cIsFirst */
+    if (NULL == pFData)
+    {
+        cIsFirst = YAPP_TRUE;
+        return YAPP_RET_SUCCESS;
+    }
 
     if (cIsFirst)
     {
@@ -1908,7 +1928,6 @@ int YAPP_ReadData(FILE *pFData,
     if (ferror(pFData))
     {
         (void) fprintf(stderr, "ERROR: File read failed!\n");
-        free(pcBuf);
         return YAPP_RET_ERROR;
     }
     iReadItems = (int) ((float) iReadItems / fSampSize);
@@ -2393,6 +2412,149 @@ void YAPP_GetIntFrac(float fNum, int *piInt, float *pfFrac)
 
     return; 
 } 
+
+
+/*
+ * Calculate statistics
+ */
+int YAPP_CalcStats(char *pcFileData,
+                   int iFormat,
+                   YUM_t *pstYUM)
+{
+    int iTotSampsPerBlock = 0;  /* iBlockSize */
+    int iBlockSize = DEF_SIZE_BLOCK;
+    int iNumReads = 0;
+    int iReadBlockCount = 0;
+    int iReadItems = 0;
+    int iNumSamps = 0;
+    int iDiff = 0;
+    int i = 0;
+    float fMean = 0.0;
+    float fRMS = 0.0;
+
+    /* only support .tim and .dat files for now */
+    assert((YAPP_FORMAT_DTS_TIM == iFormat)
+           || (YAPP_FORMAT_DTS_DAT == iFormat));
+    /* make sure the metadata has been read, as we need to skip the header */
+    if (YAPP_FORMAT_DTS_TIM == iFormat)
+    {
+        assert(pstYUM->iHeaderLen != 0);
+    }
+
+    /* open the data file for reading */
+    g_pFData = fopen(pcFileData, "r");
+    if (NULL == g_pFData)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Opening file %s failed! %s.\n",
+                       pcFileData,
+                       strerror(errno));
+        return YAPP_RET_ERROR;
+    }
+
+    iNumReads = (int) ceilf(((float) pstYUM->iTimeSamps) / iBlockSize);
+
+    /* optimisation - store some commonly used values in variables */
+    /* NOTE: will be iBlockSize * iNumChans once filterbank is supported */
+    iTotSampsPerBlock = iBlockSize;
+
+    /* allocate memory for the buffer, based on the number of channels and time
+       samples */
+    g_pfBuf = (float *) YAPP_Malloc((size_t) iBlockSize,
+                                    sizeof(float),
+                                    YAPP_FALSE);
+    if (NULL == g_pfBuf)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Memory allocation failed! %s!\n",
+                       strerror(errno));
+        /* close the file, it may be opened later for reading data */
+        (void) fclose(g_pFData);
+        /* set the stream pointer to NULL so that YAPP_CleanUp does not try to
+           close it */
+        g_pFData = NULL;
+        return YAPP_RET_ERROR;
+    }
+
+    (void) fseek(g_pFData, (long) pstYUM->iHeaderLen, SEEK_SET);
+
+    /* set minimum and maximum values */
+    pstYUM->fMin = FLT_MAX;
+    pstYUM->fMax = -(FLT_MAX);
+
+    while (iNumReads > 0)
+    {
+        /* read data */
+        iReadItems = YAPP_ReadData(g_pFData,
+                                   g_pfBuf,
+                                   pstYUM->fSampSize,
+                                   iTotSampsPerBlock);
+        if (YAPP_RET_ERROR == iReadItems)
+        {
+            (void) fprintf(stderr, "ERROR: Reading data failed!\n");
+            /* close the file, it may be opened later for reading data */
+            (void) fclose(g_pFData);
+            /* set the stream pointer to NULL so that YAPP_CleanUp does not try to
+               close it */
+            g_pFData = NULL;
+            return YAPP_RET_ERROR;
+        }
+        --iNumReads;
+        ++iReadBlockCount;
+
+        if (iReadItems < iTotSampsPerBlock)
+        {
+            iDiff = iBlockSize - iReadItems;
+
+            /* reset remaining elements to '\0' */
+            (void) memset((g_pfBuf + iReadItems),
+                          '\0',
+                          (sizeof(float) * iDiff));
+        }
+
+        /* calculate the number of time samples in the block - this may not
+           be iBlockSize for the last block, and should be iBlockSize for
+           all other blocks */
+        iNumSamps = iReadItems;
+
+        /* calculate statistics */
+        fMean = YAPP_CalcMean(g_pfBuf, iNumSamps, 0, 1);
+        pstYUM->fMean += fMean;
+        fRMS = YAPP_CalcRMS(g_pfBuf, iNumSamps, 0, 1, fMean);
+        fRMS *= fRMS;
+        fRMS *= (iNumSamps - 1);
+        pstYUM->fRMS += fRMS;
+        for (i = 0; i < iNumSamps; ++i)
+        {
+            if (g_pfBuf[i] < pstYUM->fMin)
+            {
+                pstYUM->fMin = g_pfBuf[i];
+            }
+            if (g_pfBuf[i] > pstYUM->fMax)
+            {
+                pstYUM->fMax = g_pfBuf[i];
+            }
+        }
+    }
+
+    /* print statistics */
+    pstYUM->fMean /= iReadBlockCount;
+    pstYUM->fRMS /= (pstYUM->iTimeSamps - 1);
+    pstYUM->fRMS = sqrtf(pstYUM->fRMS);
+
+    /* kludgy reset of static variable cIsFirst in YAPP_ReadData() */
+    /* NOTE: this could be done at the beginning of any read loop, but is done
+             here to obviate adding code to all files containing read loops */
+    (void) YAPP_ReadData(NULL, NULL, 0.0, 0);
+
+    /* close the file, it may be opened later for reading data */
+    (void) fclose(g_pFData);
+    /* set the stream pointer to NULL so that YAPP_CleanUp does not try to
+       close it */
+    g_pFData = NULL;
+
+    return YAPP_RET_SUCCESS;
+}
 
 
 /*
