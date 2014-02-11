@@ -5,7 +5,7 @@
 .\# Created by Jayanth Chennamangalam on 2011.03.20
 .\#
 
-.TH YAPP_VIEWDATA 1 "2013-07-06" "YAPP 3.4-beta" \
+.TH YAPP_VIEWDATA 1 "2014-02-11" "YAPP 3.4-beta" \
 "Yet Another Pulsar Processor"
 
 
@@ -32,6 +32,10 @@ a .fhd configuration file is present in the same directory)
 .br
 4. PRESTO .dat time series format
 
+For time series data, plots are scaled by the absolute minimum and maximum
+values in the data. If the baseline is non-flat, the --no-abs-scale option may
+need to be given for proper viewing (see below).
+
 
 .SH OPTIONS
 .TP
@@ -49,6 +53,9 @@ Number of time samples read in one block (default is 4096 samples).
 .TP
 .B \-c, --clip-level \fIlevel
 Number of sigmas above threshold; will clip anything above this level.
+.TP
+.B \-a, --no-abs-scale
+Use relative scale for plotting per block.
 .TP
 .B \-t, --period \fIperiod
 Period of the pulsar in ms.
