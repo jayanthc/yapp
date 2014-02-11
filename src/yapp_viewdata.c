@@ -1008,9 +1008,9 @@ void PrintUsage(const char *pcProgName)
     (void) printf("    -t  --period <period>               ");
     (void) printf("Period of the pulsar in ms\n");
     (void) printf("    -r  --phase <phase>                 ");
-    (void) printf("Phase of the first pulse with respect to");
+    (void) printf("Phase of the first pulse with respect\n");
     (void) printf("                                        ");
-    (void) printf("the first sample\n");
+    (void) printf("to the first sample\n");
     (void) printf("    -m  --colour-map <name>             ");
     (void) printf("Colour map for plotting\n");
     (void) printf("                                        ");
