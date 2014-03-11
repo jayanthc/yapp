@@ -114,8 +114,19 @@ int main(int argc, char *argv[])
     iRet = YAPP_ReadMetadata(pcFileData, iFormat, &stYUM);
     if (iRet != EXIT_SUCCESS)
     {
-        fprintf(stderr,
-                "ERROR: Reading metadata failed!\n");
+        (void) fprintf(stderr,
+                       "ERROR: Reading metadata failed!\n");
+        return EXIT_FAILURE;
+    }
+    /* current support only for single-precision floating point values */
+    if (stYUM.iNumBits != YAPP_SAMPSIZE_32)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Unsupported data type! %s only supports "
+                       "single-precision floating point, while input data is "
+                       "%d bits.\n",
+                       pcProgName,
+                       stYUM.iNumBits);
         return EXIT_FAILURE;
     }
 
