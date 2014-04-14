@@ -2213,7 +2213,7 @@ int YAPP_WriteMetadata(char *pcFileData, int iFormat, YUM_t stYUM)
 
         /* write reference DM */
         /* TODO: consider file format for dedispersed filterbank files */
-        if (YAPP_FORMAT_TIM == iFormat)
+        if (YAPP_FORMAT_DTS_TIM == iFormat)
         {
             iLen = strlen(YAPP_SP_LABEL_DM);
             (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
