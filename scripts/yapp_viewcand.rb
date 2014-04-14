@@ -93,7 +93,15 @@ opts.each do |opt, arg|
 end
 
 # user input validation
-if 0.0 == stepDM or 0.0 == stopDM or nil == prefix
+if startDM != stopDM
+  if 0.0 == stepDM or 0.0 == stopDM
+    STDERR.puts "ERROR: Missing user input!"
+    printUsage($PROGRAM_NAME)
+    exit
+  end
+end
+
+if nil == prefix
   STDERR.puts "ERROR: Missing user input!"
   printUsage($PROGRAM_NAME)
   exit

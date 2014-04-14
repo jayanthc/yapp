@@ -359,12 +359,15 @@ int YAPP_ReadMetadata(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
                                "Reading SIGPROC header failed!\n");
                 return YAPP_RET_ERROR;
             }
-            iRet = YAPP_CalcStats(pcFileSpec, iFormat, pstYUM);
-            if (iRet != YAPP_RET_SUCCESS)
+            if (YAPP_FORMAT_DTS_TIM == iFormat)
             {
-                (void) fprintf(stderr,
-                               "ERROR: Calculating statistics failed!\n");
-                return YAPP_RET_ERROR;
+                iRet = YAPP_CalcStats(pcFileSpec, iFormat, pstYUM);
+                if (iRet != YAPP_RET_SUCCESS)
+                {
+                    (void) fprintf(stderr,
+                                   "ERROR: Calculating statistics failed!\n");
+                    return YAPP_RET_ERROR;
+                }
             }
             break;
 
@@ -2209,11 +2212,15 @@ int YAPP_WriteMetadata(char *pcFileData, int iFormat, YUM_t stYUM)
                       pFData);
 
         /* write reference DM */
-        iLen = strlen(YAPP_SP_LABEL_DM);
-        (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
-        (void) strcpy(acLabel, YAPP_SP_LABEL_DM);
-        (void) fwrite(acLabel, sizeof(char), iLen, pFData);
-        (void) fwrite(&stYUM.dDM, sizeof(stYUM.dDM), 1, pFData);
+        /* TODO: consider file format for dedispersed filterbank files */
+        if (YAPP_FORMAT_TIM == iFormat)
+        {
+            iLen = strlen(YAPP_SP_LABEL_DM);
+            (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
+            (void) strcpy(acLabel, YAPP_SP_LABEL_DM);
+            (void) fwrite(acLabel, sizeof(char), iLen, pFData);
+            (void) fwrite(&stYUM.dDM, sizeof(stYUM.dDM), 1, pFData);
+        }
 
         /* write barycentric flag */
         iLen = strlen(YAPP_SP_LABEL_FLAGBARY);
