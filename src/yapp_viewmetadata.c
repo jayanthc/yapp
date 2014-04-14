@@ -209,7 +209,8 @@ int main(int argc, char *argv[])
         (void) printf("    Time                          : %g s\n",
                       (stYUM.iTimeSamps * (stYUM.dTSamp / 1e3)));
         /* print statistics */
-        if ((YAPP_FORMAT_TIM == iFormat) || (YAPP_FORMAT_DAT == iFormat))
+        if ((YAPP_FORMAT_DTS_TIM == iFormat)
+            || (YAPP_FORMAT_DTS_DAT == iFormat))
         {
             (void) printf("Minimum value                     : %g\n",
                           stYUM.fMin);

@@ -1996,7 +1996,7 @@ int YAPP_WriteMetadata(char *pcFileData, int iFormat, YUM_t stYUM)
                       pFData);
 
         /* write reference DM */
-        if (YAPP_FORMAT_TIM == iFormat)
+        if (YAPP_FORMAT_DTS_TIM == iFormat)
         {
             iLen = strlen(YAPP_SP_LABEL_DM);
             (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
