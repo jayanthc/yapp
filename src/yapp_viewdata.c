@@ -831,7 +831,7 @@ int main(int argc, char *argv[])
                     g_pfXAxis[iBlockSize-1],
                     fDataMin,
                     fDataMax);
-            cpglab("Time - Start Time (s)", "", "Time Series");
+            cpglab("Time - Start Time (s)", "Power (arbitrary units)", "Time Series");
             cpgbox("BCNST", 0.0, 0, "BCNST", 0.0, 0);
             cpgsci(PG_CI_PLOT);
             cpgline(iBlockSize, g_pfXAxis, g_pfBuf);
