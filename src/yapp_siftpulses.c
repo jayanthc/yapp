@@ -180,7 +180,8 @@ int main(int argc, char *argv[])
             YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
-        if (iFormat != YAPP_FORMAT_DTS_TIM)
+        if ((iFormat != YAPP_FORMAT_DTS_TIM)
+            && (iFormat != YAPP_FORMAT_DTS_DAT))
         {
             (void) fprintf(stderr,
                            "ERROR: Invalid file type!\n");
@@ -190,9 +191,10 @@ int main(int argc, char *argv[])
     }
 
     /* read metadata */
-    /* NOTE: it is assumed that all files correspond to a single observation.
-             the only information taken from all files except the last one is
-             the DM. general metadata is read from the last file */
+    /* NOTE: it is assumed that all files correspond to a single observation,
+             and that sampling time is the same for all files. the only
+             information taken from all files except the last one is the DM.
+             general metadata is read from the last file */
     /* allocate memory for the DM array */
     pfDM = (float *) YAPP_Malloc((size_t) iNumDMs,
                                  sizeof(float),
@@ -255,8 +257,11 @@ int main(int argc, char *argv[])
             return YAPP_RET_ERROR;
         }
 
-        /* skip the header */
-        (void) fseek(ppFIn[i-optind], (long) stYUM.iHeaderLen, SEEK_SET);
+        if (YAPP_FORMAT_DTS_TIM == iFormat)
+        {
+            /* skip the header */
+            (void) fseek(ppFIn[i-optind], (long) stYUM.iHeaderLen, SEEK_SET);
+        }
     }
 
     /* sort the input files and DM array in descending DM order */
@@ -309,7 +314,8 @@ int main(int argc, char *argv[])
 
     /* allocate memory for single pulses */
     /* compute number of events due to noise alone */
-    iNumRandEvents = iNumDMs * stYUM.iTimeSamps * sqrt(M_PI) * erfc(fThreshold);
+    iNumRandEvents = iNumDMs * stYUM.iTimeSamps * sqrt(M_PI)
+                     * erfc(fThreshold);
 
     if (1 == iNumReads)
     {

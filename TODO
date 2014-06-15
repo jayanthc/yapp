@@ -2,6 +2,7 @@ TODO
 ----
 
 
+0. Inconsistencies in number of channels for .tim/.dat files - 1 or Nchan?
 1. Program to merge multiple .fil files
 2. RFI mask generator - manual/automatic?
 3. Program to remove running mean/baseline - manual polynomial fitting?

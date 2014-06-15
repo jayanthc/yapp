@@ -118,6 +118,8 @@ all: yapp_makever \
 	 yapp_stacktim \
 	 yapp_stackfil.o \
 	 yapp_stackfil \
+	 yapp_split.o \
+	 yapp_split \
 	 tags
 #	 yapp_makeaudio.o \
 	 yapp_makeaudio \
@@ -259,6 +261,13 @@ yapp_stackfil: $(IDIR)/yapp_stackfil.o $(IDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o $(IDIR)/colourmap.o
 	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) $(LFLAGS_CFITSIO) -o $(BINDIR)/$@
 
+yapp_split.o: $(SRCDIR)/yapp_split.c $(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h
+	$(CC) $(CFLAGS_C) $(DDEBUG) $< -o $(IDIR)/$@
+
+yapp_split: $(IDIR)/yapp_split.o $(IDIR)/yapp_version.o \
+	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o $(IDIR)/colourmap.o
+	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) $(LFLAGS_CFITSIO) -o $(BINDIR)/$@
+
 yapp_makeaudio.o: $(SRCDIR)/yapp_makeaudio.c $(SRCDIR)/yapp.h
 	$(CC) $(CFLAGS_C) $(SRCDIR)/yapp_makeaudio.c -o $(IDIR)/$@
 
@@ -336,6 +345,7 @@ clean:
 	$(DELCMD) $(IDIR)/yapp_siftpulses.o
 	$(DELCMD) $(IDIR)/yapp_stacktim.o
 	$(DELCMD) $(IDIR)/yapp_stackfil.o
+	$(DELCMD) $(IDIR)/yapp_split.o
 	$(DELCMD) $(IDIR)/yapp_makeaudio.o
 #	$(DELCMD) $(IDIR)/set_colours.o
 #	$(DELCMD) $(IDIR)/yapp_dedisplaw.o
