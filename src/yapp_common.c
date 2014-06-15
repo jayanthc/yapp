@@ -1621,6 +1621,8 @@ int YAPP_ReadPRESTOHeaderFile(char *pcFileData, YUM_t *pstYUM)
         else if (0 == strncmp(pcLine, YAPP_PR_LABEL_NCHANS, YAPP_PR_LEN_LABEL))
         {
             (void) sscanf(pcVal, "=  %d", &pstYUM->iNumChans);
+            /* set number of good channels to number of channels */
+            pstYUM->iNumGoodChans = pstYUM->iNumChans;
         }
         else if (0 == strncmp(pcLine, YAPP_PR_LABEL_CHANBW, YAPP_PR_LEN_LABEL))
         {

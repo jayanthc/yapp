@@ -94,7 +94,9 @@ all: yapp_makever \
 	 yapp_siftpulses.o \
 	 yapp_siftpulses \
 	 yapp_stacktim.o \
-	 yapp_stacktim
+	 yapp_stacktim \
+	 yapp_split.o \
+	 yapp_split \
 
 yapp_makever: $(SRCDIR)/yapp_makever.c
 	$(CC) $(CFLAGS_L) $< -o $(IDIR)/$@
@@ -221,6 +223,13 @@ yapp_stacktim: $(IDIR)/yapp_stacktim.o $(IDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o $(IDIR)/colourmap.o
 	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) $(LFLAGS_CFITSIO) -o $(BINDIR)/$@
 
+yapp_split.o: $(SRCDIR)/yapp_split.c $(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h
+	$(CC) $(CFLAGS_C) $(DDEBUG) $< -o $(IDIR)/$@
+
+yapp_split: $(IDIR)/yapp_split.o $(IDIR)/yapp_version.o \
+	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o $(IDIR)/colourmap.o
+	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) $(LFLAGS_CFITSIO) -o $(BINDIR)/$@
+
 # install the man pages
 install:
 	@echo Copying binaries...
@@ -250,4 +259,5 @@ clean:
 	$(DELCMD) $(IDIR)/yapp_subtract.o
 	$(DELCMD) $(IDIR)/yapp_siftpulses.o
 	$(DELCMD) $(IDIR)/yapp_stacktim.o
+	$(DELCMD) $(IDIR)/yapp_split.o
 
