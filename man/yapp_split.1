@@ -1,0 +1,70 @@
+.\#
+.\# Yet Another Pulsar Processor Commands
+.\# yapp_split Manual Page
+.\#
+.\# Created by Jayanth Chennamangalam on 2014.06.14
+.\#
+
+.TH YAPP_SPLIT 1 "2014-06-14" "YAPP 3.4-beta" \
+"Yet Another Pulsar Processor"
+
+
+.SH NAME
+yapp_split \- split dedispersed time series data into smaller time sections
+
+
+.SH SYNOPSIS
+.B yapp_split
+[options]
+.I data-file
+
+
+.SH DESCRIPTION
+Splits dedispersed time series data into smaller time sections, based on the \
+requested time. The time duration will be rounded up so that there are a \
+power-of-2 number of samples in the data file, so that it will work with the \
+PRESTO birdie-removal scheme. The last file may have some data overlap with \
+the last-but-one file, so that the last file is also of the same length as \
+the others. The data file should be in the SIGPROC .tim or PRESTO .dat format.
+
+
+.SH OPTIONS
+.TP
+.B \-h, --help
+Display a short help text.
+.TP
+.B \-t, --time \fItime
+Requested time duration of each time section (default is 30 min.).
+.TP
+.B \-v, --version
+Display the version.
+
+
+.SH EXAMPLE
+.TP
+Splits the data in data.dat with a requested time duration of 20 minutes. The \
+output is written to the set of files with names of the form data.splitX.dat, \
+where X is in [0, N-1], where N is the total number of time sections.
+.TP
+yapp_split -t 20 data.dat
+
+
+.SH SEE ALSO
+.BR yapp_dat2tim (1),
+.BR yapp_tim2dat (1),
+.BR yapp_viewmetadata (1),
+.BR yapp_viewdata (1),
+.BR yapp_dedisperse (1),
+.BR yapp_smooth(1),
+.BR yapp_filter (1),
+.BR yapp_add (1),
+.BR yapp_fold (1),
+.BR yapp_subtract (1),
+.BR yapp_stacktim (1),
+.BR yapp_siftpulses (1)
+
+
+.SH AUTHOR
+.TP 
+Written by Jayanth Chennamangalam. http://jayanthc.github.com/yapp/
+
