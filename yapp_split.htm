@@ -10,7 +10,7 @@
     <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Yanone+Kaffeesatz" />
     <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Titillium+Web" />
     <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Ubuntu+Mono" />
-    <title>Yet Another Pulsar Processor | About</title>
+    <title>Yet Another Pulsar Processor | yapp_split</title>
 
 <!-- Google Analytics begin -->
 <script type="text/javascript">
@@ -41,29 +41,36 @@
       </ul>
     </nav>
     <header>
-    about
+    yapp_split
     </header>
     <article>
       <section>
-        <p>Yet Another Pulsar Processor (YAPP) is a radio pulsar data analysis
-           software suite. The tools in this software suite include those for
-           viewing data and associated metadata, converting
-           baseband data to filterbank format, dedispersion, smoothing,
-           filtering, coherent addition of multiple time series, folding,
-           subtraction of time series, single-pulse-sifting, stacking
-           sub-band dedispersed time series to form filterbank format data,
-           and splitting a time series into smaller time sections, along with
-           scripts for calibrating and displaying folded profiles and
-           computing spectral indices, and a few format-conversion utilities.
-           </p>
-        <p>YAPP is very much in development, and the number of features it
-           currently supports is limited. It is mainly intended to be used in
-           conjunction with other pulsar data processing software such as
-           <a href="http://sigproc.sourceforge.net/">SIGPROC</a> or
-           <a href="http://www.cv.nrao.edu/~sransom/presto/">PRESTO</a>, among
-           others.</p>
-        <p>&nbsp;</p>
-        <p>&nbsp;</p>
+        <p>Splits dedispersed time series data into smaller time sections,
+           based on the requested time. The time duration will be rounded up so
+           that there are a power-of-2 number of samples in the data file, so
+           that it will work with the PRESTO birdie-removal scheme. The last
+           file may have some data overlap with the last-but-one file, so that
+           the last file is also of the same length as the others. The data
+           file should be in the SIGPROC <code>.tim</code> or PRESTO
+           <code>.dat</code> format.
+        <p>Usage:</p> 
+        <code>yapp_split [options] <i>data-file</i></code>
+        <ul>
+          <li><code>-h</code> or <code>--help</code>: Display this usage
+              information.</li>
+          <li><code>-t</code> or <code>--time <i>time</i></code>:
+              Requested time duration of each time section (default is 30 min.).</li>
+          <li><code>-v</code> or <code>--version</code>: Display the version.</li>
+       </ul>
+       <p>Example:</p>
+       <p>Splits the data in <code>data.dat</code> with a requested time
+          duration of 20 minutes. The output is written to the set of files
+          with names of the form <code>data.splitX.dat</code>, where
+          <code>X</code> is in [0, <code>N</code>-1], where <code>N</code> is
+          the total number of time sections.</p>
+       <code>yapp_split -t 20 data.dat</code>
+       <p>&nbsp;</p>
+       <p>&nbsp;</p>
       </section>
     </article>
     <footer>
