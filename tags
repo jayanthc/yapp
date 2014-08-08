@@ -6,59 +6,66 @@
 !_TAG_PROGRAM_VERSION	5.9~svn20110310	//
 BADTIME_BEG	src/yapp.h	126;"	d
 BADTIME_END	src/yapp.h	128;"	d
-BUF_0	src/yapp.h	164;"	d
-BUF_1	src/yapp.h	165;"	d
+BUF_0	src/yapp.h	165;"	d
+BUF_1	src/yapp.h	166;"	d
 CHANNEL_COUNT	src/yapp_makeaudio.c	25;"	d	file:
 CMAP_AUTUMN	src/colourmap.h	/^    CMAP_AUTUMN = 0,$/;"	e	enum:CMap_e
 CMAP_BLUE	src/colourmap.h	/^    CMAP_BLUE,$/;"	e	enum:CMap_e
 CMAP_BONE	src/colourmap.h	/^    CMAP_BONE,$/;"	e	enum:CMap_e
+CMAP_BURD	src/colourmap.h	/^    CMAP_BURD,$/;"	e	enum:CMap_e
 CMAP_COOL	src/colourmap.h	/^    CMAP_COOL,$/;"	e	enum:CMap_e
 CMAP_COPPER	src/colourmap.h	/^    CMAP_COPPER,$/;"	e	enum:CMap_e
 CMAP_GRAY	src/colourmap.h	/^    CMAP_GRAY,$/;"	e	enum:CMap_e
 CMAP_GRAY_INV	src/colourmap.h	/^    CMAP_GRAY_INV,$/;"	e	enum:CMap_e
 CMAP_HOT	src/colourmap.h	/^    CMAP_HOT,$/;"	e	enum:CMap_e
+CMAP_HOT_INV	src/colourmap.h	/^    CMAP_HOT_INV,$/;"	e	enum:CMap_e
 CMAP_JET	src/colourmap.h	/^    CMAP_JET,$/;"	e	enum:CMap_e
 CMAP_LEVELS	src/colourmap.h	36;"	d
 CMAP_PINK	src/colourmap.h	/^    CMAP_PINK,$/;"	e	enum:CMap_e
+CMAP_RDBU	src/colourmap.h	/^    CMAP_RDBU,$/;"	e	enum:CMap_e
 CMAP_SPRING	src/colourmap.h	/^    CMAP_SPRING,$/;"	e	enum:CMap_e
-CMAP_STR_AUTUMN	src/colourmap.h	56;"	d
-CMAP_STR_BLUE	src/colourmap.h	57;"	d
-CMAP_STR_BONE	src/colourmap.h	58;"	d
-CMAP_STR_COOL	src/colourmap.h	59;"	d
-CMAP_STR_COPPER	src/colourmap.h	60;"	d
-CMAP_STR_GRAY	src/colourmap.h	61;"	d
-CMAP_STR_GRAY_INV	src/colourmap.h	62;"	d
-CMAP_STR_HOT	src/colourmap.h	63;"	d
-CMAP_STR_JET	src/colourmap.h	64;"	d
-CMAP_STR_PINK	src/colourmap.h	65;"	d
-CMAP_STR_SPRING	src/colourmap.h	66;"	d
-CMAP_STR_SUMMER	src/colourmap.h	67;"	d
-CMAP_STR_WINTER	src/colourmap.h	68;"	d
+CMAP_STR_AUTUMN	src/colourmap.h	59;"	d
+CMAP_STR_BLUE	src/colourmap.h	60;"	d
+CMAP_STR_BONE	src/colourmap.h	61;"	d
+CMAP_STR_BURD	src/colourmap.h	74;"	d
+CMAP_STR_COOL	src/colourmap.h	62;"	d
+CMAP_STR_COPPER	src/colourmap.h	63;"	d
+CMAP_STR_GRAY	src/colourmap.h	64;"	d
+CMAP_STR_GRAY_INV	src/colourmap.h	65;"	d
+CMAP_STR_HOT	src/colourmap.h	66;"	d
+CMAP_STR_HOT_INV	src/colourmap.h	67;"	d
+CMAP_STR_JET	src/colourmap.h	68;"	d
+CMAP_STR_PINK	src/colourmap.h	69;"	d
+CMAP_STR_RDBU	src/colourmap.h	73;"	d
+CMAP_STR_SPRING	src/colourmap.h	70;"	d
+CMAP_STR_SUMMER	src/colourmap.h	71;"	d
+CMAP_STR_WINTER	src/colourmap.h	72;"	d
 CMAP_SUMMER	src/colourmap.h	/^    CMAP_SUMMER,$/;"	e	enum:CMap_e
-CMAP_WINTER	src/colourmap.h	/^    CMAP_WINTER$/;"	e	enum:CMap_e
+CMAP_WINTER	src/colourmap.h	/^    CMAP_WINTER,$/;"	e	enum:CMap_e
 CMap_e	src/colourmap.h	/^typedef enum CMap_e$/;"	g
 CMap_t	src/colourmap.h	/^} CMap_t;$/;"	t	typeref:enum:CMap_e
 CalcOffset	src/yapp_add.c	/^int CalcOffset(float fFMax, float fFMin, double dTSamp, double dDM)$/;"	f
 CleanUp	src/yapp_ft.c	/^void CleanUp(int iNTaps)$/;"	f
 CopyDataForFFT	src/yapp_ft.c	/^int CopyDataForFFT(int iNFFT)$/;"	f
 DEF_ACC	src/yapp_ft.h	24;"	d
-DEF_CMAP	src/colourmap.h	70;"	d
-DEF_CMAP_STR	src/colourmap.h	71;"	d
+DEF_CMAP	src/colourmap.h	76;"	d
+DEF_CMAP_STR	src/colourmap.h	77;"	d
 DEF_FOLD_PULSES	src/yapp.h	157;"	d
 DEF_FORMAT	src/yapp.h	150;"	d
 DEF_LAW	src/yapp.h	149;"	d
-DEF_LAW_MAX	src/yapp.h	274;"	d
-DEF_LAW_MIN	src/yapp.h	273;"	d
-DEF_LAW_STEP	src/yapp.h	271;"	d
+DEF_LAW_MAX	src/yapp.h	275;"	d
+DEF_LAW_MIN	src/yapp.h	274;"	d
+DEF_LAW_STEP	src/yapp.h	272;"	d
 DEF_NFFT	src/yapp_ft.h	19;"	d
 DEF_NUM_SUBBANDS	src/yapp_ft.h	31;"	d
 DEF_OUT_FORMAT	src/yapp.h	151;"	d
-DEF_PROC_SPEC	src/yapp.h	266;"	d
+DEF_PROC_SPEC	src/yapp.h	267;"	d
 DEF_SIZE_BLOCK	src/yapp.h	152;"	d
 DEF_SIZE_READ	src/yapp_ft.h	21;"	d
+DEF_THRESHOLD	src/yapp.h	158;"	d
 DEF_WINDOWS	src/yapp.h	154;"	d
 DEF_WINDOWS_MEDFILTER	src/yapp.h	155;"	d
-DM_TOL_PERCENT	src/yapp.h	247;"	d
+DM_TOL_PERCENT	src/yapp.h	248;"	d
 DoFFT	src/yapp_ft.c	/^int DoFFT()$/;"	f
 DoPFB	src/yapp_ft.c	/^int DoPFB(int iNTaps, int iNFFT)$/;"	f
 EXT_DAT	src/yapp.h	77;"	d
@@ -100,7 +107,7 @@ MAX_SIZE_BLOCK	src/yapp.h	133;"	d
 MAX_SIZE_BLOCK_FOLD	src/yapp.h	135;"	d
 MAX_SIZE_BLOCK_MEDFILTER	src/yapp.h	137;"	d
 MAX_SNR_BINS	src/yapp.h	139;"	d
-MIN_THRES_IN_SIGMA	src/yapp.h	249;"	d
+MIN_THRES_IN_SIGMA	src/yapp.h	250;"	d
 NUM_BAD_BOUNDS	src/yapp.h	124;"	d
 NUM_BYTES_PER_SAMP	src/yapp_ft.h	17;"	d
 NUM_CMAPS	src/colourmap.h	37;"	d
@@ -111,61 +118,61 @@ PG_2D_VP_MB	src/colourmap.h	24;"	d
 PG_2D_VP_ML	src/colourmap.h	22;"	d
 PG_2D_VP_MR	src/colourmap.h	23;"	d
 PG_2D_VP_MT	src/colourmap.h	25;"	d
-PG_BUTEXIT_B	src/yapp.h	225;"	d
-PG_BUTEXIT_CL_TEXT_B	src/yapp.h	230;"	d
-PG_BUTEXIT_CL_TEXT_L	src/yapp.h	229;"	d
-PG_BUTEXIT_L	src/yapp.h	223;"	d
-PG_BUTEXIT_R	src/yapp.h	224;"	d
-PG_BUTEXIT_T	src/yapp.h	226;"	d
-PG_BUTEXIT_TEXT_B	src/yapp.h	228;"	d
-PG_BUTEXIT_TEXT_L	src/yapp.h	227;"	d
-PG_BUTNEXT_B	src/yapp.h	216;"	d
-PG_BUTNEXT_CL_TEXT_B	src/yapp.h	221;"	d
-PG_BUTNEXT_CL_TEXT_L	src/yapp.h	220;"	d
-PG_BUTNEXT_L	src/yapp.h	214;"	d
-PG_BUTNEXT_R	src/yapp.h	215;"	d
-PG_BUTNEXT_T	src/yapp.h	217;"	d
-PG_BUTNEXT_TEXT_B	src/yapp.h	219;"	d
-PG_BUTNEXT_TEXT_L	src/yapp.h	218;"	d
-PG_BUT_B	src/yapp.h	211;"	d
-PG_BUT_CL_SLEEP	src/yapp.h	233;"	d
-PG_BUT_FILLCOL	src/yapp.h	232;"	d
-PG_BUT_L	src/yapp.h	209;"	d
-PG_BUT_R	src/yapp.h	210;"	d
-PG_BUT_T	src/yapp.h	212;"	d
-PG_CH	src/yapp.h	195;"	d
-PG_CH_2P	src/yapp.h	196;"	d
-PG_CH_3P	src/yapp.h	197;"	d
-PG_CH_SCALEFACTOR	src/yapp.h	199;"	d
-PG_CI_DEF	src/yapp.h	237;"	d
-PG_CI_PLOT	src/yapp.h	238;"	d
-PG_DEV	src/yapp.h	172;"	d
-PG_DEV_PS	src/yapp.h	173;"	d
-PG_PLOT_SLEEP	src/yapp.h	235;"	d
-PG_TICK_STEPS_X	src/yapp.h	201;"	d
-PG_TICK_STEPS_Y	src/yapp.h	202;"	d
-PG_VP_BUT_MB	src/yapp.h	206;"	d
-PG_VP_BUT_ML	src/yapp.h	204;"	d
-PG_VP_BUT_MR	src/yapp.h	205;"	d
-PG_VP_BUT_MT	src/yapp.h	207;"	d
-PG_VP_MB	src/yapp.h	185;"	d
-PG_VP_ML	src/yapp.h	183;"	d
-PG_VP_MR	src/yapp.h	184;"	d
-PG_VP_MT	src/yapp.h	186;"	d
+PG_BUTEXIT_B	src/yapp.h	226;"	d
+PG_BUTEXIT_CL_TEXT_B	src/yapp.h	231;"	d
+PG_BUTEXIT_CL_TEXT_L	src/yapp.h	230;"	d
+PG_BUTEXIT_L	src/yapp.h	224;"	d
+PG_BUTEXIT_R	src/yapp.h	225;"	d
+PG_BUTEXIT_T	src/yapp.h	227;"	d
+PG_BUTEXIT_TEXT_B	src/yapp.h	229;"	d
+PG_BUTEXIT_TEXT_L	src/yapp.h	228;"	d
+PG_BUTNEXT_B	src/yapp.h	217;"	d
+PG_BUTNEXT_CL_TEXT_B	src/yapp.h	222;"	d
+PG_BUTNEXT_CL_TEXT_L	src/yapp.h	221;"	d
+PG_BUTNEXT_L	src/yapp.h	215;"	d
+PG_BUTNEXT_R	src/yapp.h	216;"	d
+PG_BUTNEXT_T	src/yapp.h	218;"	d
+PG_BUTNEXT_TEXT_B	src/yapp.h	220;"	d
+PG_BUTNEXT_TEXT_L	src/yapp.h	219;"	d
+PG_BUT_B	src/yapp.h	212;"	d
+PG_BUT_CL_SLEEP	src/yapp.h	234;"	d
+PG_BUT_FILLCOL	src/yapp.h	233;"	d
+PG_BUT_L	src/yapp.h	210;"	d
+PG_BUT_R	src/yapp.h	211;"	d
+PG_BUT_T	src/yapp.h	213;"	d
+PG_CH	src/yapp.h	196;"	d
+PG_CH_2P	src/yapp.h	197;"	d
+PG_CH_3P	src/yapp.h	198;"	d
+PG_CH_SCALEFACTOR	src/yapp.h	200;"	d
+PG_CI_DEF	src/yapp.h	238;"	d
+PG_CI_PLOT	src/yapp.h	239;"	d
+PG_DEV	src/yapp.h	173;"	d
+PG_DEV_PS	src/yapp.h	174;"	d
+PG_PLOT_SLEEP	src/yapp.h	236;"	d
+PG_TICK_STEPS_X	src/yapp.h	202;"	d
+PG_TICK_STEPS_Y	src/yapp.h	203;"	d
+PG_VP_BUT_MB	src/yapp.h	207;"	d
+PG_VP_BUT_ML	src/yapp.h	205;"	d
+PG_VP_BUT_MR	src/yapp.h	206;"	d
+PG_VP_BUT_MT	src/yapp.h	208;"	d
+PG_VP_MB	src/yapp.h	186;"	d
+PG_VP_ML	src/yapp.h	184;"	d
+PG_VP_MR	src/yapp.h	185;"	d
+PG_VP_MT	src/yapp.h	187;"	d
 PG_WEDG_VP_MB	src/colourmap.h	32;"	d
-PG_WEDG_VP_MB	src/yapp.h	192;"	d
+PG_WEDG_VP_MB	src/yapp.h	193;"	d
 PG_WEDG_VP_ML	src/colourmap.h	30;"	d
-PG_WEDG_VP_ML	src/yapp.h	190;"	d
+PG_WEDG_VP_ML	src/yapp.h	191;"	d
 PG_WEDG_VP_MR	src/colourmap.h	31;"	d
-PG_WEDG_VP_MR	src/yapp.h	191;"	d
+PG_WEDG_VP_MR	src/yapp.h	192;"	d
 PG_WEDG_VP_MT	src/colourmap.h	33;"	d
-PG_WEDG_VP_MT	src/yapp.h	193;"	d
-PLOT_DDS_SUFFIX	src/yapp.h	177;"	d
-PLOT_WATERFALL	src/yapp.h	240;"	d
-PLOT_WATERFALL_GS	src/yapp.h	241;"	d
-PROC_SPEC_NOTSEL	src/yapp.h	255;"	d
-PROC_SPEC_PERCENT	src/yapp.h	257;"	d
-PROC_SPEC_TIME	src/yapp.h	259;"	d
+PG_WEDG_VP_MT	src/yapp.h	194;"	d
+PLOT_DDS_SUFFIX	src/yapp.h	178;"	d
+PLOT_WATERFALL	src/yapp.h	241;"	d
+PLOT_WATERFALL_GS	src/yapp.h	242;"	d
+PROC_SPEC_NOTSEL	src/yapp.h	256;"	d
+PROC_SPEC_PERCENT	src/yapp.h	258;"	d
+PROC_SPEC_TIME	src/yapp.h	260;"	d
 Plot2D	src/colourmap.c	/^void Plot2D(float* pfBuf, float fDataMin, float fDataMax,$/;"	f
 PrintUsage	src/yapp_add.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	src/yapp_basesub.c	/^void PrintUsage(const char *pcProgName)$/;"	f
@@ -198,7 +205,7 @@ USEC2SEC	src/yapp_ft.h	33;"	d
 VAR_VER	src/yapp_makever.c	26;"	d	file:
 VER_BUILD_DELIM	src/yapp_makever.c	28;"	d	file:
 VER_BUILD_PREFIX	src/yapp_makever.c	27;"	d	file:
-WATERFALL_OFFSET_SCALE	src/yapp.h	242;"	d
+WATERFALL_OFFSET_SCALE	src/yapp.h	243;"	d
 YAPP_BYTE2BIT_FACTOR	src/yapp.h	103;"	d
 YAPP_CalcDelays	src/yapp_dedisperse.c	/^int YAPP_CalcDelays(double dDM,$/;"	f
 YAPP_CalcMean	src/yapp_common.c	/^float YAPP_CalcMean(float *pfBuf, int iLength, int iOffset, int iStride)$/;"	f
@@ -213,14 +220,14 @@ YAPP_CleanUp	src/yapp_dedisplaw.c	/^void YAPP_CleanUp()$/;"	f
 YAPP_Compare	src/yapp_common.c	/^int YAPP_Compare(float *pfA, float *pfB)$/;"	f
 YAPP_CopyData	utilities/yapp_dat2tim.c	/^int YAPP_CopyData(char *pcFileData, FILE *pFTim)$/;"	f
 YAPP_CopyData	utilities/yapp_tim2dat.c	/^int YAPP_CopyData(char *pcFileData, FILE *pFDat, int iOffset)$/;"	f
-YAPP_DEGPERHOUR	src/yapp.h	288;"	d
+YAPP_DEGPERHOUR	src/yapp.h	289;"	d
 YAPP_DecDouble2String	src/yapp_common.c	/^void YAPP_DecDouble2String(double dDec, char *pcDec)$/;"	f
 YAPP_DecString2Double	src/yapp_common.c	/^double YAPP_DecString2Double(char *pcDec)$/;"	f
-YAPP_ERF_ENTRIES	src/yapp.h	244;"	d
+YAPP_ERF_ENTRIES	src/yapp.h	245;"	d
 YAPP_FALSE	src/yapp.h	49;"	d
-YAPP_FILE_DELAYS_LIN	src/yapp.h	279;"	d
-YAPP_FILE_DELAYS_OTHER	src/yapp.h	280;"	d
-YAPP_FILE_DELAYS_QUAD	src/yapp.h	278;"	d
+YAPP_FILE_DELAYS_LIN	src/yapp.h	280;"	d
+YAPP_FILE_DELAYS_OTHER	src/yapp.h	281;"	d
+YAPP_FILE_DELAYS_QUAD	src/yapp.h	279;"	d
 YAPP_FORMATSTR_DTS_DAT	src/yapp.h	64;"	d
 YAPP_FORMATSTR_DTS_DAT_INF	src/yapp.h	65;"	d
 YAPP_FORMATSTR_DTS_DDS	src/yapp.h	62;"	d
@@ -241,8 +248,8 @@ YAPP_GetFilenameFromPath	src/yapp_common.c	/^char* YAPP_GetFilenameFromPath(char
 YAPP_GetFilenameWithExtFromPath	src/yapp_common.c	/^char* YAPP_GetFilenameWithExtFromPath(char *pcPath)$/;"	f
 YAPP_GetIntFrac	src/yapp_common.c	/^void YAPP_GetIntFrac(float fNum, int *piInt, float *pfFrac) $/;"	f
 YAPP_HandleStopSignals	src/yapp_common.c	/^void YAPP_HandleStopSignals(int iSigNo)$/;"	f
-YAPP_LIGHTSPEED	src/yapp.h	286;"	d
-YAPP_MAX_MEMTABLE	src/yapp.h	283;"	d
+YAPP_LIGHTSPEED	src/yapp.h	287;"	d
+YAPP_MAX_MEMTABLE	src/yapp.h	284;"	d
 YAPP_MAX_NPOL	utilities/yapp_fits2fil.h	12;"	d
 YAPP_MAX_NUM_BANDS	src/yapp.h	143;"	d
 YAPP_Malloc	src/yapp_common.c	/^void* YAPP_Malloc(size_t iNumItems, size_t iSize, int iZero)$/;"	f
@@ -297,7 +304,6 @@ YAPP_ReadMetadata	src/yapp_common.c	/^int YAPP_ReadMetadata(char *pcFileSpec, in
 YAPP_ReadPRESTOHeaderFile	src/yapp_common.c	/^int YAPP_ReadPRESTOHeaderFile(char *pcFileData, YUM_t *pstYUM)$/;"	f
 YAPP_ReadPSRFITSHeader	src/yapp_common.c	/^int YAPP_ReadPSRFITSHeader(char *pcFileSpec, YUM_t *pstYUM)$/;"	f
 YAPP_ReadSIGPROCHeader	src/yapp_common.c	/^int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)$/;"	f
-YAPP_ReadSIGPROCHeaderFile	src/yapp_common.c	/^int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM)$/;"	f
 YAPP_RegisterSignalHandlers	src/yapp_common.c	/^int YAPP_RegisterSignalHandlers()$/;"	f
 YAPP_SAMPSIZE_1	src/yapp.h	95;"	d
 YAPP_SAMPSIZE_16	src/yapp.h	99;"	d

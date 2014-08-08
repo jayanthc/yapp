@@ -2,20 +2,22 @@ TODO
 ----
 
 
-0. Inconsistencies in number of channels for .tim/.dat files - 1 or Nchan?
-1. Program to merge multiple .fil files
-2. RFI mask generator - manual/automatic?
-3. Program to remove running mean/baseline - manual polynomial fitting?
-4. yapp equivalent to realfft.
-5. Incoherent summation (stacking).
-6. Memory usage management - create ~/.yapp/yapp.conf or some such to fix
+1. Inconsistencies in number of channels for .tim/.dat files - 1 or Nchan?
+2. Program to merge multiple .fil files
+3. RFI mask generator - manual/automatic?
+4. Program to remove running mean/baseline - manual polynomial fitting?
+5. yapp equivalent to realfft.
+6. Incoherent summation (stacking).
+7. Memory usage management - create ~/.yapp/yapp.conf or some such to fix
    an upper limit on the amount of memory the YAPP programs can use.
-7. Support the non-POSIX (OS X/BSD) SIGINFO for status reporting.
-8. Deprecate support for headerless .fil files.
+8. Support the non-POSIX (OS X/BSD) SIGINFO for status reporting.
 9. Fix clipping/thresholding.
 
 all:
 1. popt-ify all programs.
+
+yapp_fits2fil:
+1. FEATURE: Support scales, weights, and offsets.
 
 
 yapp_add:

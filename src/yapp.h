@@ -155,6 +155,7 @@ enum tagFileFormats
 #define DEF_WINDOWS_MEDFILTER 10    /**< @brief Default number of windows */
 
 #define DEF_FOLD_PULSES     1000    /**< @brief Default number of pulses to fold */
+#define DEF_THRESHOLD       8.0     /**< @brief Default threshold for sifting */
 /* @} */
 
 /**
@@ -510,14 +511,6 @@ int YAPP_ReadDASCfg(char *pcFileSpec, YUM_t *pstYUM);
  * @param[out]      pstYUM              YUM structure
  */
 int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM);
-
-/**
- * Read configuration information corresponding to a SIGPROC '.fil' file, from a separate header file
- *
- * @param[in]       pcFileSpec          Data filename
- * @param[out]      pstYUM              YUM structure
- */
-int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM);
 
 /**
  * Read configuration information corresponding to a PRESTO '.dat' file, from a separate header file

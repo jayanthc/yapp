@@ -920,6 +920,7 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
 
     /* read the parameters from the header section of the file */
     /* start with the 'HEADER_START' label */
+    /* read field label length */
     iRet = fread(&iLen, sizeof(iLen), 1, g_pFData);
     /* if this is a file with header, iLen should be strlen(HEADER_START) */
     if (iLen != strlen(YAPP_SP_LABEL_HDRSTART))
@@ -935,6 +936,7 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
         }
         return YAPP_RET_SUCCESS;
     }
+    /* read field label */
     iRet = fread(acLabel, sizeof(char), iLen, g_pFData);
     acLabel[iLen] = '\0';
     if (strcmp(acLabel, YAPP_SP_LABEL_HDRSTART) != 0)
@@ -1360,18 +1362,10 @@ int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM)
     size_t iLen = 0;
     struct stat stFileStats = {0};
     int iRet = YAPP_RET_SUCCESS;
-#if 0
-    double dFChan = 0.0;
-    int iDataTypeID = 0;
-    double dFChan1 = 0.0;
-    float fFCh1 = 0.0;
-    double dChanBW = 0.0;
-    double dTStart = 0.0;
-    int iObsID = 0;
-#endif
     char *pcExt = NULL;
     char *pcVal = NULL;
     char* pcLine = NULL;
+    int i = 0;
 
     /* build the header file name */
     (void) strncpy(acFileHeader, pcFileSpec, LEN_GENSTRING);
@@ -1449,6 +1443,12 @@ int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM)
         return YAPP_RET_ERROR;
     }
     (void) sscanf(pcVal, ": %f", &pstYUM->fChanBW);
+    if (pstYUM->fChanBW < 0.0)
+    {
+        pstYUM->cIsBandFlipped = YAPP_TRUE;
+        /* make the channel bandwidth positive */
+        pstYUM->fChanBW = fabs(pstYUM->fChanBW);
+    }
     /* read lowest frequency */
     (void) getline(&pcLine, &iLen, pFHdr); 
     pcVal = strrchr(pcLine, ':');
@@ -1510,206 +1510,6 @@ int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM)
     }
     (void) sscanf(pcVal, ": %d", &pstYUM->iNumIFs);
 
-    #if 0
-        else if (0 == strcmp(acLabel, "data_type"))
-        {
-            iRet = fread(&iDataTypeID,
-                         sizeof(iDataTypeID),
-                         1,
-                         g_pFData);
-            pstYUM->iHeaderLen += sizeof(iDataTypeID);
-        }
-        else if (0 == strcmp(acLabel, "tstart"))
-        {
-            /* read timestamp of first sample (MJD) */
-            iRet = fread(&dTStart,
-                         sizeof(dTStart),
-                         1,
-                         g_pFData);
-            pstYUM->iHeaderLen += sizeof(dTStart);
-        }
-        else if (0 == strcmp(acLabel, "machine_id"))
-        {
-            /* read backend ID */
-            iRet = fread(&pstYUM->iBackendID,
-                         sizeof(pstYUM->iBackendID),
-                         1,
-                         g_pFData);
-            pstYUM->iHeaderLen += sizeof(pstYUM->iBackendID);
-        }
-        else if (0 == strcmp(acLabel, "src_raj"))
-        {
-            /* read source RA (J2000) */
-            iRet = fread(&pstYUM->dSourceRA,
-                         sizeof(pstYUM->dSourceRA),
-                         1,
-                         g_pFData);
-            pstYUM->iHeaderLen += sizeof(pstYUM->dSourceRA);
-        }
-        else if (0 == strcmp(acLabel, "src_dej"))
-        {
-            /* read source declination (J2000) */
-            iRet = fread(&pstYUM->dSourceDec,
-                         sizeof(pstYUM->dSourceDec),
-                         1,
-                         g_pFData);
-            pstYUM->iHeaderLen += sizeof(pstYUM->dSourceDec);
-        }
-        else if (0 == strcmp(acLabel, "az_start"))
-        {
-            /* read azimuth start */
-            iRet = fread(&pstYUM->dAzStart,
-                         sizeof(pstYUM->dAzStart),
-                         1,
-                         g_pFData);
-            pstYUM->iHeaderLen += sizeof(pstYUM->dAzStart);
-        }
-        else if (0 == strcmp(acLabel, "za_start"))
-        {
-            /* read ZA start */
-            iRet = fread(&pstYUM->dZAStart,
-                         sizeof(pstYUM->dZAStart),
-                         1,
-                         g_pFData);
-            pstYUM->iHeaderLen += sizeof(pstYUM->dZAStart);
-        }
-        /* DTS-specific field */
-        else if (0 == strcmp(acLabel, "refdm"))
-        {
-            /* read reference DM */
-            iRet = fread(&pstYUM->dDM, sizeof(pstYUM->dDM), 1, g_pFData);
-            pstYUM->iHeaderLen += sizeof(pstYUM->dDM);
-        }
-        else if (0 == strcmp(acLabel, "barycentric"))
-        {
-            /* read barycentric flag */
-            iRet = fread(&pstYUM->iFlagBary,
-                         sizeof(pstYUM->iFlagBary),
-                         1,
-                         g_pFData);
-            pstYUM->iHeaderLen += sizeof(pstYUM->iFlagBary);
-        }
-        else if (0 == strcmp(acLabel, "FREQUENCY_START"))
-        {
-            pstYUM->iFlagSplicedData = YAPP_TRUE;
-
-            /* read field label length */
-            iRet = fread(&iLen, sizeof(iLen), 1, g_pFData);
-            /* read field label */
-            iRet = fread(acLabel, sizeof(char), iLen, g_pFData);
-            acLabel[iLen] = '\0';
-            pstYUM->iHeaderLen += (sizeof(iLen) + iLen);
-            /* allocate memory for the frequency channel array read from
-               the header */
-            pstYUM->pfFreq = (float *) YAPP_Malloc(pstYUM->iNumChans,
-                                           sizeof(float),
-                                           YAPP_FALSE);
-            if (NULL == pstYUM->pfFreq)
-            {
-                (void) fprintf(stderr,
-                               "ERROR: Memory allocation for frequency "
-                               " channel array failed! %s!\n",
-                               strerror(errno));
-                YAPP_CleanUp();
-                return YAPP_RET_ERROR;
-            }
-
-            /* store in the reverse order */
-            i = pstYUM->iNumChans - 1;
-            /* parse frequency channels for spliced data */
-            while (strcmp(acLabel, "FREQUENCY_END") != 0)
-            {
-                /* read field label length */
-                iRet = fread(&iLen, sizeof(iLen), 1, g_pFData);
-                /* read field label */
-                iRet = fread(acLabel, sizeof(char), iLen, g_pFData);
-                acLabel[iLen] = '\0';
-                pstYUM->iHeaderLen += (sizeof(iLen) + iLen);
-                if (0 == strcmp(acLabel, "fchannel"))
-                {
-                    iRet = fread(&dFChan, sizeof(dFChan), 1, g_pFData);
-                    pstYUM->pfFreq[i] = (float) dFChan;
-                    pstYUM->iHeaderLen += sizeof(dFChan);
-                }
-                else
-                {
-                    /* print a warning about encountering unknown field label */
-                    if (strcmp(acLabel, "FREQUENCY_END") != 0)
-                    {
-                        (void) fprintf(stderr,
-                                       "WARNING: Unknown field label %s "
-                                       "encountered!\n", acLabel);
-                        YAPP_CleanUp();
-                        return YAPP_RET_ERROR;
-                    }
-                }
-                --i;
-            }
-        }
-        else
-        {
-            /* print a warning about encountering unknown field label */
-            if (strcmp(acLabel, "HEADER_END") != 0)
-            {
-                (void) fprintf(stderr,
-                               "WARNING: Unknown field label %s "
-                               "encountered!\n", acLabel);
-            }
-        }
-    }
-
-    /* close the file, it may be opened later for reading data */
-    (void) fclose(g_pFData);
-    /* set the stream pointer to NULL so that YAPP_CleanUp does not try to
-       close it */
-    g_pFData = NULL;
-
-    if (pstYUM->fChanBW < 0.0)
-    {
-        /* make the channel bandwidth positive */
-        pstYUM->fChanBW = fabs(pstYUM->fChanBW);
-        pstYUM->fFMax = fFCh1;
-        pstYUM->fFMin = pstYUM->fFMax - (pstYUM->iNumChans * pstYUM->fChanBW);
-    }
-    else
-    {
-        pstYUM->fFMin = fFCh1;
-        pstYUM->fFMax = pstYUM->fFMin + (pstYUM->iNumChans * pstYUM->fChanBW);
-    }
-
-    if (YAPP_TRUE == pstYUM->iFlagSplicedData)
-    {
-        /* in spliced data files, the first frequency is always the
-           highest - since we have inverted the array, it is the last
-           frequency */
-        pstYUM->fFMax = pstYUM->pfFreq[pstYUM->iNumChans-1];
-        /* get the lowest frequency */
-        pstYUM->fFMin = pstYUM->pfFreq[0];
-        /* calculate the channel bandwidth */
-        pstYUM->fChanBW = pstYUM->pfFreq[1] - pstYUM->pfFreq[0];
-
-        /* TODO: Number-of-bands calculation not accurate */
-        for (i = 1; i < pstYUM->iNumChans; ++i)
-        {
-            /*if (fabsf(pfFreq[i] - pfFreq[i-1]) > fChanBW)*/
-            /* kludge: */
-            if (fabsf(pstYUM->pfFreq[i] - pstYUM->pfFreq[i-1]) > (2 * pstYUM->fChanBW))
-            {
-                ++pstYUM->iNumBands;
-                if (YAPP_MAX_NUM_BANDS == pstYUM->iNumBands)
-                {
-                    (void) printf("WARNING: "
-                                  "Maximum number of bands reached!\n");
-                    break;
-                }
-            }
-        }
-    }
-    else
-    {
-        pstYUM->iNumBands = 1;
-    }
-    #endif
 
     /* calculate bandwidth and centre frequency */
     pstYUM->fBW = pstYUM->fFMax - pstYUM->fFMin;
@@ -1736,6 +1536,25 @@ int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM)
     /* set number of good channels to number of channels - no support for
        SIGPROC ignore files yet */
     pstYUM->iNumGoodChans = pstYUM->iNumChans;
+
+    /* call all channels good - no support for SIGPROC ignore files yet */
+    pstYUM->pcIsChanGood = (char *) YAPP_Malloc(pstYUM->iNumChans,
+                                                sizeof(char),
+                                                YAPP_FALSE);
+    if (NULL == pstYUM->pcIsChanGood)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Memory allocation for channel goodness "
+                       "flag failed! %s!\n",
+                       strerror(errno));
+        return YAPP_RET_ERROR;
+    }
+
+    /* read the channel goodness flags */
+    for (i = 0; i < pstYUM->iNumChans; ++i)
+    {
+        pstYUM->pcIsChanGood[i] = YAPP_TRUE;
+    }
 
     free(pcLine);
 

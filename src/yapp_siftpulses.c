@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
     int iNumEvents = 0;
     float fMedian = 0.0;
     float fRMS = 0.0;
-    float fThreshold = 0.0;
+    float fThreshold = DEF_THRESHOLD;
     double dTNow = 0.0;
     float fTemp = 0.0;
     FILE *pFTemp = NULL;
@@ -314,6 +314,7 @@ int main(int argc, char *argv[])
 
     /* allocate memory for single pulses */
     /* compute number of events due to noise alone */
+    /* TODO: check if this equation is correct */
     iNumRandEvents = iNumDMs * stYUM.iTimeSamps * sqrt(M_PI)
                      * erfc(fThreshold);
 
@@ -421,6 +422,8 @@ int main(int argc, char *argv[])
         }
         --iNumReads;
         ++iReadBlockCount;
+
+        /* TODO: optionally do smoothing here */
 
         /* calculate the reference median and standard deviation */
         if (cIsFirst)

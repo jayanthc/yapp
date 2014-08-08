@@ -136,9 +136,6 @@ int main(int argc, char *argv[])
                       stYUM.fBW);
         (void) printf("Sampling interval                 : %.10g ms\n",
                       stYUM.dTSamp);
-        /* TODO: think about order - changing might cause problems in
-           headerless .fil */
-        /* TODO: remove support for headerless .fil files */
         (void) printf("Number of channels                : %d\n",
                       stYUM.iNumChans);
         (void) printf("Number of good channels           : %d\n",

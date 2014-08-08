@@ -19,6 +19,7 @@
  *                                          will clip anything above this level
  *     -a  --no-abs-scale                   Use relative scale for plotting per
  *                                          block
+ *     -b  --show-passband                  Show the passband for each block
  *     -t  --period <period>                Period of the pulsar in ms
  *     -r  --phase <phase>                  Phase of the first pulse with
  *                                          respect to the first sample
@@ -1005,6 +1006,8 @@ void PrintUsage(const char *pcProgName)
     (void) printf("Use relative scale for plotting per\n");
     (void) printf("                                        ");
     (void) printf("block\n");
+    (void) printf("    -b  --show-passband                 ");
+    (void) printf("Show the passband for each block\n");
     (void) printf("    -t  --period <period>               ");
     (void) printf("Period of the pulsar in ms\n");
     (void) printf("    -r  --phase <phase>                 ");
