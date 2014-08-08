@@ -513,6 +513,14 @@ int YAPP_ReadDASCfg(char *pcFileSpec, YUM_t *pstYUM);
 int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM);
 
 /**
+ * Read configuration information corresponding to a SIGPROC '.fil' file, from a separate header file
+ *
+ * @param[in]       pcFileSpec          Data filename
+ * @param[out]      pstYUM              YUM structure
+ */
+int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM);
+
+/**
  * Read configuration information corresponding to a PRESTO '.dat' file, from a separate header file
  *
  * @param[in]       pcFileData          Data filename
