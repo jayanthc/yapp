@@ -913,6 +913,7 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
 
     /* read the parameters from the header section of the file */
     /* start with the 'HEADER_START' label */
+    /* read field label length */
     iRet = fread(&iLen, sizeof(iLen), 1, g_pFData);
     /* if this is a file with header, iLen should be strlen(HEADER_START) */
     if (iLen != strlen(YAPP_SP_LABEL_HDRSTART))
@@ -928,6 +929,7 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
         }
         return YAPP_RET_SUCCESS;
     }
+    /* read field label */
     iRet = fread(acLabel, sizeof(char), iLen, g_pFData);
     acLabel[iLen] = '\0';
     if (strcmp(acLabel, YAPP_SP_LABEL_HDRSTART) != 0)
@@ -1356,6 +1358,7 @@ int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM)
     char *pcExt = NULL;
     char *pcVal = NULL;
     char* pcLine = NULL;
+    int i = 0;
 
     /* build the header file name */
     (void) strncpy(acFileHeader, pcFileSpec, LEN_GENSTRING);
@@ -1433,6 +1436,12 @@ int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM)
         return YAPP_RET_ERROR;
     }
     (void) sscanf(pcVal, ": %f", &pstYUM->fChanBW);
+    if (pstYUM->fChanBW < 0.0)
+    {
+        pstYUM->cIsBandFlipped = YAPP_TRUE;
+        /* make the channel bandwidth positive */
+        pstYUM->fChanBW = fabs(pstYUM->fChanBW);
+    }
     /* read lowest frequency */
     (void) getline(&pcLine, &iLen, pFHdr); 
     pcVal = strrchr(pcLine, ':');
@@ -1520,6 +1529,25 @@ int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM)
     /* set number of good channels to number of channels - no support for
        SIGPROC ignore files yet */
     pstYUM->iNumGoodChans = pstYUM->iNumChans;
+
+    /* call all channels good - no support for SIGPROC ignore files yet */
+    pstYUM->pcIsChanGood = (char *) YAPP_Malloc(pstYUM->iNumChans,
+                                                sizeof(char),
+                                                YAPP_FALSE);
+    if (NULL == pstYUM->pcIsChanGood)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Memory allocation for channel goodness "
+                       "flag failed! %s!\n",
+                       strerror(errno));
+        return YAPP_RET_ERROR;
+    }
+
+    /* read the channel goodness flags */
+    for (i = 0; i < pstYUM->iNumChans; ++i)
+    {
+        pstYUM->pcIsChanGood[i] = YAPP_TRUE;
+    }
 
     free(pcLine);
 

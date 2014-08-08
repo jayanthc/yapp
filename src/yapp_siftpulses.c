@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
     int iNumEvents = 0;
     float fMedian = 0.0;
     float fRMS = 0.0;
-    float fThreshold = 0.0;
+    float fThreshold = DEF_THRESHOLD;
     double dTNow = 0.0;
     float fTemp = 0.0;
     FILE *pFTemp = NULL;

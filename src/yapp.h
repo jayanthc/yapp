@@ -145,6 +145,7 @@ enum tagFileFormats
 
 #define DEF_WINDOWS         1000    /**< @brief Default number of windows */
 #define DEF_FOLD_PULSES     1000    /**< @brief Default number of pulses to fold */
+#define DEF_THRESHOLD       8.0     /**< @brief Default threshold for sifting */
 /* @} */
 
 /**

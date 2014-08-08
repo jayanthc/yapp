@@ -34,7 +34,7 @@
 
 #define LEN_GENSTRING       256
 #define CMAP_LEVELS         64
-#define NUM_CMAPS           19
+#define NUM_CMAPS           16
 
 typedef enum CMap_e
 {
@@ -46,11 +46,14 @@ typedef enum CMap_e
     CMAP_GRAY,
     CMAP_GRAY_INV,
     CMAP_HOT,
+    CMAP_HOT_INV,
     CMAP_JET,
     CMAP_PINK,
     CMAP_SPRING,
     CMAP_SUMMER,
-    CMAP_WINTER
+    CMAP_WINTER,
+    CMAP_RDBU,
+    CMAP_BURD,
 } CMap_t;
 
 #define CMAP_STR_AUTUMN     "autumn"
@@ -61,11 +64,14 @@ typedef enum CMap_e
 #define CMAP_STR_GRAY       "gray"
 #define CMAP_STR_GRAY_INV   "gray-inv"
 #define CMAP_STR_HOT        "hot"
+#define CMAP_STR_HOT_INV    "hot-inv"
 #define CMAP_STR_JET        "jet"
 #define CMAP_STR_PINK       "pink"
 #define CMAP_STR_SPRING     "spring"
 #define CMAP_STR_SUMMER     "summer"
 #define CMAP_STR_WINTER     "winter"
+#define CMAP_STR_RDBU       "RdBu"
+#define CMAP_STR_BURD       "BuRd"
 
 #define DEF_CMAP            CMAP_JET
 #define DEF_CMAP_STR        "jet"
