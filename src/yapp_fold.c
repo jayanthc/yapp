@@ -874,7 +874,7 @@ int main(int argc, char *argv[])
                         }
                     }
 #endif
-                    printf("%ld, %d\n", lSampCount, j);
+                  //  printf("%ld, %d\n", lSampCount, j);
                     g_pfProfBuf[j] += (((g_pfBuf[i] - fMeanNoise) / fRMSNoise)
                                        / DEF_FOLD_PULSES);
                     ++lSampCount;

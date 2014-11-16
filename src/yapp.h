@@ -601,6 +601,10 @@ float YAPP_CalcRMS(float *pfBuf,
                    int iOffset,
                    int iStride,
                    float fMean);
+float YAPP_CalcChiSquared(float *pfBuf,
+                          int iLength,
+                          float fNoiseMean,
+                          float fNoiseRMS);
 int YAPP_Compare(float *pfA, float *pfB);
 float YAPP_CalcMedian(float *pfBuf, int iLength, float fOldMedian);
 /*

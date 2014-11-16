@@ -2427,12 +2427,33 @@ float YAPP_CalcRMS(float *pfBuf,
 
     for (i = iOffset; i < iLength; i += iStride)
     {
-        fRMS += powf((pfBuf[i] - fMean), 2);
+        fRMS += powf(pfBuf[i] - fMean, 2);
     }
     fRMS /= (iLength - 1);
     fRMS = sqrtf(fRMS);
 
     return fRMS;
+}
+
+
+/*
+ * Calculate chi-squared of two signals
+ */
+float YAPP_CalcChiSquared(float *pfBuf,
+                          int iLength,
+                          float fMean,
+                          float fRMS)
+{
+    float fChiSq = 0.0;
+    int i = 0;
+
+    for (i = 0; i < iLength; ++i)
+    {
+        fChiSq += powf(pfBuf[i] - fMean, 2);
+    }
+    fChiSq /= fMean; //(fRMS * fRMS);
+
+    return fChiSq;
 }
 
 

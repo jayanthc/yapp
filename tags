@@ -188,6 +188,7 @@ PrintUsage	src/yapp_smooth.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	src/yapp_split.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	src/yapp_stackfil.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	src/yapp_stacktim.c	/^void PrintUsage(const char *pcProgName)$/;"	f
+PrintUsage	src/yapp_stat.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	src/yapp_subtract.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	src/yapp_viewdata.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	src/yapp_viewmetadata.c	/^void PrintUsage(const char *pcProgName)$/;"	f
@@ -207,6 +208,7 @@ VER_BUILD_DELIM	src/yapp_makever.c	28;"	d	file:
 VER_BUILD_PREFIX	src/yapp_makever.c	27;"	d	file:
 WATERFALL_OFFSET_SCALE	src/yapp.h	243;"	d
 YAPP_BYTE2BIT_FACTOR	src/yapp.h	103;"	d
+YAPP_CalcChiSquared	src/yapp_common.c	/^float YAPP_CalcChiSquared(float *pfBuf,$/;"	f
 YAPP_CalcDelays	src/yapp_dedisperse.c	/^int YAPP_CalcDelays(double dDM,$/;"	f
 YAPP_CalcMean	src/yapp_common.c	/^float YAPP_CalcMean(float *pfBuf, int iLength, int iOffset, int iStride)$/;"	f
 YAPP_CalcMedian	src/yapp_common.c	/^float YAPP_CalcMedian(float *pfBuf, int iLength, float fOldMedian)$/;"	f
@@ -304,6 +306,7 @@ YAPP_ReadMetadata	src/yapp_common.c	/^int YAPP_ReadMetadata(char *pcFileSpec, in
 YAPP_ReadPRESTOHeaderFile	src/yapp_common.c	/^int YAPP_ReadPRESTOHeaderFile(char *pcFileData, YUM_t *pstYUM)$/;"	f
 YAPP_ReadPSRFITSHeader	src/yapp_common.c	/^int YAPP_ReadPSRFITSHeader(char *pcFileSpec, YUM_t *pstYUM)$/;"	f
 YAPP_ReadSIGPROCHeader	src/yapp_common.c	/^int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)$/;"	f
+YAPP_ReadSIGPROCHeaderFile	src/yapp_common.c	/^int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM)$/;"	f
 YAPP_RegisterSignalHandlers	src/yapp_common.c	/^int YAPP_RegisterSignalHandlers()$/;"	f
 YAPP_SAMPSIZE_1	src/yapp.h	95;"	d
 YAPP_SAMPSIZE_16	src/yapp.h	99;"	d
@@ -436,12 +439,15 @@ g_pcIsTimeGood	src/yapp_dedisperse.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	src/yapp_dedisplaw.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	src/yapp_fold.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	src/yapp_makerfimask.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
+g_pcIsTimeGood	src/yapp_stat.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	src/yapp_viewdata.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pdDM	src/yapp_dedisplaw.c	/^double *g_pdDM = NULL;$/;"	v
 g_pdDelayTab	src/yapp_dedisplaw.c	/^double *g_pdDelayTab = NULL;$/;"	v
 g_pdMaxDelayTab	src/yapp_dedisplaw.c	/^double *g_pdMaxDelayTab = NULL;$/;"	v
 g_pdPhase	src/yapp_fold.c	/^double *g_pdPhase = NULL;$/;"	v
+g_pdPhase	src/yapp_stat.c	/^double *g_pdPhase = NULL;$/;"	v
 g_pf2DProfBuf	src/yapp_fold.c	/^float *g_pf2DProfBuf = NULL;$/;"	v
+g_pf2DProfBuf	src/yapp_stat.c	/^float *g_pf2DProfBuf = NULL;$/;"	v
 g_pfBFGain	src/yapp_dedisperse.c	/^float *g_pfBFGain = NULL;$/;"	v
 g_pfBFGain	src/yapp_dedisplaw.c	/^float *g_pfBFGain = NULL;$/;"	v
 g_pfBFGain	src/yapp_makerfimask.c	/^float *g_pfBFGain = NULL;$/;"	v
@@ -455,6 +461,7 @@ g_pfBuf	src/yapp_fold.c	/^float *g_pfBuf = NULL;$/;"	v
 g_pfBuf	src/yapp_makeaudio.c	/^float *g_pfBuf = NULL;$/;"	v
 g_pfBuf	src/yapp_smooth.c	/^float *g_pfBuf = NULL;$/;"	v
 g_pfBuf	src/yapp_split.c	/^float *g_pfBuf = NULL;$/;"	v
+g_pfBuf	src/yapp_stat.c	/^float *g_pfBuf = NULL;$/;"	v
 g_pfBuf	src/yapp_viewdata.c	/^float *g_pfBuf = NULL;$/;"	v
 g_pfBuf0	src/yapp_dedisperse.c	/^float *g_pfBuf0 = NULL;$/;"	v
 g_pfBuf0	src/yapp_dedisplaw.c	/^float *g_pfBuf0 = NULL;$/;"	v
@@ -477,20 +484,24 @@ g_pfOutBuf	src/yapp_stacktim.c	/^float *g_pfOutBuf = NULL;$/;"	v
 g_pfOutBuf	src/yapp_subtract.c	/^float *g_pfOutBuf = NULL;$/;"	v
 g_pfPFBCoeff	src/yapp_ft.c	/^float* g_pfPFBCoeff = NULL;$/;"	v
 g_pfPhase	src/yapp_fold.c	/^float *g_pfPhase = NULL;$/;"	v
+g_pfPhase	src/yapp_stat.c	/^float *g_pfPhase = NULL;$/;"	v
 g_pfPlotBuf	src/yapp_dedisperse.c	/^float *g_pfPlotBuf = NULL;$/;"	v
 g_pfPlotBuf	src/yapp_dedisplaw.c	/^float *g_pfPlotBuf = NULL;$/;"	v
 g_pfPlotBuf	src/yapp_fold.c	/^float *g_pfPlotBuf = NULL;$/;"	v
 g_pfPlotBuf	src/yapp_makerfimask.c	/^float *g_pfPlotBuf = NULL;$/;"	v
 g_pfPlotBuf	src/yapp_stackfil.c	/^float *g_pfPlotBuf = NULL;$/;"	v
 g_pfPlotBuf	src/yapp_stacktim.c	/^float *g_pfPlotBuf = NULL;$/;"	v
+g_pfPlotBuf	src/yapp_stat.c	/^float *g_pfPlotBuf = NULL;$/;"	v
 g_pfPlotBuf	src/yapp_viewdata.c	/^float *g_pfPlotBuf = NULL;$/;"	v
 g_pfPriBufBk	src/yapp_dedisplaw.c	/^float *g_pfPriBufBk = NULL;$/;"	v
 g_pfProfBuf	src/yapp_fold.c	/^float *g_pfProfBuf = NULL;$/;"	v
+g_pfProfBuf	src/yapp_stat.c	/^float *g_pfProfBuf = NULL;$/;"	v
 g_pfSumPow	src/yapp_ft.c	/^float *g_pfSumPow = NULL;$/;"	v
 g_pfSumPowX	src/yapp_ft.c	/^float *g_pfSumPowX = NULL;$/;"	v
 g_pfSumPowY	src/yapp_ft.c	/^float *g_pfSumPowY = NULL;$/;"	v
 g_pfSumStokesIm	src/yapp_ft.c	/^float *g_pfSumStokesIm = NULL;$/;"	v
 g_pfSumStokesRe	src/yapp_ft.c	/^float *g_pfSumStokesRe = NULL;$/;"	v
+g_pfTemplateBuf	src/yapp_stat.c	/^float *g_pfTemplateBuf = NULL;$/;"	v
 g_pfXAxis	src/yapp_add.c	/^float *g_pfXAxis = NULL;$/;"	v
 g_pfXAxis	src/yapp_basesub.c	/^float *g_pfXAxis = NULL;$/;"	v
 g_pfXAxis	src/yapp_dedisperse.c	/^float *g_pfXAxis = NULL;$/;"	v
@@ -502,6 +513,7 @@ g_pfXAxis	src/yapp_siftpulses.c	/^float *g_pfXAxis = NULL;$/;"	v
 g_pfXAxis	src/yapp_smooth.c	/^float *g_pfXAxis = NULL;$/;"	v
 g_pfXAxis	src/yapp_stackfil.c	/^float *g_pfXAxis = NULL;$/;"	v
 g_pfXAxis	src/yapp_stacktim.c	/^float *g_pfXAxis = NULL;$/;"	v
+g_pfXAxis	src/yapp_stat.c	/^float *g_pfXAxis = NULL;$/;"	v
 g_pfXAxis	src/yapp_subtract.c	/^float *g_pfXAxis = NULL;$/;"	v
 g_pfXAxis	src/yapp_viewdata.c	/^float *g_pfXAxis = NULL;$/;"	v
 g_pfXAxisOld	src/yapp_stackfil.c	/^float *g_pfXAxisOld = NULL;$/;"	v
@@ -511,6 +523,7 @@ g_pfYAxis	src/yapp_dedisperse.c	/^float *g_pfYAxis = NULL;$/;"	v
 g_pfYAxis	src/yapp_fold.c	/^float *g_pfYAxis = NULL;$/;"	v
 g_pfYAxis	src/yapp_makerfimask.c	/^float *g_pfYAxis = NULL;$/;"	v
 g_pfYAxis	src/yapp_stackfil.c	/^float *g_pfYAxis = NULL;$/;"	v
+g_pfYAxis	src/yapp_stat.c	/^float *g_pfYAxis = NULL;$/;"	v
 g_pfYAxis	src/yapp_viewdata.c	/^float *g_pfYAxis = NULL;$/;"	v
 g_pfcFFTBuf	src/yapp_filter.c	/^fftwf_complex *g_pfcFFTBuf = NULL;$/;"	v
 g_pfcFFTInX	src/yapp_ft.c	/^fftwf_complex *g_pfcFFTInX = NULL;$/;"	v
@@ -574,6 +587,7 @@ main	src/yapp_smooth.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/yapp_split.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/yapp_stackfil.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/yapp_stacktim.c	/^int main(int argc, char *argv[])$/;"	f
+main	src/yapp_stat.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/yapp_subtract.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/yapp_viewdata.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/yapp_viewmetadata.c	/^int main(int argc, char *argv[])$/;"	f
