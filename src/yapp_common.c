@@ -1715,7 +1715,7 @@ int YAPP_ReadData(FILE *pFData,
                   int iTotSampsPerBlock)
 {
     static char cIsFirst = YAPP_TRUE;
-    static char *pcBuf = NULL;
+    static unsigned char *pcBuf = NULL;
     int iReadItems = 0;
     int i = 0;
 
@@ -1731,7 +1731,7 @@ int YAPP_ReadData(FILE *pFData,
         /* allocate memory for the byte buffer, based on the total number of
            samples per block (= number of channels * number of time samples per
            block) */
-        pcBuf = (char *) YAPP_Malloc((int) (iTotSampsPerBlock * fSampSize),
+        pcBuf = (unsigned char *) YAPP_Malloc((int) (iTotSampsPerBlock * fSampSize),
                                      sizeof(char),
                                      YAPP_FALSE);
         if (NULL == pcBuf)
@@ -1746,7 +1746,7 @@ int YAPP_ReadData(FILE *pFData,
 
     /* read data into the byte buffer */
     iReadItems = fread(pcBuf,
-                       sizeof(char),
+                       sizeof(unsigned char),
                        (int) (iTotSampsPerBlock * fSampSize),
                        pFData);
     if (ferror(pFData))
