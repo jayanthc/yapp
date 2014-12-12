@@ -2,6 +2,7 @@ TODO
 ----
 
 
+0. If file size is too small and DM is too large: negative skip values.
 1. Inconsistencies in number of channels for .tim/.dat files - 1 or Nchan?
 2. Program to merge multiple .fil files
 3. RFI mask generator - manual/automatic?

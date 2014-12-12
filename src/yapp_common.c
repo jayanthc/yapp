@@ -1731,9 +1731,10 @@ int YAPP_ReadData(FILE *pFData,
         /* allocate memory for the byte buffer, based on the total number of
            samples per block (= number of channels * number of time samples per
            block) */
-        pcBuf = (unsigned char *) YAPP_Malloc((int) (iTotSampsPerBlock * fSampSize),
-                                     sizeof(char),
-                                     YAPP_FALSE);
+        pcBuf = (unsigned char *) YAPP_Malloc((int) (iTotSampsPerBlock
+                                                     * fSampSize),
+                                                     sizeof(char),
+                                                     YAPP_FALSE);
         if (NULL == pcBuf)
         {
             (void) fprintf(stderr,
@@ -1803,9 +1804,25 @@ int YAPP_ReadData(FILE *pFData,
         for (i = 0; i < (iReadItems / 2); ++i)
         {
             /* copy lower 4 bits */
-            pfBuf[2*i] = pcBuf[i] & 0x0F;
+            pfBuf[2*i] = (float) (pcBuf[i] & 0x0F);
             /* copy upper 4 bits */
-            pfBuf[(2*i)+1] = (pcBuf[i] & 0xF0) >> 4;
+            pfBuf[(2*i)+1] = (float) ((pcBuf[i] & 0xF0) >> 4);
+        }
+    }
+    else if (YAPP_SAMPSIZE_2 == (fSampSize * YAPP_BYTE2BIT_FACTOR))
+    {
+        /* 2-bit/0.25-byte data */
+        /* copy data from the byte buffer to the float buffer */
+        for (i = 0; i < (iReadItems / 4); ++i)
+        {
+            /* copy lowest 2 bits */
+            pfBuf[4*i] = (float) (pcBuf[i] & 0x03);
+            /* copy next 2 bits */
+            pfBuf[(4*i)+1] = (float) ((pcBuf[i] & 0x0C) >> 2);
+            /* copy next 2 bits */
+            pfBuf[(4*i)+2] = (float) ((pcBuf[i] & 0x30) >> 4);
+            /* copy uppermost 2 bits */
+            pfBuf[(4*i)+3] = (float) ((pcBuf[i] & 0xC0) >> 6);
         }
     }
 

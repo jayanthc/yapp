@@ -506,7 +506,7 @@ int main(int argc, char *argv[])
     /* set up the plot's X-axis */
     g_pfXAxis = (float *) YAPP_Malloc(iBlockSize,
                                       sizeof(float),
-                                      YAPP_FALSE);
+                                      YAPP_TRUE);
     if (NULL == g_pfXAxis)
     {
         (void) fprintf(stderr,
