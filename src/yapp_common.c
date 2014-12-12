@@ -1751,14 +1751,14 @@ int YAPP_ReadData(FILE *pFData,
 
     if (YAPP_SAMPSIZE_32 == (fSampSize * YAPP_BYTE2BIT_FACTOR))
     {
-        /* 32-bit/4-byte data */
+        /* 32-bit/4-byte floating-point data */
         /* copy data from the byte buffer to the float buffer */
         (void) memcpy(pfBuf, pcBuf, (int) (iTotSampsPerBlock * fSampSize));
     }
     else if (YAPP_SAMPSIZE_16 == (fSampSize * YAPP_BYTE2BIT_FACTOR))
     {
         /* 16-bit/2-byte data */
-        short int* psBuf = (short int*) pcBuf;
+        unsigned short int* psBuf = (unsigned short int*) pcBuf;
         for (i = 0; i < iReadItems; ++i)
         {
             pfBuf[i] = (float) psBuf[i];
