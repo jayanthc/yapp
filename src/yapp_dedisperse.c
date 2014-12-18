@@ -23,6 +23,8 @@
  *     -o  --out-format <format>            Output format - 'dds', 'tim', or
  *                                          'fil'
  *                                          (default is 'tim')
+ *     -f  --f-decimate <factor>            Decimation-in-frequency factor,
+ *                                          for 'fil' output
  *     -g  --graphics                       Turn on plotting
  *     -m  --colour-map <name>              Colour map for plotting
  *                                          (default is 'jet')
@@ -54,6 +56,7 @@ extern FILE *g_pFData;
 /* the following are global only to enable cleaning up in case of abnormal
    termination, such as those triggered by SIGINT or SIGTERM */
 int *g_piOffsetTab = NULL;
+int *g_piOutOffsetTab = NULL;
 char *g_pcIsTimeGood = NULL;
 float *g_pfBFTimeSectMean = NULL;
 float *g_pfBFGain = NULL;
@@ -62,6 +65,7 @@ float *g_pfBuf0 = NULL;
 float *g_pfBuf1 = NULL;
 float *g_pfPlotBuf = NULL;
 float *g_pfDedispData = NULL;
+float *g_pfDecDedispData = NULL;
 float *g_pfXAxis = NULL;
 float *g_pfYAxis = NULL;
 
@@ -82,7 +86,9 @@ int main(int argc, char *argv[])
     float fLaw = DEF_LAW;
     float fChanBW = 0.0;
     int iMaxOffset = 0;
+    int iOutMaxOffset = 0;
     int iNumChans = 0;
+    int iOutNumChans = 0;
     float fSampSize = 0.0;      /* number of bits that make a sample */
     int iTotSampsPerBlock = 0;  /* iNumChans * iBlockSize */
     int iEffcNumGoodChans = 0;
@@ -99,6 +105,7 @@ int main(int argc, char *argv[])
     float *pfPriBuf = NULL;
     float *pfSecBuf = NULL;
     float *pfSpectrum = NULL;
+    float *pfOutSpec = NULL;
     float *pfOffsetSpec = NULL;
     int iPrimaryBuf = BUF_0;
     int iOffset = 0;
@@ -134,9 +141,11 @@ int main(int argc, char *argv[])
     int k = 0;
     int l = 0;
     int m = 0;
+    int n = 0;
     double dDelay = 0.0;
     int iStartOffset = 0;
     float fStartOffset = 0.0;
+    int iDecFac = 0;
     char cHasGraphics = YAPP_FALSE;
     int iColourMap = DEF_CMAP;
     int iInvCols = YAPP_FALSE;
@@ -144,7 +153,7 @@ int main(int argc, char *argv[])
     const char *pcProgName = NULL;
     int iNextOpt = 0;
     /* valid short options */
-    const char* const pcOptsShort = "hs:p:n:d:l:b:u:o:gm:iev";
+    const char* const pcOptsShort = "hs:p:n:d:l:b:u:o:f:gm:iev";
     /* valid long options */
     const struct option stOptsLong[] = {
         { "help",                   0, NULL, 'h' },
@@ -156,6 +165,7 @@ int main(int argc, char *argv[])
         { "nsubband",               1, NULL, 'b' },
         { "subband",                1, NULL, 'u' },
         { "out-format",             1, NULL, 'o' },
+        { "f-decimate",             1, NULL, 'f' },
         { "graphics",               0, NULL, 'g' },
         { "colour-map",             1, NULL, 'm' },
         { "invert",                 0, NULL, 'i' },
@@ -246,6 +256,11 @@ int main(int argc, char *argv[])
                 }
                 break;
 
+            case 'f':   /* -f or --f-decimate */
+                /* set option */
+                iDecFac = atoi(optarg);
+                break;
+
             case 'g':   /* -g or --graphics */
                 /* set option */
                 cHasGraphics = YAPP_TRUE;
@@ -321,6 +336,14 @@ int main(int argc, char *argv[])
         }
     }
 
+    if (iDecFac !=0 && iOutputFormat != YAPP_FORMAT_FIL)
+    {
+        (void) fprintf(stderr,
+                       "WARNING: Ignoring decimation factor!\n");
+        /* reset so that later checks evaluate to false */
+        iDecFac = 0;
+    }
+
     /* register the signal-handling function */
     iRet = YAPP_RegisterSignalHandlers();
     if (iRet != YAPP_RET_SUCCESS)
@@ -393,8 +416,34 @@ int main(int argc, char *argv[])
             return YAPP_RET_ERROR;
         }
     }
+    if (iDecFac != 0)
+    {
+        if (iNumChans % iDecFac != 0)
+        {
+            (void) fprintf(stderr,
+                           "ERROR: Invalid decimation factor! Decimation factor "
+                           "must be a factor of number of channels!\n");
+            PrintUsage(pcProgName);
+            return YAPP_RET_ERROR;
+        }
 
-    iRet = YAPP_CalcDelays(dDM, stYUM, fLaw, &iMaxOffset);
+        /* calculate the number of channels in the output */
+        iOutNumChans = iNumChans / iDecFac;
+    }
+
+    /* allocate memory for the delay table */
+    g_piOffsetTab = (int *) YAPP_Malloc((size_t) stYUM.iNumChans,
+                                        sizeof(int),
+                                        YAPP_FALSE);
+    if (NULL == g_piOffsetTab)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Memory allocation failed! %s!\n",
+                       strerror(errno));
+        YAPP_CleanUp();
+        return YAPP_RET_ERROR;
+    }
+    iRet = YAPP_CalcDelays(dDM, stYUM, fLaw, &g_piOffsetTab, &iMaxOffset);
     if (iRet != YAPP_RET_SUCCESS)
     {
         (void) fprintf(stderr,
@@ -403,13 +452,16 @@ int main(int argc, char *argv[])
         return YAPP_RET_ERROR;
     }
 
-    /* calculate the corrected start time */
-    dDelay = (double) -4.148741601e6
-             * (((double) 1.0 / pow(INFINITY, fLaw))
-                - ((double) 1.0 / pow(stYUM.fFMax, fLaw)))
-             * dDM;    /* in ms */
-    iStartOffset = (int) (dDelay / stYUM.dTSamp);
-    fStartOffset = iStartOffset * dTSampInSec;
+    if (0 == iDecFac)
+    {
+        /* calculate the corrected start time */
+        dDelay = (double) -4.148741601e6
+                 * (((double) 1.0 / pow(INFINITY, fLaw))
+                    - ((double) 1.0 / pow(stYUM.fFMax, fLaw)))
+                 * dDM;    /* in ms */
+        iStartOffset = (int) (dDelay / stYUM.dTSamp);
+        fStartOffset = iStartOffset * dTSampInSec;
+    }
 
     /* ensure that the block size is at least equivalent to the maximum offset,
        because we don't read beyond the second buffer */
@@ -659,6 +711,24 @@ int main(int argc, char *argv[])
                        strerror(errno));
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
+    }
+
+    if (iDecFac != 0)
+    {
+        /* allocate memory for the primary and secondary buffers, based on the
+           number of channels and time samples */
+        g_pfDecDedispData = (float *) YAPP_Malloc((size_t) iOutNumChans
+                                                  * iBlockSize,
+                                                  sizeof(float),
+                                                  YAPP_FALSE);
+        if (NULL == g_pfDecDedispData)
+        {
+            (void) fprintf(stderr,
+                           "ERROR: Memory allocation failed! %s!\n",
+                           strerror(errno));
+            YAPP_CleanUp();
+            return YAPP_RET_ERROR;
+        }
     }
 
     if (YAPP_FORMAT_FIL == iFormat)
@@ -930,6 +1000,12 @@ int main(int argc, char *argv[])
             }
         }
 
+        if (iDecFac != 0)
+        {
+            stYUMOut.iNumChans = iOutNumChans;
+            stYUMOut.fChanBW = stYUM.fChanBW * iDecFac;
+        }
+
         /* write metadata to disk */
         iRet = YAPP_WriteMetadata(acFileDedisp, iOutputFormat, stYUMOut);
         if (iRet != YAPP_RET_SUCCESS)
@@ -937,6 +1013,30 @@ int main(int argc, char *argv[])
             (void) fprintf(stderr,
                            "ERROR: Writing metadata failed for file %s!\n",
                            acFileDedisp);
+            YAPP_CleanUp();
+            return YAPP_RET_ERROR;
+        }
+    }
+
+    if (iDecFac != 0)
+    {
+        /* allocate memory for the output delay table */
+        g_piOutOffsetTab = (int *) YAPP_Malloc((size_t) iOutNumChans,
+                                               sizeof(int),
+                                               YAPP_FALSE);
+        if (NULL == g_piOutOffsetTab)
+        {
+            (void) fprintf(stderr,
+                           "ERROR: Memory allocation failed! %s!\n",
+                           strerror(errno));
+            YAPP_CleanUp();
+            return YAPP_RET_ERROR;
+        }
+        iRet = YAPP_CalcDelays(dDM, stYUMOut, fLaw, &g_piOutOffsetTab, &iOutMaxOffset);
+        if (iRet != YAPP_RET_SUCCESS)
+        {
+            (void) fprintf(stderr,
+                           "ERROR: Calculating delays failed!\n");
             YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
@@ -1158,23 +1258,37 @@ int main(int argc, char *argv[])
                       '\0',
                       (sizeof(float) * iBlockSize));
 
-        for (k = 0; k < iBlockSize; ++k)
+        if (0 == iDecFac)
         {
-            pfSpectrum = pfPriBuf + k * iNumChans;
-            for (l = 0; l < iNumChans; ++l)
+            for (k = 0; k < iBlockSize; ++k)
             {
-                if (stYUM.pcIsChanGood[l])
+                pfSpectrum = pfPriBuf + k * iNumChans;
+                for (l = 0; l < iNumChans; ++l)
                 {
-                    /* get the offset for the corresponding DM and frequency
-                       channel from the offset table */
-                    iOffset = g_piOffsetTab[l];
-                    /* apply the delay - shift all time samples up */
-                    if ((k + iOffset) >= iBlockSize)
+                    if (stYUM.pcIsChanGood[l])
                     {
-                        if (!(cIsLastBlock))
+                        /* get the offset for the corresponding DM and frequency
+                           channel from the offset table */
+                        iOffset = g_piOffsetTab[l];
+                        /* apply the delay - shift all time samples up */
+                        if ((k + iOffset) >= iBlockSize)
                         {
-                            m = k + iOffset - iBlockSize;
-                            pfOffsetSpec = pfSecBuf + m * iNumChans;
+                            if (!(cIsLastBlock))
+                            {
+                                m = k + iOffset - iBlockSize;
+                                pfOffsetSpec = pfSecBuf + m * iNumChans;
+                                pfSpectrum[l] = pfOffsetSpec[l];
+                                if (g_pcIsTimeGood[iReadSmpCount+k+iOffset])
+                                {
+                                    g_pfDedispData[k] += pfSpectrum[l];
+                                    ++iEffcNumGoodChans;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            pfOffsetSpec = pfPriBuf
+                                           + (k + iOffset) * iNumChans;
                             pfSpectrum[l] = pfOffsetSpec[l];
                             if (g_pcIsTimeGood[iReadSmpCount+k+iOffset])
                             {
@@ -1183,34 +1297,88 @@ int main(int argc, char *argv[])
                             }
                         }
                     }
-                    else
+                }
+
+                /* get the average over all the good channels */
+                if (iEffcNumGoodChans != 0)
+                {
+                    g_pfDedispData[k] /= iEffcNumGoodChans;
+                }
+                else
+                {
+                    g_pfDedispData[k] = 0.0;
+                }
+
+                g_pfDedispData[k] /= fNoiseRMS;
+
+                /* reset the effective number of good channels */
+                iEffcNumGoodChans = 0;
+            }
+        }
+        else
+        {
+            for (k = 0; k < iBlockSize; ++k)
+            {
+                pfSpectrum = pfPriBuf + k * iNumChans;
+                pfOutSpec = g_pfDecDedispData + k * iOutNumChans;
+                for (l = 0; l < iNumChans; ++l)
+                {
+                    n = l / iDecFac;
+                    if (((float) l / iDecFac) - (l /iDecFac) == 0)
                     {
-                        pfOffsetSpec = pfPriBuf
-                                       + (k + iOffset) * iNumChans;
-                        pfSpectrum[l] = pfOffsetSpec[l];
-                        if (g_pcIsTimeGood[iReadSmpCount+k+iOffset])
+                        g_pfDedispData[k] = 0.0;
+                    }
+                    if (stYUM.pcIsChanGood[l])
+                    {
+                        /* get the offset for the corresponding DM and frequency
+                           channel from the offset table */
+                        iOffset = g_piOffsetTab[l] - g_piOutOffsetTab[n];
+                        /* apply the delay - shift all time samples up */
+                        if ((k + iOffset) >= iBlockSize)
                         {
-                            g_pfDedispData[k] += pfSpectrum[l];
-                            ++iEffcNumGoodChans;
+                            if (!(cIsLastBlock))
+                            {
+                                m = k + iOffset - iBlockSize;
+                                pfOffsetSpec = pfSecBuf + m * iNumChans;
+                                pfSpectrum[l] = pfOffsetSpec[l];
+                                if (g_pcIsTimeGood[iReadSmpCount+k+iOffset])
+                                {
+                                    g_pfDedispData[k] += pfSpectrum[l];
+                                    pfOutSpec[n] = g_pfDedispData[k];
+                                    ++iEffcNumGoodChans;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            pfOffsetSpec = pfPriBuf
+                                           + (k + iOffset) * iNumChans;
+                            pfSpectrum[l] = pfOffsetSpec[l];
+                            if (g_pcIsTimeGood[iReadSmpCount+k+iOffset])
+                            {
+                                g_pfDedispData[k] += pfSpectrum[l];
+                                pfOutSpec[n] = g_pfDedispData[k];
+                                ++iEffcNumGoodChans;
+                            }
                         }
                     }
                 }
-            }
 
-            /* get the average over all the good channels */
-            if (iEffcNumGoodChans != 0)
-            {
-                g_pfDedispData[k] /= iEffcNumGoodChans;
-            }
-            else
-            {
-                g_pfDedispData[k] = 0.0;
-            }
+                /* get the average over all the good channels */
+                if (iEffcNumGoodChans != 0)
+                {
+                    g_pfDedispData[k] /= iEffcNumGoodChans;
+                }
+                else
+                {
+                    g_pfDedispData[k] = 0.0;
+                }
 
-            g_pfDedispData[k] /= fNoiseRMS;
+                g_pfDedispData[k] /= fNoiseRMS;
 
-            /* reset the effective number of good channels */
-            iEffcNumGoodChans = 0;
+                /* reset the effective number of good channels */
+                iEffcNumGoodChans = 0;
+            }
         }
 
         if (cHasGraphics)
@@ -1281,10 +1449,20 @@ int main(int argc, char *argv[])
            disk if required */
         if (YAPP_FORMAT_FIL == iOutputFormat)
         {
-            (void) fwrite(pfPriBuf,
-                          sizeof(float),
-                          iNumChans * iBlockSize,
-                          pFDedispData);
+            if (0 == iDecFac)
+            {
+                (void) fwrite(pfPriBuf,
+                              sizeof(float),
+                              iNumChans * iBlockSize,
+                              pFDedispData);
+            }
+            else
+            {
+                (void) fwrite(g_pfDecDedispData,
+                              sizeof(float),
+                              iOutNumChans * iBlockSize,
+                              pFDedispData);
+            }
         }
         else
         {
@@ -1515,6 +1693,10 @@ void PrintUsage(const char *pcProgName)
     (void) printf("Output format - 'dds', 'tim', or 'fil'\n");
     (void) printf("                                        ");
     (void) printf("(default is 'tim')\n");
+    (void) printf("    -f  --f-decimate <factor>           ");
+    (void) printf("Decimation-in-frequency factor,\n");
+    (void) printf("                                        ");
+    (void) printf("for 'fil' output\n");
     (void) printf("    -g  --graphics                      ");
     (void) printf("Turn on plotting\n");
     (void) printf("    -m  --colour-map <name>             ");
@@ -1536,6 +1718,7 @@ void PrintUsage(const char *pcProgName)
 int YAPP_CalcDelays(double dDM,
                     YUM_t stYUM,
                     float fLaw,
+                    int** ppiOffsetTab,
                     int* piMaxOffset)
 {
     int i = 0;
@@ -1543,18 +1726,6 @@ int YAPP_CalcDelays(double dDM,
     float fF2 = 0.0;
     double dDelay = 0.0;
     float fFMaxCalc = stYUM.fFMax;     /* reference frequency */
-
-    g_piOffsetTab = (int *) YAPP_Malloc((size_t) stYUM.iNumChans,
-                                        sizeof(int),
-                                        YAPP_FALSE);
-    if (NULL == g_piOffsetTab)
-    {
-        (void) fprintf(stderr,
-                       "ERROR: Memory allocation failed! %s!\n",
-                       strerror(errno));
-        YAPP_CleanUp();
-        return YAPP_RET_ERROR;
-    }
 
     /* calculate quadratic delays */
     /* NOTE: delay may not be 0 for the highest frequency channel,
@@ -1586,17 +1757,17 @@ int YAPP_CalcDelays(double dDM,
                          * (((double) 1.0 / pow(fF1, fLaw))
                             - ((double) 1.0 / pow(fF2, fLaw)))
                          * dDM;    /* in ms */
-                g_piOffsetTab[i] = (int) (dDelay / stYUM.dTSamp);
+                (*ppiOffsetTab)[i] = (int) (dDelay / stYUM.dTSamp);
 #ifdef DEBUG
                 (void) fprintf(pFFileDelaysQuad,
                                "%d %g %d\n",
                                i,
                                dDelay,
-                               g_piOffsetTab[i]);
+                               (*ppiOffsetTab)[i]);
 #endif
                 fF2 -= stYUM.fChanBW;
             }
-            *piMaxOffset = g_piOffsetTab[0];
+            *piMaxOffset = (*ppiOffsetTab)[0];
         }
         else
         {
@@ -1608,17 +1779,17 @@ int YAPP_CalcDelays(double dDM,
                          * (((double) 1.0 / pow(fF1, fLaw))
                             - ((double) 1.0 / pow(fF2, fLaw)))
                          * dDM;    /* in ms */
-                g_piOffsetTab[i] = (int) (dDelay / stYUM.dTSamp);
+                (*ppiOffsetTab)[i] = (int) (dDelay / stYUM.dTSamp);
 #ifdef DEBUG
                 (void) fprintf(pFFileDelaysQuad,
                                "%d %g %d\n",
                                i,
                                dDelay,
-                               g_piOffsetTab[i]);
+                               (*ppiOffsetTab)[i]);
 #endif
                 fF2 -= stYUM.fChanBW;
             }
-            *piMaxOffset = g_piOffsetTab[stYUM.iNumChans-1];
+            *piMaxOffset = (*ppiOffsetTab)[stYUM.iNumChans-1];
         }
     }
     else
@@ -1633,17 +1804,17 @@ int YAPP_CalcDelays(double dDM,
                          * (((double) 1.0 / pow(fF1, fLaw))
                             - ((double) 1.0 / pow(fF2, fLaw)))
                          * dDM;    /* in ms */
-                g_piOffsetTab[i] = (int) (dDelay / stYUM.dTSamp);
+                (*ppiOffsetTab)[i] = (int) (dDelay / stYUM.dTSamp);
 #ifdef DEBUG
                 (void) fprintf(pFFileDelaysQuad,
                                "%d %g %d\n",
                                i,
                                dDelay,
-                               g_piOffsetTab[i]);
+                               (*ppiOffsetTab)[i]);
 #endif
                 fF2 -= stYUM.fChanBW;
             }
-            *piMaxOffset = g_piOffsetTab[stYUM.iNumChans-1];
+            *piMaxOffset = (*ppiOffsetTab)[stYUM.iNumChans-1];
         }
         else
         {
@@ -1655,17 +1826,17 @@ int YAPP_CalcDelays(double dDM,
                          * (((double) 1.0 / pow(fF1, fLaw))
                             - ((double) 1.0 / pow(fF2, fLaw)))
                          * dDM;    /* in ms */
-                g_piOffsetTab[i] = (int) (dDelay / stYUM.dTSamp);
+                (*ppiOffsetTab)[i] = (int) (dDelay / stYUM.dTSamp);
 #ifdef DEBUG
                 (void) fprintf(pFFileDelaysQuad,
                                "%d %g %d\n",
                                i,
                                dDelay,
-                               g_piOffsetTab[i]);
+                               (*ppiOffsetTab)[i]);
 #endif
                 fF2 -= stYUM.fChanBW;
             }
-            *piMaxOffset = g_piOffsetTab[0];
+            *piMaxOffset = (*ppiOffsetTab)[0];
         }
     }
 #ifdef DEBUG

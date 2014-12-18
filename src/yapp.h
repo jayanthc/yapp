@@ -539,14 +539,16 @@ double YAPP_CalcThresholdInSigmas(int iTimeSamps);
 /**
  * Calculate dispersion delays for correction.
  *
- * @param[in]   dDM         DM in pc cm^-3
- * @param[in]   stYUM       Metadata
- * @param[in]   fLaw        Dispersion law
- * @param[out]  piMaxOffset Maximum correction in terms of samples
+ * @param[in]   dDM             DM in pc cm^-3
+ * @param[in]   stYUM           Metadata
+ * @param[in]   fLaw            Dispersion law
+ * @param[out]  ppiOffsetTab    Delay table
+ * @param[out]  piMaxOffset     Maximum correction in terms of samples
  */
 int YAPP_CalcDelays(double dDM,
                     YUM_t stYUM,
                     float fLaw,
+                    int** ppiOffsetTab,
                     int* piMaxOffset);
 
 /**
