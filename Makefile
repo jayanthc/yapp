@@ -355,8 +355,8 @@ clean:
 	$(DELCMD) $(IDIR)/yapp_stacktim.o
 	$(DELCMD) $(IDIR)/yapp_stackfil.o
 	$(DELCMD) $(IDIR)/yapp_split.o
-	$(DELCMD) $(IDIR)/yapp_makeaudio.o
 	$(DELCMD) $(IDIR)/yapp_stat.o
+#	$(DELCMD) $(IDIR)/yapp_makeaudio.o
 #	$(DELCMD) $(IDIR)/set_colours.o
 #	$(DELCMD) $(IDIR)/yapp_dedisplaw.o
 #	$(DELCMD) $(IDIR)/reorderdds.o
