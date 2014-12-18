@@ -2351,7 +2351,7 @@ float YAPP_CalcRMS(float *pfBuf,
 
     for (i = iOffset; i < iLength; i += iStride)
     {
-        fRMS += powf((pfBuf[i] - fMean), 2);
+        fRMS += powf(pfBuf[i] - fMean, 2);
     }
     fRMS /= (iLength - 1);
     fRMS = sqrtf(fRMS);

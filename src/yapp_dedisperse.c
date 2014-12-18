@@ -519,7 +519,7 @@ int main(int argc, char *argv[])
 
     if (iBlockSize == iMaxOffset)
     {
-        if (lBytesToProc < (iBlockSize * iNumChans * sizeof(float)))
+        if (lBytesToProc < (iBlockSize * iNumChans * fSampSize))
         {
             /* if the block size is equivalent to the maximum delay that is to
                be applied, and if the number of bytes to be processed is less
@@ -530,7 +530,7 @@ int main(int argc, char *argv[])
             (void) printf("WARNING: Amount of data to be processed is less "
                           "than the calculated maximum offset! Will process "
                           "more data than what was requested.\n");
-            lBytesToProc = iBlockSize * iNumChans * sizeof(float);
+            lBytesToProc = iBlockSize * iNumChans * fSampSize;
         }
     }
     else
@@ -538,7 +538,7 @@ int main(int argc, char *argv[])
         /* here, iBlockSize > iMaxOffset */
         assert(iBlockSize > iMaxOffset);
 
-        if (lBytesToProc < (iMaxOffset * iNumChans * sizeof(float)))
+        if (lBytesToProc < (iMaxOffset * iNumChans * fSampSize))
         {
             /* if the number of bytes to be processed is less than the maximum
                offset, de-dispersion will be affected, as we don't have more
@@ -547,21 +547,21 @@ int main(int argc, char *argv[])
             (void) printf("WARNING: Amount of data to be processed is less "
                           "than the calculated maximum offset! Will process "
                           "more data than what was requested.\n");
-            lBytesToProc = iMaxOffset * iNumChans *sizeof(float);
+            lBytesToProc = iMaxOffset * iNumChans * fSampSize;
             (void) printf("WARNING: Amount of data to be processed is less "
                           "than the block size! Adjusting block size "
                           "accordingly.\n");
-            iBlockSize = lBytesToProc / (iNumChans * sizeof(float));
+            iBlockSize = iMaxOffset;
         }
         else
         {
-            if (lBytesToProc < (iBlockSize * iNumChans * sizeof(float)))
+            if (lBytesToProc < (iBlockSize * iNumChans * fSampSize))
             {
                 /* here, iMaxOffset <=(eqv) lBytesToProc <(eqv) iBlockSize */
                 (void) printf("WARNING: Amount of data to be processed is "
                               "less than the block size! Adjusting block size "
                               "accordingly.\n");
-                iBlockSize = lBytesToProc / (iNumChans * sizeof(float));
+                iBlockSize = lBytesToProc / (iNumChans * fSampSize);
             }
         }
     }
@@ -640,16 +640,31 @@ int main(int argc, char *argv[])
         /* compute the number of channels per sub-band. iNumChans is a multiple
            of iNumSubBands */
         iChansPerSubBand = iNumChans / iNumSubBands;
-        iStartChan = iSubBand * iChansPerSubBand;
-        iEndChan = (iSubBand + 1) * iChansPerSubBand;
-        stYUMOut.iNumGoodChans = iChansPerSubBand;
-        for (i = 0; i < iNumChans; ++i)
+        if (stYUM.cIsBandFlipped)
         {
-            if (!((i >= iStartChan) && (i < iEndChan)))
+            iStartChan = (iNumSubBands - iSubBand) * iChansPerSubBand;
+            iEndChan = (iNumSubBands - (iSubBand + 1)) * iChansPerSubBand;
+            for (i = 0; i < iNumChans; ++i)
             {
-                stYUM.pcIsChanGood[i] = YAPP_FALSE;
+                if (!((i >= iEndChan) && (i < iStartChan)))
+                {
+                    stYUM.pcIsChanGood[i] = YAPP_FALSE;
+                }
             }
         }
+        else
+        {
+            iStartChan = iSubBand * iChansPerSubBand;
+            iEndChan = (iSubBand + 1) * iChansPerSubBand;
+            for (i = 0; i < iNumChans; ++i)
+            {
+                if (!((i >= iStartChan) && (i < iEndChan)))
+                {
+                    stYUM.pcIsChanGood[i] = YAPP_FALSE;
+                }
+            }
+        }
+        stYUMOut.iNumGoodChans = iChansPerSubBand;
     }
 
     fStatBW = stYUMOut.iNumGoodChans * fChanBW;  /* in MHz */
@@ -981,8 +996,16 @@ int main(int argc, char *argv[])
         {
             stYUMOut.iNumChans = iChansPerSubBand;
             stYUMOut.fBW = stYUMOut.iNumChans * stYUMOut.fChanBW;
-            stYUMOut.fFMin = stYUM.fFMin
-                             + (iStartChan * stYUMOut.fChanBW);
+            if (stYUM.cIsBandFlipped)
+            {
+                stYUMOut.fFMin = stYUM.fFMax
+                                 - (iStartChan * stYUMOut.fChanBW);
+            }
+            else
+            {
+                stYUMOut.fFMin = stYUM.fFMin
+                                 + (iStartChan * stYUMOut.fChanBW);
+            }
             stYUMOut.fFMax = stYUMOut.fFMin
                             + ((stYUMOut.iNumChans - 1) * stYUMOut.fChanBW);
             if (0 == (stYUMOut.iNumChans % 2))   /* even number of channels */
@@ -1450,25 +1473,59 @@ int main(int argc, char *argv[])
         {
             if (0 == iDecFac)
             {
-                (void) fwrite(pfPriBuf,
-                              sizeof(float),
-                              iNumChans * iBlockSize,
-                              pFDedispData);
+                /* kludgy fix to the last block problem */
+                if (!cIsLastBlock)
+                {
+                    (void) fwrite(pfPriBuf,
+                                  sizeof(float),
+                                  iNumChans * iBlockSize,
+                                  pFDedispData);
+                }
+                else
+                {
+                    (void) fwrite(pfPriBuf,
+                                  sizeof(float),
+                                  iNumChans * (iBlockSize - iMaxOffset),
+                                  pFDedispData);
+                }
             }
             else
             {
-                (void) fwrite(g_pfDecDedispData,
-                              sizeof(float),
-                              iOutNumChans * iBlockSize,
-                              pFDedispData);
+                /* kludgy fix to the last block problem */
+                if (!cIsLastBlock)
+                {
+                    (void) fwrite(g_pfDecDedispData,
+                                  sizeof(float),
+                                  iOutNumChans * iBlockSize,
+                                  pFDedispData);
+                }
+                else
+                {
+                    (void) fwrite(g_pfDecDedispData,
+                                  sizeof(float),
+                                  iOutNumChans * (iBlockSize - iMaxOffset),
+                                  pFDedispData);
+                }
+
             }
         }
         else
         {
-            (void) fwrite(g_pfDedispData,
-                          sizeof(float),
-                          iBlockSize,
-                          pFDedispData);
+            /* kludgy fix to the last block problem */
+            if (!cIsLastBlock)
+            {
+                (void) fwrite(g_pfDedispData,
+                              sizeof(float),
+                              iBlockSize,
+                              pFDedispData);
+            }
+            else
+            {
+                (void) fwrite(g_pfDedispData,
+                              sizeof(float),
+                              iBlockSize - iMaxOffset,
+                              pFDedispData);
+            }
         }
 
         if (cHasGraphics)
