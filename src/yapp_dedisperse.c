@@ -642,7 +642,7 @@ int main(int argc, char *argv[])
         iChansPerSubBand = iNumChans / iNumSubBands;
         if (stYUM.cIsBandFlipped)
         {
-            iStartChan = (iNumSubBands - iSubBand) * iChansPerSubBand;
+            iStartChan = ((iNumSubBands - iSubBand) * iChansPerSubBand) - 1;
             iEndChan = (iNumSubBands - (iSubBand + 1)) * iChansPerSubBand;
             for (i = 0; i < iNumChans; ++i)
             {
