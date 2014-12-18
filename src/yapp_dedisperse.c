@@ -651,7 +651,6 @@ int main(int argc, char *argv[])
             if (!((i >= iStartChan) && (i < iEndChan)))
             {
                 stYUM.pcIsChanGood[i] = YAPP_FALSE;
-                --stYUMOut.iNumGoodChans;
             }
         }
     }
