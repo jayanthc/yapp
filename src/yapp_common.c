@@ -1712,13 +1712,6 @@ int YAPP_ReadData(FILE *pFData,
     int iReadItems = 0;
     int i = 0;
 
-    /* kludgy way to reset the static variable cIsFirst */
-    if (NULL == pFData)
-    {
-        cIsFirst = YAPP_TRUE;
-        return YAPP_RET_SUCCESS;
-    }
-
     if (cIsFirst)
     {
         /* allocate memory for the byte buffer, based on the total number of
@@ -2303,11 +2296,6 @@ int YAPP_CalcStats(char *pcFileData, int iFormat, YUM_t *pstYUM)
     pstYUM->fMean /= iReadBlockCount;
     pstYUM->fRMS /= (pstYUM->iTimeSamps - 1);
     pstYUM->fRMS = sqrtf(pstYUM->fRMS);
-
-    /* kludgy reset of static variable cIsFirst in YAPP_ReadData() */
-    /* NOTE: this could be done at the beginning of any read loop, but is done
-             here to obviate adding code to all files containing read loops */
-    (void) YAPP_ReadData(NULL, NULL, 0.0, 0);
 
     /* close the file, it may be opened later for reading data */
     (void) fclose(g_pFData);
