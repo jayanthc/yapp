@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
     struct stat stFileStats = {0};
     long lBytesToSkip = 0;
     long lBytesToProc = 0;
-    int iTimeSampsSkip = 0;
+    int iTimeSampsToSkip = 0;
     int iTimeSampsToProc = 0;
     char cIsFil = YAPP_TRUE;
     int iNTaps = 1;                       /* 1 if no PFB, NUM_TAPS if PFB */
@@ -149,12 +149,12 @@ int main(int argc, char *argv[])
                 PrintUsage(pcProgName);
                 return YAPP_RET_SUCCESS;
 
-            case 's':   /* -s or --skip-time */
+            case 's':   /* -s or --skip */
                 /* set option */
                 dDataSkipTime = atof(optarg);
                 break;
 
-            case 'p':   /* -p or --proc-time */
+            case 'p':   /* -p or --proc */
                 /* set option */
                 dDataProcTime = atof(optarg);
                 break;
@@ -305,12 +305,22 @@ int main(int argc, char *argv[])
                        "data!\n");
     }
 
-    lBytesToSkip = (long) floor((dDataSkipTime / dTSampInSec)
+    lBytesToSkip = (long) floor(dDataSkipTime / dTSampInSec)
                                                     /* number of samples */
-                           * fSampSize);
-    lBytesToProc = (long) floor((dDataProcTime / dTSampInSec)
+                          * fSampSize;
+    if (fSampSize >= 2.0)
+    {
+        /* will be true for fSampSize = 0.5 and 1.0 */
+        assert(0 == lBytesToSkip % (int) fSampSize);
+    }
+    lBytesToProc = (long) floor(dDataProcTime / dTSampInSec)
                                                     /* number of samples */
-                           * fSampSize);
+                          * fSampSize;
+    if (fSampSize >= 2.0)
+    {
+        /* will be true for fSampSize = 0.5 and 1.0 */
+        assert(0 == lBytesToProc % (int) fSampSize);
+    }
 
     if (lBytesToSkip >= stYUM.lDataSizeTotal)
     {
@@ -331,16 +341,16 @@ int main(int argc, char *argv[])
                       lBytesToProc);
     }
 
-    iTimeSampsSkip = (int) (lBytesToSkip / fSampSize);
+    iTimeSampsToSkip = (int) (lBytesToSkip / fSampSize);
     (void) printf("Skipping\n"
                   "    %ld of %ld bytes\n"
                   "    %d of %d time samples\n"
                   "    %.10g of %.10g seconds\n",
                   lBytesToSkip,
                   lDataSizeTotal,
-                  iTimeSampsSkip,
+                  iTimeSampsToSkip,
                   iTimeSamps,
-                  (iTimeSampsSkip * dTSampInSec),
+                  (iTimeSampsToSkip * dTSampInSec),
                   (iTimeSamps * dTSampInSec));
 
     /* truncate lBytesToProc to (X * iNTaps * iNFFT * NUM_BYTES_PER_SAMP)
