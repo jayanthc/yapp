@@ -2,6 +2,8 @@ TODO
 ----
 
 
+-2. yapp_viewdata -s X flips band mid-way.
+-1. yapp_smooth shows -nan as mean.
 0. If file size is too small and DM is too large: negative skip values.
 1. Inconsistencies in number of channels for .tim/.dat files - 1 or Nchan?
 2. Program to merge multiple .fil files
