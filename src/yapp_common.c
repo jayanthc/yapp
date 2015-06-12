@@ -1720,15 +1720,12 @@ int YAPP_ReadData(FILE *pFData,
     int i = 0;
 
     //TODO: check if this is needed
-#if 0
     /* kludgy way to reset the static variable cIsFirst */
     if (NULL == pFData)
     {
-        printf("resetting isfirst ...!\n");
         cIsFirst = YAPP_TRUE;
         return YAPP_RET_SUCCESS;
     }
-#endif
 
     if (cIsFirst)
     {
@@ -2389,11 +2386,11 @@ int YAPP_CalcStats(char *pcFileData, int iFormat, YUM_t *pstYUM)
     pstYUM->fRMS /= (pstYUM->iTimeSamps - 1);
     pstYUM->fRMS = sqrtf(pstYUM->fRMS);
 
+    //TODO: check if this is needed
     /* kludgy reset of static variable cIsFirst in YAPP_ReadData() */
     /* NOTE: this could be done at the beginning of any read loop, but is done
              here to obviate adding code to all files containing read loops */
-    //TODO: check if this is needed
-    //(void) YAPP_ReadData(NULL, NULL, 0.0, 0);
+    (void) YAPP_ReadData(NULL, NULL, 0.0, 0);
 
     /* close the file, it may be opened later for reading data */
     (void) fclose(g_pFData);
