@@ -490,14 +490,24 @@ int main(int argc, char *argv[])
                        "data!\n");
     }
 
-    lBytesToSkip = (long) floor((dDataSkipTime / dTSampInSec)
+    lBytesToSkip = (long) floor(dDataSkipTime / dTSampInSec)
                                                     /* number of samples */
                           * iNumChans
-                          * fSampSize);
-    lBytesToProc = (long) floor((dDataProcTime / dTSampInSec)
+                          * fSampSize;
+    if (fSampSize >= 2.0)
+    {
+        /* will be true for fSampSize = 0.5 and 1.0 */
+        assert(0 == lBytesToSkip % (int) fSampSize);
+    }
+    lBytesToProc = (long) floor(dDataProcTime / dTSampInSec)
                                                     /* number of samples */
                           * iNumChans
-                          * fSampSize);
+                          * fSampSize;
+    if (fSampSize >= 2.0)
+    {
+        /* will be true for fSampSize = 0.5 and 1.0 */
+        assert(0 == lBytesToProc % (int) fSampSize);
+    }
 
     if (lBytesToSkip >= lDataSizeTotal)
     {

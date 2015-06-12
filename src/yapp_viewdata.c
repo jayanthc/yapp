@@ -481,9 +481,9 @@ int main(int argc, char *argv[])
     if ((YAPP_FORMAT_FIL == iFormat) || (YAPP_FORMAT_DTS_TIM == iFormat))
     {
         /* skip the header */
-        fseek(g_pFData, (long) stYUM.iHeaderLen, SEEK_SET);
+        (void) fseek(g_pFData, (long) stYUM.iHeaderLen, SEEK_SET);
         /* skip data, if any are to be skipped */
-        fseek(g_pFData, lBytesToSkip, SEEK_CUR);
+        (void) fseek(g_pFData, lBytesToSkip, SEEK_CUR);
     }
     else
     {
@@ -607,11 +607,6 @@ int main(int argc, char *argv[])
         }
         --iNumReads;
         ++iReadBlockCount;
-
-        for (int blah = 0; blah < iReadItems; ++blah)
-        {
-            //printf("%g\n", g_pfBuf[blah]);
-        }
 
         if ((iReadItems < iTotSampsPerBlock)    /* usually, the last block */
             || (0 == iNumReads))                /* definitely the last block */

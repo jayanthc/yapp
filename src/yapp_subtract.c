@@ -256,12 +256,22 @@ int main(int argc, char *argv[])
                        "data!\n");
     }
 
-    lBytesToSkip = (long) floor((dDataSkipTime / dTSampInSec)
+    lBytesToSkip = (long) floor(dDataSkipTime / dTSampInSec)
                                                     /* number of samples */
-                           * stYUM.fSampSize);
-    lBytesToProc = (long) floor((dDataProcTime / dTSampInSec)
+                          * stYUM.fSampSize;
+    if (stYUM.fSampSize >= 2.0)
+    {
+        /* will be true for fSampSize = 0.5 and 1.0 */
+        assert(0 == lBytesToSkip % (int) stYUM.fSampSize);
+    }
+    lBytesToProc = (long) floor(dDataProcTime / dTSampInSec)
                                                     /* number of samples */
-                           * stYUM.fSampSize);
+                          * stYUM.fSampSize;
+    if (stYUM.fSampSize >= 2.0)
+    {
+        /* will be true for fSampSize = 0.5 and 1.0 */
+        assert(0 == lBytesToProc % (int) stYUM.fSampSize);
+    }
 
     if (lBytesToSkip >= stYUM.lDataSizeTotal)
     {
