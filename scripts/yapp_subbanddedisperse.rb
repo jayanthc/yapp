@@ -87,16 +87,14 @@ if extName != ".fil" and extName != ".spec"
   exit
 end
 baseName = File.basename(file, extName)
-inputFileGlob = File.dirname(file) + "/" + baseName                           \
-                + ".dm" + sprintf("%g", dm) + ".band*.tim"
+inputFileGlob = baseName + ".dm" + sprintf("%g", dm) + ".band*.tim"
 
 # perform optional smoothing
 if width != 0.0
   %x[ls #{inputFileGlob} | xargs -n 1 yapp_smooth -w #{width}]
 
   # update inputFileGlob for stacking
-  inputFileGlob = File.dirname(file) + "/" + baseName                         \
-                  + ".dm" + sprintf("%g", dm) + ".band*.smooth"               \
+  inputFileGlob = baseName + ".dm" + sprintf("%g", dm) + ".band*.smooth"      \
                   + sprintf("%g", width) + ".tim"
 end
 
