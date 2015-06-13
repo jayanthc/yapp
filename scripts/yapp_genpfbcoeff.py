@@ -7,7 +7,7 @@
 # Based on vegas_gencoeff.py
 # Created by Jayanth Chennamangalam based on code by Sean McHugh, UCSB
 
-"""Usage: test.py [options]
+"""Usage: yapp_genpfbcoeff.py [options]
 
 Options:
     -h --help                         Display this usage information

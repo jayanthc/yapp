@@ -768,7 +768,7 @@ void PrintUsage(const char *pcProgName)
     (void) printf("processed\n");
     (void) printf("                                        ");
     (void) printf("(default is all)\n");
-    (void) printf("    -w  --width                         ");
+    (void) printf("    -w  --width <width>                 ");
     (void) printf("Width of boxcar window in milliseconds\n");
     (void) printf("                                        ");
     (void) printf("(default is 1 ms)\n");
