@@ -71,6 +71,7 @@ LFLAGS_SNDFILE = -lsndfile
 
 # directories
 SRCDIR = src
+SCRIPTDIR = scripts
 UTILDIR = utilities
 MANDIR = man
 IDIR = src
@@ -328,6 +329,9 @@ endif
 install:
 	@echo Copying binaries...
 	cp $(BINDIR)/* $(BININSTALLDIR)
+	@echo DONE
+	@echo Copying scripts...
+	cp $(SCRIPTDIR)/* $(BININSTALLDIR)
 	@echo DONE
 	@echo Copying man pages...
 	cp $(MANDIR)/*.1 $(MANINSTALLDIR)

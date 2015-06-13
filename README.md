@@ -32,6 +32,7 @@ YAPP includes the following scripts:
 * `yapp_stackprof.py` : Stacks folded profiles from multiple bands to show a plot of phase versus frequency.
 * `yapp_addprof.py` : Add [calibrated] profiles from two polarisations.
 * `yapp_viewcand.rb` : Converts prepfold candidate plots in PS format to PNG, and generates a set of HTML pages displaying a tiled set of plots.
+* `yapp_subbanddedisperse.rb`: Creates a sub-band-dedispersed filterbank file from a raw filterbank file and optionally does smoothing.
 
 The supported file formats are are DAS `.spec`, SIGPROC `.fil`, and SIGPROC `.tim`, with limited support for DAS `.dds`, PSRFITS, and PRESTO `.dat`.
 
