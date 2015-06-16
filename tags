@@ -15,6 +15,8 @@ CMAP_BONE	src/colourmap.h	/^    CMAP_BONE,$/;"	e	enum:CMap_e
 CMAP_BURD	src/colourmap.h	/^    CMAP_BURD,$/;"	e	enum:CMap_e
 CMAP_COOL	src/colourmap.h	/^    CMAP_COOL,$/;"	e	enum:CMap_e
 CMAP_COPPER	src/colourmap.h	/^    CMAP_COPPER,$/;"	e	enum:CMap_e
+CMAP_CUBEHELIX	src/colourmap.h	/^    CMAP_CUBEHELIX,$/;"	e	enum:CMap_e
+CMAP_CUBEHELIX_INV	src/colourmap.h	/^    CMAP_CUBEHELIX_INV,$/;"	e	enum:CMap_e
 CMAP_GRAY	src/colourmap.h	/^    CMAP_GRAY,$/;"	e	enum:CMap_e
 CMAP_GRAY_INV	src/colourmap.h	/^    CMAP_GRAY_INV,$/;"	e	enum:CMap_e
 CMAP_HOT	src/colourmap.h	/^    CMAP_HOT,$/;"	e	enum:CMap_e
@@ -24,22 +26,24 @@ CMAP_LEVELS	src/colourmap.h	36;"	d
 CMAP_PINK	src/colourmap.h	/^    CMAP_PINK,$/;"	e	enum:CMap_e
 CMAP_RDBU	src/colourmap.h	/^    CMAP_RDBU,$/;"	e	enum:CMap_e
 CMAP_SPRING	src/colourmap.h	/^    CMAP_SPRING,$/;"	e	enum:CMap_e
-CMAP_STR_AUTUMN	src/colourmap.h	59;"	d
-CMAP_STR_BLUE	src/colourmap.h	60;"	d
-CMAP_STR_BONE	src/colourmap.h	61;"	d
-CMAP_STR_BURD	src/colourmap.h	74;"	d
-CMAP_STR_COOL	src/colourmap.h	62;"	d
-CMAP_STR_COPPER	src/colourmap.h	63;"	d
-CMAP_STR_GRAY	src/colourmap.h	64;"	d
-CMAP_STR_GRAY_INV	src/colourmap.h	65;"	d
-CMAP_STR_HOT	src/colourmap.h	66;"	d
-CMAP_STR_HOT_INV	src/colourmap.h	67;"	d
-CMAP_STR_JET	src/colourmap.h	68;"	d
-CMAP_STR_PINK	src/colourmap.h	69;"	d
-CMAP_STR_RDBU	src/colourmap.h	73;"	d
-CMAP_STR_SPRING	src/colourmap.h	70;"	d
-CMAP_STR_SUMMER	src/colourmap.h	71;"	d
-CMAP_STR_WINTER	src/colourmap.h	72;"	d
+CMAP_STR_AUTUMN	src/colourmap.h	61;"	d
+CMAP_STR_BLUE	src/colourmap.h	62;"	d
+CMAP_STR_BONE	src/colourmap.h	63;"	d
+CMAP_STR_BURD	src/colourmap.h	76;"	d
+CMAP_STR_COOL	src/colourmap.h	64;"	d
+CMAP_STR_COPPER	src/colourmap.h	65;"	d
+CMAP_STR_CUBEHELIX	src/colourmap.h	77;"	d
+CMAP_STR_CUBEHELIX_INV	src/colourmap.h	78;"	d
+CMAP_STR_GRAY	src/colourmap.h	66;"	d
+CMAP_STR_GRAY_INV	src/colourmap.h	67;"	d
+CMAP_STR_HOT	src/colourmap.h	68;"	d
+CMAP_STR_HOT_INV	src/colourmap.h	69;"	d
+CMAP_STR_JET	src/colourmap.h	70;"	d
+CMAP_STR_PINK	src/colourmap.h	71;"	d
+CMAP_STR_RDBU	src/colourmap.h	75;"	d
+CMAP_STR_SPRING	src/colourmap.h	72;"	d
+CMAP_STR_SUMMER	src/colourmap.h	73;"	d
+CMAP_STR_WINTER	src/colourmap.h	74;"	d
 CMAP_SUMMER	src/colourmap.h	/^    CMAP_SUMMER,$/;"	e	enum:CMap_e
 CMAP_WINTER	src/colourmap.h	/^    CMAP_WINTER,$/;"	e	enum:CMap_e
 CMap_e	src/colourmap.h	/^typedef enum CMap_e$/;"	g
@@ -48,8 +52,8 @@ CalcOffset	src/yapp_add.c	/^int CalcOffset(float fFMax, float fFMin, double dTSa
 CleanUp	src/yapp_ft.c	/^void CleanUp(int iNTaps)$/;"	f
 CopyDataForFFT	src/yapp_ft.c	/^int CopyDataForFFT(int iNFFT)$/;"	f
 DEF_ACC	src/yapp_ft.h	24;"	d
-DEF_CMAP	src/colourmap.h	76;"	d
-DEF_CMAP_STR	src/colourmap.h	77;"	d
+DEF_CMAP	src/colourmap.h	80;"	d
+DEF_CMAP_STR	src/colourmap.h	81;"	d
 DEF_FOLD_PULSES	src/yapp.h	157;"	d
 DEF_FORMAT	src/yapp.h	150;"	d
 DEF_LAW	src/yapp.h	149;"	d
@@ -441,6 +445,7 @@ g_pcIsTimeGood	src/yapp_fold.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	src/yapp_makerfimask.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	src/yapp_stat.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	src/yapp_viewdata.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
+g_pcVersion	src/yapp_version.c	/^const char *g_pcVersion = "YAPP-DEV-3.5.14-beta-20150616-144908";$/;"	v
 g_pdDM	src/yapp_dedisplaw.c	/^double *g_pdDM = NULL;$/;"	v
 g_pdDelayTab	src/yapp_dedisplaw.c	/^double *g_pdDelayTab = NULL;$/;"	v
 g_pdMaxDelayTab	src/yapp_dedisplaw.c	/^double *g_pdMaxDelayTab = NULL;$/;"	v
