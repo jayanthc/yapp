@@ -7,6 +7,7 @@
  *     -h  --help                           Display this usage information
  *     -s  --skip <time>                    The length of data in seconds, to
  *                                          be skipped
+ *                                          (default is 0 s)
  *     -p  --proc <time>                    The length of data in seconds, to
  *                                          be processed
  *                                          (default is all)
@@ -112,7 +113,7 @@ int main(int argc, char *argv[])
     long int lBytesToSkip = 0;
     long int lBytesToProc = 0;
     int iTimeSamps = 0;
-    int iTimeSampsSkip = 0;
+    int iTimeSampsToSkip = 0;
     int iTimeSampsToProc = 0;
     int iBlockSize = DEF_SIZE_BLOCK;
     int iNumReads = 0;
@@ -588,20 +589,20 @@ int main(int argc, char *argv[])
                       lBytesToSkip);
     }
 
-    iTimeSampsSkip = (int) (lBytesToSkip / (iNumChans * fSampSize));
+    iTimeSampsToSkip = (int) (lBytesToSkip / (iNumChans * fSampSize));
     (void) printf("Skipping\n"
                   "    %ld of %ld bytes\n"
                   "    %d of %d time samples\n"
                   "    %.10g of %.10g seconds\n",
                   lBytesToSkip,
                   lDataSizeTotal,
-                  iTimeSampsSkip,
+                  iTimeSampsToSkip,
                   stYUM.iTimeSamps,
-                  (iTimeSampsSkip * dTSampInSec),
+                  (iTimeSampsToSkip * dTSampInSec),
                   (stYUM.iTimeSamps * dTSampInSec));
 
     iTimeSampsToProc = (int) (lBytesToProc / (iNumChans * fSampSize));
-    iNumReads = (int) ceilf(((float) iTimeSampsToProc) / iBlockSize);
+    iNumReads = (int) ceilf((float) iTimeSampsToProc / iBlockSize);
 
     /* optimisation - store some commonly used values in variables */
     iTotSampsPerBlock = iNumChans * iBlockSize;
@@ -1570,8 +1571,8 @@ int main(int argc, char *argv[])
             cpgswin(g_pfXAxis[0], g_pfXAxis[iBlockSize-1], fDataMin, fDataMax);
             cpgbox("BCNST", 0.0, 0, "BCNST", 0.0, 0);
             cpglab("Time - Start Time (s)",
-                   "Total Power",
-                   "Dedipsersed Time Series");
+                   "Total Power (arbitrary units)",
+                   "Dedispersed Time Series");
             cpgsci(PG_CI_PLOT);
             cpgline(iBlockSize, g_pfXAxis, g_pfDedispData);
             cpgsci(PG_CI_DEF);
@@ -1770,7 +1771,7 @@ void PrintUsage(const char *pcProgName)
     (void) printf("                                        ");
     (void) printf("(default is 'jet')\n");
     (void) printf("    -i  --invert                        ");
-    (void) printf("Invert the background and foreground\n");
+    (void) printf("Invert background and foreground\n");
     (void) printf("                                        ");
     (void) printf("colours in plots\n");
     (void) printf("    -e  --non-interactive               ");

@@ -5,11 +5,11 @@
  * @verbatim
  * Usage: yapp_viewdata [options] <data-file>
  *     -h  --help                           Display this usage information
- *     -s  --skip <time>                    The length of data in seconds, to be
- *                                          skipped
+ *     -s  --skip <time>                    The length of data in seconds, to
+ *                                          be skipped
  *                                          (default is 0 s)
- *     -p  --proc <time>                    The length of data in seconds, to be
- *                                          processed
+ *     -p  --proc <time>                    The length of data in seconds, to
+ *                                          be processed
  *                                          (default is all)
  *     -n  --nsamp <samples>                Number of samples read in one block
  *                                          (default is 4096 samples)
@@ -22,8 +22,8 @@
  *                                          respect to the first sample
  *     -m  --colour-map <name>              Colour map for plotting
  *                                          (default is 'jet')
- *     -i  --invert                         Invert the background and foreground
- *                                          colours in plots
+ *     -i  --invert                         Invert the background and
+ *                                          foreground colours in plots
  *     -e  --non-interactive                Run in non-interactive mode
  *     -v  --version                        Display the version @endverbatim
  *
