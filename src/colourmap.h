@@ -34,7 +34,7 @@
 
 #define LEN_GENSTRING       256
 #define CMAP_LEVELS         64
-#define NUM_CMAPS           16
+#define NUM_CMAPS           18
 
 typedef enum CMap_e
 {
@@ -54,27 +54,31 @@ typedef enum CMap_e
     CMAP_WINTER,
     CMAP_RDBU,
     CMAP_BURD,
+    CMAP_CUBEHELIX,
+    CMAP_CUBEHELIX_INV,
 } CMap_t;
 
-#define CMAP_STR_AUTUMN     "autumn"
-#define CMAP_STR_BLUE       "blue"
-#define CMAP_STR_BONE       "bone"
-#define CMAP_STR_COOL       "cool"
-#define CMAP_STR_COPPER     "copper"
-#define CMAP_STR_GRAY       "gray"
-#define CMAP_STR_GRAY_INV   "gray-inv"
-#define CMAP_STR_HOT        "hot"
-#define CMAP_STR_HOT_INV    "hot-inv"
-#define CMAP_STR_JET        "jet"
-#define CMAP_STR_PINK       "pink"
-#define CMAP_STR_SPRING     "spring"
-#define CMAP_STR_SUMMER     "summer"
-#define CMAP_STR_WINTER     "winter"
-#define CMAP_STR_RDBU       "RdBu"
-#define CMAP_STR_BURD       "BuRd"
+#define CMAP_STR_AUTUMN         "autumn"
+#define CMAP_STR_BLUE           "blue"
+#define CMAP_STR_BONE           "bone"
+#define CMAP_STR_COOL           "cool"
+#define CMAP_STR_COPPER         "copper"
+#define CMAP_STR_GRAY           "gray"
+#define CMAP_STR_GRAY_INV       "gray-inv"
+#define CMAP_STR_HOT            "hot"
+#define CMAP_STR_HOT_INV        "hot-inv"
+#define CMAP_STR_JET            "jet"
+#define CMAP_STR_PINK           "pink"
+#define CMAP_STR_SPRING         "spring"
+#define CMAP_STR_SUMMER         "summer"
+#define CMAP_STR_WINTER         "winter"
+#define CMAP_STR_RDBU           "RdBu"
+#define CMAP_STR_BURD           "BuRd"
+#define CMAP_STR_CUBEHELIX      "cubehelix"
+#define CMAP_STR_CUBEHELIX_INV  "cubehelix-inv"
 
-#define DEF_CMAP            CMAP_JET
-#define DEF_CMAP_STR        "jet"
+#define DEF_CMAP                CMAP_JET
+#define DEF_CMAP_STR            "jet"
 
 int SetColourMap(int iCMap, float fColMin, float fColMax);
 int GetColourMapFromName(char *pcCMapName);
