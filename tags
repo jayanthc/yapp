@@ -187,6 +187,7 @@ PrintUsage	src/yapp_fold.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	src/yapp_ft.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	src/yapp_makeaudio.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	src/yapp_makerfimask.c	/^void PrintUsage(const char *pcProgName)$/;"	f
+PrintUsage	src/yapp_replacemetadata.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	src/yapp_siftpulses.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	src/yapp_smooth.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	src/yapp_split.c	/^void PrintUsage(const char *pcProgName)$/;"	f
@@ -445,7 +446,7 @@ g_pcIsTimeGood	src/yapp_fold.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	src/yapp_makerfimask.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	src/yapp_stat.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	src/yapp_viewdata.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
-g_pcVersion	src/yapp_version.c	/^const char *g_pcVersion = "YAPP-DEV-3.5.14-beta-20150616-144908";$/;"	v
+g_pcVersion	src/yapp_version.c	/^const char *g_pcVersion = "YAPP-DEV-3.5.15-beta-20150705-150042";$/;"	v
 g_pdDM	src/yapp_dedisplaw.c	/^double *g_pdDM = NULL;$/;"	v
 g_pdDelayTab	src/yapp_dedisplaw.c	/^double *g_pdDelayTab = NULL;$/;"	v
 g_pdMaxDelayTab	src/yapp_dedisplaw.c	/^double *g_pdMaxDelayTab = NULL;$/;"	v
@@ -589,6 +590,7 @@ main	src/yapp_ft.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/yapp_makeaudio.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/yapp_makerfimask.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/yapp_makever.c	/^int main(int argc, char *argv[])$/;"	f
+main	src/yapp_replacemetadata.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/yapp_siftpulses.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/yapp_smooth.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/yapp_split.c	/^int main(int argc, char *argv[])$/;"	f

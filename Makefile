@@ -123,6 +123,8 @@ all: yapp_makever \
 	 yapp_split \
 	 yapp_stat.o \
 	 yapp_stat \
+	 yapp_replacemetadata.o \
+	 yapp_replacemetadata \
 	 tags
 #	 yapp_makeaudio.o \
 	 yapp_makeaudio \
@@ -285,6 +287,13 @@ yapp_stat: $(IDIR)/yapp_stat.o $(IDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o $(IDIR)/colourmap.o
 	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) $(LFLAGS_CFITSIO) -o $(BINDIR)/$@
 
+yapp_replacemetadata.o: $(SRCDIR)/yapp_replacemetadata.c $(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h
+	$(CC) $(CFLAGS_C) $(DDEBUG) $< -o $(IDIR)/$@
+
+yapp_replacemetadata: $(IDIR)/yapp_replacemetadata.o $(IDIR)/yapp_version.o \
+	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o $(IDIR)/colourmap.o
+	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) $(LFLAGS_CFITSIO) -o $(BINDIR)/$@
+
 yapp_dedisplaw.o: $(SRCDIR)/yapp_dedisplaw.c $(SRCDIR)/yapp.h
 	$(CC) $(CFLAGS_C) $(DFC) $(DDEBUG) $(SRCDIR)/yapp_dedisplaw.c -o $(IDIR)/$@
 
@@ -360,6 +369,7 @@ clean:
 	$(DELCMD) $(IDIR)/yapp_stackfil.o
 	$(DELCMD) $(IDIR)/yapp_split.o
 	$(DELCMD) $(IDIR)/yapp_stat.o
+	$(DELCMD) $(IDIR)/yapp_replacemetadata.o
 #	$(DELCMD) $(IDIR)/yapp_makeaudio.o
 #	$(DELCMD) $(IDIR)/set_colours.o
 #	$(DELCMD) $(IDIR)/yapp_dedisplaw.o

@@ -1491,7 +1491,7 @@ int main(int argc, char *argv[])
                    g_pfYAxis, iNumChans, fChanBW,
                    "Time - Start Time (s)",
                    "Frequency (MHz)",
-                   "After Dedispersion",
+                   "After Delay Correction",
                    iColourMap);
         }
 
