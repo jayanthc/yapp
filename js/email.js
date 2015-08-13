@@ -6,7 +6,7 @@
  */
 
 var userid = "jayanth";
-var domain = "jayanthchennamangalam.com";
+var domain = "astro.ox.ac.uk";
 
 document.write("<a href=\"mailto:" + userid + "@" + domain + "\">"
                + userid + "@" + domain + "</a>");
