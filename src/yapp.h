@@ -63,6 +63,8 @@
 #define YAPP_FORMATSTR_DTS_TIM      "tim"
 #define YAPP_FORMATSTR_DTS_DAT      "dat"
 #define YAPP_FORMATSTR_DTS_DAT_INF  "inf"
+#define YAPP_FORMATSTR_YM           "ym"
+#define YAPP_FORMATSTR_YMB          "ymb"
 /* @} */
 
 #define EXT_RAW                     ".raw"
@@ -72,11 +74,12 @@
 #define EXT_DEDISPSPECCFG           ".cfg"
 #define EXT_PS                      ".ps"
 #define EXT_FIL                     ".fil"
-#define EXT_FHD                     ".fhd"
 #define EXT_TIM                     ".tim"
 #define EXT_DAT                     ".dat"
 #define EXT_INF                     ".inf"
-#define EXT_YAPP_PROFILE            ".ypr"
+#define EXT_YM                      ".ym"
+#define EXT_YMB                     ".ymb"
+#define EXT_YAPP_PROFILE            ".yp"
 
 enum tagFileFormats
 {
@@ -88,7 +91,10 @@ enum tagFileFormats
     /* dedispersed time series formats */
     YAPP_FORMAT_DTS_DDS,        /* Desh's dedispersed data format */
     YAPP_FORMAT_DTS_TIM,        /* SIGPROC time series format */
-    YAPP_FORMAT_DTS_DAT         /* PRESTO time series format */
+    YAPP_FORMAT_DTS_DAT,        /* PRESTO time series format */
+    /* metadata */
+    YAPP_FORMAT_YM,             /* YAPP metadata text file */
+    YAPP_FORMAT_YMB             /* YAPP metadata binary file */
 };
 
 /* sample sizes in number of bits */
@@ -147,6 +153,7 @@ enum tagFileFormats
  */
 /* @{ */
 #define DEF_LAW             2.0
+// TODO: change this to YAPP_FORMAT_NONE or something
 #define DEF_FORMAT          YAPP_FORMAT_SPEC
 #define DEF_OUT_FORMAT      YAPP_FORMAT_DTS_TIM
 #define DEF_SIZE_BLOCK      4096    /**< @brief Default block size */
@@ -477,6 +484,9 @@ int YAPP_SP_GetObsNameFromID(int iObsID, char *pcObs);
  * @param[out]  pcObs       Observatory name
  */
 int YAPP_SP_GetObsIDFromName(char *pcObs);
+
+int YAPP_GetExtFromFormat(int iFormat, char *pcExt);
+int YAPP_SP_GetFormatFromExt(char *pcExt);
 
 /**
  * Read metadata from file

@@ -27,6 +27,7 @@ int main(int argc, char *argv[])
     int iFormat = DEF_FORMAT;
     int iRet = YAPP_RET_SUCCESS;
     YUM_t stYUM = {{0}};
+    char acExt[LEN_GENSTRING]  = {0};
     const char *pcProgName = NULL;
     int iNextOpt = 0;
     /* valid short options */
@@ -109,6 +110,16 @@ int main(int argc, char *argv[])
                            "ERROR: Invalid file type!\n");
             return YAPP_RET_ERROR;
         }
+        iRet = YAPP_GetExtFromFormat(iFormat, acExt);  
+        if (iRet != YAPP_RET_SUCCESS)
+        {
+            (void) fprintf(stderr,
+                           "ERROR: Getting extension failed for file %s!\n",
+                           pcFileSpec);
+            ++iNextOpt;
+            continue;
+        }
+        (void) printf("File format                       : %s\n", acExt);
 
         iRet = YAPP_ReadMetadata(pcFileSpec, iFormat, &stYUM);
         if (iRet != YAPP_RET_SUCCESS)
@@ -150,11 +161,8 @@ int main(int argc, char *argv[])
             || (YAPP_FORMAT_FIL == iFormat)
             || (YAPP_FORMAT_PSRFITS == iFormat))
         {
-            if (YAPP_TRUE == stYUM.cIsBandFlipped)
-            {
-                (void) printf("                                    "
-                              "Flipped band\n");
-            }
+            (void) printf("Flipped band                      : %s\n",
+                           stYUM.cIsBandFlipped ? "Yes" : "No");
             (void) printf("Estimated number of bands         : %d\n",
                           stYUM.iNumBands);
         }

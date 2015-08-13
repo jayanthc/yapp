@@ -84,6 +84,10 @@ int YAPP_GetFileType(char *pcFile)
     {
         iFormat = YAPP_FORMAT_DTS_DAT;
     }
+    else if (0 == strcmp(pcExt, EXT_YM))
+    {
+        iFormat = YAPP_FORMAT_YM;
+    }
     else
     {
         (void) fprintf(stderr,
@@ -95,7 +99,8 @@ int YAPP_GetFileType(char *pcFile)
     return iFormat;
 }
 
-
+//TODO: modify these functions to return the path minu extension (equivalent to
+//File.dirname + File.basename - File.extname in Ruby
 /*
  * Extracts the filename from a given path, minus the extension
  */
@@ -316,6 +321,69 @@ int YAPP_SP_GetObsIDFromName(char *pcObs)
     }
 
     return YAPP_RET_ERROR;
+}
+
+
+int YAPP_GetExtFromFormat(int iFormat, char *pcExt)
+{
+    switch (iFormat)
+    {
+        case YAPP_FORMAT_SPEC:
+            (void) strcpy(pcExt, YAPP_FORMATSTR_SPEC);
+            break;
+
+        case YAPP_FORMAT_RAW:
+            (void) strcpy(pcExt, YAPP_FORMATSTR_RAW);
+            break;
+
+        case YAPP_FORMAT_PSRFITS:
+            (void) strcpy(pcExt, YAPP_FORMATSTR_PSRFITS);
+            break;
+
+        case YAPP_FORMAT_FIL:
+            (void) strcpy(pcExt, YAPP_FORMATSTR_FIL);
+            break;
+
+        case YAPP_FORMAT_DTS_DDS:
+            (void) strcpy(pcExt, YAPP_FORMATSTR_DTS_DDS);
+            break;
+
+        case YAPP_FORMAT_DTS_TIM:
+            (void) strcpy(pcExt, YAPP_FORMATSTR_DTS_TIM);
+            break;
+
+        case YAPP_FORMAT_DTS_DAT:
+            (void) strcpy(pcExt, YAPP_FORMATSTR_DTS_DAT);
+            break;
+
+        case YAPP_FORMAT_YM:
+            (void) strcpy(pcExt, YAPP_FORMATSTR_YM);
+            break;
+
+        case YAPP_FORMAT_YMB:
+            (void) strcpy(pcExt, YAPP_FORMATSTR_YMB);
+            break;
+
+        default:
+            (void) fprintf(stderr,
+                           "ERROR: Unknown format %d!\n",
+                           iFormat);
+            return YAPP_RET_ERROR;
+    }
+
+    return YAPP_RET_SUCCESS;
+}
+
+
+int YAPP_SP_GetFormatFromExt(char *pcExt)
+{
+    char acFilename = {0};
+    int iFormat = YAPP_RET_ERROR; 
+
+    (void) sprintf(acFilename ".%s", pcExt);
+    iFormat = GetFileType(acFilename);
+
+    return iFormat;
 }
 
 
@@ -1377,7 +1445,7 @@ int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM)
                        acFileHeader);
         return YAPP_RET_ERROR;
     }
-    (void) strcpy(pcExt, EXT_FHD);
+    (void) strcpy(pcExt, EXT_YM);
 
     /* open the header file for reading */
     pFHdr = fopen(acFileHeader, "r");
@@ -1391,6 +1459,16 @@ int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM)
         return YAPP_RET_ERROR;
     }
 
+    /* read file format */
+    (void) getline(&pcLine, &iLen, pFHdr); 
+    pcVal = strrchr(pcLine, ':');
+    if (NULL == pcVal)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Reading header file failed!\n");
+        return YAPP_RET_ERROR;
+    }
+    (void) sscanf(pcVal, ": %s", pstYUM->acSite);
     /* read observing site */
     (void) getline(&pcLine, &iLen, pFHdr); 
     pcVal = strrchr(pcLine, ':');
@@ -1510,6 +1588,8 @@ int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM)
     }
     (void) sscanf(pcVal, ": %d", &pstYUM->iNumIFs);
 
+    /* close the header file */
+    (void) fclose(pFHdr);
 
     /* calculate bandwidth and centre frequency */
     pstYUM->fBW = pstYUM->fFMax - pstYUM->fFMin;

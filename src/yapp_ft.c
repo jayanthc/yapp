@@ -440,7 +440,7 @@ int main(int argc, char *argv[])
         /* this will be freed by the YAPP garbage collector */
         pcFilename = YAPP_GetFilenameWithExtFromPath(g_acFileData);
         (void) strcpy(acFileSpecHdr, pcFilename);
-        (void) strcat(acFileSpecHdr, EXT_FHD);
+        (void) strcat(acFileSpecHdr, EXT_YM);
         iFileSpecHdr = open(acFileSpecHdr,
                             O_CREAT | O_TRUNC | O_WRONLY,
                             S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
