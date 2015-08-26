@@ -250,8 +250,8 @@ int main(int argc, char *argv[])
                 else
                 {
                     (void) fprintf(stderr,
-                                   "ERROR: Format should be either 'dds' or "
-                                   "'tim'!\n");
+                                   "ERROR: Format should be 'dds' or "
+                                   "'tim' or 'fil'!\n");
                     PrintUsage(pcProgName);
                     return YAPP_RET_ERROR;
                 }
@@ -1474,7 +1474,7 @@ int main(int argc, char *argv[])
                    g_pfYAxis, iNumChans, fChanBW,
                    "Time - Start Time (s)",
                    "Frequency (MHz)",
-                   "After Dedispersion",
+                   "After Delay Correction",
                    iColourMap);
         }
 

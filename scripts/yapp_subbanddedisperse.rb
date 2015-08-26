@@ -100,3 +100,13 @@ end
 
 %x[yapp_stacktim -e #{inputFileGlob}]
 
+# delete intermediate files
+# delete sub-band time series files
+inputFileGlob = baseName + ".dm" + sprintf("%g", dm) + ".band?.tim"
+%x[rm -f #{inputFileGlob}]
+inputFileGlob = baseName + ".dm" + sprintf("%g", dm) + ".band??.tim"
+%x[rm -f #{inputFileGlob}]
+# delete smoothed time series files
+inputFileGlob = baseName + ".dm" + sprintf("%g", dm) + ".band*.smooth*.tim"
+%x[rm -f #{inputFileGlob}]
+
