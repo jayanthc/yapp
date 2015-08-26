@@ -314,6 +314,45 @@ int YAPP_SP_GetObsIDFromName(char *pcObs)
 }
 
 
+int YAPP_GetExtFromFormat(int iFormat, char *pcExt)
+{
+    switch (iFormat)
+    {
+        case YAPP_FORMAT_SPEC:
+            (void) strcpy(pcExt, YAPP_FORMATSTR_SPEC);
+            break;
+
+        case YAPP_FORMAT_PSRFITS:
+            (void) strcpy(pcExt, YAPP_FORMATSTR_PSRFITS);
+            break;
+
+        case YAPP_FORMAT_FIL:
+            (void) strcpy(pcExt, YAPP_FORMATSTR_FIL);
+            break;
+
+        case YAPP_FORMAT_DTS_DDS:
+            (void) strcpy(pcExt, YAPP_FORMATSTR_DTS_DDS);
+            break;
+
+        case YAPP_FORMAT_DTS_TIM:
+            (void) strcpy(pcExt, YAPP_FORMATSTR_DTS_TIM);
+            break;
+
+        case YAPP_FORMAT_DTS_DAT:
+            (void) strcpy(pcExt, YAPP_FORMATSTR_DTS_DAT);
+            break;
+
+        default:
+            (void) fprintf(stderr,
+                           "ERROR: Unknown format %d!\n",
+                           iFormat);
+            return YAPP_RET_ERROR;
+    }
+
+    return YAPP_RET_SUCCESS;
+}
+
+
 /*
  * Reads metadata from file
  */
@@ -1503,6 +1542,8 @@ int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM)
     }
     (void) sscanf(pcVal, ": %d", &pstYUM->iNumIFs);
 
+    /* close the header file */
+    (void) fclose(pFHdr);
 
     /* calculate bandwidth and centre frequency */
     pstYUM->fBW = pstYUM->fFMax - pstYUM->fFMin;
