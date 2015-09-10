@@ -93,13 +93,13 @@ int main(int argc, char *argv[])
     const char *pcProgName = NULL;
     int iNextOpt = 0;
     /* valid short options */
-    const char* const pcOptsShort = "hs:p:w:giev";
+    const char* const pcOptsShort = "hs:p:n:giev";
     /* valid long options */
     const struct option stOptsLong[] = {
         { "help",                   0, NULL, 'h' },
         { "skip",                   1, NULL, 's' },
         { "proc",                   1, NULL, 'p' },
-        { "width",                  1, NULL, 'w' },
+        { "nsamp",                  1, NULL, 'n' },
         { "graphics",               0, NULL, 'g' },
         { "invert",                 0, NULL, 'i' },
         { "non-interactive",        0, NULL, 'e' },
@@ -829,6 +829,8 @@ void PrintUsage(const char *pcProgName)
     (void) printf("processed\n");
     (void) printf("                                        ");
     (void) printf("(default is all)\n");
+    (void) printf("    -n  --nsamp <samples>               ");
+    (void) printf("Number of samples read in one block");
     (void) printf("    -g  --graphics                      ");
     (void) printf("Turn on plotting\n");
     (void) printf("    -i  --invert                        ");

@@ -499,7 +499,7 @@ void PrintUsage(const char *pcProgName)
     (void) printf("Number of samples read in one block\n");
     (void) printf("                                        ");
     (void) printf("(default is 4096 samples)\n");
-    (void) printf("    -t  --threshold                     ");
+    (void) printf("    -t  --threshold <sigmas>            ");
     (void) printf("Threshold in sigmas\n");
     (void) printf("    -i  --invert                        ");
     (void) printf("Invert background and foreground\n");

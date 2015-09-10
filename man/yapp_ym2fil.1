@@ -1,28 +1,26 @@
 .\#
 .\# Yet Another Pulsar Processor Commands
-.\# yapp_dat2tim Manual Page
+.\# yapp_ym2fil Manual Page
 .\#
-.\# Created by Jayanth Chennamangalam on 2013.03.05
+.\# Created by Jayanth Chennamangalam on 2015.09.11
 .\#
 
-.TH YAPP_DAT2TIM 1 "2014-06-14" "YAPP 3.6-beta" \
+.TH YAPP_YM2FIL 1 "2015-09-11" "YAPP 3.6-beta" \
 "Yet Another Pulsar Processor"
 
 
 .SH NAME
-yapp_dat2tim \- convert PRESTO '.dat' to SIGPROC '.tim'
+yapp_ym2fil \- convert yapp_viewmetadata output to SIGPROC '.fil'
 
 
 .SH SYNOPSIS
-.B yapp_dat2tim
+.B yapp_ym2fil
 [options]
 .I data-file
 
 
 .SH DESCRIPTION
-Converts dedispersed time series data file format from PRESTO '.dat' to \
-SIGPROC '.tim'. The '.inf' file containing PRESTO header information must be \
-present in the same directory as the '.dat' file.
+Converts the output of yapp_viewmetadata to SIGPROC '.fil'.
 
 
 .SH OPTIONS
@@ -36,14 +34,16 @@ Display the version.
 
 .SH EXAMPLE
 .TP
-Converts the file data.dat to data.tim, assuming the header file data.inf is \
-present in the current directory.
-.TP
-yapp_dat2tim data.dat
+Converts the output of the first command - stored in data.ym - to \
+data.header.fil.
+.P
+yapp_viewmetadata data.fil > data.ym
+.br
+yapp_ym2fil data.ym
 
 
 .SH SEE ALSO
-.BR yapp_tim2dat (1),
+.BR yapp_dat2tim (1),
 .BR yapp_viewmetadata (1),
 .BR yapp_viewdata (1),
 .BR yapp_dedisperse (1),
@@ -52,7 +52,6 @@ yapp_dat2tim data.dat
 .BR yapp_add (1),
 .BR yapp_fold (1),
 .BR yapp_subtract (1),
-.BR yapp_stacktim (1),
 .BR yapp_split(1),
 .BR yapp_siftpulses (1)
 
