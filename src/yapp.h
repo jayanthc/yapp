@@ -61,6 +61,7 @@
 #define YAPP_FORMATSTR_DTS_TIM      "tim"
 #define YAPP_FORMATSTR_DTS_DAT      "dat"
 #define YAPP_FORMATSTR_DTS_DAT_INF  "inf"
+#define YAPP_FORMATSTR_YM           "ym"
 /* @} */
 
 #define EXT_PSRFITS                 ".fits"
@@ -69,11 +70,11 @@
 #define EXT_DEDISPSPECCFG           ".cfg"
 #define EXT_PS                      ".ps"
 #define EXT_FIL                     ".fil"
-#define EXT_FHD                     ".fhd"
 #define EXT_TIM                     ".tim"
 #define EXT_DAT                     ".dat"
 #define EXT_INF                     ".inf"
-#define EXT_YAPP_PROFILE            ".ypr"
+#define EXT_YM                      ".ym"
+#define EXT_YAPP_PROFILE            ".yp"
 
 enum tagFileFormats
 {
@@ -84,7 +85,9 @@ enum tagFileFormats
     /* dedispersed time series formats */
     YAPP_FORMAT_DTS_DDS,        /* Desh's dedispersed data format */
     YAPP_FORMAT_DTS_TIM,        /* SIGPROC time series format */
-    YAPP_FORMAT_DTS_DAT         /* PRESTO time series format */
+    YAPP_FORMAT_DTS_DAT,        /* PRESTO time series format */
+    /* metadata */
+    YAPP_FORMAT_YM,             /* YAPP metadata text file */
 };
 
 /* sample sizes in number of bits */
@@ -107,6 +110,7 @@ enum tagFileFormats
 #define INFIX_FOLD                  "fold"
 #define INFIX_STACK                 "stack"
 #define INFIX_SPLIT                 "split"
+#define INFIX_HEADER                "header"
 
 #define SUFFIX_CFG                  "_cfg"
 

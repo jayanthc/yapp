@@ -9,9 +9,17 @@
 CC = gcc
 
 # include path for other libraries
+ifeq ($(shell uname), Darwin)
+CFLAGS_INC_PGPLOT =-I/opt/local/include# define if needed (as -I[...])
+else
 CFLAGS_INC_PGPLOT =# define if needed (as -I[...])
+endif
 CFLAGS_INC_FFTW3 =# define if needed (as -I[...])
+ifeq ($(shell uname), Darwin)
+CFLAGS_INC_CFITSIO =-I/usr/local/include# define if needed (as -I[...])
+else
 CFLAGS_INC_CFITSIO =# define if needed (as -I[...])
+endif
 
 CFLAGS = -std=gnu99 -pedantic -Wall $(CFLAGS_INC_PGPLOT) $(CFLAGS_INC_FFTW3)  \
 	$(CFLAGS_INC_CFITSIO)
@@ -36,9 +44,17 @@ DDEBUG = -DDEBUG
 endif
 
 # linker flags
+ifeq ($(shell uname), Darwin)
+LFLAGS_PGPLOT_DIR =-L/opt/local/lib# define if not in $PATH (as -L[...])
+else
 LFLAGS_PGPLOT_DIR =# define if not in $PATH (as -L[...])
+endif
 LFLAGS_FFTW3_DIR =# define if not in $PATH (as -L[...])
+ifeq ($(shell uname), Darwin)
+LFLAGS_CFITSIO_DIR =-L/usr/local/lib# define if not in $PATH (as -L[...])
+else
 LFLAGS_CFITSIO_DIR =# define if not in $PATH (as -L[...])
+endif
 LFLAGS_FFTW3 = $(LFLAGS_FFTW3_DIR) -lfftw3f
 LFLAGS_CFITSIO = $(LFLAGS_CFITSIO_DIR) -lcfitsio
 # in some cases, linking needs to be done with the X11 library, in which case
@@ -98,6 +114,8 @@ all: yapp_makever \
 	 yapp_stacktim \
 	 yapp_split.o \
 	 yapp_split \
+	 yapp_ym2fil.o \
+	 yapp_ym2fil \
 
 yapp_makever: $(SRCDIR)/yapp_makever.c
 	$(CC) $(CFLAGS_L) $< -o $(IDIR)/$@
@@ -231,6 +249,13 @@ yapp_split: $(IDIR)/yapp_split.o $(IDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o $(IDIR)/colourmap.o
 	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) $(LFLAGS_CFITSIO) -o $(BINDIR)/$@
 
+yapp_ym2fil.o: $(UTILDIR)/yapp_ym2fil.c $(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h
+	$(CC) $(CFLAGS_C) -I$(SRCDIR) $(DDEBUG) $< -o $(UTILDIR)/$@
+
+yapp_ym2fil: $(UTILDIR)/yapp_ym2fil.o $(IDIR)/yapp_version.o \
+	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o $(IDIR)/colourmap.o
+	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) $(LFLAGS_CFITSIO) -o $(BINDIR)/$@
+
 # install the man pages
 install:
 	@echo Copying binaries...
@@ -264,4 +289,5 @@ clean:
 	$(DELCMD) $(IDIR)/yapp_siftpulses.o
 	$(DELCMD) $(IDIR)/yapp_stacktim.o
 	$(DELCMD) $(IDIR)/yapp_split.o
+	$(DELCMD) $(UTILDIR)/yapp_ym2fil.o
 

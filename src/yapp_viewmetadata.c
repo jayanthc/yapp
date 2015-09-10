@@ -119,7 +119,6 @@ int main(int argc, char *argv[])
             ++iNextOpt;
             continue;
         }
-        (void) printf("File format                       : %s\n", acExt);
 
         iRet = YAPP_ReadMetadata(pcFileSpec, iFormat, &stYUM);
         if (iRet != YAPP_RET_SUCCESS)
@@ -131,6 +130,7 @@ int main(int argc, char *argv[])
             continue;
         }
 
+        (void) printf("File format                       : %s\n", acExt);
         (void) printf("Observing site                    : %s\n",
                       stYUM.acSite);
         (void) printf("Field name                        : %s\n",
@@ -147,8 +147,6 @@ int main(int argc, char *argv[])
                       stYUM.fBW);
         (void) printf("Sampling interval                 : %.10g ms\n",
                       stYUM.dTSamp);
-        /* TODO: think about order - changing might cause problems in
-           headerless .fil */
         (void) printf("Number of channels                : %d\n",
                       stYUM.iNumChans);
         (void) printf("Number of good channels           : %d\n",
