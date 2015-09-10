@@ -29,7 +29,7 @@ opts = GetoptLong.new(
 fileDataTempName = "yapptempdata"
 fileDataTemp = nil
 fileYM = nil
-fileYMB = nil
+fileHeader = nil
 
 opts.each do |opt, arg|
   case opt
@@ -63,10 +63,10 @@ if File.extname(fileData) != ".fil"
 end
 
 # convert metadata to binary and write it out to the metadata file
-%x[yapp_ym2ymb #{fileYM}]
+%x[yapp_ym2fil #{fileYM}]
 
 # build metadata file name
-fileYMB = File.dirname(fileYM) + "/" + File.basename(fileYM, ".ym") + ".ymb"
+fileHeader = File.dirname(fileYM) + "/" + File.basename(fileYM, ".ym") + ".header.fil"
 
 # read data file header size
 lenHeader = (%x[yapp_viewmetadata #{fileData} | tail -1 | cut -d ":" -f 2 | sed -e "s/^[ ]//"]).to_i
@@ -77,13 +77,10 @@ fileDataTemp = File.dirname(fileData) + "/" + fileDataTempName
 # copy data from input to temporary file
 %x[dd if=#{fileData} of=#{fileDataTemp} ibs=#{lenHeader} obs=104857600 skip=1]
 
-# replace old data with new metadata
-%x[cat #{fileYMB} > #{fileData}]
-
-# concatenate temporary data file to old data file
-%x[cat #{fileDataTemp} >> #{fileData}]
+# replace old data with new metadata and data
+%x[cat #{fileHeader} #{fileDataTemp} > #{fileData}]
 
 # remove temporary files
-%x[rm #{fileYMB}]
+%x[rm #{fileHeader}]
 %x[rm #{fileDataTemp}]
 
