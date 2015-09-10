@@ -287,10 +287,10 @@ yapp_stat: $(IDIR)/yapp_stat.o $(IDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o $(IDIR)/colourmap.o
 	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) $(LFLAGS_CFITSIO) -o $(BINDIR)/$@
 
-yapp_ym2fil.o: $(SRCDIR)/yapp_ym2fil.c $(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h
-	$(CC) $(CFLAGS_C) $(DDEBUG) $< -o $(IDIR)/$@
+yapp_ym2fil.o: $(UTILDIR)/yapp_ym2fil.c $(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h
+	$(CC) $(CFLAGS_C) -I$(SRCDIR) $(DDEBUG) $< -o $(UTILDIR)/$@
 
-yapp_ym2fil: $(IDIR)/yapp_ym2fil.o $(IDIR)/yapp_version.o \
+yapp_ym2fil: $(UTILDIR)/yapp_ym2fil.o $(IDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o $(IDIR)/colourmap.o
 	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) $(LFLAGS_CFITSIO) -o $(BINDIR)/$@
 
@@ -369,7 +369,7 @@ clean:
 	$(DELCMD) $(IDIR)/yapp_stackfil.o
 	$(DELCMD) $(IDIR)/yapp_split.o
 	$(DELCMD) $(IDIR)/yapp_stat.o
-	$(DELCMD) $(IDIR)/yapp_ym2fil.o
+	$(DELCMD) $(UTILDIR)/yapp_ym2fil.o
 #	$(DELCMD) $(IDIR)/yapp_makeaudio.o
 #	$(DELCMD) $(IDIR)/set_colours.o
 #	$(DELCMD) $(IDIR)/yapp_dedisplaw.o

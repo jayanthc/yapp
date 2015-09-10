@@ -197,10 +197,10 @@ PrintUsage	src/yapp_stat.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	src/yapp_subtract.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	src/yapp_viewdata.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	src/yapp_viewmetadata.c	/^void PrintUsage(const char *pcProgName)$/;"	f
-PrintUsage	src/yapp_ym2fil.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	utilities/yapp_dat2tim.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	utilities/yapp_fits2fil.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	utilities/yapp_tim2dat.c	/^void PrintUsage(const char *pcProgName)$/;"	f
+PrintUsage	utilities/yapp_ym2fil.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 RET_ERROR	src/yapp_makever.c	20;"	d	file:
 RET_SUCCESS	src/yapp_makever.c	19;"	d	file:
 ReadData	src/yapp_ft.c	/^int ReadData(char cIsFirst, int iNTaps, int iNFFT)$/;"	f
@@ -604,10 +604,10 @@ main	src/yapp_stat.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/yapp_subtract.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/yapp_viewdata.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/yapp_viewmetadata.c	/^int main(int argc, char *argv[])$/;"	f
-main	src/yapp_ym2fil.c	/^int main(int argc, char *argv[])$/;"	f
 main	utilities/yapp_dat2tim.c	/^int main(int argc, char *argv[])$/;"	f
 main	utilities/yapp_fits2fil.c	/^int main(int argc, char *argv[])$/;"	f
 main	utilities/yapp_tim2dat.c	/^int main(int argc, char *argv[])$/;"	f
+main	utilities/yapp_ym2fil.c	/^int main(int argc, char *argv[])$/;"	f
 padBadTimes	src/yapp.h	/^    double (*padBadTimes)[][NUM_BAD_BOUNDS];$/;"	m	struct:YUM_s
 pcData	src/yapp_ft.h	/^    signed char *pcData;        \/* raw data, (iNFFT * NUM_BYTES_PER_SAMP)$/;"	m	struct:tagPFBData
 pcIsChanGood	src/yapp.h	/^    char *pcIsChanGood;$/;"	m	struct:YUM_s
