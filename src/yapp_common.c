@@ -375,13 +375,13 @@ int YAPP_GetExtFromFormat(int iFormat, char *pcExt)
 }
 
 
-int YAPP_SP_GetFormatFromExt(char *pcExt)
+int YAPP_GetFormatFromExt(char *pcExt)
 {
     char acFilename = {0};
     int iFormat = YAPP_RET_ERROR; 
 
-    (void) sprintf(acFilename ".%s", pcExt);
-    iFormat = GetFileType(acFilename);
+    (void) sprintf(acFilename, ".%s", pcExt);
+    iFormat = YAPP_GetFileType(acFilename);
 
     return iFormat;
 }

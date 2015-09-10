@@ -19,7 +19,7 @@
  *                                          will clip anything above this level
  *     -a  --no-abs-scale                   Use relative scale for plotting per
  *                                          block
- *     -b  --show-passband                  Show the passband for each block
+ *     -d  --show-bandpass                  Show the bandpass for each block
  *     -t  --period <period>                Period of the pulsar in ms
  *     -r  --phase <phase>                  Phase of the first pulse with
  *                                          respect to the first sample
@@ -62,6 +62,7 @@ float *g_pfPlotBuf = NULL;
 float *g_pfXAxis = NULL;
 float *g_pfXAxisOld = NULL;
 float *g_pfYAxis = NULL;
+float *g_pfBandpass = NULL;
 
 int main(int argc, char *argv[])
 {
@@ -78,6 +79,7 @@ int main(int argc, char *argv[])
     float fNoiseRMS = 0.0;
     float fClipLevel = 0.0;
     char cUseAbsScale = YAPP_TRUE;
+    char cShowBandpass = YAPP_FALSE;
     double dNumSigmas = 0.0;
     double dTSampInSec = 0.0;   /* holds sampling time in s */
     int iNumBands = 0;
@@ -121,7 +123,7 @@ int main(int argc, char *argv[])
     const char *pcProgName = NULL;
     int iNextOpt = 0;
     /* valid short options */
-    const char* const pcOptsShort = "hs:p:n:b:c:at:r:m:iev";
+    const char* const pcOptsShort = "hs:p:n:b:c:adt:r:m:iev";
     /* valid long options */
     const struct option stOptsLong[] = {
         { "help",                   0, NULL, 'h' },
@@ -131,6 +133,7 @@ int main(int argc, char *argv[])
         { "nband",                  1, NULL, 'b' },
         { "clip-level",             1, NULL, 'c' },
         { "no-abs-range",           0, NULL, 'a' },
+        { "show-bandpass",          0, NULL, 'd' },
         { "period",                 1, NULL, 't' },
         { "phase",                  1, NULL, 'r' },
         { "colour-map",             1, NULL, 'm' },
@@ -190,6 +193,11 @@ int main(int argc, char *argv[])
             case 'a':   /* -a or --no-abs-range */
                 /* set option */
                 cUseAbsScale = YAPP_FALSE;
+                break;
+
+            case 'd':   /* -d or --show-bandpass */
+                /* set option */
+                cShowBandpass = YAPP_TRUE;
                 break;
 
             case 't':   /* -t or --period */
@@ -590,6 +598,23 @@ int main(int argc, char *argv[])
         dMinPhaseDiff = (stYUM.dTSamp / dPeriod);
     }
 
+    if (cShowBandpass)
+    {
+        /* allocate memory for the bandpass */
+        g_pfBandpass = (float *) YAPP_Malloc(stYUM.iNumChans,
+                                             sizeof(float),
+                                             YAPP_TRUE);
+        if (NULL == g_pfBandpass)
+        {
+            (void) fprintf(stderr,
+                           "ERROR: Memory allocation for bandpass failed! "
+                           "%s!\n",
+                           strerror(errno));
+            YAPP_CleanUp();
+            return YAPP_RET_ERROR;
+        }
+    }
+
     while (iNumReads > 0)
     {
         /* read data */
@@ -780,11 +805,24 @@ int main(int argc, char *argv[])
                 {
                     j = k + i * iBlockSize;
                     g_pfPlotBuf[j] = pfSpectrum[m];
+                    if (cShowBandpass)
+                    {
+                        /* construct the bandpass */
+                        g_pfBandpass[m] += pfSpectrum[m];
+                    }
                     ++i;
                 }
                 i = 0;
                 ++k;
             }
+
+// temp
+if (cShowBandpass)
+for (m = 0; m < stYUM.iNumChans; ++m)
+{
+    printf("%g\n", g_pfBandpass[m] / iBlockSize);
+}
+///////////////
 
             /* erase the previous x-axis */
             if (!cIsFirst && !cIsNonInteractive)   /* kludge */
@@ -1016,8 +1054,8 @@ void PrintUsage(const char *pcProgName)
     (void) printf("Use relative scale for plotting per\n");
     (void) printf("                                        ");
     (void) printf("block\n");
-    (void) printf("    -b  --show-passband                 ");
-    (void) printf("Show the passband for each block\n");
+    (void) printf("    -d  --show-bandpass                 ");
+    (void) printf("Show the bandpass for each block\n");
     (void) printf("    -t  --period <period>               ");
     (void) printf("Period of the pulsar in ms\n");
     (void) printf("    -r  --phase <phase>                 ");

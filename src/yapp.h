@@ -486,7 +486,7 @@ int YAPP_SP_GetObsNameFromID(int iObsID, char *pcObs);
 int YAPP_SP_GetObsIDFromName(char *pcObs);
 
 int YAPP_GetExtFromFormat(int iFormat, char *pcExt);
-int YAPP_SP_GetFormatFromExt(char *pcExt);
+int YAPP_GetFormatFromExt(char *pcExt);
 
 /**
  * Read metadata from file

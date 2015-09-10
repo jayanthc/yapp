@@ -107,13 +107,15 @@ int main(int argc, char *argv[])
         return YAPP_RET_ERROR;
     }
 
-    iDataFormat = YAPP_GetFormatFromExt(
+#if 0
+    iDataFormat = YAPP_GetFormatFromExt();
     if (0 == iDataFormat)
     {
         (void) fprintf(stderr, "ERROR: Data format not specified!\n");
         PrintUsage(pcProgName);
         return YAPP_RET_ERROR;
     }
+#endif
 
     /* open the time series data file for writing */
     pcFileOut = YAPP_GetFilenameFromPath(pcFileYM);
