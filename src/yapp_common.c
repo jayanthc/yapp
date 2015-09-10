@@ -45,7 +45,7 @@ static float *g_pfBuf = NULL;
 int YAPP_GetFileType(char *pcFile)
 {
     char *pcExt = NULL;
-    int iFormat = YAPP_RET_ERROR; 
+    int iFormat = YAPP_RET_ERROR;
 
     /* TODO: check if this is actually at the end */
     pcExt = strrchr(pcFile, '.');
@@ -360,10 +360,6 @@ int YAPP_GetExtFromFormat(int iFormat, char *pcExt)
             (void) strcpy(pcExt, YAPP_FORMATSTR_YM);
             break;
 
-        case YAPP_FORMAT_YMB:
-            (void) strcpy(pcExt, YAPP_FORMATSTR_YMB);
-            break;
-
         default:
             (void) fprintf(stderr,
                            "ERROR: Unknown format %d!\n",
@@ -378,7 +374,7 @@ int YAPP_GetExtFromFormat(int iFormat, char *pcExt)
 int YAPP_GetFormatFromExt(char *pcExt)
 {
     char acFilename = {0};
-    int iFormat = YAPP_RET_ERROR; 
+    int iFormat = YAPP_RET_ERROR;
 
     (void) sprintf(acFilename, ".%s", pcExt);
     iFormat = YAPP_GetFileType(acFilename);
@@ -482,7 +478,7 @@ int YAPP_ReadPSRFITSHeader(char *pcFileSpec, YUM_t *pstYUM)
     (void) fits_open_file(&pstFileData, pcFileSpec, READONLY, &iStatus);
     if  (iStatus != 0)
     {
-        fits_get_errstatus(iStatus, acErrMsg); 
+        fits_get_errstatus(iStatus, acErrMsg);
         (void) fprintf(stderr, "ERROR: Opening file failed! %s\n", acErrMsg);
         return YAPP_RET_ERROR;
     }
@@ -552,7 +548,7 @@ int YAPP_ReadPSRFITSHeader(char *pcFileSpec, YUM_t *pstYUM)
                            &iStatus);
     if  (iStatus != 0)
     {
-        fits_get_errstatus(iStatus, acErrMsg); 
+        fits_get_errstatus(iStatus, acErrMsg);
         (void) fprintf(stderr,
                        "ERROR: Moving to HDU %s failed! %s\n",
                        YAPP_PF_HDUNAME_SUBINT,
@@ -601,7 +597,7 @@ int YAPP_ReadPSRFITSHeader(char *pcFileSpec, YUM_t *pstYUM)
                            &iStatus);
     if (iStatus != 0)
     {
-        fits_get_errstatus(iStatus, acErrMsg); 
+        fits_get_errstatus(iStatus, acErrMsg);
         (void) fprintf(stderr,
                        "ERROR: Getting column number failed! %s\n",
                        acErrMsg);
@@ -1154,7 +1150,7 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
                it */
             pstYUM->dSourceRA /= YAPP_SP_RADEC_SCALE;
             /* SIGPROC stores the RA in hours, so convert it to degrees */
-            pstYUM->dSourceRA *= YAPP_DEGPERHOUR; 
+            pstYUM->dSourceRA *= YAPP_DEGPERHOUR;
             pstYUM->iHeaderLen += sizeof(pstYUM->dSourceRA);
         }
         else if (0 == strcmp(acLabel, YAPP_SP_LABEL_SRCDEC))
@@ -1427,6 +1423,7 @@ int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM)
 {
     FILE* pFHdr = NULL;
     char acFileHeader[LEN_GENSTRING] = {0};
+    char acTemp[LEN_GENSTRING] = {0};
     size_t iLen = 0;
     struct stat stFileStats = {0};
     int iRet = YAPP_RET_SUCCESS;
@@ -1459,18 +1456,10 @@ int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM)
         return YAPP_RET_ERROR;
     }
 
-    /* read file format */
-    (void) getline(&pcLine, &iLen, pFHdr); 
-    pcVal = strrchr(pcLine, ':');
-    if (NULL == pcVal)
-    {
-        (void) fprintf(stderr,
-                       "ERROR: Reading header file failed!\n");
-        return YAPP_RET_ERROR;
-    }
-    (void) sscanf(pcVal, ": %s", pstYUM->acSite);
+    /* read and ignore file format */
+    (void) getline(&pcLine, &iLen, pFHdr);
     /* read observing site */
-    (void) getline(&pcLine, &iLen, pFHdr); 
+    (void) getline(&pcLine, &iLen, pFHdr);
     pcVal = strrchr(pcLine, ':');
     if (NULL == pcVal)
     {
@@ -1480,7 +1469,7 @@ int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM)
     }
     (void) sscanf(pcVal, ": %s", pstYUM->acSite);
     /* read field name */
-    (void) getline(&pcLine, &iLen, pFHdr); 
+    (void) getline(&pcLine, &iLen, pFHdr);
     pcVal = strrchr(pcLine, ':');
     if (NULL == pcVal)
     {
@@ -1489,8 +1478,58 @@ int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM)
         return YAPP_RET_ERROR;
     }
     (void) sscanf(pcVal, ": %s", pstYUM->acPulsar);
+    /* read right ascension */
+    (void) getline(&pcLine, &iLen, pFHdr);
+    pcVal = strrchr(pcLine, ':');
+    if (NULL == pcVal)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Reading header file failed!\n");
+        return YAPP_RET_ERROR;
+    }
+    (void) sscanf(pcVal, ": %lf", &pstYUM->dSourceRA);
+    /* read declination */
+    (void) getline(&pcLine, &iLen, pFHdr);
+    pcVal = strrchr(pcLine, ':');
+    if (NULL == pcVal)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Reading header file failed!\n");
+        return YAPP_RET_ERROR;
+    }
+    (void) sscanf(pcVal, ": %lf", &pstYUM->dSourceDec);
+    /* read start MJD */
+    (void) getline(&pcLine, &iLen, pFHdr);
+    pcVal = strrchr(pcLine, ':');
+    if (NULL == pcVal)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Reading header file failed!\n");
+        return YAPP_RET_ERROR;
+    }
+    (void) sscanf(pcVal, ": %lf", &pstYUM->dTStart);
+    /* read centre frequency */
+    (void) getline(&pcLine, &iLen, pFHdr);
+    pcVal = strrchr(pcLine, ':');
+    if (NULL == pcVal)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Reading header file failed!\n");
+        return YAPP_RET_ERROR;
+    }
+    (void) sscanf(pcVal, ": %f", &pstYUM->fFCentre);
+    /* read bandwidth */
+    (void) getline(&pcLine, &iLen, pFHdr);
+    pcVal = strrchr(pcLine, ':');
+    if (NULL == pcVal)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Reading header file failed!\n");
+        return YAPP_RET_ERROR;
+    }
+    (void) sscanf(pcVal, ": %f", &pstYUM->fBW);
     /* read sampling interval */
-    (void) getline(&pcLine, &iLen, pFHdr); 
+    (void) getline(&pcLine, &iLen, pFHdr);
     pcVal = strrchr(pcLine, ':');
     if (NULL == pcVal)
     {
@@ -1500,7 +1539,7 @@ int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM)
     }
     (void) sscanf(pcVal, ": %lf", &pstYUM->dTSamp);
     /* read number of channels */
-    (void) getline(&pcLine, &iLen, pFHdr); 
+    (void) getline(&pcLine, &iLen, pFHdr);
     pcVal = strrchr(pcLine, ':');
     if (NULL == pcVal)
     {
@@ -1510,9 +1549,9 @@ int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM)
     }
     (void) sscanf(pcVal, ": %d", &pstYUM->iNumChans);
     /* read and ignore number of good channels */
-    (void) getline(&pcLine, &iLen, pFHdr); 
+    (void) getline(&pcLine, &iLen, pFHdr);
     /* read channel bandwidth */
-    (void) getline(&pcLine, &iLen, pFHdr); 
+    (void) getline(&pcLine, &iLen, pFHdr);
     pcVal = strrchr(pcLine, ':');
     if (NULL == pcVal)
     {
@@ -1521,14 +1560,8 @@ int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM)
         return YAPP_RET_ERROR;
     }
     (void) sscanf(pcVal, ": %f", &pstYUM->fChanBW);
-    if (pstYUM->fChanBW < 0.0)
-    {
-        pstYUM->cIsBandFlipped = YAPP_TRUE;
-        /* make the channel bandwidth positive */
-        pstYUM->fChanBW = fabs(pstYUM->fChanBW);
-    }
     /* read lowest frequency */
-    (void) getline(&pcLine, &iLen, pFHdr); 
+    (void) getline(&pcLine, &iLen, pFHdr);
     pcVal = strrchr(pcLine, ':');
     if (NULL == pcVal)
     {
@@ -1538,7 +1571,7 @@ int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM)
     }
     (void) sscanf(pcVal, ": %f", &pstYUM->fFMin);
     /* read highest frequency */
-    (void) getline(&pcLine, &iLen, pFHdr); 
+    (void) getline(&pcLine, &iLen, pFHdr);
     pcVal = strrchr(pcLine, ':');
     if (NULL == pcVal)
     {
@@ -1547,8 +1580,8 @@ int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM)
         return YAPP_RET_ERROR;
     }
     (void) sscanf(pcVal, ": %f", &pstYUM->fFMax);
-    /* read number of bands */
-    (void) getline(&pcLine, &iLen, pFHdr); 
+    /* read band-flip status */
+    (void) getline(&pcLine, &iLen, pFHdr);
     pcVal = strrchr(pcLine, ':');
     if (NULL == pcVal)
     {
@@ -1556,19 +1589,17 @@ int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM)
                        "ERROR: Reading header file failed!\n");
         return YAPP_RET_ERROR;
     }
-    (void) sscanf(pcVal, ": %d", &pstYUM->iNumBands);
-    /* read number of bad time sections */
-    (void) getline(&pcLine, &iLen, pFHdr); 
-    pcVal = strrchr(pcLine, ':');
-    if (NULL == pcVal)
+    (void) sscanf(pcVal, ": %s", acTemp);
+    if (0 == strcmp(acTemp, "Yes"))
     {
-        (void) fprintf(stderr,
-                       "ERROR: Reading header file failed!\n");
-        return YAPP_RET_ERROR;
+        pstYUM->cIsBandFlipped = YAPP_TRUE;
     }
-    (void) sscanf(pcVal, ": %d", &pstYUM->iNumBadTimes);
+    /* read and ignore estimated number of bands */
+    (void) getline(&pcLine, &iLen, pFHdr);
+    /* read and ignore number of bad time sections */
+    (void) getline(&pcLine, &iLen, pFHdr);
     /* read number of bits */
-    (void) getline(&pcLine, &iLen, pFHdr); 
+    (void) getline(&pcLine, &iLen, pFHdr);
     pcVal = strrchr(pcLine, ':');
     if (NULL == pcVal)
     {
@@ -1578,7 +1609,7 @@ int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM)
     }
     (void) sscanf(pcVal, ": %d", &pstYUM->iNumBits);
     /* read number of IFs */
-    (void) getline(&pcLine, &iLen, pFHdr); 
+    (void) getline(&pcLine, &iLen, pFHdr);
     pcVal = strrchr(pcLine, ':');
     if (NULL == pcVal)
     {
@@ -1587,6 +1618,7 @@ int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM)
         return YAPP_RET_ERROR;
     }
     (void) sscanf(pcVal, ": %d", &pstYUM->iNumIFs);
+    /* ignore everything else */
 
     /* close the header file */
     (void) fclose(pFHdr);
@@ -2331,13 +2363,13 @@ int YAPP_CalcNumChans(int iNumBands,
 }
 
 
-void YAPP_GetIntFrac(float fNum, int *piInt, float *pfFrac) 
-{                                     
+void YAPP_GetIntFrac(float fNum, int *piInt, float *pfFrac)
+{
     *piInt = (int) fNum;
     *pfFrac = fNum - (float) *piInt;
 
-    return; 
-} 
+    return;
+}
 
 
 /*

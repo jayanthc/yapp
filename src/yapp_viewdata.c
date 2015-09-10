@@ -816,14 +816,6 @@ int main(int argc, char *argv[])
                 ++k;
             }
 
-// temp
-if (cShowBandpass)
-for (m = 0; m < stYUM.iNumChans; ++m)
-{
-    printf("%g\n", g_pfBandpass[m] / iBlockSize);
-}
-///////////////
-
             /* erase the previous x-axis */
             if (!cIsFirst && !cIsNonInteractive)   /* kludge */
             {

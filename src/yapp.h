@@ -64,7 +64,6 @@
 #define YAPP_FORMATSTR_DTS_DAT      "dat"
 #define YAPP_FORMATSTR_DTS_DAT_INF  "inf"
 #define YAPP_FORMATSTR_YM           "ym"
-#define YAPP_FORMATSTR_YMB          "ymb"
 /* @} */
 
 #define EXT_RAW                     ".raw"
@@ -78,7 +77,6 @@
 #define EXT_DAT                     ".dat"
 #define EXT_INF                     ".inf"
 #define EXT_YM                      ".ym"
-#define EXT_YMB                     ".ymb"
 #define EXT_YAPP_PROFILE            ".yp"
 
 enum tagFileFormats
@@ -94,7 +92,6 @@ enum tagFileFormats
     YAPP_FORMAT_DTS_DAT,        /* PRESTO time series format */
     /* metadata */
     YAPP_FORMAT_YM,             /* YAPP metadata text file */
-    YAPP_FORMAT_YMB             /* YAPP metadata binary file */
 };
 
 /* sample sizes in number of bits */
@@ -118,6 +115,7 @@ enum tagFileFormats
 #define INFIX_FOLD                  "fold"
 #define INFIX_STACK                 "stack"
 #define INFIX_SPLIT                 "split"
+#define INFIX_HEADER                "header"
 
 #define SUFFIX_CFG                  "_cfg"
 

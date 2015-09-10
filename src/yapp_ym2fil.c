@@ -1,9 +1,9 @@
 /**
- * @file yapp_ym2ymb.c
+ * @file yapp_ym2fil.c
  * Reads metadata from a .ym file, and writes it into a binary file.
  *
  * @verbatim
- * Usage: yapp_ym2ymb [options] <metadata-file>
+ * Usage: yapp_ym2fil [options] <metadata-file>
  *     -h  --help                           Display this usage information
  *     -v  --version                        Display the version @endverbatim
  *
@@ -107,16 +107,6 @@ int main(int argc, char *argv[])
         return YAPP_RET_ERROR;
     }
 
-#if 0
-    iDataFormat = YAPP_GetFormatFromExt();
-    if (0 == iDataFormat)
-    {
-        (void) fprintf(stderr, "ERROR: Data format not specified!\n");
-        PrintUsage(pcProgName);
-        return YAPP_RET_ERROR;
-    }
-#endif
-
     /* open the time series data file for writing */
     pcFileOut = YAPP_GetFilenameFromPath(pcFileYM);
     if (NULL == pcFileOut) {
@@ -126,11 +116,13 @@ int main(int argc, char *argv[])
     }
 
     (void) sprintf(acFileOut,
-                   "%s%s",
+                   "%s.%s%s",
                    pcFileOut,
-                   EXT_YMB);
+                   INFIX_HEADER,
+                   EXT_FIL);
 
-    iRet = YAPP_WriteMetadata(acFileOut, iDataFormat, stYUM);
+    /* write out the filterbank-format header */
+    iRet = YAPP_WriteMetadata(acFileOut, YAPP_FORMAT_FIL, stYUM);
     if (iRet != YAPP_RET_SUCCESS)
     {
         (void) fprintf(stderr, "ERROR: Writing metadata failed!\n");
