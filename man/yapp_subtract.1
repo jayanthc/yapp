@@ -5,7 +5,7 @@
 .\# Created by Jayanth Chennamangalam on 2013.05.09
 .\#
 
-.TH YAPP_SUBTRACT 1 "2014-06-14" "YAPP 3.5-beta" \
+.TH YAPP_SUBTRACT 1 "2015-09-11" "YAPP 3.6-beta" \
 "Yet Another Pulsar Processor"
 
 
@@ -29,6 +29,12 @@ data files should be in the SIGPROC .tim format.
 .TP
 .B \-h, --help
 Display a short help text.
+.TP
+.B \-s, --skip \fItime
+Length of data to be skipped, in seconds (default is 0).
+.TP
+.B \-p, --proc \fItime
+Length of data to be processed, in seconds (default is all data).
 .TP
 .B \-n, --nsamp \fIsamples
 Number of time samples read in one block (default is 4096 samples).

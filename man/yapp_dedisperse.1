@@ -5,7 +5,7 @@
 .\# Created by Jayanth Chennamangalam on 2012.12.18
 .\#
 
-.TH YAPP_DEDISPERSE 1 "2014-06-14" "YAPP 3.5-beta" \
+.TH YAPP_DEDISPERSE 1 "2015-09-11" "YAPP 3.6-beta" \
 "Yet Another Pulsar Processor"
 
 
@@ -58,13 +58,17 @@ DM at which to dedisperse (default is 0.0).
 Dispersion law (default is 2.0).
 .TP
 .B \-b, --nsubband \fInsubband
-Number of sub-bands (factor of number of channels, must be < number of channels)
+Number of sub-bands (factor of number of channels, must be < number of \
+channels).
 .TP
 .B \-u, --subband \fIsubband
-Sub-band to dedisperse (within [0, nsubband))
+Sub-band to dedisperse (within [0, nsubband)).
 .TP
 .B \-o, --out-format \fIformat
 Output format - 'dds', 'tim', or 'fil' (default is 'tim').
+.TP
+.B \-f, --f-decimate \fIfactor
+Decimation-in-frequency factor, for 'fil' output.
 .TP
 .B \-g, --graphics
 Turn on plotting.
@@ -72,8 +76,9 @@ Turn on plotting.
 .B \-m, --colour-map \fIname
 Colour map for plotting. Supports some of the standard MATLAB colour maps, \
 plus a few more. Valid colour map names are 'autumn', 'blue', 'bone', \
-\'cool', 'copper', 'gray', 'gray-inv', 'hot', 'jet', 'pink', 'spring', \
-\'summer', and 'winter' (default is 'jet').
+\'cool', 'copper', 'gray', 'gray-inv', 'hot', 'hot-inv', 'jet', 'pink', \
+\'spring', 'summer', 'winter', 'RdBu', 'BdRu', 'cubehelix', and \
+\'cubehelix-inv' (default is 'jet').
 .TP
 .B \-i, --invert
 Invert background and foreground colours in plots.
