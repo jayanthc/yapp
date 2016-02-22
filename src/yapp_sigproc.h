@@ -57,6 +57,9 @@ typedef struct tagSIGPROCHeader
 #define YAPP_SP_LABEL_FREQSTART     "FREQUENCY_START"
 #define YAPP_SP_LABEL_FREQEND       "FREQUENCY_END"
 #define YAPP_SP_LABEL_FREQCHAN      "fchannel"
+/* to semi-support M. Keith's version of fake (fast_fake) that adds a field for
+   8-bit files */
+#define YAPP_SP_LABEL_SIGNED        "signed"
 
 enum tagObservatory
 {
