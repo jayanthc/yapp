@@ -1207,6 +1207,16 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
             acTemp[iLen] = '\0';
             pstYUM->iHeaderLen += (sizeof(iLen) + iLen);
         }
+        /* to semi-support M. Keith's version of fake (fast_fake) */
+        else if (0 == strcmp(acLabel, YAPP_SP_LABEL_SIGNED))
+        {
+            /* read signed flag */
+            char cTemp = 0;
+            iRet = fread(&cTemp,
+                         sizeof(cTemp),
+                         1,
+                         g_pFData);
+        }
         else if (0 == strcmp(acLabel, YAPP_SP_LABEL_FREQSTART))
         {
             pstYUM->iFlagSplicedData = YAPP_TRUE;

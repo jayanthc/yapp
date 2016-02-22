@@ -346,13 +346,14 @@ YAPP_SP_LABEL_NUMCHANS	src/yapp_sigproc.h	40;"	d
 YAPP_SP_LABEL_NUMIFS	src/yapp_sigproc.h	46;"	d
 YAPP_SP_LABEL_OBSID	src/yapp_sigproc.h	49;"	d
 YAPP_SP_LABEL_RAWFILENAME	src/yapp_sigproc.h	37;"	d
+YAPP_SP_LABEL_SIGNED	src/yapp_sigproc.h	62;"	d
 YAPP_SP_LABEL_SRCDEC	src/yapp_sigproc.h	52;"	d
 YAPP_SP_LABEL_SRCNAME	src/yapp_sigproc.h	38;"	d
 YAPP_SP_LABEL_SRCRA	src/yapp_sigproc.h	51;"	d
 YAPP_SP_LABEL_TSAMP	src/yapp_sigproc.h	47;"	d
 YAPP_SP_LABEL_TSTART	src/yapp_sigproc.h	48;"	d
 YAPP_SP_LABEL_ZASTART	src/yapp_sigproc.h	54;"	d
-YAPP_SP_NUMOBS	src/yapp_sigproc.h	74;"	d
+YAPP_SP_NUMOBS	src/yapp_sigproc.h	77;"	d
 YAPP_SP_OBSID_AO	src/yapp_sigproc.h	/^    YAPP_SP_OBSID_AO,$/;"	e	enum:tagObservatory
 YAPP_SP_OBSID_EFFELSBERG	src/yapp_sigproc.h	/^    YAPP_SP_OBSID_EFFELSBERG$/;"	e	enum:tagObservatory
 YAPP_SP_OBSID_FAKE	src/yapp_sigproc.h	/^    YAPP_SP_OBSID_FAKE = 0,$/;"	e	enum:tagObservatory
@@ -362,16 +363,16 @@ YAPP_SP_OBSID_JB	src/yapp_sigproc.h	/^    YAPP_SP_OBSID_JB,$/;"	e	enum:tagObserv
 YAPP_SP_OBSID_NANCAY	src/yapp_sigproc.h	/^    YAPP_SP_OBSID_NANCAY,$/;"	e	enum:tagObservatory
 YAPP_SP_OBSID_ORT	src/yapp_sigproc.h	/^    YAPP_SP_OBSID_ORT,$/;"	e	enum:tagObservatory
 YAPP_SP_OBSID_PARKES	src/yapp_sigproc.h	/^    YAPP_SP_OBSID_PARKES,$/;"	e	enum:tagObservatory
-YAPP_SP_OBS_AO	src/yapp_sigproc.h	77;"	d
-YAPP_SP_OBS_EFFELSBERG	src/yapp_sigproc.h	84;"	d
-YAPP_SP_OBS_FAKE	src/yapp_sigproc.h	76;"	d
-YAPP_SP_OBS_GBT	src/yapp_sigproc.h	82;"	d
-YAPP_SP_OBS_GMRT	src/yapp_sigproc.h	83;"	d
-YAPP_SP_OBS_JB	src/yapp_sigproc.h	81;"	d
-YAPP_SP_OBS_NANCAY	src/yapp_sigproc.h	79;"	d
-YAPP_SP_OBS_ORT	src/yapp_sigproc.h	78;"	d
-YAPP_SP_OBS_PARKES	src/yapp_sigproc.h	80;"	d
-YAPP_SP_RADEC_SCALE	src/yapp_sigproc.h	86;"	d
+YAPP_SP_OBS_AO	src/yapp_sigproc.h	80;"	d
+YAPP_SP_OBS_EFFELSBERG	src/yapp_sigproc.h	87;"	d
+YAPP_SP_OBS_FAKE	src/yapp_sigproc.h	79;"	d
+YAPP_SP_OBS_GBT	src/yapp_sigproc.h	85;"	d
+YAPP_SP_OBS_GMRT	src/yapp_sigproc.h	86;"	d
+YAPP_SP_OBS_JB	src/yapp_sigproc.h	84;"	d
+YAPP_SP_OBS_NANCAY	src/yapp_sigproc.h	82;"	d
+YAPP_SP_OBS_ORT	src/yapp_sigproc.h	81;"	d
+YAPP_SP_OBS_PARKES	src/yapp_sigproc.h	83;"	d
+YAPP_SP_RADEC_SCALE	src/yapp_sigproc.h	89;"	d
 YAPP_Smooth	src/yapp_common.c	/^int YAPP_Smooth(float* pfInBuf,$/;"	f
 YAPP_TRUE	src/yapp.h	50;"	d
 YAPP_WriteMetadata	src/yapp_common.c	/^int YAPP_WriteMetadata(char *pcFileData, int iFormat, YUM_t stYUM)$/;"	f
@@ -451,6 +452,7 @@ g_pcIsTimeGood	src/yapp_fold.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	src/yapp_makerfimask.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	src/yapp_stat.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	src/yapp_viewdata.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
+g_pcVersion	src/yapp_version.c	/^const char *g_pcVersion = "YAPP-DEV-3.6.0-beta-20160222-133114";$/;"	v
 g_pdDM	src/yapp_dedisplaw.c	/^double *g_pdDM = NULL;$/;"	v
 g_pdDelayTab	src/yapp_dedisplaw.c	/^double *g_pdDelayTab = NULL;$/;"	v
 g_pdMaxDelayTab	src/yapp_dedisplaw.c	/^double *g_pdMaxDelayTab = NULL;$/;"	v
