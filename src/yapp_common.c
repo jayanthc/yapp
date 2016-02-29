@@ -437,6 +437,22 @@ int YAPP_ReadMetadata(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
             return YAPP_RET_ERROR;
     }
 
+    /* kludge */
+    if (0 == pstYUM->iNumIFs)
+    {
+        (void) fprintf(stderr,
+                       "WARNING: Number of IFs is 0! Setting it to 1.\n");
+        pstYUM->iNumIFs = 1;
+    }
+    if (0 == pstYUM->iNumPol)
+    {
+        (void) fprintf(stderr,
+                       "WARNING: Number of polarizations is 0! "
+                       "Setting it to number of IFs = %d.\n",
+                       pstYUM->iNumIFs);
+        pstYUM->iNumPol = pstYUM->iNumIFs;
+    }
+
     return YAPP_RET_SUCCESS;
 }
 

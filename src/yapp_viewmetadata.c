@@ -179,16 +179,10 @@ int main(int argc, char *argv[])
                       stYUM.iNumBadTimes);
         (void) printf("Number of bits per sample         : %d\n",
                       stYUM.iNumBits);
-        if (stYUM.iNumIFs != 0)
-        {
-            (void) printf("Number of IFs                     : %d\n",
-                          stYUM.iNumIFs);
-        }
-        if (stYUM.iNumPol != 0)
-        {
-            (void) printf("Number of polarizations           : %d\n",
-                          stYUM.iNumPol);
-        }
+        (void) printf("Number of IFs                     : %d\n",
+                      stYUM.iNumIFs);
+        (void) printf("Number of polarizations           : %d\n",
+                      stYUM.iNumPol);
         if ((stYUM.dDM != 0.0)
             || (YAPP_FORMAT_DTS_TIM == iFormat)
             || (YAPP_FORMAT_DTS_DAT == iFormat))
