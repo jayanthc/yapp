@@ -138,7 +138,6 @@ int main(int argc, char *argv[])
     {
         fprintf(stderr,
                 "ERROR: Writing metadata failed!\n");
-        (void) fclose(pFDat);
         return EXIT_FAILURE;
     }
 
@@ -183,7 +182,6 @@ int YAPP_CopyData(char *pcFileData, FILE *pFDat, int iOffset)
                        "ERROR: Failed to stat %s: %s!\n",
                        pcFileData,
                        strerror(errno));
-        (void) fclose(pFData);
         return EXIT_FAILURE;
     }
 
