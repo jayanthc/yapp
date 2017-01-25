@@ -10,7 +10,10 @@
 #include "yapp_sigproc.h"
 #include "yapp_psrfits.h"
 #include "yapp_presto.h"
+#include "yapp_hdf5.h"
 #include <fitsio.h>
+#include <hdf5.h>
+#include <hdf5_hl.h>
 
 const char g_aacSP_ObsNames[YAPP_SP_NUMOBS][LEN_GENSTRING] = {
     YAPP_SP_OBS_FAKE,
@@ -87,6 +90,10 @@ int YAPP_GetFileType(char *pcFile)
     else if (0 == strcmp(pcExt, EXT_YM))
     {
         iFormat = YAPP_FORMAT_YM;
+    }
+    else if (0 == strcmp(pcExt, EXT_HDF5))
+    {
+        iFormat = YAPP_FORMAT_HDF5;
     }
     else
     {
@@ -360,6 +367,10 @@ int YAPP_GetExtFromFormat(int iFormat, char *pcExt)
             (void) strcpy(pcExt, YAPP_FORMATSTR_YM);
             break;
 
+        case YAPP_FORMAT_HDF5:
+            (void) strcpy(pcExt, YAPP_FORMATSTR_HDF5);
+            break;
+
         default:
             (void) fprintf(stderr,
                            "ERROR: Unknown format %d!\n",
@@ -448,6 +459,17 @@ int YAPP_ReadMetadata(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
             {
                 (void) fprintf(stderr,
                                "ERROR: Calculating statistics failed!\n");
+                return YAPP_RET_ERROR;
+            }
+            break;
+
+        case YAPP_FORMAT_HDF5:
+            iRet = YAPP_ReadHDF5Metadata(pcFileSpec, iFormat, pstYUM);
+            if (iRet != YAPP_RET_SUCCESS)
+            {
+                (void) fprintf(stderr,
+                               "ERROR: "
+                               "Reading HDF5 metadata failed!\n");
                 return YAPP_RET_ERROR;
             }
             break;
@@ -965,6 +987,12 @@ int YAPP_ReadDASCfg(char *pcFileSpec, YUM_t *pstYUM)
 
     /* TODO: convert (year, month, day, hour, minute, second) to MJD */
 
+    return YAPP_RET_SUCCESS;
+}
+
+
+int YAPP_ReadHDF5Metadata(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
+{
     return YAPP_RET_SUCCESS;
 }
 
@@ -2294,6 +2322,35 @@ int YAPP_WriteMetadata(char *pcFileData, int iFormat, YUM_t stYUM)
                        stYUM.fChanBW);
 
         (void) fclose(pFInf);
+    }
+    else if (YAPP_FORMAT_HDF5 == iFormat)
+    {
+        hid_t hFileID;
+        hid_t hGroupID;
+        herr_t hStatus;
+        hsize_t hDims[YAPP_HDF5_DYNSPEC_RANK] = {5, 4};
+
+        /* create file */
+        hFileID = H5Fcreate(pcFileData,
+                            H5F_ACC_TRUNC,
+                            H5P_DEFAULT,
+                            H5P_DEFAULT);
+
+        /* create group */
+        hGroupID = H5Gcreate(hFileID,
+                             YAPP_HDF5_DYNSPEC_GROUP,
+                             H5P_DEFAULT,
+                             H5P_DEFAULT,
+                             H5P_DEFAULT);
+
+        /* create attributes */
+        //int aiAttr[3] = {100, 200, 300};
+        //hStatus = H5LTset_attribute_int(hGroupID, YAPP_HDF5_DYNSPEC_GROUP YAPP_HDF5_DYNSPEC_DATASET, "Factors", aiAttr, 3);
+
+        /* close stuff */
+        hStatus = H5Gclose(hGroupID);
+        hStatus = H5Fclose(hFileID);
+
     }
 
     return EXIT_SUCCESS;

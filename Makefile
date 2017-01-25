@@ -16,15 +16,16 @@ else
 CFLAGS_INC_PGPLOT =# define if needed (as -I[...])
 endif
 CFLAGS_INC_FFTW3 =# define if needed (as -I[...])
+CFLAGS_INC_HDF5 =-I/usr/local/hdf5/include
 #ifeq ($(OSTYPE), darwin13)
 ifeq ($(shell uname), Darwin)
-CFLAGS_INC_CFITSIO =-I/usr/local/include# define if needed (as -I[...])
+CFLAGS_INC_CFITSIO =-I/opt/local/include# define if needed (as -I[...])
 else
 CFLAGS_INC_CFITSIO =# define if needed (as -I[...])
 endif
 
 CFLAGS = -std=gnu99 -pedantic -Wall $(CFLAGS_INC_PGPLOT) $(CFLAGS_INC_FFTW3)  \
-	$(CFLAGS_INC_CFITSIO)
+	$(CFLAGS_INC_CFITSIO) $(CFLAGS_INC_HDF5)
 CFLAGS_C_DEBUG = $(CFLAGS) -g -c
 CFLAGS_C_RELEASE = $(CFLAGS) -O3 -c
 ifeq ($(OPT_DEBUG), yes)
@@ -53,14 +54,16 @@ else
 LFLAGS_PGPLOT_DIR =# define if not in $PATH (as -L[...])
 endif
 LFLAGS_FFTW3_DIR =# define if not in $PATH (as -L[...])
+LFLAGS_HDF5_DIR =-L/usr/local/hdf5/lib
 #ifeq ($(OSTYPE), darwin13)
 ifeq ($(shell uname), Darwin)
-LFLAGS_CFITSIO_DIR =-L/usr/local/lib# define if not in $PATH (as -L[...])
+LFLAGS_CFITSIO_DIR =-L/opt/local/lib# define if not in $PATH (as -L[...])
 else
 LFLAGS_CFITSIO_DIR =# define if not in $PATH (as -L[...])
 endif
 LFLAGS_FFTW3 = $(LFLAGS_FFTW3_DIR) -lfftw3f
 LFLAGS_CFITSIO = $(LFLAGS_CFITSIO_DIR) -lcfitsio
+LFLAGS_HDF5 = $(LFLAGS_HDF5_DIR) -lhdf5 -lhdf5_hl
 # in some cases, linking needs to be done with the X11 library, in which case
 # append '-lX11' (and possibly the path to the library) to the line below.
 # libgfortran may also be needed in some case, in which case append
@@ -111,6 +114,8 @@ all: yapp_makever \
 	 yapp_dat2tim \
 	 yapp_tim2dat.o \
 	 yapp_tim2dat \
+	 yapp_fil2h5.o \
+	 yapp_fil2h5 \
 	 yapp_subtract.o \
 	 yapp_subtract \
 	 yapp_siftpulses.o \
@@ -153,7 +158,7 @@ yapp_viewmetadata.o: $(SRCDIR)/yapp_viewmetadata.c $(SRCDIR)/yapp.h
 
 yapp_viewmetadata: $(IDIR)/yapp_viewmetadata.o $(IDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
-	$(CC) $^ $(LFLAGS_MATH) $(LFLAGS_CFITSIO) -o $(BINDIR)/$@
+	$(CC) $^ $(LFLAGS_MATH) $(LFLAGS_CFITSIO) $(LFLAGS_HDF5) -o $(BINDIR)/$@
 
 colourmap.o: $(SRCDIR)/colourmap.c $(SRCDIR)/colourmap.h
 	$(CC) $(CFLAGS_C) $< -o $(IDIR)/$@
@@ -164,7 +169,7 @@ yapp_viewdata.o: $(SRCDIR)/yapp_viewdata.c $(SRCDIR)/yapp.h \
 
 yapp_viewdata: $(IDIR)/yapp_viewdata.o $(IDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o $(IDIR)/colourmap.o
-	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) $(LFLAGS_CFITSIO) -o $(BINDIR)/$@
+	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) $(LFLAGS_CFITSIO) $(LFLAGS_HDF5) -o $(BINDIR)/$@
 
 yapp_ft.o: $(SRCDIR)/yapp_ft.c $(SRCDIR)/yapp.h
 	$(CC) $(CFLAGS_C) $(DDEBUG) $< -o $(IDIR)/$@
@@ -172,7 +177,7 @@ yapp_ft.o: $(SRCDIR)/yapp_ft.c $(SRCDIR)/yapp.h
 yapp_ft: $(IDIR)/yapp_ft.o $(IDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
 	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) $(LFLAGS_FFTW3) \
-		$(LFLAGS_CFITSIO) -o $(BINDIR)/$@
+		$(LFLAGS_CFITSIO) $(LFLAGS_HDF5) -o $(BINDIR)/$@
 
 yapp_dedisperse.o: $(SRCDIR)/yapp_dedisperse.c $(SRCDIR)/yapp.h
 	$(CC) $(CFLAGS_C) $(DDEBUG) $(DFC) $(SRCDIR)/yapp_dedisperse.c \
@@ -181,7 +186,7 @@ yapp_dedisperse.o: $(SRCDIR)/yapp_dedisperse.c $(SRCDIR)/yapp.h
 yapp_dedisperse: $(IDIR)/yapp_dedisperse.o
 	$(CC) $(IDIR)/yapp_dedisperse.o $(IDIR)/yapp_version.o \
 		$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o $(IDIR)/colourmap.o \
-		$(LFLAGS_PGPLOT) $(LFLAGS_MATH) $(LFLAGS_CFITSIO) -o $(BINDIR)/$@
+		$(LFLAGS_PGPLOT) $(LFLAGS_MATH) $(LFLAGS_CFITSIO) $(LFLAGS_HDF5) -o $(BINDIR)/$@
 
 yapp_smooth.o: $(SRCDIR)/yapp_smooth.c $(SRCDIR)/yapp.h \
 	$(SRCDIR)/yapp_sigproc.h
@@ -189,7 +194,7 @@ yapp_smooth.o: $(SRCDIR)/yapp_smooth.c $(SRCDIR)/yapp.h \
 
 yapp_smooth: $(IDIR)/yapp_smooth.o $(IDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
-	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) $(LFLAGS_CFITSIO) -o $(BINDIR)/$@
+	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) $(LFLAGS_CFITSIO) $(LFLAGS_HDF5) -o $(BINDIR)/$@
 
 yapp_filter.o: $(SRCDIR)/yapp_filter.c $(SRCDIR)/yapp.h \
 	$(SRCDIR)/yapp_sigproc.h
@@ -198,28 +203,28 @@ yapp_filter.o: $(SRCDIR)/yapp_filter.c $(SRCDIR)/yapp.h \
 yapp_filter: $(IDIR)/yapp_filter.o $(IDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
 	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) $(LFLAGS_FFTW3) \
-		$(LFLAGS_CFITSIO) -o $(BINDIR)/$@
+		$(LFLAGS_CFITSIO) $(LFLAGS_HDF5) -o $(BINDIR)/$@
 
 yapp_fold.o: $(SRCDIR)/yapp_fold.c $(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h
 	$(CC) $(CFLAGS_C) $(DDEBUG) $< -o $(IDIR)/$@
 
 yapp_fold: $(IDIR)/yapp_fold.o $(IDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o $(IDIR)/colourmap.o
-	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) $(LFLAGS_CFITSIO) -o $(BINDIR)/$@
+	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) $(LFLAGS_CFITSIO) $(LFLAGS_HDF5) -o $(BINDIR)/$@
 
 yapp_add.o: $(SRCDIR)/yapp_add.c $(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h
 	$(CC) $(CFLAGS_C) $(DDEBUG) $< -o $(IDIR)/$@
 
 yapp_add: $(IDIR)/yapp_add.o $(IDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
-	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) $(LFLAGS_CFITSIO) -o $(BINDIR)/$@
+	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) $(LFLAGS_CFITSIO) $(LFLAGS_HDF5) -o $(BINDIR)/$@
 
 yapp_subtract.o: $(SRCDIR)/yapp_subtract.c $(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h
 	$(CC) $(CFLAGS_C) $(DDEBUG) $< -o $(IDIR)/$@
 
 yapp_subtract: $(IDIR)/yapp_subtract.o $(IDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
-	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) $(LFLAGS_CFITSIO) -o $(BINDIR)/$@
+	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) $(LFLAGS_CFITSIO) $(LFLAGS_HDF5) -o $(BINDIR)/$@
 
 yapp_fits2fil.o: $(UTILDIR)/yapp_fits2fil.c $(UTILDIR)/yapp_fits2fil.h \
 	$(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h $(SRCDIR)/yapp_psrfits.h
@@ -227,7 +232,7 @@ yapp_fits2fil.o: $(UTILDIR)/yapp_fits2fil.c $(UTILDIR)/yapp_fits2fil.h \
 
 yapp_fits2fil: $(UTILDIR)/yapp_fits2fil.o $(IDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
-	$(CC) $^ $(LFLAGS_MATH) $(LFLAGS_CFITSIO) -o $(BINDIR)/$@
+	$(CC) $^ $(LFLAGS_MATH) $(LFLAGS_CFITSIO) $(LFLAGS_HDF5) -o $(BINDIR)/$@
 
 yapp_dat2tim.o: $(UTILDIR)/yapp_dat2tim.c $(UTILDIR)/yapp_dat2tim.h \
 	$(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h
@@ -235,7 +240,7 @@ yapp_dat2tim.o: $(UTILDIR)/yapp_dat2tim.c $(UTILDIR)/yapp_dat2tim.h \
 
 yapp_dat2tim: $(UTILDIR)/yapp_dat2tim.o $(SRCDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
-	$(CC) $^ $(LFLAGS_MATH) $(LFLAGS_CFITSIO) -o $(BINDIR)/$@
+	$(CC) $^ $(LFLAGS_MATH) $(LFLAGS_CFITSIO) $(LFLAGS_HDF5) -o $(BINDIR)/$@
 
 yapp_tim2dat.o: $(UTILDIR)/yapp_tim2dat.c $(UTILDIR)/yapp_tim2dat.h \
 	$(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h
@@ -243,56 +248,64 @@ yapp_tim2dat.o: $(UTILDIR)/yapp_tim2dat.c $(UTILDIR)/yapp_tim2dat.h \
 
 yapp_tim2dat: $(UTILDIR)/yapp_tim2dat.o $(SRCDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
-	$(CC) $^ $(LFLAGS_MATH) $(LFLAGS_CFITSIO) -o $(BINDIR)/$@
+	$(CC) $^ $(LFLAGS_MATH) $(LFLAGS_CFITSIO) $(LFLAGS_HDF5) -o $(BINDIR)/$@
+
+yapp_fil2h5.o: $(UTILDIR)/yapp_fil2h5.c $(UTILDIR)/yapp_fil2h5.h \
+	$(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h
+	$(CC) $(CFLAGS_C) -I$(SRCDIR) $(DDEBUG) $< -o $(UTILDIR)/$@
+
+yapp_fil2h5: $(UTILDIR)/yapp_fil2h5.o $(SRCDIR)/yapp_version.o \
+	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
+	$(CC) $^ $(LFLAGS_MATH) $(LFLAGS_CFITSIO) $(LFLAGS_HDF5) -o $(BINDIR)/$@
 
 yapp_siftpulses.o: $(SRCDIR)/yapp_siftpulses.c $(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h
 	$(CC) $(CFLAGS_C) $(DDEBUG) $< -o $(IDIR)/$@
 
 yapp_siftpulses: $(IDIR)/yapp_siftpulses.o $(IDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
-	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) $(LFLAGS_CFITSIO) -o $(BINDIR)/$@
+	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) $(LFLAGS_CFITSIO) $(LFLAGS_HDF5) -o $(BINDIR)/$@
 
 yapp_stacktim.o: $(SRCDIR)/yapp_stacktim.c $(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h
 	$(CC) $(CFLAGS_C) $(DDEBUG) $< -o $(IDIR)/$@
 
 yapp_stacktim: $(IDIR)/yapp_stacktim.o $(IDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o $(IDIR)/colourmap.o
-	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) $(LFLAGS_CFITSIO) -o $(BINDIR)/$@
+	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) $(LFLAGS_CFITSIO) $(LFLAGS_HDF5) -o $(BINDIR)/$@
 
 yapp_stackfil.o: $(SRCDIR)/yapp_stackfil.c $(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h
 	$(CC) $(CFLAGS_C) $(DDEBUG) $< -o $(IDIR)/$@
 
 yapp_stackfil: $(IDIR)/yapp_stackfil.o $(IDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o $(IDIR)/colourmap.o
-	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) $(LFLAGS_CFITSIO) -o $(BINDIR)/$@
+	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) $(LFLAGS_CFITSIO) $(LFLAGS_HDF5) -o $(BINDIR)/$@
 
 yapp_split.o: $(SRCDIR)/yapp_split.c $(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h
 	$(CC) $(CFLAGS_C) $(DDEBUG) $< -o $(IDIR)/$@
 
 yapp_split: $(IDIR)/yapp_split.o $(IDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o $(IDIR)/colourmap.o
-	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) $(LFLAGS_CFITSIO) -o $(BINDIR)/$@
+	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) $(LFLAGS_CFITSIO) $(LFLAGS_HDF5) -o $(BINDIR)/$@
 
 yapp_makeaudio.o: $(SRCDIR)/yapp_makeaudio.c $(SRCDIR)/yapp.h
 	$(CC) $(CFLAGS_C) $(SRCDIR)/yapp_makeaudio.c -o $(IDIR)/$@
 
 yapp_makeaudio: $(IDIR)/yapp_makeaudio.o
 	$(CC) $(SRCDIR)/yapp_makeaudio.o $(IDIR)/yapp_version.o $(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o \
-		$(LFLAGS_MATH) $(LFLAGS_SNDFILE) $(LFLAGS_CFITSIO) -o $(BINDIR)/$@
+		$(LFLAGS_MATH) $(LFLAGS_SNDFILE) $(LFLAGS_CFITSIO) $(LFLAGS_HDF5) -o $(BINDIR)/$@
 
 yapp_stat.o: $(SRCDIR)/yapp_stat.c $(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h
 	$(CC) $(CFLAGS_C) $(DDEBUG) $< -o $(IDIR)/$@
 
 yapp_stat: $(IDIR)/yapp_stat.o $(IDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o $(IDIR)/colourmap.o
-	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) $(LFLAGS_CFITSIO) -o $(BINDIR)/$@
+	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) $(LFLAGS_CFITSIO) $(LFLAGS_HDF5) -o $(BINDIR)/$@
 
 yapp_ym2fil.o: $(UTILDIR)/yapp_ym2fil.c $(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h
 	$(CC) $(CFLAGS_C) -I$(SRCDIR) $(DDEBUG) $< -o $(UTILDIR)/$@
 
 yapp_ym2fil: $(UTILDIR)/yapp_ym2fil.o $(IDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o $(IDIR)/colourmap.o
-	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) $(LFLAGS_CFITSIO) -o $(BINDIR)/$@
+	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) $(LFLAGS_CFITSIO) $(LFLAGS_HDF5) -o $(BINDIR)/$@
 
 yapp_dedisplaw.o: $(SRCDIR)/yapp_dedisplaw.c $(SRCDIR)/yapp.h
 	$(CC) $(CFLAGS_C) $(DFC) $(DDEBUG) $(SRCDIR)/yapp_dedisplaw.c -o $(IDIR)/$@
@@ -300,7 +313,7 @@ yapp_dedisplaw.o: $(SRCDIR)/yapp_dedisplaw.c $(SRCDIR)/yapp.h
 yapp_dedisplaw: $(IDIR)/yapp_dedisplaw.o
 	$(FC) $(IDIR)/yapp_dedisplaw.o $(IDIR)/yapp_version.o \
 		$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o $(IDIR)/set_colours.o \
-		$(LFLAGS_PGPLOT) $(LFLAGS_MATH) $(LFLAGS_CFITSIO) -o $(BINDIR)/$@
+		$(LFLAGS_PGPLOT) $(LFLAGS_MATH) $(LFLAGS_CFITSIO) $(LFLAGS_HDF5) -o $(BINDIR)/$@
 
 #killrfi.o: $(SRCDIR)/killrfi.c
 #	$(CC) $(CFLAGS_C) $(DDEBUG) $(SRCDIR)/killrfi.c -o $(IDIR)/$@
@@ -316,7 +329,7 @@ reorderdds.o: $(SRCDIR)/reorderdds.c
 
 reorderdds: $(IDIR)/reorderdds.o
 	$(FC) $(IDIR)/reorderdds.o $(IDIR)/yapp_version.o $(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o \
-		$(IDIR)/set_colours.o $(LFLAGS_PGPLOT) $(LFLAGS_MATH) $(LFLAGS_CFITSIO) -o $(BINDIR)/$@
+		$(IDIR)/set_colours.o $(LFLAGS_PGPLOT) $(LFLAGS_MATH) $(LFLAGS_CFITSIO) $(LFLAGS_HDF5) -o $(BINDIR)/$@
 
 #gendispdata.o: $(SRCDIR)/gendispdata.c
 #	$(CC) $(CFLAGS_C) $(SRCDIR)/gendispdata.c -o $(IDIR)/$@
@@ -363,6 +376,7 @@ clean:
 	$(DELCMD) $(UTILDIR)/yapp_fits2fil.o
 	$(DELCMD) $(UTILDIR)/yapp_dat2tim.o
 	$(DELCMD) $(UTILDIR)/yapp_tim2dat.o
+	$(DELCMD) $(UTILDIR)/yapp_fil2h5.o
 	$(DELCMD) $(IDIR)/yapp_subtract.o
 	$(DELCMD) $(IDIR)/yapp_siftpulses.o
 	$(DELCMD) $(IDIR)/yapp_stacktim.o

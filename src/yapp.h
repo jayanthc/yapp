@@ -64,6 +64,7 @@
 #define YAPP_FORMATSTR_DTS_DAT      "dat"
 #define YAPP_FORMATSTR_DTS_DAT_INF  "inf"
 #define YAPP_FORMATSTR_YM           "ym"
+#define YAPP_FORMATSTR_HDF5         "h5"
 /* @} */
 
 #define EXT_RAW                     ".raw"
@@ -78,6 +79,7 @@
 #define EXT_INF                     ".inf"
 #define EXT_YM                      ".ym"
 #define EXT_YAPP_PROFILE            ".yp"
+#define EXT_HDF5                    ".h5"
 
 enum tagFileFormats
 {
@@ -86,6 +88,7 @@ enum tagFileFormats
     YAPP_FORMAT_RAW,            /* raw voltages (baseband data) */
     YAPP_FORMAT_PSRFITS,        /* PSRFITS spectrometer data */
     YAPP_FORMAT_FIL,            /* SIGPROC filterbank file format */
+    YAPP_FORMAT_HDF5,           /* HDF5 file containing dynamic spectrum */
     /* dedispersed time series formats */
     YAPP_FORMAT_DTS_DDS,        /* Desh's dedispersed data format */
     YAPP_FORMAT_DTS_TIM,        /* SIGPROC time series format */
@@ -535,6 +538,15 @@ int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM);
  * @param[out]      pstYUM              YUM structure
  */
 int YAPP_ReadPRESTOHeaderFile(char *pcFileData, YUM_t *pstYUM);
+
+/**
+ * Read configuration information corresponding to an HDF5 ('.h5') file
+ *
+ * @param[in]       pcFileSpec          Data filename
+ * @param[in]       iFormat             Data file type
+ * @param[out]      pstYUM              YUM structure
+ */
+int YAPP_ReadHDF5Metadata(char *pcFileSpec, int iFormat, YUM_t *pstYUM);
 
 /**
  * Read one block of data from disk
