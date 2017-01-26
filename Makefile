@@ -63,7 +63,7 @@ LFLAGS_CFITSIO_DIR =# define if not in $PATH (as -L[...])
 endif
 LFLAGS_FFTW3 = $(LFLAGS_FFTW3_DIR) -lfftw3f
 LFLAGS_CFITSIO = $(LFLAGS_CFITSIO_DIR) -lcfitsio
-LFLAGS_HDF5 = $(LFLAGS_HDF5_DIR) -lhdf5 -lhdf5_hl
+LFLAGS_HDF5 = $(LFLAGS_HDF5_DIR) -lhdf5
 # in some cases, linking needs to be done with the X11 library, in which case
 # append '-lX11' (and possibly the path to the library) to the line below.
 # libgfortran may also be needed in some case, in which case append

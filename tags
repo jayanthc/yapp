@@ -264,6 +264,23 @@ YAPP_GetFilenameFromPath	src/yapp_common.c	/^char* YAPP_GetFilenameFromPath(char
 YAPP_GetFilenameWithExtFromPath	src/yapp_common.c	/^char* YAPP_GetFilenameWithExtFromPath(char *pcPath)$/;"	f
 YAPP_GetFormatFromExt	src/yapp_common.c	/^int YAPP_GetFormatFromExt(char *pcExt)$/;"	f
 YAPP_GetIntFrac	src/yapp_common.c	/^void YAPP_GetIntFrac(float fNum, int *piInt, float *pfFrac)$/;"	f
+YAPP_HDF5_ATTRNAME_BACKEND	src/yapp_hdf5.h	/^#define YAPP_HDF5_ATTRNAME_BACKEND /;"	d
+YAPP_HDF5_ATTRNAME_BFLIP	src/yapp_hdf5.h	/^#define YAPP_HDF5_ATTRNAME_BFLIP /;"	d
+YAPP_HDF5_ATTRNAME_BW	src/yapp_hdf5.h	/^#define YAPP_HDF5_ATTRNAME_BW /;"	d
+YAPP_HDF5_ATTRNAME_CHANBW	src/yapp_hdf5.h	/^#define YAPP_HDF5_ATTRNAME_CHANBW /;"	d
+YAPP_HDF5_ATTRNAME_FCEN	src/yapp_hdf5.h	/^#define YAPP_HDF5_ATTRNAME_FCEN /;"	d
+YAPP_HDF5_ATTRNAME_FMAX	src/yapp_hdf5.h	/^#define YAPP_HDF5_ATTRNAME_FMAX /;"	d
+YAPP_HDF5_ATTRNAME_FMIN	src/yapp_hdf5.h	/^#define YAPP_HDF5_ATTRNAME_FMIN /;"	d
+YAPP_HDF5_ATTRNAME_NUMBITS	src/yapp_hdf5.h	/^#define YAPP_HDF5_ATTRNAME_NUMBITS /;"	d
+YAPP_HDF5_ATTRNAME_NUMCHANS	src/yapp_hdf5.h	/^#define YAPP_HDF5_ATTRNAME_NUMCHANS /;"	d
+YAPP_HDF5_ATTRNAME_NUMIFS	src/yapp_hdf5.h	/^#define YAPP_HDF5_ATTRNAME_NUMIFS /;"	d
+YAPP_HDF5_ATTRNAME_SITE	src/yapp_hdf5.h	/^#define YAPP_HDF5_ATTRNAME_SITE /;"	d
+YAPP_HDF5_ATTRNAME_SRCDEC	src/yapp_hdf5.h	/^#define YAPP_HDF5_ATTRNAME_SRCDEC /;"	d
+YAPP_HDF5_ATTRNAME_SRCNAME	src/yapp_hdf5.h	/^#define YAPP_HDF5_ATTRNAME_SRCNAME /;"	d
+YAPP_HDF5_ATTRNAME_SRCRA	src/yapp_hdf5.h	/^#define YAPP_HDF5_ATTRNAME_SRCRA /;"	d
+YAPP_HDF5_ATTRNAME_TIMESAMPS	src/yapp_hdf5.h	/^#define YAPP_HDF5_ATTRNAME_TIMESAMPS /;"	d
+YAPP_HDF5_ATTRNAME_TSAMP	src/yapp_hdf5.h	/^#define YAPP_HDF5_ATTRNAME_TSAMP /;"	d
+YAPP_HDF5_ATTRNAME_TSTART	src/yapp_hdf5.h	/^#define YAPP_HDF5_ATTRNAME_TSTART /;"	d
 YAPP_HDF5_DYNSPEC_DATASET	src/yapp_hdf5.h	/^#define YAPP_HDF5_DYNSPEC_DATASET /;"	d
 YAPP_HDF5_DYNSPEC_GROUP	src/yapp_hdf5.h	/^#define YAPP_HDF5_DYNSPEC_GROUP /;"	d
 YAPP_HDF5_DYNSPEC_RANK	src/yapp_hdf5.h	/^#define YAPP_HDF5_DYNSPEC_RANK /;"	d
@@ -320,6 +337,7 @@ YAPP_RET_READDONE	src/yapp_ft.h	/^#define YAPP_RET_READDONE /;"	d
 YAPP_RET_SUCCESS	src/yapp.h	/^#define YAPP_RET_SUCCESS /;"	d
 YAPP_ReadDASCfg	src/yapp_common.c	/^int YAPP_ReadDASCfg(char *pcFileSpec, YUM_t *pstYUM)$/;"	f
 YAPP_ReadData	src/yapp_common.c	/^int YAPP_ReadData(FILE *pFData,$/;"	f
+YAPP_ReadHDF5Attribute	src/yapp_common.c	/^herr_t YAPP_ReadHDF5Attribute(hid_t hDataset,$/;"	f
 YAPP_ReadHDF5Metadata	src/yapp_common.c	/^int YAPP_ReadHDF5Metadata(char *pcFileSpec, int iFormat, YUM_t *pstYUM)$/;"	f
 YAPP_ReadMetadata	src/yapp_common.c	/^int YAPP_ReadMetadata(char *pcFileSpec, int iFormat, YUM_t *pstYUM)$/;"	f
 YAPP_ReadPRESTOHeaderFile	src/yapp_common.c	/^int YAPP_ReadPRESTOHeaderFile(char *pcFileData, YUM_t *pstYUM)$/;"	f
@@ -384,6 +402,11 @@ YAPP_SP_OBS_PARKES	src/yapp_sigproc.h	/^#define YAPP_SP_OBS_PARKES /;"	d
 YAPP_SP_RADEC_SCALE	src/yapp_sigproc.h	/^#define YAPP_SP_RADEC_SCALE /;"	d
 YAPP_Smooth	src/yapp_common.c	/^int YAPP_Smooth(float* pfInBuf,$/;"	f
 YAPP_TRUE	src/yapp.h	/^#define YAPP_TRUE /;"	d
+YAPP_WriteHDF5CharAttribute	src/yapp_common.c	/^int YAPP_WriteHDF5CharAttribute(hid_t hDataset,$/;"	f
+YAPP_WriteHDF5DoubleAttribute	src/yapp_common.c	/^int YAPP_WriteHDF5DoubleAttribute(hid_t hDataset,$/;"	f
+YAPP_WriteHDF5FloatAttribute	src/yapp_common.c	/^int YAPP_WriteHDF5FloatAttribute(hid_t hDataset,$/;"	f
+YAPP_WriteHDF5IntAttribute	src/yapp_common.c	/^int YAPP_WriteHDF5IntAttribute(hid_t hDataset,$/;"	f
+YAPP_WriteHDF5StringAttribute	src/yapp_common.c	/^int YAPP_WriteHDF5StringAttribute(hid_t hDataset,$/;"	f
 YAPP_WriteMetadata	src/yapp_common.c	/^int YAPP_WriteMetadata(char *pcFileData, int iFormat, YUM_t stYUM)$/;"	f
 YAPP_WritePolSelection	utilities/yapp_fits2fil.c	/^int YAPP_WritePolSelection(int iNumBits, long int lLen, char cToSum)$/;"	f
 YUM_s	src/yapp.h	/^typedef struct YUM_s$/;"	s
@@ -463,7 +486,7 @@ g_pcIsTimeGood	src/yapp_fold.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	src/yapp_makerfimask.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	src/yapp_stat.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	src/yapp_viewdata.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
-g_pcVersion	src/yapp_version.c	/^const char *g_pcVersion = "YAPP-DEV-3.6.0-beta-20170124-203047";$/;"	v
+g_pcVersion	src/yapp_version.c	/^const char *g_pcVersion = "YAPP-DEV-3.6.0-beta-20170126-122554";$/;"	v
 g_pdDM	src/yapp_dedisplaw.c	/^double *g_pdDM = NULL;$/;"	v
 g_pdDelayTab	src/yapp_dedisplaw.c	/^double *g_pdDelayTab = NULL;$/;"	v
 g_pdMaxDelayTab	src/yapp_dedisplaw.c	/^double *g_pdMaxDelayTab = NULL;$/;"	v

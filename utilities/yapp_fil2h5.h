@@ -9,9 +9,7 @@
 #ifndef __YAPP_FIL2H5_H__
 #define __YAPP_FIL2H5_H__
 
-//#define SIZE_BUF    1048576 /* 1 MB */
-//#define SIZE_BUF    262144
-#define SIZE_BUF    16777216
+#define SIZE_BUF    16777216    /* 16 MB */
 
 int YAPP_CopyData(char *pcFileData,
                   int iOffset,

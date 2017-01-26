@@ -13,7 +13,6 @@
 #include "yapp_hdf5.h"
 #include <fitsio.h>
 #include <hdf5.h>
-#include <hdf5_hl.h>
 
 const char g_aacSP_ObsNames[YAPP_SP_NUMOBS][LEN_GENSTRING] = {
     YAPP_SP_OBS_FAKE,
@@ -993,9 +992,224 @@ int YAPP_ReadDASCfg(char *pcFileSpec, YUM_t *pstYUM)
 
 int YAPP_ReadHDF5Metadata(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
 {
+    hid_t hFile = 0;
+    hid_t hGroup = 0;
+    hid_t hDataset = 0;
+    herr_t hStatus = 0;
+    int i = 0;
+
+    assert(YAPP_FORMAT_HDF5 == iFormat);
+
+    /* open .h5 file */
+    hFile = H5Fopen(pcFileSpec, H5F_ACC_RDONLY, H5P_DEFAULT);
+    if (hFile < 0)
+    {
+        fprintf(stderr,
+                "ERROR: Opening file %s failed! %s.\n",
+                pcFileSpec,
+                strerror(errno));
+        return YAPP_RET_ERROR;
+    }
+
+    /* open the group */
+    hGroup = H5Gopen(hFile, YAPP_HDF5_DYNSPEC_GROUP, H5P_DEFAULT);
+    if (hGroup < 0)
+    {
+        fprintf(stderr,
+                "ERROR: Opening group %s failed!\n",
+                YAPP_HDF5_DYNSPEC_GROUP);
+        return YAPP_RET_ERROR;
+    }
+
+    /* open the dataset */
+    hDataset = H5Dopen(hGroup,
+                       YAPP_HDF5_DYNSPEC_GROUP YAPP_HDF5_DYNSPEC_DATASET,
+                       H5P_DEFAULT);
+    if (hDataset < 0)
+    {
+        fprintf(stderr,
+                "ERROR: Opening dataset %s failed!\n",
+                YAPP_HDF5_DYNSPEC_GROUP YAPP_HDF5_DYNSPEC_DATASET);
+        return YAPP_RET_ERROR;
+    }
+
+    /* iterate through the attributes of this dataset */
+    hStatus = H5Aiterate(hDataset,
+                         H5_INDEX_NAME,
+                         H5_ITER_NATIVE,
+                         NULL,
+                         YAPP_ReadHDF5Attribute,
+                         pstYUM);
+
+    (void) H5Dclose(hDataset);
+    (void) H5Gclose(hGroup);
+    (void) H5Fclose(hFile);
+
+    /* fill in additional info in the metadata structure */
+
+    pstYUM->iNumBands = 1;
+
+    pstYUM->fSampSize = ((float) pstYUM->iNumBits) / YAPP_BYTE2BIT_FACTOR;
+
+    pstYUM->lDataSizeTotal = (long) pstYUM->iNumChans
+                                    * pstYUM->iTimeSamps
+                                    * pstYUM->fSampSize;
+
+    /* call all channels good - no support for SIGPROC ignore files yet */
+    pstYUM->pcIsChanGood = (char *) YAPP_Malloc(pstYUM->iNumChans,
+                                                sizeof(char),
+                                                YAPP_FALSE);
+    if (NULL == pstYUM->pcIsChanGood)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Memory allocation for channel goodness "
+                       "flag failed! %s!\n",
+                       strerror(errno));
+        return YAPP_RET_ERROR;
+    }
+
+    /* read the channel goodness flags */
+    for (i = 0; i < pstYUM->iNumChans; ++i)
+    {
+        pstYUM->pcIsChanGood[i] = YAPP_TRUE;
+    }
+
+    /* set number of good channels to number of channels - no support for
+       masking yet */
+    pstYUM->iNumGoodChans = pstYUM->iNumChans;
+
+    return YAPP_RET_SUCCESS;
     return YAPP_RET_SUCCESS;
 }
 
+
+herr_t YAPP_ReadHDF5Attribute(hid_t hDataset,
+                              const char *pcAttrName,
+                              const H5A_info_t *pstAttrInfo,
+                              void *pstYUM)
+{
+    hid_t hAttr = 0;
+    hid_t hType = 0;
+    herr_t hStatus = 0;
+
+    hAttr = H5Aopen(hDataset, pcAttrName, H5P_DEFAULT);
+
+    if (0 == strcmp(pcAttrName, YAPP_HDF5_ATTRNAME_SITE))
+    {
+        hType = H5Aget_type (hAttr);
+        hStatus = H5Aread(hAttr,
+                          hType,
+                          &(((YUM_t *) pstYUM)->acSite));
+    }
+    else if (0 == strcmp(pcAttrName, YAPP_HDF5_ATTRNAME_SRCNAME))
+    {
+        hType = H5Aget_type (hAttr);
+        hStatus = H5Aread(hAttr,
+                          hType,
+                          &(((YUM_t *) pstYUM)->acPulsar));
+    }
+    else if (0 == strcmp(pcAttrName, YAPP_HDF5_ATTRNAME_TSAMP))
+    {
+        hStatus = H5Aread(hAttr,
+                          H5T_IEEE_F64LE,
+                          &(((YUM_t *) pstYUM)->dTSamp));
+    }
+    else if (0 == strcmp(pcAttrName, YAPP_HDF5_ATTRNAME_FCEN))
+    {
+        hStatus = H5Aread(hAttr,
+                          H5T_IEEE_F32LE,
+                          &(((YUM_t *) pstYUM)->fFCentre));
+    }
+    else if (0 == strcmp(pcAttrName, YAPP_HDF5_ATTRNAME_BW))
+    {
+        hStatus = H5Aread(hAttr,
+                          H5T_IEEE_F32LE,
+                          &(((YUM_t *) pstYUM)->fBW));
+    }
+    else if (0 == strcmp(pcAttrName, YAPP_HDF5_ATTRNAME_NUMCHANS))
+    {
+        hStatus = H5Aread(hAttr,
+                          H5T_STD_I32LE,
+                          &(((YUM_t *) pstYUM)->iNumChans));
+    }
+    else if (0 == strcmp(pcAttrName, YAPP_HDF5_ATTRNAME_CHANBW))
+    {
+        hStatus = H5Aread(hAttr,
+                          H5T_IEEE_F32LE,
+                          &(((YUM_t *) pstYUM)->fChanBW));
+    }
+    else if (0 == strcmp(pcAttrName, YAPP_HDF5_ATTRNAME_TIMESAMPS))
+    {
+        hStatus = H5Aread(hAttr,
+                          H5T_STD_I32LE,
+                          &(((YUM_t *) pstYUM)->iTimeSamps));
+    }
+    else if (0 == strcmp(pcAttrName, YAPP_HDF5_ATTRNAME_NUMBITS))
+    {
+        hStatus = H5Aread(hAttr,
+                          H5T_STD_I32LE,
+                          &(((YUM_t *) pstYUM)->iNumBits));
+    }
+    else if (0 == strcmp(pcAttrName, YAPP_HDF5_ATTRNAME_NUMIFS))
+    {
+        hStatus = H5Aread(hAttr,
+                          H5T_STD_I32LE,
+                          &(((YUM_t *) pstYUM)->iNumIFs));
+    }
+    else if (0 == strcmp(pcAttrName, YAPP_HDF5_ATTRNAME_BACKEND))
+    {
+        hStatus = H5Aread(hAttr,
+                          H5T_STD_I32LE,
+                          &(((YUM_t *) pstYUM)->iBackendID));
+    }
+    else if (0 == strcmp(pcAttrName, YAPP_HDF5_ATTRNAME_SRCRA))
+    {
+        hStatus = H5Aread(hAttr,
+                          H5T_IEEE_F64LE,
+                          &(((YUM_t *) pstYUM)->dSourceRA));
+    }
+    else if (0 == strcmp(pcAttrName, YAPP_HDF5_ATTRNAME_SRCDEC))
+    {
+        hStatus = H5Aread(hAttr,
+                          H5T_IEEE_F64LE,
+                          &(((YUM_t *) pstYUM)->dSourceDec));
+    }
+    else if (0 == strcmp(pcAttrName, YAPP_HDF5_ATTRNAME_FMIN))
+    {
+        hStatus = H5Aread(hAttr,
+                          H5T_IEEE_F32LE,
+                          &(((YUM_t *) pstYUM)->fFMin));
+    }
+    else if (0 == strcmp(pcAttrName, YAPP_HDF5_ATTRNAME_FMAX))
+    {
+        hStatus = H5Aread(hAttr,
+                          H5T_IEEE_F32LE,
+                          &(((YUM_t *) pstYUM)->fFMax));
+    }
+    else if (0 == strcmp(pcAttrName, YAPP_HDF5_ATTRNAME_BFLIP))
+    {
+        hStatus = H5Aread(hAttr,
+                          H5T_STD_I8LE,
+                          &(((YUM_t *) pstYUM)->cIsBandFlipped));
+    }
+    else if (0 == strcmp(pcAttrName, YAPP_HDF5_ATTRNAME_TSTART))
+    {
+        hStatus = H5Aread(hAttr,
+                          H5T_IEEE_F64LE,
+                          &(((YUM_t *) pstYUM)->dTStart));
+    }
+    else
+    {
+        /* print a warning about encountering unknown attribute */
+        (void) fprintf(stderr,
+                       "WARNING: Unknown attribute %s encountered!\n",
+                       pcAttrName);
+    }
+
+    (void) H5Aclose(hAttr);
+
+    return hStatus;
+}
 
 int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
 {
@@ -2325,35 +2539,286 @@ int YAPP_WriteMetadata(char *pcFileData, int iFormat, YUM_t stYUM)
     }
     else if (YAPP_FORMAT_HDF5 == iFormat)
     {
-        hid_t hFileID;
-        hid_t hGroupID;
-        herr_t hStatus;
-        hsize_t hDims[YAPP_HDF5_DYNSPEC_RANK] = {5, 4};
+        hid_t hFile = 0;
+        hid_t hGroup = 0;
+        hid_t hDataspace = 0;
+        hid_t hDataset = 0;
+        herr_t hStatus = 0;
+        hsize_t hDims[YAPP_HDF5_DYNSPEC_RANK] = {0};
 
         /* create file */
-        hFileID = H5Fcreate(pcFileData,
+        hFile = H5Fcreate(pcFileData,
                             H5F_ACC_TRUNC,
                             H5P_DEFAULT,
                             H5P_DEFAULT);
 
         /* create group */
-        hGroupID = H5Gcreate(hFileID,
+        hGroup = H5Gcreate(hFile,
                              YAPP_HDF5_DYNSPEC_GROUP,
                              H5P_DEFAULT,
                              H5P_DEFAULT,
                              H5P_DEFAULT);
 
+        /* create dataspace */
+        hDims[0] = stYUM.iNumChans;
+        hDims[1] = stYUM.iTimeSamps;
+        hDataspace = H5Screate_simple(YAPP_HDF5_DYNSPEC_RANK, hDims, NULL);
+
+        /* create dataset */
+        hDataset = H5Dcreate(hGroup,
+                             YAPP_HDF5_DYNSPEC_GROUP YAPP_HDF5_DYNSPEC_DATASET,
+                             H5T_STD_I8LE,
+                             hDataspace,
+                             H5P_DEFAULT,
+                             H5P_DEFAULT,
+                             H5P_DEFAULT);
+
         /* create attributes */
-        //int aiAttr[3] = {100, 200, 300};
-        //hStatus = H5LTset_attribute_int(hGroupID, YAPP_HDF5_DYNSPEC_GROUP YAPP_HDF5_DYNSPEC_DATASET, "Factors", aiAttr, 3);
+
+        /* write telescope site */
+        (void) YAPP_WriteHDF5StringAttribute(hDataset,
+                                             YAPP_HDF5_ATTRNAME_SITE,
+                                             stYUM.acSite);
+
+        /* write source name */
+        (void) YAPP_WriteHDF5StringAttribute(hDataset,
+                                             YAPP_HDF5_ATTRNAME_SRCNAME,
+                                             stYUM.acPulsar);
+
+        /* write sampling time */
+        (void) YAPP_WriteHDF5DoubleAttribute(hDataset,
+                                             YAPP_HDF5_ATTRNAME_TSAMP,
+                                             stYUM.dTSamp);
+
+        /* write centre frequency */
+        (void) YAPP_WriteHDF5FloatAttribute(hDataset,
+                                            YAPP_HDF5_ATTRNAME_FCEN,
+                                            stYUM.fFCentre);
+
+        /* write bandwidth */
+        (void) YAPP_WriteHDF5FloatAttribute(hDataset,
+                                            YAPP_HDF5_ATTRNAME_BW,
+                                            stYUM.fBW);
+
+        /* write number of channels */
+        (void) YAPP_WriteHDF5IntAttribute(hDataset,
+                                          YAPP_HDF5_ATTRNAME_NUMCHANS,
+                                          stYUM.iNumChans);
+
+        /* write channel bandwidth */
+        (void) YAPP_WriteHDF5FloatAttribute(hDataset,
+                                            YAPP_HDF5_ATTRNAME_CHANBW,
+                                            stYUM.fChanBW);
+
+        /* write number of time samples */
+        (void) YAPP_WriteHDF5IntAttribute(hDataset,
+                                          YAPP_HDF5_ATTRNAME_TIMESAMPS,
+                                          stYUM.iTimeSamps);
+
+        /* write number of bits */
+        (void) YAPP_WriteHDF5IntAttribute(hDataset,
+                                          YAPP_HDF5_ATTRNAME_NUMBITS,
+                                          stYUM.iNumBits);
+
+        //TODO: think about this nifs/npols/nbeams?
+        /* write number of IFs */
+        (void) YAPP_WriteHDF5IntAttribute(hDataset,
+                                          YAPP_HDF5_ATTRNAME_NUMIFS,
+                                          stYUM.iNumIFs);
+
+        //TODO: think about this (name?)
+        /* write backend ID */
+        (void) YAPP_WriteHDF5IntAttribute(hDataset,
+                                          YAPP_HDF5_ATTRNAME_BACKEND,
+                                          stYUM.iBackendID);
+
+        /* write source RA */
+        (void) YAPP_WriteHDF5DoubleAttribute(hDataset,
+                                            YAPP_HDF5_ATTRNAME_SRCRA,
+                                            stYUM.dSourceRA);
+
+        /* write source dec. */
+        (void) YAPP_WriteHDF5DoubleAttribute(hDataset,
+                                            YAPP_HDF5_ATTRNAME_SRCDEC,
+                                            stYUM.dSourceDec);
+
+        //TODO: think about this. should min and max be written at all?
+        /* write lowest frequency */
+        (void) YAPP_WriteHDF5FloatAttribute(hDataset,
+                                            YAPP_HDF5_ATTRNAME_FMIN,
+                                            stYUM.fFMin);
+
+        /* write highest frequency */
+        (void) YAPP_WriteHDF5FloatAttribute(hDataset,
+                                            YAPP_HDF5_ATTRNAME_FMAX,
+                                            stYUM.fFMax);
+
+        /* write band flip status */
+        (void) YAPP_WriteHDF5CharAttribute(hDataset,
+                                           YAPP_HDF5_ATTRNAME_BFLIP,
+                                           stYUM.cIsBandFlipped);
+
+        /* write start time */
+        (void) YAPP_WriteHDF5DoubleAttribute(hDataset,
+                                             YAPP_HDF5_ATTRNAME_TSTART,
+                                             stYUM.dTStart);
 
         /* close stuff */
-        hStatus = H5Gclose(hGroupID);
-        hStatus = H5Fclose(hFileID);
+        (void) H5Dclose(hDataset);
+        (void) H5Sclose(hDataspace);
+        (void) H5Gclose(hGroup);
+        (void) H5Fclose(hFile);
 
     }
 
-    return EXIT_SUCCESS;
+    return YAPP_RET_SUCCESS;
+}
+
+
+/*
+ * Write HDF5 string attribute to a dataset
+ */
+int YAPP_WriteHDF5StringAttribute(hid_t hDataset,
+                                  char *pcAttrName,
+                                  char *pcAttrVal)
+{
+    hid_t hAttrDataspace = 0;
+    hid_t hType = 0;
+    hid_t hAttr = 0;
+
+    /* create string type */
+    hType = H5Tcopy(H5T_C_S1);
+    (void) H5Tset_size(hType, strlen(pcAttrVal) + 1);
+    (void) H5Tset_strpad(hType, H5T_STR_NULLTERM);
+
+    /* create and write attribute */
+    hAttrDataspace = H5Screate(H5S_SCALAR);
+    hAttr = H5Acreate(hDataset,
+                      pcAttrName,
+                      hType,
+                      hAttrDataspace,
+                      H5P_DEFAULT,
+                      H5P_DEFAULT);
+    (void) H5Awrite(hAttr, hType, pcAttrVal);
+
+    /* free resources */
+    (void) H5Aclose(hAttr);
+    (void) H5Tclose(hType);
+    (void) H5Sclose(hAttrDataspace);
+
+    return YAPP_RET_SUCCESS;
+}
+
+
+/*
+ * Write HDF5 32-bit integer attribute to a dataset
+ */
+int YAPP_WriteHDF5IntAttribute(hid_t hDataset,
+                               char *pcAttrName,
+                               int iAttrVal)
+{
+    hid_t hAttrDataspace = 0;
+    hid_t hAttr = 0;
+
+    /* create and write attribute */
+    hAttrDataspace = H5Screate(H5S_SCALAR);
+    hAttr = H5Acreate(hDataset,
+                      pcAttrName,
+                      H5T_STD_I32LE,
+                      hAttrDataspace,
+                      H5P_DEFAULT,
+                      H5P_DEFAULT);
+    (void) H5Awrite(hAttr, H5T_STD_I32LE, (const void *) &iAttrVal);
+
+    /* free resources */
+    (void) H5Aclose(hAttr);
+    (void) H5Sclose(hAttrDataspace);
+
+    return YAPP_RET_SUCCESS;
+}
+
+
+/*
+ * Write HDF5 float attribute to a dataset
+ */
+int YAPP_WriteHDF5FloatAttribute(hid_t hDataset,
+                                 char *pcAttrName,
+                                 float fAttrVal)
+{
+    hid_t hAttrDataspace = 0;
+    hid_t hAttr = 0;
+
+    /* create and write attribute */
+    hAttrDataspace = H5Screate(H5S_SCALAR);
+    hAttr = H5Acreate(hDataset,
+                      pcAttrName,
+                      H5T_IEEE_F32LE,
+                      hAttrDataspace,
+                      H5P_DEFAULT,
+                      H5P_DEFAULT);
+    (void) H5Awrite(hAttr, H5T_IEEE_F32LE, (const void *) &fAttrVal);
+
+    /* free resources */
+    (void) H5Aclose(hAttr);
+    (void) H5Sclose(hAttrDataspace);
+
+    return YAPP_RET_SUCCESS;
+}
+
+
+/*
+ * Write HDF5 double attribute to a dataset
+ */
+int YAPP_WriteHDF5DoubleAttribute(hid_t hDataset,
+                                  char *pcAttrName,
+                                  double dAttrVal)
+{
+    hid_t hAttrDataspace = 0;
+    hid_t hAttr = 0;
+
+    /* create and write attribute */
+    hAttrDataspace = H5Screate(H5S_SCALAR);
+    hAttr = H5Acreate(hDataset,
+                      pcAttrName,
+                      H5T_IEEE_F64LE,
+                      hAttrDataspace,
+                      H5P_DEFAULT,
+                      H5P_DEFAULT);
+    (void) H5Awrite(hAttr, H5T_IEEE_F64LE, (const void *) &dAttrVal);
+
+    /* free resources */
+    (void) H5Aclose(hAttr);
+    (void) H5Sclose(hAttrDataspace);
+
+    return YAPP_RET_SUCCESS;
+}
+
+
+/*
+ * Write HDF5 char attribute to a dataset
+ */
+int YAPP_WriteHDF5CharAttribute(hid_t hDataset,
+                                char *pcAttrName,
+                                char cAttrVal)
+{
+    hid_t hAttrDataspace = 0;
+    hid_t hAttr = 0;
+
+    /* create and write attribute */
+    hAttrDataspace = H5Screate(H5S_SCALAR);
+    hAttr = H5Acreate(hDataset,
+                      pcAttrName,
+                      H5T_STD_I8LE,
+                      hAttrDataspace,
+                      H5P_DEFAULT,
+                      H5P_DEFAULT);
+    (void) H5Awrite(hAttr, H5T_STD_I8LE, (const void *) &cAttrVal);
+
+    /* free resources */
+    (void) H5Aclose(hAttr);
+    (void) H5Sclose(hAttrDataspace);
+
+    return YAPP_RET_SUCCESS;
 }
 
 
