@@ -554,8 +554,12 @@ int main(int argc, char *argv[])
         /* skip data, if any are to be skipped */
         (void) fseek(g_pFData, lBytesToSkip, SEEK_SET);
     }
-    else {
-        //TODO: hdf5 skip data
+    else
+    {
+        if (lBytesToSkip != 0)
+        {
+            (void) printf("WARNING: Skipping data not supported for HDF5!\n");
+        }
     }
 
     /* open the PGPLOT graphics device */
