@@ -319,6 +319,24 @@ int main(int argc, char *argv[])
         stYUM.iNumChans = 1;
     }
 
+    if (YAPP_FORMAT_HDF5 == iFormat)
+    {
+        /* current support only for 8-bit integer, 16-bit integer, and 32-bit
+           single-precision floating point values */
+        if (!((YAPP_SAMPSIZE_8 == stYUM.iNumBits)
+              || (YAPP_SAMPSIZE_16 == stYUM.iNumBits)
+              || (YAPP_SAMPSIZE_32 == stYUM.iNumBits)))
+        {
+            (void) fprintf(stderr,
+                           "ERROR: Unsupported data type! %s only supports "
+                           "8-bit ints, 16-bit ints, and 32-bit floats, "
+                           "while input data is %d bits.\n",
+                           pcProgName,
+                           stYUM.iNumBits);
+            return YAPP_RET_ERROR;
+        }
+    }
+
     /* convert sampling interval to seconds */
     dTSampInSec = stYUM.dTSamp / 1e3;
 

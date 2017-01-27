@@ -2261,6 +2261,7 @@ int YAPP_ReadHDF5Data(hid_t hDataspace,
                                   hStride,
                                   hCount,
                                   hBlock);
+    //TODO: check how this behaves with 16-bit and 32-bit data
     hStatus = H5Dread(hDataset,
                       H5T_STD_I8LE,  
                       hMemDataspace,

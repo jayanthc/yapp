@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
     char acFileH5[LEN_GENSTRING] = {0};
     int iFormat = DEF_FORMAT;
     YUM_t stYUM = {{0}};
-    int iRet = EXIT_SUCCESS;
+    int iRet = YAPP_RET_SUCCESS;
 
     const char *pcProgName = NULL;
     int iNextOpt = 0;
@@ -113,35 +113,36 @@ int main(int argc, char *argv[])
     }
 
     iRet = YAPP_ReadMetadata(pcFileData, iFormat, &stYUM);
-    if (iRet != EXIT_SUCCESS)
+    if (iRet != YAPP_RET_SUCCESS)
     {
         (void) fprintf(stderr,
                        "ERROR: Reading metadata failed!\n");
-        return EXIT_FAILURE;
+        return YAPP_RET_ERROR;
     }
-#if 0
-    /* current support only for single-precision floating point values */
-    if (stYUM.iNumBits != YAPP_SAMPSIZE_32)
+    /* current support only for 8-bit integer, 16-bit integer, and 32-bit
+       single-precision floating point values */
+    if (!((YAPP_SAMPSIZE_8 == stYUM.iNumBits)
+          || (YAPP_SAMPSIZE_16 == stYUM.iNumBits)
+          || (YAPP_SAMPSIZE_32 == stYUM.iNumBits)))
     {
         (void) fprintf(stderr,
                        "ERROR: Unsupported data type! %s only supports "
-                       "single-precision floating point, while input data is "
-                       "%d bits.\n",
+                       "8-bit ints, 16-bit ints, and 32-bit floats, "
+                       "while input data is %d bits.\n",
                        pcProgName,
                        stYUM.iNumBits);
-        return EXIT_FAILURE;
+        return YAPP_RET_ERROR;
     }
-#endif
 
     pcFilename = YAPP_GetFilenameFromPath(pcFileData);
     (void) strcpy(acFileH5, pcFilename);
     (void) strcat(acFileH5, EXT_HDF5);
     iRet = YAPP_WriteMetadata(acFileH5, YAPP_FORMAT_HDF5, stYUM);
-    if (iRet != EXIT_SUCCESS)
+    if (iRet != YAPP_RET_SUCCESS)
     {
         fprintf(stderr,
                 "ERROR: Writing metadata failed!\n");
-        return EXIT_FAILURE;
+        return YAPP_RET_ERROR;
     }
 
     /* open .h5 file and write data */
@@ -152,25 +153,26 @@ int main(int argc, char *argv[])
                 "ERROR: Opening file %s failed! %s.\n",
                 acFileH5,
                 strerror(errno));
-        return EXIT_FAILURE;
+        return YAPP_RET_ERROR;
     }
 
     iRet = YAPP_CopyData(pcFileData,
                          stYUM.iHeaderLen,
                          hFile,
                          stYUM.iNumChans,
-                         stYUM.iTimeSamps);
-    if (iRet != EXIT_SUCCESS)
+                         stYUM.iTimeSamps,
+                         stYUM.iNumBits);
+    if (iRet != YAPP_RET_SUCCESS)
     {
         fprintf(stderr,
                 "ERROR: Writing data failed!\n");
         (void) H5Fclose(hFile);
-        return EXIT_FAILURE;
+        return YAPP_RET_ERROR;
     }
 
     (void) H5Fclose(hFile);
 
-    return EXIT_SUCCESS;
+    return YAPP_RET_SUCCESS;
 }
 
 
@@ -178,7 +180,8 @@ int YAPP_CopyData(char *pcFileData,
                   int iOffset,
                   hid_t hFile,
                   int iNumChans,
-                  int iTimeSamps)
+                  int iTimeSamps,
+                  int iNumBits)
 {
     FILE *pFData = NULL;
     struct stat stFileStats = {0};
@@ -188,23 +191,24 @@ int YAPP_CopyData(char *pcFileData,
     hid_t hDataspace = 0;
     hid_t hMemDataspace = 0;
     hid_t hDataset = 0;
+    hid_t hType = 0;
     hsize_t hMemDims[YAPP_HDF5_DYNSPEC_RANK] = {0};
     hsize_t hOffset[YAPP_HDF5_DYNSPEC_RANK] = {0};
     hsize_t hStride[YAPP_HDF5_DYNSPEC_RANK] = {0};
     hsize_t hCount[YAPP_HDF5_DYNSPEC_RANK] = {0};
     hsize_t hBlock[YAPP_HDF5_DYNSPEC_RANK] = {0};
     herr_t hStatus = 0;
-    int iRet = EXIT_SUCCESS;
+    int iRet = YAPP_RET_SUCCESS;
 
     /* get the file size */
     iRet = stat(pcFileData, &stFileStats);
-    if (iRet != EXIT_SUCCESS)
+    if (iRet != YAPP_RET_SUCCESS)
     {
         (void) fprintf(stderr,
                        "ERROR: Failed to stat %s: %s!\n",
                        pcFileData,
                        strerror(errno));
-        return EXIT_FAILURE;
+        return YAPP_RET_ERROR;
     }
 
     /* open the file */
@@ -215,7 +219,7 @@ int YAPP_CopyData(char *pcFileData,
                 "ERROR: Opening file %s failed! %s.\n",
                 pcFileData,
                 strerror(errno));
-        return EXIT_FAILURE;
+        return YAPP_RET_ERROR;
     }
 
     /* skip header */
@@ -229,7 +233,7 @@ int YAPP_CopyData(char *pcFileData,
                        "ERROR: Memory allocation for buffer failed! %s!\n",
                        strerror(errno));
         (void) fclose(pFData);
-        return EXIT_FAILURE;
+        return YAPP_RET_ERROR;
     }
 
     /* open the group */
@@ -244,7 +248,6 @@ int YAPP_CopyData(char *pcFileData,
 
     /* create a memory dataspace */
     hMemDims[0] = iNumChans;
-    //TODO: make this error-proof
     hMemDims[1] = SIZE_BUF / iNumChans;
     hMemDataspace = H5Screate_simple(YAPP_HDF5_DYNSPEC_RANK, hMemDims, NULL);
 
@@ -254,10 +257,31 @@ int YAPP_CopyData(char *pcFileData,
     hStride[0] = 1;
     hStride[1] = 1;
     hCount[0] = iNumChans;
-    //TODO: make this error-proof
     hCount[1] = SIZE_BUF / iNumChans;
     hBlock[0] = 1;
     hBlock[1] = 1;
+
+    switch (iNumBits)
+    {
+        case YAPP_SAMPSIZE_8:
+            hType = H5T_STD_I8LE;
+            break;
+
+        case YAPP_SAMPSIZE_16:
+            hType = H5T_STD_I16LE;
+            break;
+
+        case YAPP_SAMPSIZE_32:
+            hType = H5T_IEEE_F32LE;
+            break;
+
+        default:
+            /* we don't expect this */
+            assert ((YAPP_SAMPSIZE_8 == iNumBits)
+                    || (YAPP_SAMPSIZE_16 == iNumBits)
+                    || (YAPP_SAMPSIZE_32 == iNumBits));
+            return YAPP_RET_ERROR;
+    }
 
     /* copy data */
     do
@@ -271,7 +295,7 @@ int YAPP_CopyData(char *pcFileData,
                                       hCount,
                                       hBlock);
         hStatus = H5Dwrite(hDataset,
-                           H5T_STD_I8LE,
+                           hType,
                            hMemDataspace,
                            hDataspace,
                            H5P_DEFAULT,
@@ -305,12 +329,12 @@ int YAPP_CopyData(char *pcFileData,
         (void) fprintf(stderr, "ERROR: Data copy failed!\n");
         printf("%ld, %ld\n", lByteCount, stFileStats.st_size);
         (void) fclose(pFData);
-        return EXIT_FAILURE;
+        return YAPP_RET_ERROR;
     }
 
     (void) fclose(pFData);
 
-    return EXIT_SUCCESS;
+    return YAPP_RET_SUCCESS;
 }
 
 /*

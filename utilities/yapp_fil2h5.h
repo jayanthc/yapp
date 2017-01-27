@@ -9,13 +9,14 @@
 #ifndef __YAPP_FIL2H5_H__
 #define __YAPP_FIL2H5_H__
 
-#define SIZE_BUF    16777216    /* 16 MB */
+#define SIZE_BUF    (8192 * iNumChans)
 
 int YAPP_CopyData(char *pcFileData,
                   int iOffset,
                   hid_t hFileID,
                   int iNumChans,
-                  int iTimeSamps);
+                  int iTimeSamps,
+                  int iNumBits);
 
 #endif  /* __YAPP_FIL2H5_H__ */
 
