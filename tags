@@ -338,6 +338,7 @@ YAPP_RET_SUCCESS	src/yapp.h	/^#define YAPP_RET_SUCCESS /;"	d
 YAPP_ReadDASCfg	src/yapp_common.c	/^int YAPP_ReadDASCfg(char *pcFileSpec, YUM_t *pstYUM)$/;"	f
 YAPP_ReadData	src/yapp_common.c	/^int YAPP_ReadData(FILE *pFData,$/;"	f
 YAPP_ReadHDF5Attribute	src/yapp_common.c	/^herr_t YAPP_ReadHDF5Attribute(hid_t hDataset,$/;"	f
+YAPP_ReadHDF5Data	src/yapp_common.c	/^int YAPP_ReadHDF5Data(hid_t hDataspace,$/;"	f
 YAPP_ReadHDF5Metadata	src/yapp_common.c	/^int YAPP_ReadHDF5Metadata(char *pcFileSpec, int iFormat, YUM_t *pstYUM)$/;"	f
 YAPP_ReadMetadata	src/yapp_common.c	/^int YAPP_ReadMetadata(char *pcFileSpec, int iFormat, YUM_t *pstYUM)$/;"	f
 YAPP_ReadPRESTOHeaderFile	src/yapp_common.c	/^int YAPP_ReadPRESTOHeaderFile(char *pcFileData, YUM_t *pstYUM)$/;"	f
@@ -486,7 +487,7 @@ g_pcIsTimeGood	src/yapp_fold.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	src/yapp_makerfimask.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	src/yapp_stat.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	src/yapp_viewdata.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
-g_pcVersion	src/yapp_version.c	/^const char *g_pcVersion = "YAPP-DEV-3.6.0-beta-20170126-122554";$/;"	v
+g_pcVersion	src/yapp_version.c	/^const char *g_pcVersion = "YAPP-DEV-3.6.0-beta-20170127-135521";$/;"	v
 g_pdDM	src/yapp_dedisplaw.c	/^double *g_pdDM = NULL;$/;"	v
 g_pdDelayTab	src/yapp_dedisplaw.c	/^double *g_pdDelayTab = NULL;$/;"	v
 g_pdMaxDelayTab	src/yapp_dedisplaw.c	/^double *g_pdMaxDelayTab = NULL;$/;"	v

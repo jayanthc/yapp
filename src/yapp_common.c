@@ -2212,6 +2212,143 @@ int YAPP_ReadData(FILE *pFData,
 
 
 /*
+ * Read HDF5 data.
+ */
+int YAPP_ReadHDF5Data(hid_t hDataspace,
+                      hid_t hDataset,
+                      hsize_t *hOffset,
+                      hsize_t *hCount,
+                      hid_t hMemDataspace,
+                      float *pfBuf,
+                      float fSampSize,
+                      int iTotSampsPerBlock)
+{
+    static char cIsFirst = YAPP_TRUE;
+    static unsigned char *pcBuf = NULL;
+    int iReadItems = 0;
+    hsize_t hStride[YAPP_HDF5_DYNSPEC_RANK] = {0};
+    hsize_t hBlock[YAPP_HDF5_DYNSPEC_RANK] = {0};
+    herr_t hStatus = 0;
+    int i = 0;
+
+    if (cIsFirst)
+    {
+        /* allocate memory for the byte buffer, based on the total number of
+           samples per block (= number of channels * number of time samples per
+           block) */
+        pcBuf = (unsigned char *) YAPP_Malloc((int) (iTotSampsPerBlock
+                                                     * fSampSize),
+                                                     sizeof(char),
+                                                     YAPP_FALSE);
+        if (NULL == pcBuf)
+        {
+            (void) fprintf(stderr,
+                           "ERROR: Memory allocation failed for buffer! %s!\n",
+                           strerror(errno));
+            return YAPP_RET_ERROR;
+        }
+        cIsFirst = YAPP_FALSE;
+    }
+
+    /* read data into the byte buffer */
+    hStride[0] = 1;
+    hStride[1] = 1;
+    hBlock[0] = 1;
+    hBlock[1] = 1;
+    hStatus = H5Sselect_hyperslab(hDataspace,
+                                  H5S_SELECT_SET,
+                                  hOffset,
+                                  hStride,
+                                  hCount,
+                                  hBlock);
+    hStatus = H5Dread(hDataset,
+                      H5T_STD_I8LE,  
+                      hMemDataspace,
+                      hDataspace,
+                      H5P_DEFAULT,
+                      pcBuf);
+    if (hStatus < 0)
+    {
+        (void) fprintf(stderr, "ERROR: File read failed!\n");
+        return YAPP_RET_ERROR;
+    }
+    iReadItems = hCount[0] * hCount[1];
+    iReadItems = (int) ((float) iReadItems / fSampSize);
+
+    if (YAPP_SAMPSIZE_32 == (fSampSize * YAPP_BYTE2BIT_FACTOR))
+    {
+        /* 32-bit/4-byte floating-point data */
+        /* copy data from the byte buffer to the float buffer */
+        (void) memcpy(pfBuf, pcBuf, (int) (iTotSampsPerBlock * fSampSize));
+    }
+    else if (YAPP_SAMPSIZE_16 == (fSampSize * YAPP_BYTE2BIT_FACTOR))
+    {
+        /* 16-bit/2-byte data */
+        unsigned short int* psBuf = (unsigned short int*) pcBuf;
+        for (i = 0; i < iReadItems; ++i)
+        {
+            pfBuf[i] = (float) psBuf[i];
+        }
+    }
+    else if (YAPP_SAMPSIZE_8 == (fSampSize * YAPP_BYTE2BIT_FACTOR))
+    {
+        /* 8-bit/1-byte data */
+        /* copy data from the byte buffer to the float buffer */
+        #if 0
+        //TODO: this works for VEGAS viewdata
+        for (i = 0; i < iReadItems; ++i)
+        {
+            if (pcBuf[i] >= 0)
+            {
+                pcBuf[i] = 128 - pcBuf[i];
+            }
+            else
+            {
+                pcBuf[i] = 128 + pcBuf[i];
+            }
+            pfBuf[i] = (float) pcBuf[i];
+        }
+        #else
+        for (i = 0; i < iReadItems; ++i)
+        {
+            pfBuf[i] = (float) pcBuf[i];
+        }
+        #endif
+    }
+    else if (YAPP_SAMPSIZE_4 == (fSampSize * YAPP_BYTE2BIT_FACTOR))
+    {
+        /* 4-bit/0.5-byte data */
+        /* copy data from the byte buffer to the float buffer */
+        for (i = 0; i < (iReadItems / 2); ++i)
+        {
+            /* copy lower 4 bits */
+            pfBuf[2*i] = (float) (pcBuf[i] & 0x0F);
+            /* copy upper 4 bits */
+            pfBuf[(2*i)+1] = (float) ((pcBuf[i] & 0xF0) >> 4);
+        }
+    }
+    else if (YAPP_SAMPSIZE_2 == (fSampSize * YAPP_BYTE2BIT_FACTOR))
+    {
+        /* 2-bit/0.25-byte data */
+        /* copy data from the byte buffer to the float buffer */
+        for (i = 0; i < (iReadItems / 4); ++i)
+        {
+            /* copy lowest 2 bits */
+            pfBuf[4*i] = (float) (pcBuf[i] & 0x03);
+            /* copy next 2 bits */
+            pfBuf[(4*i)+1] = (float) ((pcBuf[i] & 0x0C) >> 2);
+            /* copy next 2 bits */
+            pfBuf[(4*i)+2] = (float) ((pcBuf[i] & 0x30) >> 4);
+            /* copy uppermost 2 bits */
+            pfBuf[(4*i)+3] = (float) ((pcBuf[i] & 0xC0) >> 6);
+        }
+    }
+
+    return iReadItems;
+}
+
+
+/*
  * Writes header to a data file.
  */
 int YAPP_WriteMetadata(char *pcFileData, int iFormat, YUM_t stYUM)

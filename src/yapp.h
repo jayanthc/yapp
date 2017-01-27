@@ -33,6 +33,8 @@
 #include <float.h>
 
 #include <cpgplot.h>
+#include <hdf5.h>
+
 
 /**
  * @defgroup YAPPRet Standard YAPP return values.
@@ -559,6 +561,18 @@ int YAPP_ReadData(FILE *pFData,
                   float *pfBuf,
                   float fSampSize,
                   int iTotSampsPerBlock);
+
+/**
+ * Read one block of data from HDF5 file on disk
+ */
+int YAPP_ReadHDF5Data(hid_t hDataspace,
+                      hid_t hDataset,
+                      hsize_t *hOffset,
+                      hsize_t *hCount,
+                      hid_t hMemDataspace,
+                      float *pfBuf,
+                      float fSampSize,
+                      int iTotSampsPerBlock);
 
 int YAPP_WriteMetadata(char *pcFileData, int iFormat, YUM_t stYUM);
 

@@ -254,6 +254,7 @@ int YAPP_CopyData(char *pcFileData,
     hStride[0] = 1;
     hStride[1] = 1;
     hCount[0] = iNumChans;
+    //TODO: make this error-proof
     hCount[1] = SIZE_BUF / iNumChans;
     hBlock[0] = 1;
     hBlock[1] = 1;
@@ -263,9 +264,12 @@ int YAPP_CopyData(char *pcFileData,
     {
         iRet = fread(pcBuf, 1, SIZE_BUF, pFData);
         lByteCount += iRet;
-        //printf("````````%d, %d, %ld\n", iRet, iRet / iNumChans, lByteCount);
-        hStatus = H5Sselect_hyperslab(hDataspace, H5S_SELECT_SET, hOffset,
-                                                  hStride, hCount, hBlock);
+        hStatus = H5Sselect_hyperslab(hDataspace,
+                                      H5S_SELECT_SET,
+                                      hOffset,
+                                      hStride,
+                                      hCount,
+                                      hBlock);
         hStatus = H5Dwrite(hDataset,
                            H5T_STD_I8LE,
                            hMemDataspace,
@@ -275,13 +279,13 @@ int YAPP_CopyData(char *pcFileData,
 
         /* set offset for next copy*/
         hOffset[1] += hCount[1];
-        //printf("------%d, %d\n", hOffset[1], hOffset[1] + hCount[1]);
         if (hOffset[1] + hCount[1] > iTimeSamps) {
             hCount[1] = iTimeSamps - hOffset[1];
-            //printf("========%d, %d\n", hOffset[1], hOffset[1] + hCount[1]);
             hMemDims[1] = hCount[1];
             (void) H5Sclose(hMemDataspace);
-            hMemDataspace = H5Screate_simple(YAPP_HDF5_DYNSPEC_RANK, hMemDims, NULL);
+            hMemDataspace = H5Screate_simple(YAPP_HDF5_DYNSPEC_RANK,
+                                             hMemDims,
+                                             NULL);
         }
 
     }
