@@ -216,7 +216,6 @@ int YAPP_CopyData(char *pcFileData, FILE *pFTim)
     if (lByteCount != stFileStats.st_size)
     {
         (void) fprintf(stderr, "ERROR: Data copy failed!\n");
-        printf("%ld, %ld\n", lByteCount, stFileStats.st_size);
         (void) fclose(pFData);
         return EXIT_FAILURE;
     }

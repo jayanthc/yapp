@@ -33,6 +33,8 @@
 #include <float.h>
 
 #include <cpgplot.h>
+#include <hdf5.h>
+
 
 /**
  * @defgroup YAPPRet Standard YAPP return values.
@@ -62,6 +64,7 @@
 #define YAPP_FORMATSTR_DTS_DAT      "dat"
 #define YAPP_FORMATSTR_DTS_DAT_INF  "inf"
 #define YAPP_FORMATSTR_YM           "ym"
+#define YAPP_FORMATSTR_HDF5         "h5"
 /* @} */
 
 #define EXT_PSRFITS                 ".fits"
@@ -75,6 +78,7 @@
 #define EXT_INF                     ".inf"
 #define EXT_YM                      ".ym"
 #define EXT_YAPP_PROFILE            ".yp"
+#define EXT_HDF5                    ".h5"
 
 enum tagFileFormats
 {
@@ -82,6 +86,7 @@ enum tagFileFormats
     YAPP_FORMAT_SPEC = 0,       /* Desh's specfile format */
     YAPP_FORMAT_PSRFITS,        /* PSRFITS spectrometer data */
     YAPP_FORMAT_FIL,            /* SIGPROC filterbank file format */
+    YAPP_FORMAT_HDF5,           /* HDF5 file containing dynamic spectrum */
     /* dedispersed time series formats */
     YAPP_FORMAT_DTS_DDS,        /* Desh's dedispersed data format */
     YAPP_FORMAT_DTS_TIM,        /* SIGPROC time series format */
@@ -522,6 +527,15 @@ int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM);
 int YAPP_ReadPRESTOHeaderFile(char *pcFileData, YUM_t *pstYUM);
 
 /**
+ * Read configuration information corresponding to an HDF5 ('.h5') file
+ *
+ * @param[in]       pcFileSpec          Data filename
+ * @param[in]       iFormat             Data file type
+ * @param[out]      pstYUM              YUM structure
+ */
+int YAPP_ReadHDF5Metadata(char *pcFileSpec, int iFormat, YUM_t *pstYUM);
+
+/**
  * Read one block of data from disk
  *
  * @param[inout]    pfBuf               Output data buffer
@@ -532,6 +546,18 @@ int YAPP_ReadData(FILE *pFData,
                   float *pfBuf,
                   float fSampSize,
                   int iTotSampsPerBlock);
+
+/**
+ * Read one block of data from HDF5 file on disk
+ */
+int YAPP_ReadHDF5Data(hid_t hDataspace,
+                      hid_t hDataset,
+                      hsize_t *hOffset,
+                      hsize_t *hCount,
+                      hid_t hMemDataspace,
+                      float *pfBuf,
+                      float fSampSize,
+                      int iTotSampsPerBlock);
 
 int YAPP_WriteMetadata(char *pcFileData, int iFormat, YUM_t stYUM);
 
