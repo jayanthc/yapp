@@ -24,7 +24,6 @@ int main(int argc, char *argv[])
 {
     char *pcFileYM = NULL;
     int iFormat = DEF_FORMAT;
-    int iDataFormat = 0;
     int iRet = YAPP_RET_SUCCESS;
     YUM_t stYUM = {{0}};
     char *pcFileOut = NULL;

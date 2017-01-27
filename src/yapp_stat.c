@@ -87,8 +87,8 @@ int main(int argc, char *argv[])
     int iRet = YAPP_RET_SUCCESS;
     float fDataMin = 0.0;
     float fDataMax = 0.0;
-    float fDataMinOld = 0.0;
-    float fDataMaxOld = 0.0;
+    //float fDataMinOld = 0.0;
+    //float fDataMaxOld = 0.0;
     char cIsFirst = YAPP_TRUE;
     int iReadItems = 0;
     float fButX = 0.0;
@@ -97,7 +97,6 @@ int main(int argc, char *argv[])
     int iNumSamps = 0;
     double dPeriod = 0.0;
     double dPhase = 0.0;
-    double dTurn = 0.0;
     double dPhaseStep = 0.0;
     int iSampsPerPeriod = 0;
     double dSampsPerPeriodFrac = 0.0;
@@ -112,8 +111,8 @@ int main(int argc, char *argv[])
     int i = 0;
     int j = 0;
     int k = 0;
-    int l = 0;
-    int m = 0;
+    //int l = 0;
+    //int m = 0;
     char acLabel[LEN_GENSTRING] = {0};
     int iColourMap = DEF_CMAP;
     char cPlotToFile = YAPP_FALSE;

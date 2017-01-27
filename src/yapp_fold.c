@@ -101,7 +101,6 @@ int main(int argc, char *argv[])
     int iNumSamps = 0;
     double dPeriod = 0.0;
     double dPhase = 0.0;
-    double dTurn = 0.0;
     double dPhaseStep = 0.0;
     int iSampsPerPeriod = 0;
     double dSampsPerPeriodFrac = 0.0;
@@ -860,8 +859,8 @@ int main(int argc, char *argv[])
                 /* TODO: need to correct for slow drift due to rounding
                          error */
                 k = 0;
-                double rem = dSampsPerPeriodFrac;
-                double frac = 0.0;
+                //double rem = dSampsPerPeriodFrac;
+                //double frac = 0.0;
                 for (i = 0; i < iNumSamps; ++i)
                 {
                     /* compute the phase */

@@ -383,7 +383,7 @@ int YAPP_GetExtFromFormat(int iFormat, char *pcExt)
 
 int YAPP_GetFormatFromExt(char *pcExt)
 {
-    char acFilename = {0};
+    char acFilename[LEN_GENSTRING] = {0};
     int iFormat = YAPP_RET_ERROR;
 
     (void) sprintf(acFilename, ".%s", pcExt);
@@ -2681,7 +2681,6 @@ int YAPP_WriteMetadata(char *pcFileData, int iFormat, YUM_t stYUM)
         hid_t hGroup = 0;
         hid_t hDataspace = 0;
         hid_t hDataset = 0;
-        herr_t hStatus = 0;
         hsize_t hDims[YAPP_HDF5_DYNSPEC_RANK] = {0};
 
         /* create file */

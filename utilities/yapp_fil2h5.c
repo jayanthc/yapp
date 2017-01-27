@@ -327,7 +327,6 @@ int YAPP_CopyData(char *pcFileData,
     if (lByteCount != (stFileStats.st_size - iOffset))
     {
         (void) fprintf(stderr, "ERROR: Data copy failed!\n");
-        printf("%ld, %ld\n", lByteCount, stFileStats.st_size);
         (void) fclose(pFData);
         return YAPP_RET_ERROR;
     }
