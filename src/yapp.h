@@ -570,6 +570,7 @@ int YAPP_ReadHDF5Data(hid_t hDataspace,
                       hsize_t *hOffset,
                       hsize_t *hCount,
                       hid_t hMemDataspace,
+                      hid_t hType,
                       float *pfBuf,
                       float fSampSize,
                       int iTotSampsPerBlock);
