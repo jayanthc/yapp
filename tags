@@ -487,7 +487,6 @@ g_pcIsTimeGood	src/yapp_fold.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	src/yapp_makerfimask.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	src/yapp_stat.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	src/yapp_viewdata.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
-g_pcVersion	src/yapp_version.c	/^const char *g_pcVersion = "YAPP-DEV-3.6.4-beta-20170129-131018";$/;"	v
 g_pdDM	src/yapp_dedisplaw.c	/^double *g_pdDM = NULL;$/;"	v
 g_pdDelayTab	src/yapp_dedisplaw.c	/^double *g_pdDelayTab = NULL;$/;"	v
 g_pdMaxDelayTab	src/yapp_dedisplaw.c	/^double *g_pdMaxDelayTab = NULL;$/;"	v

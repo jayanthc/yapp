@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
     const char *pcProgName = NULL;
     int iNextOpt = 0;
     /* valid short options */
-    const char* const pcOptsShort = "ha:v";
+    const char* const pcOptsShort = "hs:p:a:v";
     /* valid long options */
     const struct option stOptsLong[] = {
         { "help",                   0, NULL, 'h' },
@@ -428,17 +428,22 @@ int main(int argc, char *argv[])
  */
 void PrintUsage(const char *pcProgName)
 {
-    (void) printf("Usage: %s [options] <dedispersed-data-file>\n", pcProgName);
-    (void) printf("    -s  --samples <samples-per-sec>     ");
-    (void) printf("Samples per second\n");
-    (void) printf("    -a  --ampfactor <amp-scale-factor>  ");
-    (void) printf("Amplitude scale factor\n");
-    (void) printf("    -b  --header <header-bytes-to-skip> ");
-    (void) printf("Header bytes to skip\n");
-    (void) printf("    -w  --swap                          ");
-    (void) printf("Swap flag\n");
+    (void) printf("Usage: %s [options] <data-file>\n",
+                  pcProgName);
     (void) printf("    -h  --help                          ");
     (void) printf("Display this usage information\n");
+    (void) printf("    -s  --skip <time>                   ");
+    (void) printf("The length of data in seconds, to be\n");
+    (void) printf("                                        ");
+    (void) printf("skipped\n");
+    (void) printf("    -p  --proc <time>                   ");
+    (void) printf("The length of data in seconds, to be\n");
+    (void) printf("                                        ");
+    (void) printf("processed\n");
+    (void) printf("                                        ");
+    (void) printf("(default is all)\n");
+    (void) printf("    -a  --ampfactor <amp-scale-factor>  ");
+    (void) printf("Amplitude scale factor\n");
     (void) printf("    -v  --version                       ");
     (void) printf("Display the version\n");
 

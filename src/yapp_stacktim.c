@@ -10,8 +10,6 @@
  *     -n  --nsamp <samples>                Number of samples read in one block
  *                                          (default is 4096 samples)
  *     -g  --graphics                       Turn on plotting
- *     -m  --colour-map <name>              Colour map for plotting
- *                                          (default is 'jet')
  *     -i  --invert                         Invert the background and foreground
  *                                          colours in plots
  *     -e  --non-interactive                Run in non-interactive mode
@@ -704,10 +702,6 @@ void PrintUsage(const char *pcProgName)
     (void) printf("(default is 4096 samples)\n");
     (void) printf("    -g  --graphics                      ");
     (void) printf("Turn on plotting\n");
-    (void) printf("    -m  --colour-map <name>             ");
-    (void) printf("Colour map for plotting\n");
-    (void) printf("                                        ");
-    (void) printf("(default is 'jet')\n");
     (void) printf("    -i  --invert                        ");
     (void) printf("Invert background and foreground\n");
     (void) printf("                                        ");
