@@ -2194,6 +2194,7 @@ int YAPP_ReadHDF5Data(hid_t hDataspace,
                       hsize_t *hOffset,
                       hsize_t *hCount,
                       hid_t hMemDataspace,
+                      hid_t hType,
                       float *pfBuf,
                       float fSampSize,
                       int iTotSampsPerBlock)
@@ -2236,20 +2237,18 @@ int YAPP_ReadHDF5Data(hid_t hDataspace,
                                   hStride,
                                   hCount,
                                   hBlock);
-    //TODO: check how this behaves with 16-bit and 32-bit data
     hStatus = H5Dread(hDataset,
-                      H5T_STD_I8LE,  
+                      hType,
                       hMemDataspace,
                       hDataspace,
                       H5P_DEFAULT,
-                      pcBuf);
+                      (void *) pcBuf);
     if (hStatus < 0)
     {
         (void) fprintf(stderr, "ERROR: File read failed!\n");
         return YAPP_RET_ERROR;
     }
-    iReadItems = hCount[0] * hCount[1];
-    iReadItems = (int) ((float) iReadItems / fSampSize);
+    iReadItems = (int) (hCount[0] * hCount[1]);
 
     if (YAPP_SAMPSIZE_32 == (fSampSize * YAPP_BYTE2BIT_FACTOR))
     {
@@ -2652,6 +2651,7 @@ int YAPP_WriteMetadata(char *pcFileData, int iFormat, YUM_t stYUM)
         hid_t hGroup = 0;
         hid_t hDataspace = 0;
         hid_t hDataset = 0;
+        hid_t hType = 0;
         hsize_t hDims[YAPP_HDF5_DYNSPEC_RANK] = {0};
 
         /* create file */
@@ -2672,10 +2672,32 @@ int YAPP_WriteMetadata(char *pcFileData, int iFormat, YUM_t stYUM)
         hDims[1] = stYUM.iTimeSamps;
         hDataspace = H5Screate_simple(YAPP_HDF5_DYNSPEC_RANK, hDims, NULL);
 
+        switch (stYUM.iNumBits)
+        {
+            case YAPP_SAMPSIZE_8:
+                hType = H5T_STD_I8LE;
+                break;
+
+            case YAPP_SAMPSIZE_16:
+                hType = H5T_STD_I16LE;
+                break;
+
+            case YAPP_SAMPSIZE_32:
+                hType = H5T_IEEE_F32LE;
+                break;
+
+            default:
+                /* we don't expect this */
+                assert ((YAPP_SAMPSIZE_8 == stYUM.iNumBits)
+                        || (YAPP_SAMPSIZE_16 == stYUM.iNumBits)
+                        || (YAPP_SAMPSIZE_32 == stYUM.iNumBits));
+                return YAPP_RET_ERROR;
+        }
+
         /* create dataset */
         hDataset = H5Dcreate(hGroup,
                              YAPP_HDF5_DYNSPEC_GROUP YAPP_HDF5_DYNSPEC_DATASET,
-                             H5T_STD_I8LE,
+                             hType,
                              hDataspace,
                              H5P_DEFAULT,
                              H5P_DEFAULT,

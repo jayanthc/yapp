@@ -95,6 +95,7 @@ int main(int argc, char *argv[])
     hid_t hDataset = 0;
     hid_t hDataspace = 0;
     hid_t hMemDataspace = 0;
+    hid_t hType = 0;
     hsize_t hMemDims[YAPP_HDF5_DYNSPEC_RANK] = {0};
     hsize_t hOffset[YAPP_HDF5_DYNSPEC_RANK] = {0};
     hsize_t hCount[YAPP_HDF5_DYNSPEC_RANK] = {0};
@@ -667,8 +668,38 @@ int main(int argc, char *argv[])
 
     if (YAPP_FORMAT_HDF5 == iFormat)
     {
+        switch (stYUM.iNumBits)
+        {
+            case YAPP_SAMPSIZE_8:
+                hType = H5T_STD_I8LE;
+                break;
+
+            case YAPP_SAMPSIZE_16:
+                hType = H5T_STD_I16LE;
+                break;
+
+            case YAPP_SAMPSIZE_32:
+                hType = H5T_IEEE_F32LE;
+                break;
+
+            default:
+                /* we don't expect this */
+                assert ((YAPP_SAMPSIZE_8 == stYUM.iNumBits)
+                        || (YAPP_SAMPSIZE_16 == stYUM.iNumBits)
+                        || (YAPP_SAMPSIZE_32 == stYUM.iNumBits));
+                return YAPP_RET_ERROR;
+        }
+
         hMemDims[0] = stYUM.iNumChans;
-        hMemDims[1] = iTotSampsPerBlock / stYUM.iNumChans;
+        if (1 == iNumReads)
+        {
+            /* there is only one read */
+            hMemDims[1] = stYUM.iTimeSamps;
+        }
+        else
+        {
+            hMemDims[1] = iTotSampsPerBlock / stYUM.iNumChans;
+        }
         hMemDataspace = H5Screate_simple(YAPP_HDF5_DYNSPEC_RANK,
                                          hMemDims,
                                          NULL);
@@ -677,7 +708,15 @@ int main(int argc, char *argv[])
         hOffset[0] = 0;
         hOffset[1] = 0;
         hCount[0] = stYUM.iNumChans;
-        hCount[1] = iTotSampsPerBlock / stYUM.iNumChans;
+        if (1 == iNumReads)
+        {
+            /* there is only one read */
+            hCount[1] = stYUM.iTimeSamps;
+        }
+        else
+        {
+            hCount[1] = iTotSampsPerBlock / stYUM.iNumChans;
+        }
     }
 
     while (iNumReads > 0)
@@ -692,6 +731,7 @@ int main(int argc, char *argv[])
                                            hOffset,
                                            hCount,
                                            hMemDataspace,
+                                           hType,
                                            g_pfBuf,
                                            stYUM.fSampSize,
                                            iTotSampsPerBlock);

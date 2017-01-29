@@ -28,6 +28,7 @@ int main(int argc, char *argv[])
     char *pcFileData = NULL;
     char *pcFilename = NULL;
     hid_t hFile = 0;
+    hid_t hType = 0;
     char acFileH5[LEN_GENSTRING] = {0};
     int iFormat = DEF_FORMAT;
     YUM_t stYUM = {{0}};
@@ -156,12 +157,34 @@ int main(int argc, char *argv[])
         return YAPP_RET_ERROR;
     }
 
+    switch (stYUM.iNumBits)
+    {
+        case YAPP_SAMPSIZE_8:
+            hType = H5T_STD_I8LE;
+            break;
+
+        case YAPP_SAMPSIZE_16:
+            hType = H5T_STD_I16LE;
+            break;
+
+        case YAPP_SAMPSIZE_32:
+            hType = H5T_IEEE_F32LE;
+            break;
+
+        default:
+            /* we don't expect this */
+            assert ((YAPP_SAMPSIZE_8 == stYUM.iNumBits)
+                    || (YAPP_SAMPSIZE_16 == stYUM.iNumBits)
+                    || (YAPP_SAMPSIZE_32 == stYUM.iNumBits));
+            return YAPP_RET_ERROR;
+    }
+
     iRet = YAPP_CopyData(pcFileData,
                          stYUM.iHeaderLen,
                          hFile,
                          stYUM.iNumChans,
                          stYUM.iTimeSamps,
-                         stYUM.iNumBits);
+                         hType);
     if (iRet != YAPP_RET_SUCCESS)
     {
         fprintf(stderr,
@@ -181,7 +204,7 @@ int YAPP_CopyData(char *pcFileData,
                   hid_t hFile,
                   int iNumChans,
                   int iTimeSamps,
-                  int iNumBits)
+                  hid_t hType)
 {
     FILE *pFData = NULL;
     struct stat stFileStats = {0};
@@ -191,7 +214,6 @@ int YAPP_CopyData(char *pcFileData,
     hid_t hDataspace = 0;
     hid_t hMemDataspace = 0;
     hid_t hDataset = 0;
-    hid_t hType = 0;
     hsize_t hMemDims[YAPP_HDF5_DYNSPEC_RANK] = {0};
     hsize_t hOffset[YAPP_HDF5_DYNSPEC_RANK] = {0};
     hsize_t hStride[YAPP_HDF5_DYNSPEC_RANK] = {0};
@@ -248,7 +270,15 @@ int YAPP_CopyData(char *pcFileData,
 
     /* create a memory dataspace */
     hMemDims[0] = iNumChans;
-    hMemDims[1] = SIZE_BUF / iNumChans;
+    if (iTimeSamps < SIZE_BUF / iNumChans)
+    {
+        /* there is only one read */
+        hMemDims[1] = iTimeSamps;
+    }
+    else
+    {
+        hMemDims[1] = SIZE_BUF / iNumChans;
+    }
     hMemDataspace = H5Screate_simple(YAPP_HDF5_DYNSPEC_RANK, hMemDims, NULL);
 
     /* define stride, count, and block */
@@ -257,31 +287,17 @@ int YAPP_CopyData(char *pcFileData,
     hStride[0] = 1;
     hStride[1] = 1;
     hCount[0] = iNumChans;
-    hCount[1] = SIZE_BUF / iNumChans;
+    if (iTimeSamps < SIZE_BUF / iNumChans)
+    {
+        /* there is only one read */
+        hCount[1] = iTimeSamps;
+    }
+    else
+    {
+        hCount[1] = SIZE_BUF / iNumChans;
+    }
     hBlock[0] = 1;
     hBlock[1] = 1;
-
-    switch (iNumBits)
-    {
-        case YAPP_SAMPSIZE_8:
-            hType = H5T_STD_I8LE;
-            break;
-
-        case YAPP_SAMPSIZE_16:
-            hType = H5T_STD_I16LE;
-            break;
-
-        case YAPP_SAMPSIZE_32:
-            hType = H5T_IEEE_F32LE;
-            break;
-
-        default:
-            /* we don't expect this */
-            assert ((YAPP_SAMPSIZE_8 == iNumBits)
-                    || (YAPP_SAMPSIZE_16 == iNumBits)
-                    || (YAPP_SAMPSIZE_32 == iNumBits));
-            return YAPP_RET_ERROR;
-    }
 
     /* copy data */
     do
@@ -299,7 +315,7 @@ int YAPP_CopyData(char *pcFileData,
                            hMemDataspace,
                            hDataspace,
                            H5P_DEFAULT,
-                           pcBuf);
+                           (const void *) pcBuf);
 
         /* set offset for next copy*/
         hOffset[1] += hCount[1];

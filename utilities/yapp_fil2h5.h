@@ -16,7 +16,7 @@ int YAPP_CopyData(char *pcFileData,
                   hid_t hFileID,
                   int iNumChans,
                   int iTimeSamps,
-                  int iNumBits);
+                  hid_t hType);
 
 #endif  /* __YAPP_FIL2H5_H__ */
 
