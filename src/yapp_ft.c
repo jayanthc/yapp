@@ -22,6 +22,7 @@
  *                                          (default is 1)
  *     -o  --obs-site <site-name>           Observatory name
  *     -r  --pulsar <psr-name>              Pulsar name
+ *     -g  --graphics                       Turn on plotting
  *     -i  --invert                         Invert the background and foreground
  *                                          colours in plots
  *     -e  --non-interactive                Run in non-interactive mode

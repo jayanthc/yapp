@@ -14,8 +14,8 @@
  *                                          processed
  *                                          (default is all)
  *     -n  --nsamp <samples>                Number of samples read in one block
- *     -g  --graphics                       Turn on plotting
  *                                          (default is 4096 samples)
+ *     -g  --graphics                       Turn on plotting
  *     -i  --invert                         Invert the background and foreground
  *                                          colours in plots
  *     -e  --non-interactive                Run in non-interactive mode
@@ -830,7 +830,9 @@ void PrintUsage(const char *pcProgName)
     (void) printf("                                        ");
     (void) printf("(default is all)\n");
     (void) printf("    -n  --nsamp <samples>               ");
-    (void) printf("Number of samples read in one block");
+    (void) printf("Number of samples read in one block\n");
+    (void) printf("                                        ");
+    (void) printf("(default is 4096 samples)\n");
     (void) printf("    -g  --graphics                      ");
     (void) printf("Turn on plotting\n");
     (void) printf("    -i  --invert                        ");
