@@ -28,6 +28,8 @@
  *     -i  --invert                         Invert the background and
  *                                          foreground colours in plots
  *     -e  --non-interactive                Run in non-interactive mode
+ *     -w  --plot-to-file <prefix>          Write each plot to a PS file with
+ *                                          given prefix
  *     -v  --version                        Display the version @endverbatim
  *
  * @author Jayanth Chennamangalam
@@ -127,13 +129,15 @@ int main(int argc, char *argv[])
     int l = 0;
     int m = 0;
     char acLabel[LEN_GENSTRING] = {0};
+    char acPlotFilePrefix[LEN_GENSTRING] = {0};
+    char acPlotDevice[LEN_GENSTRING] = {0};
     int iColourMap = DEF_CMAP;
     int iInvCols = YAPP_FALSE;
     char cIsNonInteractive = YAPP_FALSE;
     const char *pcProgName = NULL;
     int iNextOpt = 0;
     /* valid short options */
-    const char* const pcOptsShort = "hs:p:n:b:c:adt:r:m:iev";
+    const char* const pcOptsShort = "hs:p:n:b:c:adt:r:m:iew:v";
     /* valid long options */
     const struct option stOptsLong[] = {
         { "help",                   0, NULL, 'h' },
@@ -149,6 +153,7 @@ int main(int argc, char *argv[])
         { "colour-map",             1, NULL, 'm' },
         { "invert",                 0, NULL, 'i' },
         { "non-interactive",        0, NULL, 'e' },
+        { "plot-to-file",           1, NULL, 'w' },
         { "version",                0, NULL, 'v' },
         { NULL,                     0, NULL, 0   }
     };
@@ -233,6 +238,11 @@ int main(int argc, char *argv[])
             case 'e':  /* -e or --non-interactive */
                 /* set option */
                 cIsNonInteractive = YAPP_TRUE;
+                break;
+
+            case 'w':   /* -w or --plot-to-file */
+                /* set option */
+                (void) strncpy(acPlotFilePrefix, optarg, strlen(optarg));
                 break;
 
             case 'v':   /* -v or --version */
@@ -563,33 +573,38 @@ int main(int argc, char *argv[])
         }
     }
 
-    /* open the PGPLOT graphics device */
-    g_iPGDev = cpgopen(PG_DEV);
-    if (g_iPGDev <= 0)
+    /* if plotting to file, open the device in the read loop; if not, open
+       here */
+    if ('\0' == acPlotFilePrefix[0])
     {
-        (void) fprintf(stderr,
-                       "ERROR: Opening graphics device %s failed!\n",
-                       PG_DEV);
-        if (YAPP_FORMAT_HDF5 == iFormat)
+        /* open the PGPLOT graphics device */
+        g_iPGDev = cpgopen(PG_DEV);
+        if (g_iPGDev <= 0)
         {
-            (void) H5Sclose(hDataspace);
-            (void) H5Dclose(hDataset);
-            (void) H5Fclose(hFile);
+            (void) fprintf(stderr,
+                           "ERROR: Opening graphics device %s failed!\n",
+                           PG_DEV);
+            if (YAPP_FORMAT_HDF5 == iFormat)
+            {
+                (void) H5Sclose(hDataspace);
+                (void) H5Dclose(hDataset);
+                (void) H5Fclose(hFile);
+            }
+            YAPP_CleanUp();
+            return YAPP_RET_ERROR;
         }
-        YAPP_CleanUp();
-        return YAPP_RET_ERROR;
-    }
 
-    /* set the background colour to white and the foreground colour to
-       black, if user requires so */
-    if (YAPP_TRUE == iInvCols)
-    {
-        cpgscr(0, 1.0, 1.0, 1.0);
-        cpgscr(1, 0.0, 0.0, 0.0);
-    }
+        /* set the background colour to white and the foreground colour to
+           black, if user requires so */
+        if (YAPP_TRUE == iInvCols)
+        {
+            cpgscr(0, 1.0, 1.0, 1.0);
+            cpgscr(1, 0.0, 0.0, 0.0);
+        }
 
-    /* set character height */
-    cpgsch(PG_CH);
+        /* set character height */
+        cpgsch(PG_CH);
+    }
 
     /* set up the plot's X-axis */
     g_pfXAxis = (float *) YAPP_Malloc(iBlockSize,
@@ -600,7 +615,10 @@ int main(int argc, char *argv[])
         (void) fprintf(stderr,
                        "ERROR: Memory allocation for X-axis failed! %s!\n",
                        strerror(errno));
-        cpgclos();
+        if ('\0' == acPlotFilePrefix[0])
+        {
+            cpgclos();
+        }
         if (YAPP_FORMAT_HDF5 == iFormat)
         {
             (void) H5Sclose(hDataspace);
@@ -618,7 +636,10 @@ int main(int argc, char *argv[])
         (void) fprintf(stderr,
                        "ERROR: Memory allocation for X-axis failed! %s!\n",
                        strerror(errno));
-        cpgclos();
+        if ('\0' == acPlotFilePrefix[0])
+        {
+            cpgclos();
+        }
         if (YAPP_FORMAT_HDF5 == iFormat)
         {
             (void) H5Sclose(hDataspace);
@@ -964,6 +985,36 @@ int main(int argc, char *argv[])
                                        + (i * dTSampInSec)));
         }
 
+        if (acPlotFilePrefix[0] != '\0')
+        {
+            /* open the PGPLOT graphics device */
+            (void) sprintf(acPlotDevice,
+                           "%s-%d-%d%s%s",
+                           acPlotFilePrefix,
+                           iReadBlockCount,
+                           iTotNumReads,
+                           EXT_PS,
+                           PG_DEV_PS);
+            g_iPGDev = cpgopen(acPlotDevice);
+            if (g_iPGDev <= 0)
+            {
+                (void) fprintf(stderr,
+                               "ERROR: Opening graphics device %s failed!\n",
+                               PG_DEV);
+                if (YAPP_FORMAT_HDF5 == iFormat)
+                {
+                    (void) H5Sclose(hDataspace);
+                    (void) H5Dclose(hDataset);
+                    (void) H5Fclose(hFile);
+                }
+                YAPP_CleanUp();
+                return YAPP_RET_ERROR;
+            }
+
+            /* set character height */
+            cpgsch(PG_CH);
+        }
+
         if (!((YAPP_FORMAT_DTS_TIM == iFormat)
               || (YAPP_FORMAT_DTS_DAT == iFormat)
               || (YAPP_FORMAT_DTS_DDS == iFormat)))
@@ -1108,14 +1159,17 @@ int main(int argc, char *argv[])
             cpgsci(PG_CI_DEF);
         }
 
-        /* display the plot number */
-        /* TODO: bug - in maximized window, plot not proper  */
-        (void) sprintf(acLabel, "%d / %d", iReadBlockCount, iTotNumReads);
-        cpgmtxt("T", -1.5, 0.99, 1.0, acLabel);
-
-        if (!(cIsLastBlock))
+        if ('\0' == acPlotFilePrefix[0])
         {
-            if (!(cIsNonInteractive))
+            /* display the plot number */
+            /* TODO: bug - in maximized window, plot not proper  */
+            (void) sprintf(acLabel, "%d / %d", iReadBlockCount, iTotNumReads);
+            cpgmtxt("T", -1.5, 0.99, 1.0, acLabel);
+        }
+
+        if (!cIsLastBlock)
+        {
+            if (!cIsNonInteractive && ('\0' == acPlotFilePrefix[0]))
             {
                 /* draw the 'next' and 'exit' buttons */
                 cpgsvp(PG_VP_BUT_ML, PG_VP_BUT_MR, PG_VP_BUT_MB, PG_VP_BUT_MT);
@@ -1197,6 +1251,11 @@ int main(int argc, char *argv[])
             }
         }
 
+        if (acPlotFilePrefix[0] != '\0')
+        {
+            cpgclos();
+        }
+
         if (1 == iNumReads)
         {
             cIsLastBlock = YAPP_TRUE;
@@ -1205,7 +1264,10 @@ int main(int argc, char *argv[])
 
     (void) printf("DONE!\n");
 
-    cpgclos();
+    if ('\0' == acPlotFilePrefix[0])
+    {
+        cpgclos();
+    }
     if (YAPP_FORMAT_HDF5 == iFormat)
     {
         (void) H5Sclose(hMemDataspace);
@@ -1271,6 +1333,10 @@ void PrintUsage(const char *pcProgName)
     (void) printf("colours in plots\n");
     (void) printf("    -e  --non-interactive               ");
     (void) printf("Run in non-interactive mode\n");
+    (void) printf("    -w  --plot-to-file <prefix>         ");
+    (void) printf("Write each plot to a PS file with\n");
+    (void) printf("                                        ");
+    (void) printf("given prefix\n");
     (void) printf("    -v  --version                       ");
     (void) printf("Display the version\n");
 
