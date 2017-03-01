@@ -1344,7 +1344,7 @@ int main(int argc, char *argv[])
                 }
 
                 /* get the average over all the good channels */
-                if (iEffcNumGoodChans != 0)
+                /*if (iEffcNumGoodChans != 0)
                 {
                     g_pfDedispData[k] /= iEffcNumGoodChans;
                 }
@@ -1356,7 +1356,7 @@ int main(int argc, char *argv[])
                 //float fSpecMean = YAPP_CalcMean(pfSpectrum, iNumChans, 0, 1);
                 //float fSpecRMS = YAPP_CalcRMS(pfSpectrum, iNumChans, 0, 1, fSpecMean); 
                 //g_pfDedispData[k] /= fSpecRMS;
-                g_pfDedispData[k] /= fNoiseRMS;
+                g_pfDedispData[k] /= fNoiseRMS;*/
 
                 /* reset the effective number of good channels */
                 iEffcNumGoodChans = 0;
@@ -1412,7 +1412,7 @@ int main(int argc, char *argv[])
                 }
 
                 /* get the average over all the good channels */
-                if (iEffcNumGoodChans != 0)
+                /*if (iEffcNumGoodChans != 0)
                 {
                     g_pfDedispData[k] /= iEffcNumGoodChans;
                 }
@@ -1424,7 +1424,7 @@ int main(int argc, char *argv[])
                 //float fSpecMean = YAPP_CalcMean(pfSpectrum, iNumChans, 0, 1);
                 //float fSpecRMS = YAPP_CalcRMS(pfSpectrum, iNumChans, 0, 1, fSpecMean); 
                 //g_pfDedispData[k] /= fSpecRMS;
-                g_pfDedispData[k] /= fNoiseRMS;
+                g_pfDedispData[k] /= fNoiseRMS;*/
 
                 /* reset the effective number of good channels */
                 iEffcNumGoodChans = 0;
