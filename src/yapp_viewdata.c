@@ -28,7 +28,7 @@
  *     -i  --invert                         Invert the background and
  *                                          foreground colours in plots
  *     -e  --non-interactive                Run in non-interactive mode
- *     -w  --plot-to-file <prefix>          Write each plot to a PS file with
+ *     -w  --plot-to-file <prefix>          Write each plot to a PNG file with
  *                                          given prefix
  *     -v  --version                        Display the version @endverbatim
  *
@@ -1342,7 +1342,7 @@ void PrintUsage(const char *pcProgName)
     (void) printf("    -e  --non-interactive               ");
     (void) printf("Run in non-interactive mode\n");
     (void) printf("    -w  --plot-to-file <prefix>         ");
-    (void) printf("Write each plot to a PS file with\n");
+    (void) printf("Write each plot to a PNG file with\n");
     (void) printf("                                        ");
     (void) printf("given prefix\n");
     (void) printf("    -v  --version                       ");
