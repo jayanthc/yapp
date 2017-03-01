@@ -77,8 +77,10 @@ EXT_DEDISPSPEC	src/yapp.h	/^#define EXT_DEDISPSPEC /;"	d
 EXT_DEDISPSPECCFG	src/yapp.h	/^#define EXT_DEDISPSPECCFG /;"	d
 EXT_DYNSPEC	src/yapp.h	/^#define EXT_DYNSPEC /;"	d
 EXT_FIL	src/yapp.h	/^#define EXT_FIL /;"	d
+EXT_GIF	src/yapp.h	/^#define EXT_GIF /;"	d
 EXT_HDF5	src/yapp.h	/^#define EXT_HDF5 /;"	d
 EXT_INF	src/yapp.h	/^#define EXT_INF /;"	d
+EXT_PNG	src/yapp.h	/^#define EXT_PNG /;"	d
 EXT_PS	src/yapp.h	/^#define EXT_PS /;"	d
 EXT_PSRFITS	src/yapp.h	/^#define EXT_PSRFITS /;"	d
 EXT_RAW	src/yapp.h	/^#define EXT_RAW /;"	d
@@ -152,6 +154,8 @@ PG_CH_SCALEFACTOR	src/yapp.h	/^#define PG_CH_SCALEFACTOR /;"	d
 PG_CI_DEF	src/yapp.h	/^#define PG_CI_DEF /;"	d
 PG_CI_PLOT	src/yapp.h	/^#define PG_CI_PLOT /;"	d
 PG_DEV	src/yapp.h	/^#define PG_DEV /;"	d
+PG_DEV_GIF	src/yapp.h	/^#define PG_DEV_GIF /;"	d
+PG_DEV_PNG	src/yapp.h	/^#define PG_DEV_PNG /;"	d
 PG_DEV_PS	src/yapp.h	/^#define PG_DEV_PS /;"	d
 PG_PLOT_SLEEP	src/yapp.h	/^#define PG_PLOT_SLEEP /;"	d
 PG_TICK_STEPS_X	src/yapp.h	/^#define PG_TICK_STEPS_X /;"	d
@@ -487,7 +491,7 @@ g_pcIsTimeGood	src/yapp_fold.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	src/yapp_makerfimask.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	src/yapp_stat.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	src/yapp_viewdata.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
-g_pcVersion	src/yapp_version.c	/^const char *g_pcVersion = "YAPP-DEV-3.6.5-beta-20170227-115346";$/;"	v
+g_pcVersion	src/yapp_version.c	/^const char *g_pcVersion = "YAPP-DEV-3.6.5-beta-20170301-115819";$/;"	v
 g_pdDM	src/yapp_dedisplaw.c	/^double *g_pdDM = NULL;$/;"	v
 g_pdDelayTab	src/yapp_dedisplaw.c	/^double *g_pdDelayTab = NULL;$/;"	v
 g_pdMaxDelayTab	src/yapp_dedisplaw.c	/^double *g_pdMaxDelayTab = NULL;$/;"	v

@@ -993,8 +993,8 @@ int main(int argc, char *argv[])
                            acPlotFilePrefix,
                            iReadBlockCount,
                            iTotNumReads,
-                           EXT_PS,
-                           PG_DEV_PS);
+                           EXT_PNG,
+                           PG_DEV_PNG);
             g_iPGDev = cpgopen(acPlotDevice);
             if (g_iPGDev <= 0)
             {
@@ -1009,6 +1009,14 @@ int main(int argc, char *argv[])
                 }
                 YAPP_CleanUp();
                 return YAPP_RET_ERROR;
+            }
+
+            /* set the background colour to white and the foreground colour to
+               black, if user requires so */
+            if (YAPP_TRUE == iInvCols)
+            {
+                cpgscr(0, 1.0, 1.0, 1.0);
+                cpgscr(1, 0.0, 0.0, 0.0);
             }
 
             /* set character height */
