@@ -72,6 +72,8 @@
 #define EXT_DEDISPSPEC              ".dds"
 #define EXT_DEDISPSPECCFG           ".cfg"
 #define EXT_PS                      ".ps"
+#define EXT_PNG                     ".png"
+#define EXT_GIF                     ".gif"
 #define EXT_FIL                     ".fil"
 #define EXT_TIM                     ".tim"
 #define EXT_DAT                     ".dat"
@@ -172,6 +174,10 @@ enum tagFileFormats
 #define PG_DEV              "1/XS"  /**< @brief Device for screen plotting */
 #define PG_DEV_PS           "/CPS"  /**< @brief Device suffix for plotting to a
                                          PostScript file*/
+#define PG_DEV_PNG          "/PNG"  /**< @brief Device suffix for plotting to a
+                                         PNG file*/
+#define PG_DEV_GIF          "/GIF"  /**< @brief Device suffix for plotting to a
+                                         GIF file*/
 /* @} */
 
 #define PLOT_DDS_SUFFIX     "_dds"  /**< @brief Dedispersed data plot */
