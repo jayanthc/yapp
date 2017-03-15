@@ -304,6 +304,10 @@ enum tagFileFormats
 
 #define YAPP_DEGPERHOUR         15              /* degrees per hour */
 
+/* HDF5 */
+/* dimensionality of dynamic spectrum */
+#define YAPP_HDF5_DYNSPEC_RANK      2
+
 /**
  * YAPP Unified Metadata (YUM) definition
  * YUM abstracts the metadata storage schemes employed by different file
@@ -355,6 +359,8 @@ typedef struct YUM_s
     float fMean;
     float fMedian;
     float fRMS;
+    /* for HDF5 chunking */
+    long int lChunkDims[YAPP_HDF5_DYNSPEC_RANK];
 
 #if 0
     /* DAS configuration information */

@@ -9,13 +9,16 @@
 #ifndef __YAPP_FIL2H5_H__
 #define __YAPP_FIL2H5_H__
 
-#define SIZE_BUF    (8192 * iNumChans)
+#define SIZE_BUF                (8192 * iNumChans)
+
+#define YAPP_HDF5_CHUNK_DIM_Y   1024
 
 int YAPP_CopyData(char *pcFileData,
                   int iOffset,
                   hid_t hFileID,
                   int iNumChans,
                   int iTimeSamps,
+                  int iNumBits,
                   hid_t hType);
 
 #endif  /* __YAPP_FIL2H5_H__ */

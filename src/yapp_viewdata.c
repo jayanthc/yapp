@@ -761,15 +761,15 @@ int main(int argc, char *argv[])
                 return YAPP_RET_ERROR;
         }
 
-        hMemDims[0] = stYUM.iNumChans;
+        hMemDims[1] = stYUM.iNumChans;
         if (1 == iNumReads)
         {
             /* there is only one read */
-            hMemDims[1] = stYUM.iTimeSamps;
+            hMemDims[0] = stYUM.iTimeSamps;
         }
         else
         {
-            hMemDims[1] = iTotSampsPerBlock / stYUM.iNumChans;
+            hMemDims[0] = iTotSampsPerBlock / stYUM.iNumChans;
         }
         hMemDataspace = H5Screate_simple(YAPP_HDF5_DYNSPEC_RANK,
                                          hMemDims,
@@ -778,15 +778,15 @@ int main(int argc, char *argv[])
         /* define stride, count, and block */
         hOffset[0] = 0;
         hOffset[1] = 0;
-        hCount[0] = stYUM.iNumChans;
+        hCount[1] = stYUM.iNumChans;
         if (1 == iNumReads)
         {
             /* there is only one read */
-            hCount[1] = stYUM.iTimeSamps;
+            hCount[0] = stYUM.iTimeSamps;
         }
         else
         {
-            hCount[1] = iTotSampsPerBlock / stYUM.iNumChans;
+            hCount[0] = iTotSampsPerBlock / stYUM.iNumChans;
         }
     }
 
@@ -835,11 +835,11 @@ int main(int argc, char *argv[])
         if (YAPP_FORMAT_HDF5 == iFormat)
         {
             /* set offset for next copy*/
-            hOffset[1] += hCount[1];
+            hOffset[0] += hCount[0];
             if (1 == iNumReads)                 /* last-but-one block */
             {
-                hCount[1] = stYUM.iTimeSamps - hOffset[1];
-                hMemDims[1] = hCount[1];
+                hCount[0] = stYUM.iTimeSamps - hOffset[0];
+                hMemDims[0] = hCount[0];
                 (void) H5Sclose(hMemDataspace);
                 hMemDataspace = H5Screate_simple(YAPP_HDF5_DYNSPEC_RANK,
                                 hMemDims,

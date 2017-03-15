@@ -1603,7 +1603,8 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
                 ++pstYUM->iNumBands;
                 if (YAPP_MAX_NUM_BANDS == pstYUM->iNumBands)
                 {
-                    (void) printf("WARNING: "
+                    (void) fprintf(stderr,
+                                  "WARNING: "
                                   "Maximum number of bands reached!\n");
                     break;
                 }
@@ -2507,8 +2508,9 @@ int YAPP_WriteMetadata(char *pcFileData, int iFormat, YUM_t stYUM)
         if (YAPP_RET_ERROR == iTemp)
         {
             /* could not identify observatory, set it to 'unknown/fake' */
-            (void) printf("WARNING: "
-                          "Identifying observatory failed, setting site to %s!\n",
+            (void) fprintf(stderr,
+                          "WARNING: Identifying observatory failed, setting "
+                          "site to %s!\n",
                           YAPP_SP_OBS_FAKE);
             iTemp = YAPP_SP_OBSID_FAKE;
         }
@@ -2680,26 +2682,49 @@ int YAPP_WriteMetadata(char *pcFileData, int iFormat, YUM_t stYUM)
         hid_t hGroup = 0;
         hid_t hDataspace = 0;
         hid_t hDataset = 0;
+        hid_t hPropList = 0;
         hid_t hType = 0;
         hsize_t hDims[YAPP_HDF5_DYNSPEC_RANK] = {0};
+        unsigned int aiOptions[YAPP_HDF5_SIZE_FILTER_OPTS] = {0};
+        herr_t hStatus = 0;
 
         /* create file */
         hFile = H5Fcreate(pcFileData,
-                            H5F_ACC_TRUNC,
-                            H5P_DEFAULT,
-                            H5P_DEFAULT);
+                          H5F_ACC_TRUNC,
+                          H5P_DEFAULT,
+                          H5P_DEFAULT);
+        if (hFile < 0)
+        {
+            (void) fprintf(stderr,
+                           "ERROR: Creating file %s failed!\n",
+                           pcFileData);
+            return YAPP_RET_ERROR;
+        }
 
         /* create group */
         hGroup = H5Gcreate(hFile,
-                             YAPP_HDF5_DYNSPEC_GROUP,
-                             H5P_DEFAULT,
-                             H5P_DEFAULT,
-                             H5P_DEFAULT);
+                           YAPP_HDF5_DYNSPEC_GROUP,
+                           H5P_DEFAULT,
+                           H5P_DEFAULT,
+                           H5P_DEFAULT);
+        if (hGroup < 0)
+        {
+            (void) fprintf(stderr,
+                           "ERROR: Creating group %s failed!\n",
+                           YAPP_HDF5_DYNSPEC_GROUP);
+            return YAPP_RET_ERROR;
+        }
 
         /* create dataspace */
-        hDims[0] = stYUM.iNumChans;
-        hDims[1] = stYUM.iTimeSamps;
+        hDims[1] = stYUM.iNumChans;
+        hDims[0] = stYUM.iTimeSamps;
         hDataspace = H5Screate_simple(YAPP_HDF5_DYNSPEC_RANK, hDims, NULL);
+        if (hDataspace < 0)
+        {
+            (void) fprintf(stderr,
+                           "ERROR: Creating dataspace failed!\n");
+            return YAPP_RET_ERROR;
+        }
 
         switch (stYUM.iNumBits)
         {
@@ -2723,14 +2748,52 @@ int YAPP_WriteMetadata(char *pcFileData, int iFormat, YUM_t stYUM)
                 return YAPP_RET_ERROR;
         }
 
+        hPropList = H5Pcreate(H5P_DATASET_CREATE);
+        if (hPropList < 0)
+        {
+            (void) fprintf(stderr,
+                           "ERROR: Creating property list failed!\n");
+            return YAPP_RET_ERROR;
+        }
+        hStatus = H5Pset_chunk(hPropList,
+                               YAPP_HDF5_DYNSPEC_RANK,
+                               (hsize_t *) stYUM.lChunkDims);
+        if (hStatus < 0)
+        {
+            (void) fprintf(stderr,
+                           "ERROR: Setting chunk size failed!\n");
+            return YAPP_RET_ERROR;
+        }
+        aiOptions[0] = 0;
+        aiOptions[1] = YAPP_HDF5_FILTER_OPTS_LZ4;
+        hStatus = H5Pset_filter(hPropList,
+                                YAPP_HDF5_FILTER_ID,
+                                H5Z_FLAG_MANDATORY,
+                                YAPP_HDF5_SIZE_FILTER_OPTS,
+                                aiOptions);
+        /*hStatus = H5Pset_deflate(hPropList, 6);*/
+        if (hStatus < 0)
+        {
+            (void) fprintf(stderr,
+                           "ERROR: Setting filter failed!\n");
+            return YAPP_RET_ERROR;
+        }
+
         /* create dataset */
         hDataset = H5Dcreate(hGroup,
                              YAPP_HDF5_DYNSPEC_GROUP YAPP_HDF5_DYNSPEC_DATASET,
                              hType,
                              hDataspace,
                              H5P_DEFAULT,
-                             H5P_DEFAULT,
+                             hPropList,
                              H5P_DEFAULT);
+        if (hDataset < 0)
+        {
+            (void) fprintf(stderr,
+                           "ERROR: Creating dataset %s failed!\n",
+                           YAPP_HDF5_DYNSPEC_GROUP YAPP_HDF5_DYNSPEC_DATASET);
+            return YAPP_RET_ERROR;
+        }
 
         /* create attributes */
 
@@ -2824,6 +2887,7 @@ int YAPP_WriteMetadata(char *pcFileData, int iFormat, YUM_t stYUM)
 
         /* close stuff */
         (void) H5Dclose(hDataset);
+        (void) H5Pclose(hPropList);
         (void) H5Sclose(hDataspace);
         (void) H5Gclose(hGroup);
         (void) H5Fclose(hFile);

@@ -15,8 +15,11 @@
 #define YAPP_HDF5_DYNSPEC_GROUP     "/DynamicSpectrum"
 #define YAPP_HDF5_DYNSPEC_DATASET   "/Data"
 
-/* dimensionality of dynamic spectrum */
-#define YAPP_HDF5_DYNSPEC_RANK      2
+/* bitshuffle + LZ4 filter options */
+/* filter ID from https://support.hdfgroup.org/services/contributions.html */
+#define YAPP_HDF5_FILTER_ID            32008
+#define YAPP_HDF5_SIZE_FILTER_OPTS     2
+#define YAPP_HDF5_FILTER_OPTS_LZ4      2
 
 #define YAPP_HDF5_ATTRNAME_SITE         "Site"
 #define YAPP_HDF5_ATTRNAME_SRCNAME      "Source"

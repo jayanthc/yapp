@@ -32,16 +32,19 @@ int main(int argc, char *argv[])
     char acFileH5[LEN_GENSTRING] = {0};
     int iFormat = DEF_FORMAT;
     YUM_t stYUM = {{0}};
+    long int lChunkDimX = 0;
+    long int lChunkDimY = 0;
     int iRet = YAPP_RET_SUCCESS;
-
     const char *pcProgName = NULL;
     int iNextOpt = 0;
     /* valid short options */
-    const char* const pcOptsShort = "hv";
+    const char* const pcOptsShort = "hvx:y:";
     /* valid long options */
     const struct option stOptsLong[] = {
         { "help",                   0, NULL, 'h' },
         { "version",                0, NULL, 'v' },
+        { "chunk-dim-x",            1, NULL, 'x' },
+        { "chunk-dim-y",            1, NULL, 'y' },
         { NULL,                     0, NULL, 0   }
     };
 
@@ -63,6 +66,15 @@ int main(int argc, char *argv[])
                 /* display the version */
                 (void) printf("%s\n", g_pcVersion);
                 return YAPP_RET_SUCCESS;
+
+            case 'x':   /* -x or --chunk-dim-x */
+                /* set option */
+                lChunkDimX = atol(optarg);
+                break;
+            case 'y':   /* -y or --chunk-dim-y */
+                /* set option */
+                lChunkDimY = atol(optarg);
+                break;
 
             case '?':   /* user specified an invalid option */
                 /* print usage info and terminate with error */
@@ -135,6 +147,33 @@ int main(int argc, char *argv[])
         return YAPP_RET_ERROR;
     }
 
+    /* set up the chunking scheme */
+    if (lChunkDimX > stYUM.iNumChans)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Chunk X-dimension %ld not less than number of "
+                       "channels %d!\n",
+                       lChunkDimX,
+                       stYUM.iNumChans);
+        return YAPP_RET_ERROR;
+    }
+    else if (0 == lChunkDimX)
+    {
+        (void) fprintf(stderr,
+                       "WARNING: Chunk X-dimension not provided, using %d\n",
+                       stYUM.iNumChans);
+        lChunkDimX = stYUM.iNumChans;
+    }
+    if (0 == lChunkDimY)
+    {
+        (void) fprintf(stderr,
+                       "WARNING: Chunk Y-dimension not provided, using %d\n",
+                       YAPP_HDF5_CHUNK_DIM_Y);
+        lChunkDimY = YAPP_HDF5_CHUNK_DIM_Y;
+    }
+    stYUM.lChunkDims[0] = lChunkDimY;
+    stYUM.lChunkDims[1] = lChunkDimX;
+
     pcFilename = YAPP_GetFilenameFromPath(pcFileData);
     (void) strcpy(acFileH5, pcFilename);
     (void) strcat(acFileH5, EXT_HDF5);
@@ -184,11 +223,12 @@ int main(int argc, char *argv[])
                          hFile,
                          stYUM.iNumChans,
                          stYUM.iTimeSamps,
+                         stYUM.iNumBits,
                          hType);
     if (iRet != YAPP_RET_SUCCESS)
     {
         fprintf(stderr,
-                "ERROR: Writing data failed!\n");
+                "ERROR: Copying data failed!\n");
         (void) H5Fclose(hFile);
         return YAPP_RET_ERROR;
     }
@@ -204,6 +244,7 @@ int YAPP_CopyData(char *pcFileData,
                   hid_t hFile,
                   int iNumChans,
                   int iTimeSamps,
+                  int iNumBits,
                   hid_t hType)
 {
     FILE *pFData = NULL;
@@ -248,7 +289,10 @@ int YAPP_CopyData(char *pcFileData,
     fseek(pFData, iOffset, SEEK_SET);
 
     /* allocate memory for the buffer */
-    pcBuf = (char *) malloc(SIZE_BUF);
+    pcBuf = (char *) YAPP_Malloc(SIZE_BUF
+                                  * ((float) iNumBits) / YAPP_BYTE2BIT_FACTOR,
+                                 sizeof(char),
+                                 YAPP_FALSE);
     if (NULL == pcBuf)
     {
         (void) fprintf(stderr,
@@ -265,19 +309,20 @@ int YAPP_CopyData(char *pcFileData,
     hDataset = H5Dopen(hGroup,
                        YAPP_HDF5_DYNSPEC_GROUP YAPP_HDF5_DYNSPEC_DATASET,
                        H5P_DEFAULT);
+
     /* get the dataspace in which this dataset exists */
     hDataspace = H5Dget_space(hDataset);
 
     /* create a memory dataspace */
-    hMemDims[0] = iNumChans;
+    hMemDims[1] = iNumChans;
     if (iTimeSamps < SIZE_BUF / iNumChans)
     {
         /* there is only one read */
-        hMemDims[1] = iTimeSamps;
+        hMemDims[0] = iTimeSamps;
     }
     else
     {
-        hMemDims[1] = SIZE_BUF / iNumChans;
+        hMemDims[0] = SIZE_BUF / iNumChans;
     }
     hMemDataspace = H5Screate_simple(YAPP_HDF5_DYNSPEC_RANK, hMemDims, NULL);
 
@@ -286,15 +331,15 @@ int YAPP_CopyData(char *pcFileData,
     hOffset[1] = 0;
     hStride[0] = 1;
     hStride[1] = 1;
-    hCount[0] = iNumChans;
+    hCount[1] = iNumChans;
     if (iTimeSamps < SIZE_BUF / iNumChans)
     {
         /* there is only one read */
-        hCount[1] = iTimeSamps;
+        hCount[0] = iTimeSamps;
     }
     else
     {
-        hCount[1] = SIZE_BUF / iNumChans;
+        hCount[0] = SIZE_BUF / iNumChans;
     }
     hBlock[0] = 1;
     hBlock[1] = 1;
@@ -302,26 +347,45 @@ int YAPP_CopyData(char *pcFileData,
     /* copy data */
     do
     {
-        iRet = fread(pcBuf, 1, SIZE_BUF, pFData);
+        iRet = fread(pcBuf,
+                     sizeof(char),
+                     SIZE_BUF * (((float) iNumBits) / YAPP_BYTE2BIT_FACTOR),
+                     pFData);
         lByteCount += iRet;
+        if (0 == iRet)
+        {
+            break;
+        }
         hStatus = H5Sselect_hyperslab(hDataspace,
                                       H5S_SELECT_SET,
                                       hOffset,
                                       hStride,
                                       hCount,
                                       hBlock);
+        if (hStatus < 0)
+        {
+            (void) fprintf(stderr,
+                           "ERROR: Selecting hyperslab failed!\n");
+            return YAPP_RET_ERROR;
+        }
         hStatus = H5Dwrite(hDataset,
                            hType,
                            hMemDataspace,
                            hDataspace,
                            H5P_DEFAULT,
                            (const void *) pcBuf);
+        if (hStatus < 0)
+        {
+            (void) fprintf(stderr,
+                           "ERROR: Writing data failed!\n");
+            return YAPP_RET_ERROR;
+        }
 
         /* set offset for next copy*/
-        hOffset[1] += hCount[1];
-        if (hOffset[1] + hCount[1] > iTimeSamps) {
-            hCount[1] = iTimeSamps - hOffset[1];
-            hMemDims[1] = hCount[1];
+        hOffset[0] += hCount[0];
+        if (hOffset[0] + hCount[0] > iTimeSamps) {
+            hCount[0] = iTimeSamps - hOffset[0];
+            hMemDims[0] = hCount[0];
             (void) H5Sclose(hMemDataspace);
             hMemDataspace = H5Screate_simple(YAPP_HDF5_DYNSPEC_RANK,
                                              hMemDims,
@@ -329,7 +393,7 @@ int YAPP_CopyData(char *pcFileData,
         }
 
     }
-    while (SIZE_BUF == iRet);
+    while (SIZE_BUF * (((float) iNumBits) / YAPP_BYTE2BIT_FACTOR) == iRet);
 
     /* close HDF5 resources */
     (void) H5Sclose(hMemDataspace);
@@ -361,6 +425,10 @@ void PrintUsage(const char *pcProgName)
                   pcProgName);
     (void) printf("    -h  --help                           ");
     (void) printf("Display this usage information\n");
+    (void) printf("    -x  --chunk-dim-x                    ");
+    (void) printf("Chunk X-dimension\n");
+    (void) printf("    -y  --chunk-dim-y                    ");
+    (void) printf("Chunk Y-dimension\n");
     (void) printf("    -v  --version                        ");
     (void) printf("Display the version\n");
 

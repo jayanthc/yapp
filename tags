@@ -285,9 +285,13 @@ YAPP_HDF5_ATTRNAME_SRCRA	src/yapp_hdf5.h	/^#define YAPP_HDF5_ATTRNAME_SRCRA /;"	
 YAPP_HDF5_ATTRNAME_TIMESAMPS	src/yapp_hdf5.h	/^#define YAPP_HDF5_ATTRNAME_TIMESAMPS /;"	d
 YAPP_HDF5_ATTRNAME_TSAMP	src/yapp_hdf5.h	/^#define YAPP_HDF5_ATTRNAME_TSAMP /;"	d
 YAPP_HDF5_ATTRNAME_TSTART	src/yapp_hdf5.h	/^#define YAPP_HDF5_ATTRNAME_TSTART /;"	d
+YAPP_HDF5_CHUNK_DIM_Y	utilities/yapp_fil2h5.h	/^#define YAPP_HDF5_CHUNK_DIM_Y /;"	d
 YAPP_HDF5_DYNSPEC_DATASET	src/yapp_hdf5.h	/^#define YAPP_HDF5_DYNSPEC_DATASET /;"	d
 YAPP_HDF5_DYNSPEC_GROUP	src/yapp_hdf5.h	/^#define YAPP_HDF5_DYNSPEC_GROUP /;"	d
-YAPP_HDF5_DYNSPEC_RANK	src/yapp_hdf5.h	/^#define YAPP_HDF5_DYNSPEC_RANK /;"	d
+YAPP_HDF5_DYNSPEC_RANK	src/yapp.h	/^#define YAPP_HDF5_DYNSPEC_RANK /;"	d
+YAPP_HDF5_FILTER_ID	src/yapp_hdf5.h	/^#define YAPP_HDF5_FILTER_ID /;"	d
+YAPP_HDF5_FILTER_OPTS_LZ4	src/yapp_hdf5.h	/^#define YAPP_HDF5_FILTER_OPTS_LZ4 /;"	d
+YAPP_HDF5_SIZE_FILTER_OPTS	src/yapp_hdf5.h	/^#define YAPP_HDF5_SIZE_FILTER_OPTS /;"	d
 YAPP_HandleStopSignals	src/yapp_common.c	/^void YAPP_HandleStopSignals(int iSigNo)$/;"	f
 YAPP_LIGHTSPEED	src/yapp.h	/^#define YAPP_LIGHTSPEED /;"	d
 YAPP_MAX_MEMTABLE	src/yapp.h	/^#define YAPP_MAX_MEMTABLE /;"	d
@@ -491,7 +495,6 @@ g_pcIsTimeGood	src/yapp_fold.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	src/yapp_makerfimask.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	src/yapp_stat.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	src/yapp_viewdata.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
-g_pcVersion	src/yapp_version.c	/^const char *g_pcVersion = "YAPP-DEV-3.6.6-beta-20170301-123923";$/;"	v
 g_pdDM	src/yapp_dedisplaw.c	/^double *g_pdDM = NULL;$/;"	v
 g_pdDelayTab	src/yapp_dedisplaw.c	/^double *g_pdDelayTab = NULL;$/;"	v
 g_pdMaxDelayTab	src/yapp_dedisplaw.c	/^double *g_pdMaxDelayTab = NULL;$/;"	v
@@ -625,6 +628,7 @@ iNumIFs	src/yapp_sigproc.h	/^    int iNumIFs;$/;"	m	struct:tagSIGPROCHeader
 iNumPol	src/yapp.h	/^    int iNumPol;$/;"	m	struct:YUM_s
 iObsID	src/yapp_sigproc.h	/^    int iObsID;$/;"	m	struct:tagSIGPROCHeader
 iTimeSamps	src/yapp.h	/^    int iTimeSamps;$/;"	m	struct:YUM_s
+lChunkDims	src/yapp.h	/^    long int lChunkDims[YAPP_HDF5_DYNSPEC_RANK];$/;"	m	struct:YUM_s
 lDataSizeTotal	src/yapp.h	/^    long int lDataSizeTotal;$/;"	m	struct:YUM_s
 main	src/yapp_add.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/yapp_basesub.c	/^int main(int argc, char *argv[])$/;"	f
