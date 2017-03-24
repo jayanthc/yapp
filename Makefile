@@ -77,10 +77,13 @@ ifeq ($(HDF5), yes)
 LFLAGS_HDF5 = $(LFLAGS_HDF5_DIR) -lhdf5
 endif
 # in some cases, linking needs to be done with the X11 library, in which case
-# append '-lX11' (and possibly the path to the library) to the line below.
-# libgfortran may also be needed in some case, in which case append
-# '-lgfortran' (and possibly the path to the library) to the line below
+# append '-lX11' (and possibly the path to the library) to the line below, as
+# shown in the commented out example. the commented example also shows other
+# libraries that may be needed.
+# libgfortran may also be needed in some cases, in which case append
+# '-lgfortran' (and possibly the path to the library) to the line below.
 LFLAGS_PGPLOT = $(LFLAGS_PGPLOT_DIR) -lcpgplot
+#LFLAGS_PGPLOT = $(LFLAGS_PGPLOT_DIR) -lpgplot -lcpgplot -lX11 -lpng
 LFLAGS_MATH = -lm
 LFLAGS_SNDFILE = -lsndfile
 
