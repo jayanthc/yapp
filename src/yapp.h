@@ -54,7 +54,7 @@
 #define YAPP_TRUE                   ((char) 1)  /**< @brief Boolean true */
 /* @} */
 
-/* TODO: combine the below two groups */
+/* TODO: combine the below groups */
 /**
  * @defgroup YAPPFormat Data format strings.
  */
@@ -72,6 +72,19 @@
 #define YAPP_FORMATSTR_HDF5         "h5"
 #endif
 /* @} */
+
+#define YAPP_FORMATDESC_RAW         "Raw voltages (.raw)"
+#define YAPP_FORMATDESC_PSRFITS     "PSRFITS (.fits)"
+#define YAPP_FORMATDESC_SPEC        "DAS dynamic spectrum (.spec)"
+#define YAPP_FORMATDESC_FIL         "SIGPROC filterbank (.fil)"
+#define YAPP_FORMATDESC_DTS_DDS     "DAS time series (.dds)"
+#define YAPP_FORMATDESC_DTS_TIM     "SIGPROC time series (.tim)"
+#define YAPP_FORMATDESC_DTS_DAT     "PRESTO time series (.dat)"
+#define YAPP_FORMATDESC_DTS_DAT_INF "PRESTO time series metadata (.inf)"
+#define YAPP_FORMATDESC_YM          "YAPP text metadata (.ym)"
+#ifdef HDF5
+#define YAPP_FORMATDESC_HDF5        "Breakthrough Listen-ish HDF5 (.h5)"
+#endif
 
 #define EXT_RAW                     ".raw"
 #define EXT_PSRFITS                 ".fits"
@@ -107,6 +120,7 @@ enum tagFileFormats
     YAPP_FORMAT_DTS_DAT,        /* PRESTO time series format */
     /* metadata */
     YAPP_FORMAT_YM,             /* YAPP metadata text file */
+    YAPP_FORMAT_NUMSUPPORTED    /* this gives the number of supported types */
 };
 
 /* sample sizes in number of bits */
@@ -513,6 +527,7 @@ int YAPP_SP_GetObsNameFromID(int iObsID, char *pcObs);
 int YAPP_SP_GetObsIDFromName(char *pcObs);
 
 int YAPP_GetExtFromFormat(int iFormat, char *pcExt);
+int YAPP_GetDescFromFormat(int iFormat, char *pcDesc);
 int YAPP_GetFormatFromExt(char *pcExt);
 
 /**

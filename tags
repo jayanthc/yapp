@@ -93,6 +93,7 @@ FILE_EXT	src/yapp_makeaudio.c	/^#define FILE_EXT /;"	d	file:
 FILE_VERSRC	src/yapp_makever.c	/^#define FILE_VERSRC /;"	d	file:
 GetColourMapFromName	src/colourmap.c	/^int GetColourMapFromName(char *pcCMapName)$/;"	f
 GetLatestTimestamp	src/yapp_makever.c	/^time_t GetLatestTimestamp()$/;"	f
+GetNameFromColourMap	src/colourmap.c	/^int GetNameFromColourMap(int iCMap, char *pcCMap)$/;"	f
 GetNextPowerOf2	src/yapp_split.c	/^unsigned int GetNextPowerOf2(unsigned int iVal)$/;"	f
 INFIX_ADD	src/yapp.h	/^#define INFIX_ADD /;"	d
 INFIX_DEDISPERSE	src/yapp.h	/^#define INFIX_DEDISPERSE /;"	d
@@ -193,6 +194,7 @@ PrintUsage	src/yapp_fold.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	src/yapp_ft.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	src/yapp_makeaudio.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	src/yapp_makerfimask.c	/^void PrintUsage(const char *pcProgName)$/;"	f
+PrintUsage	src/yapp_showinfo.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	src/yapp_siftpulses.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	src/yapp_smooth.c	/^void PrintUsage(const char *pcProgName)$/;"	f
 PrintUsage	src/yapp_split.c	/^void PrintUsage(const char *pcProgName)$/;"	f
@@ -245,6 +247,16 @@ YAPP_FALSE	src/yapp.h	/^#define YAPP_FALSE /;"	d
 YAPP_FILE_DELAYS_LIN	src/yapp.h	/^#define YAPP_FILE_DELAYS_LIN /;"	d
 YAPP_FILE_DELAYS_OTHER	src/yapp.h	/^#define YAPP_FILE_DELAYS_OTHER /;"	d
 YAPP_FILE_DELAYS_QUAD	src/yapp.h	/^#define YAPP_FILE_DELAYS_QUAD /;"	d
+YAPP_FORMATDESC_DTS_DAT	src/yapp.h	/^#define YAPP_FORMATDESC_DTS_DAT /;"	d
+YAPP_FORMATDESC_DTS_DAT_INF	src/yapp.h	/^#define YAPP_FORMATDESC_DTS_DAT_INF /;"	d
+YAPP_FORMATDESC_DTS_DDS	src/yapp.h	/^#define YAPP_FORMATDESC_DTS_DDS /;"	d
+YAPP_FORMATDESC_DTS_TIM	src/yapp.h	/^#define YAPP_FORMATDESC_DTS_TIM /;"	d
+YAPP_FORMATDESC_FIL	src/yapp.h	/^#define YAPP_FORMATDESC_FIL /;"	d
+YAPP_FORMATDESC_HDF5	src/yapp.h	/^#define YAPP_FORMATDESC_HDF5 /;"	d
+YAPP_FORMATDESC_PSRFITS	src/yapp.h	/^#define YAPP_FORMATDESC_PSRFITS /;"	d
+YAPP_FORMATDESC_RAW	src/yapp.h	/^#define YAPP_FORMATDESC_RAW /;"	d
+YAPP_FORMATDESC_SPEC	src/yapp.h	/^#define YAPP_FORMATDESC_SPEC /;"	d
+YAPP_FORMATDESC_YM	src/yapp.h	/^#define YAPP_FORMATDESC_YM /;"	d
 YAPP_FORMATSTR_DTS_DAT	src/yapp.h	/^#define YAPP_FORMATSTR_DTS_DAT /;"	d
 YAPP_FORMATSTR_DTS_DAT_INF	src/yapp.h	/^#define YAPP_FORMATSTR_DTS_DAT_INF /;"	d
 YAPP_FORMATSTR_DTS_DDS	src/yapp.h	/^#define YAPP_FORMATSTR_DTS_DDS /;"	d
@@ -260,10 +272,12 @@ YAPP_FORMAT_DTS_DDS	src/yapp.h	/^    YAPP_FORMAT_DTS_DDS,        \/* Desh's dedi
 YAPP_FORMAT_DTS_TIM	src/yapp.h	/^    YAPP_FORMAT_DTS_TIM,        \/* SIGPROC time series format *\/$/;"	e	enum:tagFileFormats
 YAPP_FORMAT_FIL	src/yapp.h	/^    YAPP_FORMAT_FIL,            \/* SIGPROC filterbank file format *\/$/;"	e	enum:tagFileFormats
 YAPP_FORMAT_HDF5	src/yapp.h	/^    YAPP_FORMAT_HDF5,           \/* HDF5 file containing dynamic spectrum *\/$/;"	e	enum:tagFileFormats
+YAPP_FORMAT_NUMSUPPORTED	src/yapp.h	/^    YAPP_FORMAT_NUMSUPPORTED    \/* this gives the number of supported types *\/$/;"	e	enum:tagFileFormats
 YAPP_FORMAT_PSRFITS	src/yapp.h	/^    YAPP_FORMAT_PSRFITS,        \/* PSRFITS spectrometer data *\/$/;"	e	enum:tagFileFormats
 YAPP_FORMAT_RAW	src/yapp.h	/^    YAPP_FORMAT_RAW,            \/* raw voltages (baseband data) *\/$/;"	e	enum:tagFileFormats
 YAPP_FORMAT_SPEC	src/yapp.h	/^    YAPP_FORMAT_SPEC = 0,       \/* Desh's specfile format *\/$/;"	e	enum:tagFileFormats
 YAPP_FORMAT_YM	src/yapp.h	/^    YAPP_FORMAT_YM,             \/* YAPP metadata text file *\/$/;"	e	enum:tagFileFormats
+YAPP_GetDescFromFormat	src/yapp_common.c	/^int YAPP_GetDescFromFormat(int iFormat, char *pcDesc)$/;"	f
 YAPP_GetExtFromFormat	src/yapp_common.c	/^int YAPP_GetExtFromFormat(int iFormat, char *pcExt)$/;"	f
 YAPP_GetFileType	src/yapp_common.c	/^int YAPP_GetFileType(char *pcFile)$/;"	f
 YAPP_GetFilenameFromPath	src/yapp_common.c	/^char* YAPP_GetFilenameFromPath(char *pcPath)$/;"	f
@@ -497,6 +511,7 @@ g_pcIsTimeGood	src/yapp_fold.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	src/yapp_makerfimask.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	src/yapp_stat.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	src/yapp_viewdata.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
+g_pcVersion	src/yapp_version.c	/^const char *g_pcVersion = "YAPP-DEV-3.6.7-beta-20170324-141409";$/;"	v
 g_pdDM	src/yapp_dedisplaw.c	/^double *g_pdDM = NULL;$/;"	v
 g_pdDelayTab	src/yapp_dedisplaw.c	/^double *g_pdDelayTab = NULL;$/;"	v
 g_pdMaxDelayTab	src/yapp_dedisplaw.c	/^double *g_pdMaxDelayTab = NULL;$/;"	v
@@ -646,6 +661,7 @@ main	src/yapp_ft.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/yapp_makeaudio.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/yapp_makerfimask.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/yapp_makever.c	/^int main(int argc, char *argv[])$/;"	f
+main	src/yapp_showinfo.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/yapp_siftpulses.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/yapp_smooth.c	/^int main(int argc, char *argv[])$/;"	f
 main	src/yapp_split.c	/^int main(int argc, char *argv[])$/;"	f

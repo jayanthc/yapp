@@ -82,6 +82,7 @@ typedef enum CMap_e
 
 int SetColourMap(int iCMap, float fColMin, float fColMax);
 int GetColourMapFromName(char *pcCMapName);
+int GetNameFromColourMap(int iCMap, char *pcCMap);
 /*
  * Wrapper for PGPLOT grayscale plotting
  */

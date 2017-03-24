@@ -390,6 +390,59 @@ int YAPP_GetExtFromFormat(int iFormat, char *pcExt)
 }
 
 
+int YAPP_GetDescFromFormat(int iFormat, char *pcDesc)
+{
+    switch (iFormat)
+    {
+        case YAPP_FORMAT_SPEC:
+            (void) strcpy(pcDesc, YAPP_FORMATDESC_SPEC);
+            break;
+
+        case YAPP_FORMAT_RAW:
+            (void) strcpy(pcDesc, YAPP_FORMATDESC_RAW);
+            break;
+
+        case YAPP_FORMAT_PSRFITS:
+            (void) strcpy(pcDesc, YAPP_FORMATDESC_PSRFITS);
+            break;
+
+        case YAPP_FORMAT_FIL:
+            (void) strcpy(pcDesc, YAPP_FORMATDESC_FIL);
+            break;
+
+        case YAPP_FORMAT_DTS_DDS:
+            (void) strcpy(pcDesc, YAPP_FORMATDESC_DTS_DDS);
+            break;
+
+        case YAPP_FORMAT_DTS_TIM:
+            (void) strcpy(pcDesc, YAPP_FORMATDESC_DTS_TIM);
+            break;
+
+        case YAPP_FORMAT_DTS_DAT:
+            (void) strcpy(pcDesc, YAPP_FORMATDESC_DTS_DAT);
+            break;
+
+        case YAPP_FORMAT_YM:
+            (void) strcpy(pcDesc, YAPP_FORMATDESC_YM);
+            break;
+
+#ifdef HDF5
+        case YAPP_FORMAT_HDF5:
+            (void) strcpy(pcDesc, YAPP_FORMATDESC_HDF5);
+            break;
+#endif
+
+        default:
+            (void) fprintf(stderr,
+                           "ERROR: Unknown format %d!\n",
+                           iFormat);
+            return YAPP_RET_ERROR;
+    }
+
+    return YAPP_RET_SUCCESS;
+}
+
+
 int YAPP_GetFormatFromExt(char *pcExt)
 {
     char acFilename[LEN_GENSTRING] = {0};
