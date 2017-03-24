@@ -1340,6 +1340,94 @@ int GetColourMapFromName(char *pcCMapName)
     return iCMap;
 }
 
+
+int GetNameFromColourMap(int iCMap, char *pcCMap)
+{
+    switch (iCMap)
+    {
+        case CMAP_AUTUMN:
+            (void) strcpy(pcCMap, CMAP_STR_AUTUMN);
+            break;
+
+        case CMAP_BLUE:
+            (void) strcpy(pcCMap, CMAP_STR_BLUE);
+            break;
+
+        case CMAP_BONE:
+            (void) strcpy(pcCMap, CMAP_STR_BONE);
+            break;
+
+        case CMAP_COOL:
+            (void) strcpy(pcCMap, CMAP_STR_COOL);
+            break;
+
+        case CMAP_COPPER:
+            (void) strcpy(pcCMap, CMAP_STR_COPPER);
+            break;
+
+        case CMAP_GRAY:
+            (void) strcpy(pcCMap, CMAP_STR_GRAY);
+            break;
+
+        case CMAP_GRAY_INV:
+            (void) strcpy(pcCMap, CMAP_STR_GRAY_INV);
+            break;
+
+        case CMAP_HOT:
+            (void) strcpy(pcCMap, CMAP_STR_HOT);
+            break;
+
+        case CMAP_HOT_INV:
+            (void) strcpy(pcCMap, CMAP_STR_HOT_INV);
+            break;
+
+        case CMAP_JET:
+            (void) strcpy(pcCMap, CMAP_STR_JET);
+            break;
+
+        case CMAP_PINK:
+            (void) strcpy(pcCMap, CMAP_STR_PINK);
+            break;
+
+        case CMAP_SPRING:
+            (void) strcpy(pcCMap, CMAP_STR_SPRING);
+            break;
+
+        case CMAP_SUMMER:
+            (void) strcpy(pcCMap, CMAP_STR_SUMMER);
+            break;
+
+        case CMAP_WINTER:
+            (void) strcpy(pcCMap, CMAP_STR_WINTER);
+            break;
+
+        case CMAP_RDBU:
+            (void) strcpy(pcCMap, CMAP_STR_RDBU);
+            break;
+
+        case CMAP_BURD:
+            (void) strcpy(pcCMap, CMAP_STR_BURD);
+            break;
+
+        case CMAP_CUBEHELIX:
+            (void) strcpy(pcCMap, CMAP_STR_CUBEHELIX);
+            break;
+
+        case CMAP_CUBEHELIX_INV:
+            (void) strcpy(pcCMap, CMAP_STR_CUBEHELIX_INV);
+            break;
+
+        default:
+            (void) fprintf(stderr,
+                           "ERROR: Unknown colourmap %d!\n",
+                           iCMap);
+            return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
+}
+
+
 /*
  * void Plot2D(float* pfBuf, float fDataMin, float fDataMax,
  *             float* pfX, int iLenX, float fXStep,
