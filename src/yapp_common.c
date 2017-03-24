@@ -388,10 +388,6 @@ int YAPP_GetDescFromFormat(int iFormat, char *pcDesc)
             (void) strcpy(pcDesc, YAPP_FORMATDESC_SPEC);
             break;
 
-        case YAPP_FORMAT_RAW:
-            (void) strcpy(pcDesc, YAPP_FORMATDESC_RAW);
-            break;
-
         case YAPP_FORMAT_PSRFITS:
             (void) strcpy(pcDesc, YAPP_FORMATDESC_PSRFITS);
             break;
