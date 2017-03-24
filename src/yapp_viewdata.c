@@ -43,8 +43,10 @@
 #include "yapp.h"
 #include "yapp_sigproc.h"   /* for SIGPROC filterbank file format support */
 #include "colourmap.h"
+#ifdef HDF5
 #include "yapp_hdf5.h"
 #include <hdf5.h>
+#endif
 
 /**
  * The build version string, maintained in the file version.c, which is
@@ -99,6 +101,7 @@ int main(int argc, char *argv[])
     int iNumReads = 0;
     int iTotNumReads = 0;
     int iReadBlockCount = 0;
+#ifdef HDF5
     hid_t hFile = 0;
     hid_t hDataset = 0;
     hid_t hDataspace = 0;
@@ -107,6 +110,7 @@ int main(int argc, char *argv[])
     hsize_t hMemDims[YAPP_HDF5_DYNSPEC_RANK] = {0};
     hsize_t hOffset[YAPP_HDF5_DYNSPEC_RANK] = {0};
     hsize_t hCount[YAPP_HDF5_DYNSPEC_RANK] = {0};
+#endif
     char cIsLastBlock = YAPP_FALSE;
     int iRet = YAPP_RET_SUCCESS;
     float fDataMin = 0.0;
@@ -305,7 +309,11 @@ int main(int argc, char *argv[])
           || (YAPP_FORMAT_SPEC == iFormat)
           || (YAPP_FORMAT_DTS_TIM == iFormat)
           || (YAPP_FORMAT_DTS_DAT == iFormat)
+#ifdef HDF5
           || (YAPP_FORMAT_HDF5 == iFormat)))
+#else
+       ))
+#endif
     {
         (void) fprintf(stderr,
                        "ERROR: Invalid file type!\n");
@@ -330,6 +338,7 @@ int main(int argc, char *argv[])
         stYUM.iNumChans = 1;
     }
 
+#ifdef HDF5
     if (YAPP_FORMAT_HDF5 == iFormat)
     {
         /* current support only for 8-bit integer, 16-bit integer, and 32-bit
@@ -347,6 +356,7 @@ int main(int argc, char *argv[])
             return YAPP_RET_ERROR;
         }
     }
+#endif
 
     /* convert sampling interval to seconds */
     dTSampInSec = stYUM.dTSamp / 1e3;
@@ -495,6 +505,7 @@ int main(int argc, char *argv[])
     (void) memset(g_pcIsTimeGood, YAPP_TRUE, iTimeSampsToProc);
 
     /* open the data file for reading */
+#ifdef HDF5
     if (YAPP_FORMAT_HDF5 == iFormat)
     {
         hFile = H5Fopen(pcFileData, H5F_ACC_RDONLY, H5P_DEFAULT);
@@ -515,6 +526,7 @@ int main(int argc, char *argv[])
         hDataspace = H5Dget_space(hDataset);
     }
     else
+#endif
     {
         g_pFData = fopen(pcFileData, "r");
         if (NULL == g_pFData)
@@ -538,12 +550,14 @@ int main(int argc, char *argv[])
         (void) fprintf(stderr,
                        "ERROR: Memory allocation failed! %s!\n",
                        strerror(errno));
+#ifdef HDF5
         if (YAPP_FORMAT_HDF5 == iFormat)
         {
             (void) H5Sclose(hDataspace);
             (void) H5Dclose(hDataset);
             (void) H5Fclose(hFile);
         }
+#endif
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
@@ -560,17 +574,19 @@ int main(int argc, char *argv[])
         /* skip data, if any are to be skipped */
         (void) fseek(g_pFData, lBytesToSkip, SEEK_CUR);
     }
-    else if (iFormat != YAPP_FORMAT_HDF5)
-    {
-        /* skip data, if any are to be skipped */
-        (void) fseek(g_pFData, lBytesToSkip, SEEK_SET);
-    }
-    else
+#ifdef HDF5
+    else if (YAPP_FORMAT_HDF5 == iFormat)
     {
         if (lBytesToSkip != 0)
         {
             (void) printf("WARNING: Skipping data not supported for HDF5!\n");
         }
+    }
+#endif
+    else
+    {
+        /* skip data, if any are to be skipped */
+        (void) fseek(g_pFData, lBytesToSkip, SEEK_SET);
     }
 
     /* if plotting to file, open the device in the read loop; if not, open
@@ -584,12 +600,14 @@ int main(int argc, char *argv[])
             (void) fprintf(stderr,
                            "ERROR: Opening graphics device %s failed!\n",
                            PG_DEV);
+#ifdef HDF5
             if (YAPP_FORMAT_HDF5 == iFormat)
             {
                 (void) H5Sclose(hDataspace);
                 (void) H5Dclose(hDataset);
                 (void) H5Fclose(hFile);
             }
+#endif
             YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
@@ -619,12 +637,14 @@ int main(int argc, char *argv[])
         {
             cpgclos();
         }
+#ifdef HDF5
         if (YAPP_FORMAT_HDF5 == iFormat)
         {
             (void) H5Sclose(hDataspace);
             (void) H5Dclose(hDataset);
             (void) H5Fclose(hFile);
         }
+#endif
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
@@ -640,12 +660,14 @@ int main(int argc, char *argv[])
         {
             cpgclos();
         }
+#ifdef HDF5
         if (YAPP_FORMAT_HDF5 == iFormat)
         {
             (void) H5Sclose(hDataspace);
             (void) H5Dclose(hDataset);
             (void) H5Fclose(hFile);
         }
+#endif
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
@@ -663,12 +685,14 @@ int main(int argc, char *argv[])
             (void) fprintf(stderr,
                            "ERROR: Memory allocation for Y-axis failed! %s!\n",
                            strerror(errno));
+#ifdef HDF5
             if (YAPP_FORMAT_HDF5 == iFormat)
             {
                 (void) H5Sclose(hDataspace);
                 (void) H5Dclose(hDataset);
                 (void) H5Fclose(hFile);
             }
+#endif
             YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
@@ -698,12 +722,14 @@ int main(int argc, char *argv[])
                        "ERROR: Memory allocation for plot buffer failed! "
                        "%s!\n",
                        strerror(errno));
+#ifdef HDF5
         if (YAPP_FORMAT_HDF5 == iFormat)
         {
             (void) H5Sclose(hDataspace);
             (void) H5Dclose(hDataset);
             (void) H5Fclose(hFile);
         }
+#endif
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
@@ -726,17 +752,20 @@ int main(int argc, char *argv[])
                            "ERROR: Memory allocation for bandpass failed! "
                            "%s!\n",
                            strerror(errno));
+#ifdef HDF5
             if (YAPP_FORMAT_HDF5 == iFormat)
             {
                 (void) H5Sclose(hDataspace);
                 (void) H5Dclose(hDataset);
                 (void) H5Fclose(hFile);
             }
+#endif
             YAPP_CleanUp();
             return YAPP_RET_ERROR;
         }
     }
 
+#ifdef HDF5
     if (YAPP_FORMAT_HDF5 == iFormat)
     {
         switch (stYUM.iNumBits)
@@ -789,12 +818,14 @@ int main(int argc, char *argv[])
             hCount[0] = iTotSampsPerBlock / stYUM.iNumChans;
         }
     }
+#endif
 
     while (iNumReads > 0)
     {
         /* read data */
         (void) printf("\rReading data block %d.", iReadBlockCount);
         (void) fflush(stdout);
+#ifdef HDF5
         if (YAPP_FORMAT_HDF5 == iFormat)
         {
             iReadItems = YAPP_ReadHDF5Data(hDataspace,
@@ -817,6 +848,7 @@ int main(int argc, char *argv[])
             }
         }
         else
+#endif
         {
             iReadItems = YAPP_ReadData(g_pFData,
                                        g_pfBuf,
@@ -832,6 +864,7 @@ int main(int argc, char *argv[])
         --iNumReads;
         ++iReadBlockCount;
 
+#ifdef HDF5
         if (YAPP_FORMAT_HDF5 == iFormat)
         {
             /* set offset for next copy*/
@@ -846,6 +879,7 @@ int main(int argc, char *argv[])
                                 NULL);
             }
         }
+#endif
 
         if ((iReadItems < iTotSampsPerBlock)    /* usually, the last block */
             || (0 == iNumReads))                /* definitely the last block */
@@ -1001,12 +1035,14 @@ int main(int argc, char *argv[])
                 (void) fprintf(stderr,
                                "ERROR: Opening graphics device %s failed!\n",
                                PG_DEV);
+#ifdef HDF5
                 if (YAPP_FORMAT_HDF5 == iFormat)
                 {
                     (void) H5Sclose(hDataspace);
                     (void) H5Dclose(hDataset);
                     (void) H5Fclose(hFile);
                 }
+#endif
                 YAPP_CleanUp();
                 return YAPP_RET_ERROR;
             }
@@ -1240,6 +1276,7 @@ int main(int argc, char *argv[])
                         (void) usleep(PG_BUT_CL_SLEEP);
 
                         cpgclos();
+#ifdef HDF5
                         if (YAPP_FORMAT_HDF5 == iFormat)
                         {
                             (void) H5Sclose(hMemDataspace);
@@ -1247,6 +1284,7 @@ int main(int argc, char *argv[])
                             (void) H5Dclose(hDataset);
                             (void) H5Fclose(hFile);
                         }
+#endif
                         YAPP_CleanUp();
                         return YAPP_RET_SUCCESS;
                     }
@@ -1276,6 +1314,7 @@ int main(int argc, char *argv[])
     {
         cpgclos();
     }
+#ifdef HDF5
     if (YAPP_FORMAT_HDF5 == iFormat)
     {
         (void) H5Sclose(hMemDataspace);
@@ -1283,6 +1322,7 @@ int main(int argc, char *argv[])
         (void) H5Dclose(hDataset);
         (void) H5Fclose(hFile);
     }
+#endif
     YAPP_CleanUp();
 
     return YAPP_RET_SUCCESS;

@@ -105,7 +105,11 @@ int main(int argc, char *argv[])
               || (YAPP_FORMAT_SPEC == iFormat)
               || (YAPP_FORMAT_DTS_TIM == iFormat)
               || (YAPP_FORMAT_DTS_DAT == iFormat)
+#ifdef HDF5
               || (YAPP_FORMAT_HDF5 == iFormat)))
+#else
+           ))
+#endif
         {
             (void) fprintf(stderr,
                            "ERROR: Invalid file type!\n");
@@ -161,7 +165,11 @@ int main(int argc, char *argv[])
         if ((YAPP_FORMAT_SPEC == iFormat)
             || (YAPP_FORMAT_FIL == iFormat)
             || (YAPP_FORMAT_PSRFITS == iFormat)
+#ifdef HDF5
             || (YAPP_FORMAT_HDF5 == iFormat))
+#else
+           )
+#endif
         {
             (void) printf("Flipped band                      : %s\n",
                            stYUM.cIsBandFlipped ? "Yes" : "No");
@@ -226,7 +234,11 @@ int main(int argc, char *argv[])
         if (!((YAPP_FORMAT_PSRFITS == iFormat)
               || (YAPP_FORMAT_SPEC == iFormat)
               || (YAPP_FORMAT_DTS_DAT == iFormat)
+#ifdef HDF5
               || (YAPP_FORMAT_HDF5 == iFormat)))
+#else
+           ))
+#endif
         {
             (void) printf("Length of header                  : %d\n",
                           stYUM.iHeaderLen);
