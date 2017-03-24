@@ -1,4 +1,4 @@
-# Yet Another Pulsar Processor (YAPP) 3.6-beta
+# Yet Another Pulsar Processor (YAPP) 3.7-beta
 ## README
 
 Yet Another Pulsar Processor (YAPP) is a suite of radio pulsar data analysis software.
@@ -17,6 +17,7 @@ The YAPP tools available with this release are:
 * `yapp_siftpulses` : Sifts multiple dedispersed time series files for bright pulses.
 * `yapp_stacktim` : Stacks time series data to form filterbank data.
 * `yapp_split` : Splits time series data into time sections.
+* `yapp_showinfo` : Displays supported file types and colourmaps
 
 YAPP also comes with the following utilities:
 
