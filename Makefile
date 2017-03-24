@@ -23,24 +23,32 @@ CFLAGS_INC_CFITSIO =# define if needed (as -I[...])
 endif
 
 CFLAGS = -std=gnu99 -pedantic -Wall $(CFLAGS_INC_PGPLOT) $(CFLAGS_INC_FFTW3)  \
-	$(CFLAGS_INC_CFITSIO) $(CFLAGS_INC_HDF5)
+	$(CFLAGS_INC_CFITSIO)
+ifeq ($(HDF5), yes)
+CFLAGS += $(CFLAGS_INC_HDF5)
+endif
 CFLAGS_C_DEBUG = $(CFLAGS) -g -c
 CFLAGS_C_RELEASE = $(CFLAGS) -O3 -c
-ifeq ($(OPT_DEBUG), yes)
+ifeq ($(DEBUG), yes)
 CFLAGS_C = $(CFLAGS_C_DEBUG)
 else
 CFLAGS_C = $(CFLAGS_C_RELEASE)
 endif
 CFLAGS_L_DEBUG = $(CFLAGS) -g
 CFLAGS_L_RELEASE = $(CFLAGS) -O3
-ifeq ($(OPT_DEBUG), yes)
+ifeq ($(DEBUG), yes)
 CFLAGS_L = $(CFLAGS_L_DEBUG)
 else
 CFLAGS_L = $(CFLAGS_L_RELEASE)
 endif
 
+# enable/disable HDF5 compilation
+ifeq ($(HDF5), yes)
+DHDF5 = -DHDF5
+endif
+
 # enable/disable the debug flag
-ifeq ($(OPT_DEBUG), yes)
+ifeq ($(DEBUG), yes)
 DDEBUG = -DDEBUG
 endif
 
@@ -51,7 +59,9 @@ else
 LFLAGS_PGPLOT_DIR =# define if not in $PATH (as -L[...])
 endif
 LFLAGS_FFTW3_DIR =# define if not in $PATH (as -L[...])
+ifeq ($(HDF5), yes)
 LFLAGS_HDF5_DIR =-L/usr/local/hdf5/lib
+endif
 ifeq ($(shell uname), Darwin)
 LFLAGS_CFITSIO_DIR =-L/opt/local/lib# define if not in $PATH (as -L[...])
 else
@@ -59,7 +69,9 @@ LFLAGS_CFITSIO_DIR =# define if not in $PATH (as -L[...])
 endif
 LFLAGS_FFTW3 = $(LFLAGS_FFTW3_DIR) -lfftw3f
 LFLAGS_CFITSIO = $(LFLAGS_CFITSIO_DIR) -lcfitsio
+ifeq ($(HDF5), yes)
 LFLAGS_HDF5 = $(LFLAGS_HDF5_DIR) -lhdf5
+endif
 # in some cases, linking needs to be done with the X11 library, in which case
 # append '-lX11' (and possibly the path to the library) to the line below.
 # libgfortran may also be needed in some case, in which case append
@@ -134,10 +146,10 @@ yapp_erflookup.o: $(SRCDIR)/yapp_erflookup.c $(SRCDIR)/yapp.h
 	$(CC) $(CFLAGS_C) $< -o $(IDIR)/$@
 
 yapp_common.o: $(SRCDIR)/yapp_common.c $(SRCDIR)/yapp.h
-	$(CC) $(CFLAGS_C) $(DDEBUG) $< -o $(IDIR)/$@
+	$(CC) $(CFLAGS_C) $(DDEBUG) $(DHDF5) $< -o $(IDIR)/$@
 
 yapp_viewmetadata.o: $(SRCDIR)/yapp_viewmetadata.c $(SRCDIR)/yapp.h
-	$(CC) $(CFLAGS_C) $< -o $(IDIR)/$@
+	$(CC) $(CFLAGS_C) $(DHDF5) $< -o $(IDIR)/$@
 
 yapp_viewmetadata: $(IDIR)/yapp_viewmetadata.o $(IDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
@@ -148,7 +160,7 @@ colourmap.o: $(SRCDIR)/colourmap.c $(SRCDIR)/colourmap.h
 
 yapp_viewdata.o: $(SRCDIR)/yapp_viewdata.c $(SRCDIR)/yapp.h \
 	$(SRCDIR)/yapp_erflookup.c
-	$(CC) $(CFLAGS_C) $(DDEBUG) $< -o $(IDIR)/$@
+	$(CC) $(CFLAGS_C) $(DDEBUG) $(DHDF5) $< -o $(IDIR)/$@
 
 yapp_viewdata: $(IDIR)/yapp_viewdata.o $(IDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o $(IDIR)/colourmap.o
@@ -233,13 +245,23 @@ yapp_tim2dat: $(UTILDIR)/yapp_tim2dat.o $(SRCDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
 	$(CC) $^ $(LFLAGS_MATH) $(LFLAGS_CFITSIO) $(LFLAGS_HDF5) -o $(BINDIR)/$@
 
+ifeq ($(HDF5), yes)
 yapp_fil2h5.o: $(UTILDIR)/yapp_fil2h5.c $(UTILDIR)/yapp_fil2h5.h \
 	$(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h
-	$(CC) $(CFLAGS_C) -I$(SRCDIR) $(DDEBUG) $< -o $(UTILDIR)/$@
+	$(CC) $(CFLAGS_C) -I$(SRCDIR) $(DDEBUG) $(DHDF5) $< -o $(UTILDIR)/$@
+else
+yapp_fil2h5.o:
+	@echo "WARNING: yapp_fil2h5.o will not be compiled (HDF5=no)"
+endif
 
+ifeq ($(HDF5), yes)
 yapp_fil2h5: $(UTILDIR)/yapp_fil2h5.o $(SRCDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
 	$(CC) $^ $(LFLAGS_MATH) $(LFLAGS_CFITSIO) $(LFLAGS_HDF5) -o $(BINDIR)/$@
+else
+yapp_fil2h5:
+	@echo "WARNING: yapp_fil2h5 will not be compiled (HDF5=no)"
+endif
 
 yapp_siftpulses.o: $(SRCDIR)/yapp_siftpulses.c $(SRCDIR)/yapp.h $(SRCDIR)/yapp_sigproc.h
 	$(CC) $(CFLAGS_C) $(DDEBUG) $< -o $(IDIR)/$@
@@ -298,7 +320,9 @@ clean:
 	$(DELCMD) $(UTILDIR)/yapp_fits2fil.o
 	$(DELCMD) $(UTILDIR)/yapp_dat2tim.o
 	$(DELCMD) $(UTILDIR)/yapp_tim2dat.o
+ifeq ($(HDF5), yes)
 	$(DELCMD) $(UTILDIR)/yapp_fil2h5.o
+endif
 	$(DELCMD) $(IDIR)/yapp_subtract.o
 	$(DELCMD) $(IDIR)/yapp_siftpulses.o
 	$(DELCMD) $(IDIR)/yapp_stacktim.o

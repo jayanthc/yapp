@@ -21,6 +21,7 @@ The YAPP tools available with this release are:
 YAPP also comes with the following utilities:
 
 * `yapp_fits2fil` : Converts PSRFITS data to SIGPROC `.fil`
+* `yapp_fil2h5` : Converts SIGPROC `.fil` to HDF5.
 * `yapp_dat2tim` : Converts PRESTO '.dat' to SIGPROC `.tim`
 * `yapp_tim2dat` : Converts SIGPROC '.tim' to PRESTO `.dat`
 * `yapp_ym2fil` : Converts YAPP Metadata to SIGPROC filterbank header format.
@@ -40,9 +41,9 @@ The supported file formats are SIGPROC `.fil` and SIGPROC `.tim`, with limited s
 
 For detailed usage instructions, refer the man pages or online documentation.
 
-System requirements: Linux/OS X, PGPLOT with C binding, FFTW3, CFITSIO, Python with Matplotlib, Ruby, mogrify
+System requirements: Linux/OS X, PGPLOT with C binding, FFTW3, CFITSIO, HDF5 (optional), Python with Matplotlib, Ruby, mogrify
 
-Installation instructions: On a typical Ubuntu-based machine in which PGPLOT, FFTW3, and CFITSIO were installed via APT, running `make` followed by `sudo make install` should work, with the binaries being copied to `/usr/local/bin`. For different operating systems and/or different PGPLOT/FFTW3/CFITSIO installation directories and/or a different choice of YAPP installation directory, the makefile may need to be modified by hand. YAPP scripts require YAPP binaries to be in the search path.
+Installation instructions: On a typical Ubuntu-based machine in which PGPLOT, FFTW3, and CFITSIO were installed via APT, and the optinal HDF5 was installed in its default location, running `make` (or `make HDF5=yes`) followed by `sudo make install` should work, with the binaries being copied to `/usr/local/bin`. For different operating systems and/or different PGPLOT/FFTW3/CFITSIO/HDF5 installation directories and/or a different choice of YAPP installation directory, the makefile may need to be modified by hand. YAPP scripts require YAPP binaries to be in the search path.
 
 Created by Jayanth Chennamangalam  
 [http://jayanthc.github.io/yapp/](http://jayanthc.github.io/yapp/)

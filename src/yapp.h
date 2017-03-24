@@ -33,7 +33,9 @@
 #include <float.h>
 
 #include <cpgplot.h>
+#ifdef HDF5
 #include <hdf5.h>
+#endif
 
 
 /**
@@ -64,7 +66,9 @@
 #define YAPP_FORMATSTR_DTS_DAT      "dat"
 #define YAPP_FORMATSTR_DTS_DAT_INF  "inf"
 #define YAPP_FORMATSTR_YM           "ym"
+#ifdef HDF5
 #define YAPP_FORMATSTR_HDF5         "h5"
+#endif
 /* @} */
 
 #define EXT_PSRFITS                 ".fits"
@@ -80,7 +84,9 @@
 #define EXT_INF                     ".inf"
 #define EXT_YM                      ".ym"
 #define EXT_YAPP_PROFILE            ".yp"
+#ifdef HDF5
 #define EXT_HDF5                    ".h5"
+#endif
 
 enum tagFileFormats
 {
@@ -88,7 +94,9 @@ enum tagFileFormats
     YAPP_FORMAT_SPEC = 0,       /* Desh's specfile format */
     YAPP_FORMAT_PSRFITS,        /* PSRFITS spectrometer data */
     YAPP_FORMAT_FIL,            /* SIGPROC filterbank file format */
+#ifdef HDF5
     YAPP_FORMAT_HDF5,           /* HDF5 file containing dynamic spectrum */
+#endif
     /* dedispersed time series formats */
     YAPP_FORMAT_DTS_DDS,        /* Desh's dedispersed data format */
     YAPP_FORMAT_DTS_TIM,        /* SIGPROC time series format */
@@ -290,9 +298,11 @@ enum tagFileFormats
 
 #define YAPP_DEGPERHOUR         15              /* degrees per hour */
 
+#ifdef HDF5
 /* HDF5 */
 /* dimensionality of dynamic spectrum */
 #define YAPP_HDF5_DYNSPEC_RANK      2
+#endif
 
 /**
  * YAPP Unified Metadata (YUM) definition
@@ -345,8 +355,10 @@ typedef struct YUM_s
     float fMean;
     float fMedian;
     float fRMS;
+#ifdef HDF5
     /* for HDF5 chunking */
     long int lChunkDims[YAPP_HDF5_DYNSPEC_RANK];
+#endif
 
 #if 0
     /* DAS configuration information */
@@ -538,6 +550,7 @@ int YAPP_ReadSIGPROCHeaderFile(char *pcFileSpec, YUM_t *pstYUM);
  */
 int YAPP_ReadPRESTOHeaderFile(char *pcFileData, YUM_t *pstYUM);
 
+#ifdef HDF5
 /**
  * Read configuration information corresponding to an HDF5 ('.h5') file
  *
@@ -546,6 +559,7 @@ int YAPP_ReadPRESTOHeaderFile(char *pcFileData, YUM_t *pstYUM);
  * @param[out]      pstYUM              YUM structure
  */
 int YAPP_ReadHDF5Metadata(char *pcFileSpec, int iFormat, YUM_t *pstYUM);
+#endif
 
 /**
  * Read one block of data from disk
@@ -559,6 +573,7 @@ int YAPP_ReadData(FILE *pFData,
                   float fSampSize,
                   int iTotSampsPerBlock);
 
+#ifdef HDF5
 /**
  * Read one block of data from HDF5 file on disk
  */
@@ -571,6 +586,7 @@ int YAPP_ReadHDF5Data(hid_t hDataspace,
                       float *pfBuf,
                       float fSampSize,
                       int iTotSampsPerBlock);
+#endif
 
 int YAPP_WriteMetadata(char *pcFileData, int iFormat, YUM_t stYUM);
 

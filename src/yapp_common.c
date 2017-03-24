@@ -10,9 +10,14 @@
 #include "yapp_sigproc.h"
 #include "yapp_psrfits.h"
 #include "yapp_presto.h"
+#ifdef HDF5
 #include "yapp_hdf5.h"
+#endif
+
 #include <fitsio.h>
+#ifdef HDF5
 #include <hdf5.h>
+#endif
 
 const char g_aacSP_ObsNames[YAPP_SP_NUMOBS][LEN_GENSTRING] = {
     YAPP_SP_OBS_FAKE,
@@ -85,10 +90,12 @@ int YAPP_GetFileType(char *pcFile)
     {
         iFormat = YAPP_FORMAT_YM;
     }
+#ifdef HDF5
     else if (0 == strcmp(pcExt, EXT_HDF5))
     {
         iFormat = YAPP_FORMAT_HDF5;
     }
+#endif
     else
     {
         (void) fprintf(stderr,
@@ -356,9 +363,11 @@ int YAPP_GetExtFromFormat(int iFormat, char *pcExt)
             (void) strcpy(pcExt, YAPP_FORMATSTR_YM);
             break;
 
+#ifdef HDF5
         case YAPP_FORMAT_HDF5:
             (void) strcpy(pcExt, YAPP_FORMATSTR_HDF5);
             break;
+#endif
 
         default:
             (void) fprintf(stderr,
@@ -440,6 +449,7 @@ int YAPP_ReadMetadata(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
             }
             break;
 
+#ifdef HDF5
         case YAPP_FORMAT_HDF5:
             iRet = YAPP_ReadHDF5Metadata(pcFileSpec, iFormat, pstYUM);
             if (iRet != YAPP_RET_SUCCESS)
@@ -450,6 +460,7 @@ int YAPP_ReadMetadata(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
                 return YAPP_RET_ERROR;
             }
             break;
+#endif
 
         default:
             (void) fprintf(stderr,
@@ -965,7 +976,7 @@ int YAPP_ReadDASCfg(char *pcFileSpec, YUM_t *pstYUM)
     return YAPP_RET_SUCCESS;
 }
 
-
+#ifdef HDF5
 int YAPP_ReadHDF5Metadata(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
 {
     hid_t hFile = 0;
@@ -1186,6 +1197,7 @@ herr_t YAPP_ReadHDF5Attribute(hid_t hDataset,
 
     return hStatus;
 }
+#endif
 
 int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
 {
@@ -2187,6 +2199,7 @@ int YAPP_ReadData(FILE *pFData,
 }
 
 
+#ifdef HDF5
 /*
  * Read HDF5 data.
  */
@@ -2322,7 +2335,7 @@ int YAPP_ReadHDF5Data(hid_t hDataspace,
 
     return iReadItems;
 }
-
+#endif
 
 /*
  * Writes header to a data file.
@@ -2647,6 +2660,7 @@ int YAPP_WriteMetadata(char *pcFileData, int iFormat, YUM_t stYUM)
 
         (void) fclose(pFInf);
     }
+#ifdef HDF5
     else if (YAPP_FORMAT_HDF5 == iFormat)
     {
         hid_t hFile = 0;
@@ -2864,11 +2878,13 @@ int YAPP_WriteMetadata(char *pcFileData, int iFormat, YUM_t stYUM)
         (void) H5Fclose(hFile);
 
     }
+#endif
 
     return YAPP_RET_SUCCESS;
 }
 
 
+#ifdef HDF5
 /*
  * Write HDF5 string attribute to a dataset
  */
@@ -3014,6 +3030,7 @@ int YAPP_WriteHDF5CharAttribute(hid_t hDataset,
 
     return YAPP_RET_SUCCESS;
 }
+#endif
 
 
 /*
