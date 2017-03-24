@@ -3074,6 +3074,69 @@ int YAPP_Smooth(float* pfInBuf,
 
 
 /*
+ * Decimate the data in time and frequency
+ */
+int YAPP_Decimate(float *pfInBuf,
+                  int iBlockSize,
+                  int iSampsPerWin,
+                  int iNumChans,
+                  int iChansPerWin,
+                  float *pfOutBuf)
+{
+    int i = 0;
+    int j = 0;
+    int k = 0;
+    int l = 0;
+    float *pfInSpectrum = NULL;
+    float *pfOutSpectrum = NULL;
+    int iOutBlockSize = (int) round((float) iBlockSize / iSampsPerWin);
+    /* this is expected to be evenly divisible */
+    assert(0 == iNumChans % iChansPerWin);
+    int iOutNumChans = iNumChans / iChansPerWin;
+
+    /* decimate in time */
+    /*for (i = 0; i < iBlockSize; ++i)
+    {
+        pfInSpectrum = pfInBuf + i * iNumChans;
+        for (j = 0; j < iNumChans - iChansPerWin; ++j)
+        {
+            for (k = 1; k < iChansPerWin; ++k)
+            {
+                pfInSpectrum[j] += pfInSpectrum[j+k];
+            }
+            pfInSpectrum[j] /= iChansPerWin;
+        }
+    }*/
+
+    /* decimate in frequency */
+    /*
+    for (i = 0; i < iNumChans; i+= iChansPerWin)
+    {
+        for (j = 0; j < iBlockSize; ++j)
+        {
+            for (k = 1; k < iSampsPerWin; ++k)
+            {
+                *(pfInBuf + j * iNumChans + i)
+                    += *(pfInBuf + (j + k) * iNumChans + i);
+            }
+        }
+    }*/
+
+    /* downsample */
+    for (i = 0, j = 0; i < iBlockSize; i += iSampsPerWin, ++j)
+    {
+        pfInSpectrum = pfInBuf + i * iNumChans;
+        pfOutSpectrum = pfOutBuf + j * iOutNumChans;
+        for (k = 0, l = 0; k < iNumChans; k+= iChansPerWin, ++l)
+        {
+            pfOutSpectrum[l] = pfInSpectrum[k];
+        }
+    }
+
+    return YAPP_RET_SUCCESS;
+}
+
+/*
  * Calculate the number of channels for a stacked filterbank file. Assumes
  * input is in ascending order of frequency.
  */

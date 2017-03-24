@@ -612,6 +612,22 @@ int YAPP_CalcDelays(double dDM,
                     int* piMaxOffset);
 
 /**
+ * Decimate data
+ * @param[in]   pfInBuf         Input buffer
+ * @param[in]   iBlockSize      Number of samples in input buffer
+ * @param[in]   iSampsPerWin    Number of time samples in window
+ * @param[in]   iNumChans       Number of input channels
+ * @param[in]   iChansPerWin    Number of channels in window
+ * @param[out]  pfOutBuf        Output buffer
+ */
+int YAPP_Decimate(float *pfInBuf,
+                  int iBlockSize,
+                  int iSampsPerWin,
+                  int iNumChans,
+                  int iChansPerWin,
+                  float *pfOutBuf);
+
+/**
  * Smooth data
  * @param[in]   pfInBuf         Input buffer
  * @param[in]   iBlockSize      Number of samples in input buffer

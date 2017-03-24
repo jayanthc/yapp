@@ -102,6 +102,8 @@ all: yapp_makever \
 	 yapp_dedisperse \
 	 yapp_smooth.o \
 	 yapp_smooth \
+	 yapp_decimate.o \
+	 yapp_decimate \
 	 yapp_filter.o \
 	 yapp_filter \
 	 yapp_fold.o \
@@ -193,6 +195,14 @@ yapp_smooth.o: $(SRCDIR)/yapp_smooth.c $(SRCDIR)/yapp.h \
 	$(CC) $(CFLAGS_C) $(DDEBUG) $< -o $(IDIR)/$@
 
 yapp_smooth: $(IDIR)/yapp_smooth.o $(IDIR)/yapp_version.o \
+	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
+	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) $(LFLAGS_CFITSIO) $(LFLAGS_HDF5) -o $(BINDIR)/$@
+
+yapp_decimate.o: $(SRCDIR)/yapp_decimate.c $(SRCDIR)/yapp.h \
+	$(SRCDIR)/yapp_sigproc.h
+	$(CC) $(CFLAGS_C) $(DDEBUG) $< -o $(IDIR)/$@
+
+yapp_decimate: $(IDIR)/yapp_decimate.o $(IDIR)/yapp_version.o \
 	$(IDIR)/yapp_erflookup.o $(IDIR)/yapp_common.o
 	$(CC) $^ $(LFLAGS_PGPLOT) $(LFLAGS_MATH) $(LFLAGS_CFITSIO) $(LFLAGS_HDF5) -o $(BINDIR)/$@
 
@@ -370,6 +380,7 @@ clean:
 	$(DELCMD) $(IDIR)/yapp_ft.o
 	$(DELCMD) $(IDIR)/yapp_dedisperse.o
 	$(DELCMD) $(IDIR)/yapp_smooth.o
+	$(DELCMD) $(IDIR)/yapp_decimate.o
 	$(DELCMD) $(IDIR)/yapp_filter.o
 	$(DELCMD) $(IDIR)/yapp_fold.o
 	$(DELCMD) $(IDIR)/yapp_add.o
