@@ -644,6 +644,7 @@ int YAPP_CalcDelays(double dDM,
 
 /**
  * Decimate data
+ * @param[in]   iFormat         Data format
  * @param[in]   pfInBuf         Input buffer
  * @param[in]   iBlockSize      Number of samples in input buffer
  * @param[in]   iSampsPerWin    Number of time samples in window
@@ -651,12 +652,31 @@ int YAPP_CalcDelays(double dDM,
  * @param[in]   iChansPerWin    Number of channels in window
  * @param[out]  pfOutBuf        Output buffer
  */
-int YAPP_Decimate(float *pfInBuf,
-                  int iBlockSize,
-                  int iSampsPerWin,
-                  int iNumChans,
-                  int iChansPerWin,
-                  float *pfOutBuf);
+void YAPP_Decimate(int iFormat,
+                   float *pfInBuf,
+                   int iBlockSize,
+                   int iSampsPerWin,
+                   int iNumChans,
+                   int iChansPerWin,
+                   float *pfOutBuf);
+
+void YAPP_Float2Nibble(float *pfBuf,
+                       int iLen,
+                       float fMin,
+                       float fMax,
+                       unsigned char *pcBuf);
+
+void YAPP_Float2Byte(float *pfBuf,
+                     int iLen,
+                     float fMin,
+                     float fMax,
+                     unsigned char *pcBuf);
+
+void YAPP_Float2Short(float *pfBuf,
+                      int iLen,
+                      float fMin,
+                      float fMax,
+                      short int *piBuf);
 
 /**
  * Smooth data

@@ -241,7 +241,7 @@ YAPP_CopyData	utilities/yapp_tim2dat.c	/^int YAPP_CopyData(char *pcFileData, FIL
 YAPP_DEGPERHOUR	src/yapp.h	/^#define YAPP_DEGPERHOUR /;"	d
 YAPP_DecDouble2String	src/yapp_common.c	/^void YAPP_DecDouble2String(double dDec, char *pcDec)$/;"	f
 YAPP_DecString2Double	src/yapp_common.c	/^double YAPP_DecString2Double(char *pcDec)$/;"	f
-YAPP_Decimate	src/yapp_common.c	/^int YAPP_Decimate(float *pfInBuf,$/;"	f
+YAPP_Decimate	src/yapp_common.c	/^void YAPP_Decimate(int iFormat,$/;"	f
 YAPP_ERF_ENTRIES	src/yapp.h	/^#define YAPP_ERF_ENTRIES /;"	d
 YAPP_FALSE	src/yapp.h	/^#define YAPP_FALSE /;"	d
 YAPP_FILE_DELAYS_LIN	src/yapp.h	/^#define YAPP_FILE_DELAYS_LIN /;"	d
@@ -277,6 +277,9 @@ YAPP_FORMAT_PSRFITS	src/yapp.h	/^    YAPP_FORMAT_PSRFITS,        \/* PSRFITS spe
 YAPP_FORMAT_RAW	src/yapp.h	/^    YAPP_FORMAT_RAW,            \/* raw voltages (baseband data) *\/$/;"	e	enum:tagFileFormats
 YAPP_FORMAT_SPEC	src/yapp.h	/^    YAPP_FORMAT_SPEC = 0,       \/* Desh's specfile format *\/$/;"	e	enum:tagFileFormats
 YAPP_FORMAT_YM	src/yapp.h	/^    YAPP_FORMAT_YM,             \/* YAPP metadata text file *\/$/;"	e	enum:tagFileFormats
+YAPP_Float2Byte	src/yapp_common.c	/^void YAPP_Float2Byte(float *pfBuf,$/;"	f
+YAPP_Float2Nibble	src/yapp_common.c	/^void YAPP_Float2Nibble(float *pfBuf,$/;"	f
+YAPP_Float2Short	src/yapp_common.c	/^void YAPP_Float2Short(float *pfBuf,$/;"	f
 YAPP_GetDescFromFormat	src/yapp_common.c	/^int YAPP_GetDescFromFormat(int iFormat, char *pcDesc)$/;"	f
 YAPP_GetExtFromFormat	src/yapp_common.c	/^int YAPP_GetExtFromFormat(int iFormat, char *pcExt)$/;"	f
 YAPP_GetFileType	src/yapp_common.c	/^int YAPP_GetFileType(char *pcFile)$/;"	f
@@ -511,7 +514,8 @@ g_pcIsTimeGood	src/yapp_fold.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	src/yapp_makerfimask.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	src/yapp_stat.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	src/yapp_viewdata.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
-g_pcVersion	src/yapp_version.c	/^const char *g_pcVersion = "YAPP-DEV-3.6.7-beta-20170324-141409";$/;"	v
+g_pcOutBuf	src/yapp_decimate.c	/^unsigned char *g_pcOutBuf = NULL;$/;"	v
+g_pcVersion	src/yapp_version.c	/^const char *g_pcVersion = "YAPP-DEV-3.7.0-beta-20170328-163427";$/;"	v
 g_pdDM	src/yapp_dedisplaw.c	/^double *g_pdDM = NULL;$/;"	v
 g_pdDelayTab	src/yapp_dedisplaw.c	/^double *g_pdDelayTab = NULL;$/;"	v
 g_pdMaxDelayTab	src/yapp_dedisplaw.c	/^double *g_pdMaxDelayTab = NULL;$/;"	v
@@ -608,6 +612,7 @@ g_pfcFFTOutX	src/yapp_ft.c	/^fftwf_complex *g_pfcFFTOutX = NULL;$/;"	v
 g_pfcFFTOutY	src/yapp_ft.c	/^fftwf_complex *g_pfcFFTOutY = NULL;$/;"	v
 g_piOffsetTab	src/yapp_dedisperse.c	/^int *g_piOffsetTab = NULL;$/;"	v
 g_piOffsetTab	src/yapp_makerfimask.c	/^int *g_piOffsetTab = NULL;$/;"	v
+g_piOutBuf	src/yapp_decimate.c	/^short int *g_piOutBuf = NULL;$/;"	v
 g_piOutOffsetTab	src/yapp_dedisperse.c	/^int *g_piOutOffsetTab = NULL;$/;"	v
 g_ppFDedispCfg	src/yapp_dedisplaw.c	/^FILE **g_ppFDedispCfg = NULL;$/;"	v
 g_ppFDedispData	src/yapp_dedisplaw.c	/^FILE **g_ppFDedispData = NULL;$/;"	v

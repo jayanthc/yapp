@@ -11,12 +11,11 @@
  *     -p  --proc <time>                    The length of data in seconds, to be
  *                                          processed
  *                                          (default is all)
- *     -f  --freq-factor <samples>          Frequency decimation factor
- *     -t  --time-factor <samples>          Time decimation factor
- *     -u  --freq-width <bandwidth>         Width of boxcar window in MHz
- *                                          (default is 1 MHz)
+ *     -f  --out-chans <channels>           Number of channels in the output
+ *     -t  --out-samps <samples>            Number of time samples in the output
  *     -w  --time-width <duration>          Width of boxcar window in milliseconds
- *                                          (default is 1 ms)
+ *     -b  --out-bits <bits>                Number of bits in output
+ *                                          (default is same as input)
  *     -g  --graphics                       Turn on plotting
  *     -i  --invert                         Invert the background and foreground
  *                                          colours in plots
@@ -46,6 +45,8 @@ extern FILE *g_pFData;
    termination, such as those triggered by SIGINT or SIGTERM */
 float *g_pfBuf = NULL;
 float *g_pfOutBuf = NULL;
+unsigned char *g_pcOutBuf = NULL;
+short int *g_piOutBuf = NULL;
 float *g_pfXAxis = NULL;
 
 int main(int argc, char *argv[])
@@ -59,7 +60,7 @@ int main(int argc, char *argv[])
     double dDataProcTime = 0.0;
     YUM_t stYUM = {{0}};
     YUM_t stYUMOut = {{0}};
-    int iTotSampsPerBlock = 0;  /* iBlockSize */
+    int iTotSampsPerBlock = 0;  /* iNumChans * iBlockSize */
     double dTSampInSec = 0.0;   /* holds sampling time in s */
     long lBytesToSkip = 0;
     long lBytesToProc = 0;
@@ -68,13 +69,12 @@ int main(int argc, char *argv[])
     int iBlockSize = 0;
     int iReadBlockSize = 0;
     int iOutBlockSize = 0;
-    int iOutNumChans = 0;
     int iNumReads = 0;
     int iReadBlockCount = 0;
-    int iFreqFactor = 0;
-    int iTimeFactor = 0;
-    float fFreqWidth = 1.0; /* in MHz */
-    float fTimeWidth = 1.0; /* in ms */
+    int iOutNumChans = 0;
+    int iOutTimeSamps = 0;
+    float fTimeWidth = 0.0;     /* in ms */
+    int iOutNumBits = 0;
     char cIsLastBlock = YAPP_FALSE;
     int iRet = YAPP_RET_SUCCESS;
     float fDataMin = 0.0;
@@ -88,30 +88,22 @@ int main(int argc, char *argv[])
     int iChansPerWin = 0;
     int iDiff = 0;
     int i = 0;
-    float fMeanOrig = 0.0;
-    float fRMSOrig = 0.0;
-    float fMeanOrigAll = 0.0;
-    float fRMSOrigAll = 0.0;
-    float fMeanSmoothed = 0.0;
-    float fRMSSmoothed = 0.0;
-    float fMeanSmoothedAll = 0.0;
-    float fRMSSmoothedAll = 0.0;
     char cHasGraphics = YAPP_FALSE;
     int iInvCols = YAPP_FALSE;
     char cIsNonInteractive = YAPP_FALSE;
     const char *pcProgName = NULL;
     int iNextOpt = 0;
     /* valid short options */
-    const char* const pcOptsShort = "hs:p:f:t:v:w:giev";
+    const char* const pcOptsShort = "hs:p:f:t:w:b:giev";
     /* valid long options */
     const struct option stOptsLong[] = {
         { "help",                   0, NULL, 'h' },
         { "skip",                   1, NULL, 's' },
         { "proc",                   1, NULL, 'p' },
-        { "freq-factor",            1, NULL, 'f' },
-        { "time-factor",            1, NULL, 't' },
-        { "freq-width",             1, NULL, 'v' },
+        { "out-chans",              1, NULL, 'f' },
+        { "out-samps",              1, NULL, 't' },
         { "time-width",             1, NULL, 'w' },
+        { "out-bits",               1, NULL, 'b' },
         { "graphics",               0, NULL, 'g' },
         { "invert",                 0, NULL, 'i' },
         { "non-interactive",        0, NULL, 'e' },
@@ -143,32 +135,24 @@ int main(int argc, char *argv[])
                 dDataProcTime = atof(optarg);
                 break;
 
-            case 'f':   /* -f or --freq-factor */
+            case 'f':   /* -f or --out-chans */
                 /* set option */
-                iFreqFactor = atoi(optarg);
+                iOutNumChans = atoi(optarg);
                 break;
 
-            case 't':   /* -t or --time-factor */
+            case 't':   /* -t or --out-samps */
                 /* set option */
-                iTimeFactor = atoi(optarg);
-                break;
-
-            case 'u':   /* -u or --freq-width */
-                /* set option */
-                fFreqWidth = atof(optarg);
+                iOutTimeSamps = atoi(optarg);
                 break;
 
             case 'w':   /* -w or --time-width */
                 /* set option */
                 fTimeWidth = atof(optarg);
-                if (fTimeWidth > 1) /* 1 ms */
-                {
-                    fprintf(stderr,
-                            "WARNING: The chosen boxcar width may suppress "
-                            "pulsars with periods less than %g ms in the "
-                            "smoothed data!\n",
-                            fTimeWidth);
-                }
+                break;
+
+            case 'b':   /* -b or --out-bits */
+                /* set option */
+                iOutNumBits = atoi(optarg);
                 break;
 
             case 'g':   /* -g or --graphics */
@@ -241,6 +225,46 @@ int main(int argc, char *argv[])
         return YAPP_RET_ERROR;
     }
 
+    if (((YAPP_FORMAT_FIL == iFormat)
+        && ((0 == iOutNumChans)
+            && (0 == iOutTimeSamps)
+            && (0.0 == fTimeWidth)))
+        || ((YAPP_FORMAT_DTS_TIM == iFormat)
+            && ((0 == iOutTimeSamps)
+                && (0.0 == fTimeWidth))))
+    {
+        (void) fprintf(stderr,
+                       "ERROR: No decimation option given!\n");
+        return YAPP_RET_ERROR;
+    }
+
+    if ((iOutTimeSamps != 0) && (fTimeWidth != 0.0))
+    {
+        (void) fprintf(stderr,
+                       "WARNING: Both --out-samps/-t and --time-width/-w "
+                       "given! Using --out-samps/-t.\n");
+    }
+
+    /* current support only for 4-bit integer, 8-bit integer, 16-bit integer,
+       and 32-bit single-precision floating point values */
+    if (iOutNumBits != 0)
+    {
+        if (!((YAPP_SAMPSIZE_4 == iOutNumBits)
+              || (YAPP_SAMPSIZE_8 == iOutNumBits)
+              || (YAPP_SAMPSIZE_16 == iOutNumBits)
+              || (YAPP_SAMPSIZE_32 == iOutNumBits)))
+        {
+            (void) fprintf(stderr,
+                           "ERROR: Unsupported output bits! %s only supports "
+                           "4 (int), 8 (int), 16 (int), and "
+                           "32 (float) bits, but request is for %d bits.\n",
+                           pcProgName,
+                           iOutNumBits);
+            YAPP_CleanUp();
+            return YAPP_RET_ERROR;
+        }
+    }
+
     /* read metadata */
     iRet = YAPP_ReadMetadata(pcFileData, iFormat, &stYUM);
     if (iRet != YAPP_RET_SUCCESS)
@@ -248,6 +272,24 @@ int main(int argc, char *argv[])
         (void) fprintf(stderr,
                        "ERROR: Reading metadata failed for file %s!\n",
                        pcFileData);
+        YAPP_CleanUp();
+        return YAPP_RET_ERROR;
+    }
+
+    /* current support only for 4-bit integer, 8-bit integer, 16-bit integer,
+       and 32-bit single-precision floating point values */
+    if (!((YAPP_SAMPSIZE_4 == stYUM.iNumBits)
+          || (YAPP_SAMPSIZE_8 == stYUM.iNumBits)
+          || (YAPP_SAMPSIZE_16 == stYUM.iNumBits)
+          || (YAPP_SAMPSIZE_32 == stYUM.iNumBits)))
+    {
+        (void) fprintf(stderr,
+                       "ERROR: Unsupported data type! %s only supports "
+                       "4-bit ints, 8-bit ints, 16-bit ints, and "
+                       "32-bit floats, but input data is %d bits.\n",
+                       pcProgName,
+                       stYUM.iNumBits);
+        YAPP_CleanUp();
         return YAPP_RET_ERROR;
     }
 
@@ -295,9 +337,74 @@ int main(int argc, char *argv[])
         assert(0 == lBytesToProc % (int) stYUM.fSampSize);
     }
 
-    /* calculate the number of time samples in one boxcar window */
-    // TODO: make sure ftimewidth is > dtsamp
-    iSampsPerWin = (int) round(fTimeWidth / stYUM.dTSamp);
+    /* number of output time samples takes precedence over time width */
+    if (iOutTimeSamps != 0)
+    {
+        if (iOutTimeSamps <= stYUM.iTimeSamps)
+        {
+            iSampsPerWin = (int) roundf((float) stYUM.iTimeSamps
+                                        / iOutTimeSamps);
+        }
+        else
+        {
+            (void) fprintf(stderr,
+                           "ERROR: Requested output samples %d greater than "
+                           "data samples %d!\n",
+                           iOutTimeSamps,
+                           stYUM.iTimeSamps);
+            YAPP_CleanUp();
+            return YAPP_RET_ERROR;
+        }
+
+        fTimeWidth = (float) iSampsPerWin * stYUM.dTSamp;
+
+        if ((int) floorf((float) stYUM.iTimeSamps / iSampsPerWin)
+                != iOutTimeSamps)
+        {
+            (void) fprintf(stderr,
+                           "WARNING: Requested %d output samples, getting %d "
+                           "samples!\n",
+                           iOutTimeSamps,
+                           (int) floorf((float) stYUM.iTimeSamps
+                                        / iSampsPerWin));
+            /* not needed, but for consistency */
+            iOutTimeSamps = (int) floorf((float) stYUM.iTimeSamps
+                                         / iSampsPerWin);
+        }
+    }
+    else if (fTimeWidth != 0.0)
+    {
+        /* calculate the number of time samples in one boxcar window */
+        if (fTimeWidth < stYUM.dTSamp)
+        {
+            (void) fprintf(stderr,
+                           "WARNING: Requested time window width %g is less "
+                           "than sampling time %g; Adjusting window width to "
+                           "sampling time!\n",
+                           fTimeWidth,
+                           stYUM.dTSamp);
+            fTimeWidth = (float) stYUM.dTSamp;
+        }
+
+        iSampsPerWin = (int) floorf(fTimeWidth / stYUM.dTSamp);
+
+        /* not needed, but for consistency */
+        iOutTimeSamps = (int) round((float) stYUM.iTimeSamps / iSampsPerWin);
+    }
+    else
+    {
+        /* this should not happen due to user input validation */
+        assert(YAPP_TRUE);
+    }
+
+    if (fTimeWidth > 1) /* 1 ms */
+    {
+        fprintf(stderr,
+                "WARNING: The chosen boxcar width may suppress "
+                "pulsars with periods less than %g ms in the "
+                "smoothed data!\n",
+                fTimeWidth);
+    }
 
     /* compute the block size - a large multiple of iSampsPerWin */
     iBlockSize = DEF_WINDOWS * iSampsPerWin;
@@ -344,23 +451,35 @@ int main(int argc, char *argv[])
     {
         iBlockSize = (int) ceil(dDataProcTime / dTSampInSec);
     }
+
+    if (iBlockSize < iSampsPerWin)
+    {
+        iBlockSize = 2 * iSampsPerWin;
+    }
     /* calculate the actual number of samples that will be processed in one
        iteration */
     iReadBlockSize = iBlockSize - (iSampsPerWin - 1);
-    /* based on actual processed blocks, rather than read blocks */
-    iNumReads = (int) ceilf((float) iTimeSampsToProc / iReadBlockSize);
+    /* based on actual processed blocks */
+    /* NOTE: needs to be ceilf() */
+    iNumReads = (int) ceilf((float) (iTimeSampsToProc - (iSampsPerWin  - 1))
+                            / iReadBlockSize);
 
     /* calculate the output block size - this is DEF_WINDOWS */
-    iOutBlockSize = iBlockSize / iSampsPerWin;
+    iOutBlockSize = (int) roundf((float) iBlockSize / iSampsPerWin);
 
-    /* calculate the number of channels in one boxcar window */
-    iChansPerWin = (int) round((float) stYUM.iNumChans / iFreqFactor);
-
-    /* calculate the output number of channels */
-    iOutNumChans = stYUM.iNumChans / iChansPerWin;
+    if (YAPP_FORMAT_FIL == iFormat)
+    {
+        /* calculate the number of channels in one boxcar window */
+        iChansPerWin = (int) roundf((float) stYUM.iNumChans / iOutNumChans);
+    }
+    else
+    {
+        /* set this to 1 for YAPP_Decimate() to work */
+        iChansPerWin = 1;
+    }
 
     /* optimisation - store some commonly used values in variables */
-    iTotSampsPerBlock = iBlockSize;
+    iTotSampsPerBlock = stYUM.iNumChans * iBlockSize;
 
     (void) printf("Processing\n"
                   "    %ld of %ld bytes\n"
@@ -376,8 +495,17 @@ int main(int argc, char *argv[])
                   iNumReads,
                   iReadBlockSize);
 
-    (void) printf("Boxcar window width is %d channels.\n", iChansPerWin);
-    (void) printf("Boxcar window width is %d time samples.\n", iSampsPerWin);
+    if (YAPP_FORMAT_FIL == iFormat)
+    {
+        (void) printf("Boxcar window size is %d channels x %d time samples.\n",
+                      iChansPerWin,
+                      iSampsPerWin);
+    }
+    else
+    {
+        (void) printf("Boxcar window size is %d time samples.\n",
+                      iSampsPerWin);
+    }
 
     /* open the time series data file for reading */
     g_pFData = fopen(pcFileData, "r");
@@ -393,7 +521,9 @@ int main(int argc, char *argv[])
 
     /* allocate memory for the buffer, based on the number of channels and time
        samples */
-    g_pfBuf = (float *) YAPP_Malloc((size_t) stYUM.iNumChans * iBlockSize,
+    g_pfBuf = (float *) YAPP_Malloc((size_t) stYUM.iNumChans
+                                             * iBlockSize
+                                             * stYUM.fSampSize,
                                     sizeof(float),
                                     YAPP_FALSE);
     if (NULL == g_pfBuf)
@@ -431,9 +561,26 @@ int main(int argc, char *argv[])
                        EXT_TIM);
     }
 
+    /* update output metadata */
     stYUMOut = stYUM;
-    stYUMOut.iNumChans = iOutNumChans;
+    if (YAPP_FORMAT_FIL == iFormat)
+    {
+        stYUMOut.iNumChans = iOutNumChans;
+        stYUMOut.iNumGoodChans = iOutNumChans;
+        stYUMOut.fChanBW = stYUM.fChanBW * iChansPerWin;
+    }
+    stYUMOut.dTSamp = stYUM.dTSamp * iSampsPerWin;
     stYUMOut.iTimeSamps = stYUM.iTimeSamps / iSampsPerWin;
+    /* set output bits */
+    if (iOutNumBits != 0)
+    {
+        stYUMOut.iNumBits = iOutNumBits;
+    }
+    else
+    {
+        stYUMOut.iNumBits = stYUM.iNumBits;
+    }
+    /* write metadata to the output file */
     iRet = YAPP_WriteMetadata(acFileOut, iFormat, stYUMOut);
     if (iRet != YAPP_RET_SUCCESS)
     {
@@ -456,62 +603,136 @@ int main(int argc, char *argv[])
         return YAPP_RET_ERROR;
     }
 
+    /* skip the header */
+    (void) fseek(g_pFData, (long) stYUM.iHeaderLen, SEEK_SET);
     /* skip data, if any are to be skipped */
     (void) fseek(g_pFData, lBytesToSkip, SEEK_CUR);
 
     /* open the PGPLOT graphics device */
     if (cHasGraphics)
     {
-        g_iPGDev = cpgopen(PG_DEV);
-        if (g_iPGDev <= 0)
+        if (iFormat != YAPP_FORMAT_FIL)
+        {
+            g_iPGDev = cpgopen(PG_DEV);
+            if (g_iPGDev <= 0)
+            {
+                (void) fprintf(stderr,
+                               "ERROR: Opening graphics device %s failed!\n",
+                               PG_DEV);
+                (void) fclose(pFOut);
+                YAPP_CleanUp();
+                return YAPP_RET_ERROR;
+            }
+
+            /* set the background colour to white and the foreground colour to
+               black, if user requires so */
+            if (YAPP_TRUE == iInvCols)
+            {
+                cpgscr(0, 1.0, 1.0, 1.0);
+                cpgscr(1, 0.0, 0.0, 0.0);
+            }
+
+            cpgsubp(1, 2);
+            cpgsch(PG_CH_2P);
+
+            /* set up the plot's X-axis */
+            g_pfXAxis = (float *) YAPP_Malloc(iBlockSize,
+                                              sizeof(float),
+                                              YAPP_FALSE);
+            if (NULL == g_pfXAxis)
+            {
+                (void) fprintf(stderr,
+                               "ERROR: Memory allocation for X-axis failed! %s!\n",
+                               strerror(errno));
+                (void) fclose(pFOut);
+                YAPP_CleanUp();
+                return YAPP_RET_ERROR;
+            }
+        }
+        else
         {
             (void) fprintf(stderr,
-                           "ERROR: Opening graphics device %s failed!\n",
-                           PG_DEV);
-            (void) fclose(pFOut);
-            YAPP_CleanUp();
-            return YAPP_RET_ERROR;
-        }
-
-        /* set the background colour to white and the foreground colour to
-           black, if user requires so */
-        if (YAPP_TRUE == iInvCols)
-        {
-            cpgscr(0, 1.0, 1.0, 1.0);
-            cpgscr(1, 0.0, 0.0, 0.0);
-        }
-
-        cpgsubp(1, 2);
-        cpgsch(PG_CH_2P);
-
-        /* set up the plot's X-axis */
-        g_pfXAxis = (float *) YAPP_Malloc(iBlockSize,
-                                          sizeof(float),
-                                          YAPP_FALSE);
-        if (NULL == g_pfXAxis)
-        {
-            (void) fprintf(stderr,
-                           "ERROR: Memory allocation for X-axis failed! %s!\n",
-                           strerror(errno));
-            (void) fclose(pFOut);
-            YAPP_CleanUp();
-            return YAPP_RET_ERROR;
+                           "WARNING: Plotting is not supported for .fil files!\n");
         }
     }
 
-    /* allocate memory for the accumulation buffer */
-    g_pfOutBuf = (float *) YAPP_Malloc((size_t) stYUM.iNumChans * iOutBlockSize, 
-                                       sizeof(float),
-                                       YAPP_TRUE);
+    /* allocate memory for the output buffer */
+    g_pfOutBuf = (float *) YAPP_Malloc((size_t) iOutNumChans
+                                                * iOutBlockSize
+                                                * stYUM.fSampSize, 
+                                       sizeof(char),
+                                       YAPP_FALSE);
     if (NULL == g_pfOutBuf)
     {
         (void) fprintf(stderr,
-                       "ERROR: Memory allocation for plot buffer failed! "
+                       "ERROR: Memory allocation for buffer failed! "
                        "%s!\n",
                        strerror(errno));
         (void) fclose(pFOut);
         YAPP_CleanUp();
         return YAPP_RET_ERROR;
+    }
+
+    switch (stYUMOut.iNumBits)
+    {
+        case YAPP_SAMPSIZE_4:
+            /* allocate memory for the output buffer */
+            g_pcOutBuf = (unsigned char *) YAPP_Malloc((size_t) iOutNumChans
+                                                       * iOutBlockSize
+                                                       / 2,
+                                                       sizeof(unsigned char),
+                                                       YAPP_FALSE);
+            if (NULL == g_pcOutBuf)
+            {
+                (void) fprintf(stderr,
+                               "ERROR: Memory allocation for buffer failed! "
+                               "%s!\n",
+                               strerror(errno));
+                (void) fclose(pFOut);
+                YAPP_CleanUp();
+                return YAPP_RET_ERROR;
+            }
+            break;
+
+        case YAPP_SAMPSIZE_8:
+            /* allocate memory for the output buffer */
+            g_pcOutBuf = (unsigned char *) YAPP_Malloc((size_t) iOutNumChans
+                                                       * iOutBlockSize,
+                                                       sizeof(unsigned char),
+                                                       YAPP_FALSE);
+            if (NULL == g_pcOutBuf)
+            {
+                (void) fprintf(stderr,
+                               "ERROR: Memory allocation for buffer failed! "
+                               "%s!\n",
+                               strerror(errno));
+                (void) fclose(pFOut);
+                YAPP_CleanUp();
+                return YAPP_RET_ERROR;
+            }
+            break;
+
+        case YAPP_SAMPSIZE_16:
+            /* allocate memory for the output buffer */
+            g_piOutBuf = (short int *) YAPP_Malloc((size_t) iOutNumChans
+                                                            * iOutBlockSize,
+                                                   sizeof(short int),
+                                                   YAPP_FALSE);
+            if (NULL == g_piOutBuf)
+            {
+                (void) fprintf(stderr,
+                               "ERROR: Memory allocation for buffer failed! "
+                               "%s!\n",
+                               strerror(errno));
+                (void) fclose(pFOut);
+                YAPP_CleanUp();
+                return YAPP_RET_ERROR;
+            }
+            break;
+
+        default:
+            /* this should never happen because of input validation */
+            assert(YAPP_TRUE);
     }
 
     while (iNumReads > 0)
@@ -533,266 +754,292 @@ int main(int argc, char *argv[])
         --iNumReads;
         ++iReadBlockCount;
 
-        if (iReadItems < iTotSampsPerBlock)
+        //TODO: check if this can be replaced with cIsLastBlock
+        if ((iReadItems < iTotSampsPerBlock)    /* usually, the last block */
+            || (0 == iNumReads))                /* definitely the last block */
         {
-            iDiff = iBlockSize - iReadItems;
+            iDiff = (stYUM.iNumChans * iBlockSize) - iReadItems;
 
             /* reset remaining elements to '\0' */
             (void) memset((g_pfBuf + iReadItems),
                           '\0',
                           (sizeof(float) * iDiff));
+
+            iOutBlockSize = iOutTimeSamps
+                                - ((iReadBlockCount - 1) * iOutBlockSize);
         }
 
         /* calculate the number of time samples in the block - this may not
            be iBlockSize for the last block, and should be iBlockSize for
            all other blocks */
-        iNumSamps = iReadItems;
-
-        /* smooth data */
-        printf("=====================================\n");
-        (void) YAPP_Decimate(g_pfBuf, iNumSamps, iSampsPerWin, stYUM.iNumChans, iChansPerWin, g_pfOutBuf);
-        printf("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n");
-        /* write smoothed data to file */
-        (void) fwrite(g_pfOutBuf,
-                      sizeof(float),
-                      (long) iOutBlockSize * iOutNumChans,
-                      pFOut);
-        printf("%d, %d, %d\n", iOutBlockSize, iOutNumChans, iOutBlockSize * iOutNumChans);
-
-        /* calculate statistics */
-        /* original signal */
-        fMeanOrig = YAPP_CalcMean(g_pfBuf,
-                                  iNumSamps - (iSampsPerWin - 1),
-                                  0,
-                                  1);
-        fMeanOrigAll += fMeanOrig;
-        fRMSOrig = YAPP_CalcRMS(g_pfBuf,
-                                iNumSamps - (iSampsPerWin - 1),
-                                0,
-                                1,
-                                fMeanOrig);
-        fRMSOrig *= fRMSOrig;
-        fRMSOrig *= (iNumSamps - (iSampsPerWin - 1) - 1);
-        fRMSOrigAll += fRMSOrig;
-
-        /* smoothed signal */
-        fMeanSmoothed = YAPP_CalcMean(g_pfOutBuf,
-                                      iNumSamps - (iSampsPerWin - 1),
-                                      0,
-                                      1);
-        fMeanSmoothedAll += fMeanSmoothed;
-        fRMSSmoothed = YAPP_CalcRMS(g_pfOutBuf,
-                                    iNumSamps - (iSampsPerWin - 1),
-                                    0,
-                                    1,
-                                    fMeanSmoothed);
-        fRMSSmoothed *= fRMSSmoothed;
-        fRMSSmoothed *= (iNumSamps - (iSampsPerWin - 1) - 1);
-        fRMSSmoothedAll += fRMSSmoothed;
-
-        /* set the file position to rewind by (iSampsPerWin - 1) samples */
-        (void) fseek(g_pFData, -((iSampsPerWin - 1) * sizeof(float)), SEEK_CUR);
-
-        if (cHasGraphics)
+        iNumSamps = iReadItems / stYUM.iNumChans;
+        if (!cIsLastBlock)
         {
-            /* use a separate plotting buffer so that the x-axes for both
-               before and after plots are equivalent */
-            float* pfPlotBuf = g_pfBuf + (iSampsPerWin / 2);
-            fDataMin = pfPlotBuf[0];
-            fDataMax = pfPlotBuf[0];
-            for (i = 0; i < iReadBlockSize; ++i)
+            assert(iNumSamps == iBlockSize);
+        }
+        printf("````````````````````````\n");
+        printf("%d, %d, %d, %d, %d, %d, %d\n", iNumReads, iReadBlockCount, iNumSamps, iBlockSize, stYUM.iNumChans, iOutBlockSize, iOutNumChans);
+
+        /* decimate data */
+        YAPP_Decimate(iFormat,
+                      g_pfBuf,
+                      iNumSamps,
+                      iSampsPerWin,
+                      stYUM.iNumChans,
+                      iChansPerWin,
+                      g_pfOutBuf);
+
+        /* requantize float to original/specified number of bits */
+        switch (stYUMOut.iNumBits)
+        {
+            case YAPP_SAMPSIZE_4:
+                YAPP_Float2Nibble(g_pfOutBuf,
+                                  iOutNumChans * iOutBlockSize,
+                                  stYUM.fMin,
+                                  stYUM.fMax,
+                                  g_pcOutBuf);
+                /* write decimated data to file */
+                (void) fwrite(g_pcOutBuf,
+                              sizeof(unsigned char),
+                              (long) iOutBlockSize * iOutNumChans / 2,
+                              pFOut);
+                break;
+
+            case YAPP_SAMPSIZE_8:
+                YAPP_Float2Byte(g_pfOutBuf,
+                                iOutNumChans * iOutBlockSize,
+                                stYUM.fMin,
+                                stYUM.fMax,
+                                g_pcOutBuf);
+                /* write decimated data to file */
+                (void) fwrite(g_pcOutBuf,
+                              sizeof(unsigned char),
+                              (long) iOutBlockSize * iOutNumChans,
+                              pFOut);
+                break;
+
+            case YAPP_SAMPSIZE_16:
+                YAPP_Float2Short(g_pfOutBuf,
+                                iOutNumChans * iOutBlockSize,
+                                stYUM.fMin,
+                                stYUM.fMax,
+                                g_piOutBuf);
+                /* write decimated data to file */
+                (void) fwrite(g_piOutBuf,
+                              sizeof(short),
+                              (long) iOutBlockSize * iOutNumChans,
+                              pFOut);
+                break;
+
+            case YAPP_SAMPSIZE_32:
+                /* write decimated data to file */
+                (void) fwrite(g_pfOutBuf,
+                              sizeof(float),
+                              (long) iOutBlockSize * iOutNumChans,
+                              pFOut);
+                break;
+
+            default:
+                /* this should never happen because of input validation */
+                assert(YAPP_TRUE);
+        }
+
+        /* set the file position to rewind by (iSampsPerWin - 1) time samples,
+           and the appropriate number of channels */
+        (void) fseek(g_pFData,
+                     -((iSampsPerWin - 1)
+                         * stYUM.iNumChans 
+                         * stYUM.fSampSize
+                         * sizeof(char)),
+                     SEEK_CUR);
+
+        if (iFormat != YAPP_FORMAT_FIL)
+        {
+            if (cHasGraphics)
             {
-                if (pfPlotBuf[i] < fDataMin)
+                /* use a separate plotting buffer so that the x-axes for both
+                   before and after plots are equivalent */
+                float* pfPlotBuf = g_pfBuf + (iSampsPerWin / 2);
+                fDataMin = pfPlotBuf[0];
+                fDataMax = pfPlotBuf[0];
+                for (i = 0; i < iReadBlockSize; ++i)
                 {
-                    fDataMin = pfPlotBuf[i];
-                }
-                if (pfPlotBuf[i] > fDataMax)
-                {
-                    fDataMax = pfPlotBuf[i];
-                }
-            }
-
-            #ifdef DEBUG
-            (void) printf("Minimum value of data             : %g\n",
-                          fDataMin);
-            (void) printf("Maximum value of data             : %g\n",
-                          fDataMax);
-            #endif
-
-            cpgpanl(1, 1);
-            /* erase just before plotting, to reduce flicker */
-            cpgeras();
-            for (i = 0; i < iReadBlockSize; ++i)
-            {
-                g_pfXAxis[i] = (float) (dDataSkipTime
-                                        + (((iReadBlockCount - 1)
-                                            * iReadBlockSize
-                                            * dTSampInSec)
-                                           + (i * dTSampInSec)));
-            }
-
-            cpgsvp(PG_VP_ML, PG_VP_MR, PG_VP_MB, PG_VP_MT);
-            cpgswin(g_pfXAxis[0],
-                    g_pfXAxis[iReadBlockSize-1],
-                    fDataMin,
-                    fDataMax);
-            cpglab("Time - Start Time (s)", "", "Before Smoothing");
-            cpgbox("BCNST", 0.0, 0, "BCNST", 0.0, 0);
-            cpgsci(PG_CI_PLOT);
-            cpgline(iReadBlockSize, g_pfXAxis, pfPlotBuf);
-            cpgsci(PG_CI_DEF);
-
-            fDataMin = g_pfOutBuf[0];
-            fDataMax = g_pfOutBuf[0];
-            for (i = 0; i < (iNumSamps - (iSampsPerWin - 1)); ++i)
-            {
-                if (g_pfOutBuf[i] < fDataMin)
-                {
-                    fDataMin = g_pfOutBuf[i];
-                }
-                if (g_pfOutBuf[i] > fDataMax)
-                {
-                    fDataMax = g_pfOutBuf[i];
-                }
-            }
-
-            #ifdef DEBUG
-            (void) printf("Minimum value of data             : %g\n",
-                          fDataMin);
-            (void) printf("Maximum value of data             : %g\n",
-                          fDataMax);
-            #endif
-
-            cpgpanl(1, 2);
-            /* erase just before plotting, to reduce flicker */
-            cpgeras();
-            for (i = 0; i < iReadBlockSize; ++i)
-            {
-                g_pfXAxis[i] = (float) (dDataSkipTime
-                                        + (((iReadBlockCount - 1)
-                                            * iReadBlockSize
-                                            * dTSampInSec)
-                                           + (i * dTSampInSec)));
-            }
-
-            cpgsvp(PG_VP_ML, PG_VP_MR, PG_VP_MB, PG_VP_MT);
-            cpgswin(g_pfXAxis[0],
-                    g_pfXAxis[iReadBlockSize-1],
-                    fDataMin,
-                    fDataMax);
-            cpglab("Time - Start Time (s)", "", "After Smoothing");
-            cpgbox("BCNST", 0.0, 0, "BCNST", 0.0, 0);
-            cpgsci(PG_CI_PLOT);
-            cpgline(iReadBlockSize, g_pfXAxis, g_pfOutBuf);
-            cpgsci(PG_CI_DEF);
-
-            if (!(cIsLastBlock))
-            {
-                if (!(cIsNonInteractive))
-                {
-                    /* draw the 'next' and 'exit' buttons */
-                    cpgsvp(PG_VP_BUT_ML, PG_VP_BUT_MR, PG_VP_BUT_MB, PG_VP_BUT_MT);
-                    cpgswin(PG_BUT_L, PG_BUT_R, PG_BUT_B, PG_BUT_T);
-                    cpgsci(PG_BUT_FILLCOL); /* set the fill colour */
-                    cpgrect(PG_BUTNEXT_L, PG_BUTNEXT_R, PG_BUTNEXT_B, PG_BUTNEXT_T);
-                    cpgrect(PG_BUTEXIT_L, PG_BUTEXIT_R, PG_BUTEXIT_B, PG_BUTEXIT_T);
-                    cpgsci(0);  /* set colour index to white */
-                    cpgtext(PG_BUTNEXT_TEXT_L, PG_BUTNEXT_TEXT_B, "Next");
-                    cpgtext(PG_BUTEXIT_TEXT_L, PG_BUTEXIT_TEXT_B, "Exit");
-
-                    fButX = (PG_BUTNEXT_R - PG_BUTNEXT_L) / 2;
-                    fButY = (PG_BUTNEXT_T - PG_BUTNEXT_B) / 2;
-
-                    while (YAPP_TRUE)
+                    if (pfPlotBuf[i] < fDataMin)
                     {
-                        iRet = cpgcurs(&fButX, &fButY, &cCurChar);
-                        if (0 == iRet)
-                        {
-                            (void) fprintf(stderr,
-                                           "WARNING: "
-                                           "Reading cursor parameters failed!\n");
-                            break;
-                        }
-
-                        if (((fButX >= PG_BUTNEXT_L) && (fButX <= PG_BUTNEXT_R))
-                            && ((fButY >= PG_BUTNEXT_B) && (fButY <= PG_BUTNEXT_T)))
-                        {
-                            /* animate button click */
-                            cpgsci(PG_BUT_FILLCOL);
-                            cpgtext(PG_BUTNEXT_TEXT_L, PG_BUTNEXT_TEXT_B, "Next");
-                            cpgsci(0);  /* set colour index to white */
-                            cpgtext(PG_BUTNEXT_CL_TEXT_L, PG_BUTNEXT_CL_TEXT_B, "Next");
-                            (void) usleep(PG_BUT_CL_SLEEP);
-                            cpgsci(PG_BUT_FILLCOL); /* set colour index to fill
-                                                       colour */
-                            cpgtext(PG_BUTNEXT_CL_TEXT_L, PG_BUTNEXT_CL_TEXT_B, "Next");
-                            cpgsci(0);  /* set colour index to white */
-                            cpgtext(PG_BUTNEXT_TEXT_L, PG_BUTNEXT_TEXT_B, "Next");
-                            cpgsci(1);  /* reset colour index to black */
-                            (void) usleep(PG_BUT_CL_SLEEP);
-
-                            break;
-                        }
-                        else if (((fButX >= PG_BUTEXIT_L) && (fButX <= PG_BUTEXIT_R))
-                            && ((fButY >= PG_BUTEXIT_B) && (fButY <= PG_BUTEXIT_T)))
-                        {
-                            /* animate button click */
-                            cpgsci(PG_BUT_FILLCOL);
-                            cpgtext(PG_BUTEXIT_TEXT_L, PG_BUTEXIT_TEXT_B, "Exit");
-                            cpgsci(0);  /* set colour index to white */
-                            cpgtext(PG_BUTEXIT_CL_TEXT_L, PG_BUTEXIT_CL_TEXT_B, "Exit");
-                            (void) usleep(PG_BUT_CL_SLEEP);
-                            cpgsci(PG_BUT_FILLCOL); /* set colour index to fill
-                                                       colour */
-                            cpgtext(PG_BUTEXIT_CL_TEXT_L, PG_BUTEXIT_CL_TEXT_B, "Exit");
-                            cpgsci(0);  /* set colour index to white */
-                            cpgtext(PG_BUTEXIT_TEXT_L, PG_BUTEXIT_TEXT_B, "Exit");
-                            cpgsci(1);  /* reset colour index to black */
-                            (void) usleep(PG_BUT_CL_SLEEP);
-
-                            (void) fclose(pFOut);
-                            YAPP_CleanUp();
-                            return YAPP_RET_SUCCESS;
-                        }
+                        fDataMin = pfPlotBuf[i];
+                    }
+                    if (pfPlotBuf[i] > fDataMax)
+                    {
+                        fDataMax = pfPlotBuf[i];
                     }
                 }
-                else
+
+                #ifdef DEBUG
+                (void) printf("Minimum value of data             : %g\n",
+                              fDataMin);
+                (void) printf("Maximum value of data             : %g\n",
+                              fDataMax);
+                #endif
+
+                cpgpanl(1, 1);
+                /* erase just before plotting, to reduce flicker */
+                cpgeras();
+                for (i = 0; i < iReadBlockSize; ++i)
                 {
-                    /* pause before erasing */
-                    (void) usleep(PG_PLOT_SLEEP);
+                    g_pfXAxis[i] = (float) (dDataSkipTime
+                                            + (((iReadBlockCount - 1)
+                                                * iReadBlockSize
+                                                * dTSampInSec)
+                                               + (i * dTSampInSec)));
+                }
+
+                cpgsvp(PG_VP_ML, PG_VP_MR, PG_VP_MB, PG_VP_MT);
+                cpgswin(g_pfXAxis[0],
+                        g_pfXAxis[iReadBlockSize-1],
+                        fDataMin,
+                        fDataMax);
+                cpglab("Time - Start Time (s)", "", "Before Smoothing");
+                cpgbox("BCNST", 0.0, 0, "BCNST", 0.0, 0);
+                cpgsci(PG_CI_PLOT);
+                cpgline(iReadBlockSize, g_pfXAxis, pfPlotBuf);
+                cpgsci(PG_CI_DEF);
+
+                fDataMin = g_pfOutBuf[0];
+                fDataMax = g_pfOutBuf[0];
+                for (i = 0; i < (iNumSamps - (iSampsPerWin - 1)); ++i)
+                {
+                    if (g_pfOutBuf[i] < fDataMin)
+                    {
+                        fDataMin = g_pfOutBuf[i];
+                    }
+                    if (g_pfOutBuf[i] > fDataMax)
+                    {
+                        fDataMax = g_pfOutBuf[i];
+                    }
+                }
+
+                #ifdef DEBUG
+                (void) printf("Minimum value of data             : %g\n",
+                              fDataMin);
+                (void) printf("Maximum value of data             : %g\n",
+                              fDataMax);
+                #endif
+
+                cpgpanl(1, 2);
+                /* erase just before plotting, to reduce flicker */
+                cpgeras();
+                for (i = 0; i < iReadBlockSize; ++i)
+                {
+                    g_pfXAxis[i] = (float) (dDataSkipTime
+                                            + (((iReadBlockCount - 1)
+                                                * iReadBlockSize
+                                                * dTSampInSec)
+                                               + (i * dTSampInSec)));
+                }
+
+                cpgsvp(PG_VP_ML, PG_VP_MR, PG_VP_MB, PG_VP_MT);
+                cpgswin(g_pfXAxis[0],
+                        g_pfXAxis[iReadBlockSize-1],
+                        fDataMin,
+                        fDataMax);
+                cpglab("Time - Start Time (s)", "", "After Smoothing");
+                cpgbox("BCNST", 0.0, 0, "BCNST", 0.0, 0);
+                cpgsci(PG_CI_PLOT);
+                cpgline(iReadBlockSize, g_pfXAxis, g_pfOutBuf);
+                cpgsci(PG_CI_DEF);
+
+                if (!(cIsLastBlock))
+                {
+                    if (!(cIsNonInteractive))
+                    {
+                        /* draw the 'next' and 'exit' buttons */
+                        cpgsvp(PG_VP_BUT_ML, PG_VP_BUT_MR, PG_VP_BUT_MB, PG_VP_BUT_MT);
+                        cpgswin(PG_BUT_L, PG_BUT_R, PG_BUT_B, PG_BUT_T);
+                        cpgsci(PG_BUT_FILLCOL); /* set the fill colour */
+                        cpgrect(PG_BUTNEXT_L, PG_BUTNEXT_R, PG_BUTNEXT_B, PG_BUTNEXT_T);
+                        cpgrect(PG_BUTEXIT_L, PG_BUTEXIT_R, PG_BUTEXIT_B, PG_BUTEXIT_T);
+                        cpgsci(0);  /* set colour index to white */
+                        cpgtext(PG_BUTNEXT_TEXT_L, PG_BUTNEXT_TEXT_B, "Next");
+                        cpgtext(PG_BUTEXIT_TEXT_L, PG_BUTEXIT_TEXT_B, "Exit");
+
+                        fButX = (PG_BUTNEXT_R - PG_BUTNEXT_L) / 2;
+                        fButY = (PG_BUTNEXT_T - PG_BUTNEXT_B) / 2;
+
+                        while (YAPP_TRUE)
+                        {
+                            iRet = cpgcurs(&fButX, &fButY, &cCurChar);
+                            if (0 == iRet)
+                            {
+                                (void) fprintf(stderr,
+                                               "WARNING: "
+                                               "Reading cursor parameters failed!\n");
+                                break;
+                            }
+
+                            if (((fButX >= PG_BUTNEXT_L) && (fButX <= PG_BUTNEXT_R))
+                                && ((fButY >= PG_BUTNEXT_B) && (fButY <= PG_BUTNEXT_T)))
+                            {
+                                /* animate button click */
+                                cpgsci(PG_BUT_FILLCOL);
+                                cpgtext(PG_BUTNEXT_TEXT_L, PG_BUTNEXT_TEXT_B, "Next");
+                                cpgsci(0);  /* set colour index to white */
+                                cpgtext(PG_BUTNEXT_CL_TEXT_L, PG_BUTNEXT_CL_TEXT_B, "Next");
+                                (void) usleep(PG_BUT_CL_SLEEP);
+                                cpgsci(PG_BUT_FILLCOL); /* set colour index to fill
+                                                           colour */
+                                cpgtext(PG_BUTNEXT_CL_TEXT_L, PG_BUTNEXT_CL_TEXT_B, "Next");
+                                cpgsci(0);  /* set colour index to white */
+                                cpgtext(PG_BUTNEXT_TEXT_L, PG_BUTNEXT_TEXT_B, "Next");
+                                cpgsci(1);  /* reset colour index to black */
+                                (void) usleep(PG_BUT_CL_SLEEP);
+
+                                break;
+                            }
+                            else if (((fButX >= PG_BUTEXIT_L) && (fButX <= PG_BUTEXIT_R))
+                                && ((fButY >= PG_BUTEXIT_B) && (fButY <= PG_BUTEXIT_T)))
+                            {
+                                /* animate button click */
+                                cpgsci(PG_BUT_FILLCOL);
+                                cpgtext(PG_BUTEXIT_TEXT_L, PG_BUTEXIT_TEXT_B, "Exit");
+                                cpgsci(0);  /* set colour index to white */
+                                cpgtext(PG_BUTEXIT_CL_TEXT_L, PG_BUTEXIT_CL_TEXT_B, "Exit");
+                                (void) usleep(PG_BUT_CL_SLEEP);
+                                cpgsci(PG_BUT_FILLCOL); /* set colour index to fill
+                                                           colour */
+                                cpgtext(PG_BUTEXIT_CL_TEXT_L, PG_BUTEXIT_CL_TEXT_B, "Exit");
+                                cpgsci(0);  /* set colour index to white */
+                                cpgtext(PG_BUTEXIT_TEXT_L, PG_BUTEXIT_TEXT_B, "Exit");
+                                cpgsci(1);  /* reset colour index to black */
+                                (void) usleep(PG_BUT_CL_SLEEP);
+
+                                (void) fclose(pFOut);
+                                YAPP_CleanUp();
+                                return YAPP_RET_SUCCESS;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        /* pause before erasing */
+                        (void) usleep(PG_PLOT_SLEEP);
+                    }
                 }
             }
         }
 
+        /* reset output buffer to zero. not necessary, but to be safe. */
+        (void) memset(g_pfOutBuf,
+                      '\0',
+                      (sizeof(float) * iOutBlockSize * iOutNumChans));
+
         if (1 == iNumReads)
         {
+            /* next block is the last block */
             cIsLastBlock = YAPP_TRUE;
         }
     }
 
     (void) printf("DONE!\n");
-
-    /* copy last (iSampsPerWin / 2) time samples to the output */
-    (void) memset(g_pfOutBuf, '\0', (sizeof(float) * iReadBlockSize));
-    (void) memcpy(g_pfOutBuf,
-                  g_pfBuf + iNumSamps - (iSampsPerWin / 2),
-                  (iSampsPerWin / 2) * sizeof(float));
-    (void) fwrite(g_pfOutBuf,
-                  sizeof(float),
-                  (long) (iSampsPerWin / 2),
-                  pFOut);
-
-    /* print statistics */
-    fMeanOrigAll /= iReadBlockCount;
-    fRMSOrigAll /= (stYUM.iTimeSamps - (iSampsPerWin - 1) - 1);
-    fRMSOrigAll = sqrtf(fRMSOrigAll);
-    (void) printf("Original signal mean = %g\n", fMeanOrigAll);
-    (void) printf("Original signal RMS = %g\n", fRMSOrigAll);
-    fMeanSmoothedAll /= iReadBlockCount;
-    fRMSSmoothedAll /= (stYUM.iTimeSamps - (iSampsPerWin - 1) - 1);
-    fRMSSmoothedAll = sqrtf(fRMSSmoothedAll);
-    (void) printf("Smoothed signal mean = %g\n", fMeanSmoothedAll);
-    (void) printf("Smoothed signal RMS = %g\n", fRMSSmoothedAll);
 
     (void) fclose(pFOut);
     YAPP_CleanUp();
@@ -821,18 +1068,16 @@ void PrintUsage(const char *pcProgName)
     (void) printf("processed\n");
     (void) printf("                                        ");
     (void) printf("(default is all)\n");
-    (void) printf("    -f  --freq-factor <samples>         ");
+    (void) printf("    -f  --out-chans <channels>          ");
     (void) printf("Frequency decimation factor\n");
-    (void) printf("    -t  --time-factor <samples>         ");
+    (void) printf("    -t  --out-samps <samples>           ");
     (void) printf("Time decimation factor\n");
-    (void) printf("    -u  --freq-width <bandwidth>        ");
-    (void) printf("Width of boxcar window in MHz\n");
-    (void) printf("                                        ");
-    (void) printf("(default is 1 MHz)\n");
-    (void) printf("    -w  --width <width>                 ");
+    (void) printf("    -w  --time-width <width>            ");
     (void) printf("Width of boxcar window in milliseconds\n");
+    (void) printf("    -b  --out-bits <bits>               ");
+    (void) printf("Number of bits in output\n");
     (void) printf("                                        ");
-    (void) printf("(default is 1 ms)\n");
+    (void) printf("(default is same as input)\n");
     (void) printf("    -g  --graphics                      ");
     (void) printf("Turn on plotting\n");
     (void) printf("    -i  --invert                        ");

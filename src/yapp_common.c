@@ -495,15 +495,12 @@ int YAPP_ReadMetadata(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
                                "Reading SIGPROC header failed!\n");
                 return YAPP_RET_ERROR;
             }
-            if (YAPP_FORMAT_DTS_TIM == iFormat)
+            iRet = YAPP_CalcStats(pcFileSpec, iFormat, pstYUM);
+            if (iRet != YAPP_RET_SUCCESS)
             {
-                iRet = YAPP_CalcStats(pcFileSpec, iFormat, pstYUM);
-                if (iRet != YAPP_RET_SUCCESS)
-                {
-                    (void) fprintf(stderr,
-                                   "ERROR: Calculating statistics failed!\n");
-                    return YAPP_RET_ERROR;
-                }
+                (void) fprintf(stderr,
+                               "ERROR: Calculating statistics failed!\n");
+                return YAPP_RET_ERROR;
             }
             break;
 
@@ -3146,12 +3143,13 @@ int YAPP_Smooth(float* pfInBuf,
 /*
  * Decimate the data in time and frequency
  */
-int YAPP_Decimate(float *pfInBuf,
-                  int iBlockSize,
-                  int iSampsPerWin,
-                  int iNumChans,
-                  int iChansPerWin,
-                  float *pfOutBuf)
+void YAPP_Decimate(int iFormat,
+                   float *pfInBuf,
+                   int iBlockSize,
+                   int iSampsPerWin,
+                   int iNumChans,
+                   int iChansPerWin,
+                   float *pfOutBuf)
 {
     int i = 0;
     int j = 0;
@@ -3159,52 +3157,130 @@ int YAPP_Decimate(float *pfInBuf,
     int l = 0;
     float *pfInSpectrum = NULL;
     float *pfOutSpectrum = NULL;
-    int iOutBlockSize = (int) round((float) iBlockSize / iSampsPerWin);
-    /* this is expected to be evenly divisible */
-    assert(0 == iNumChans % iChansPerWin);
-    int iOutNumChans = iNumChans / iChansPerWin;
+    int iOutNumChans = (int) roundf((float) iNumChans / iChansPerWin);
 
-    /* decimate in time */
-    /*for (i = 0; i < iBlockSize; ++i)
+    if (YAPP_FORMAT_FIL == iFormat)
     {
-        pfInSpectrum = pfInBuf + i * iNumChans;
-        for (j = 0; j < iNumChans - iChansPerWin; ++j)
+        /* decimate in frequency */
+        for (i = 0; i < iBlockSize; ++i)
         {
-            for (k = 1; k < iChansPerWin; ++k)
+            pfInSpectrum = pfInBuf + i * iNumChans;
+            for (j = 0; j < iNumChans - iChansPerWin; ++j)
             {
-                pfInSpectrum[j] += pfInSpectrum[j+k];
-            }
-            pfInSpectrum[j] /= iChansPerWin;
-        }
-    }*/
-
-    /* decimate in frequency */
-    /*
-    for (i = 0; i < iNumChans; i+= iChansPerWin)
-    {
-        for (j = 0; j < iBlockSize; ++j)
-        {
-            for (k = 1; k < iSampsPerWin; ++k)
-            {
-                *(pfInBuf + j * iNumChans + i)
-                    += *(pfInBuf + (j + k) * iNumChans + i);
+                for (k = 1; k < iChansPerWin; ++k)
+                {
+                    pfInSpectrum[j] += pfInSpectrum[j+k];
+                }
             }
         }
-    }*/
 
-    /* downsample */
-    for (i = 0, j = 0; i < iBlockSize; i += iSampsPerWin, ++j)
-    {
-        pfInSpectrum = pfInBuf + i * iNumChans;
-        pfOutSpectrum = pfOutBuf + j * iOutNumChans;
-        for (k = 0, l = 0; k < iNumChans; k+= iChansPerWin, ++l)
+        /* decimate in time */
+        for (i = 0; i < iNumChans; i+= iChansPerWin)
         {
-            pfOutSpectrum[l] = pfInSpectrum[k];
+            for (j = 0; j < iBlockSize - iSampsPerWin; ++j)
+            {
+                for (k = 1; k < iSampsPerWin; ++k)
+                {
+                    *(pfInBuf + j * iNumChans + i)
+                        += *(pfInBuf + (j + k) * iNumChans + i);
+                }
+            }
+        }
+
+        /* scale and downsample */
+        for (i = 0, j = 0; i < iBlockSize; i += iSampsPerWin, ++j)
+        {
+            pfInSpectrum = pfInBuf + i * iNumChans;
+            pfOutSpectrum = pfOutBuf + j * iOutNumChans;
+            for (k = 0, l = 0; k < iNumChans; k += iChansPerWin, ++l)
+            {
+                pfOutSpectrum[l] = pfInSpectrum[k] / (iChansPerWin * iSampsPerWin);
+            }
+        }
+    }
+    else
+    {
+        /* decimate in time */
+        for (i = 0; i < iBlockSize - iSampsPerWin; ++i)
+        {
+            for (j = 1; j < iSampsPerWin; ++j)
+            {
+                pfInBuf[i] += pfInBuf[j];
+            }
+        }
+
+        /* scale and downsample */
+        for (i = 0, j = 0; i < iBlockSize; i += iSampsPerWin, ++j)
+        {
+            pfOutBuf[j] = pfInBuf[i] / iSampsPerWin;
         }
     }
 
-    return YAPP_RET_SUCCESS;
+    return;
 }
+
+
+void YAPP_Float2Nibble(float *pfBuf,
+                       int iLen,
+                       float fMin,
+                       float fMax,
+                       unsigned char *pcBuf)
+{
+    int i = 0;
+    float fRange = fMax - fMin;
+    float fIntMax = (float) (powf(2, YAPP_SAMPSIZE_4) - 1.0);
+    unsigned char cLo = 0;
+    unsigned char cHi = 0;
+
+    for (i = 0; i < iLen; i += 2)
+    {
+        cLo = (unsigned char) roundf(((pfBuf[i] - fMin) / fRange) * fIntMax);
+        cHi = (unsigned char) roundf(((pfBuf[i+1] - fMin) / fRange) * fIntMax);
+        pcBuf[i/2] = (cHi << 4) | cLo;
+    }
+
+    return;
+}
+
+
+void YAPP_Float2Byte(float *pfBuf,
+                     int iLen,
+                     float fMin,
+                     float fMax,
+                     unsigned char *pcBuf)
+{
+    int i = 0;
+    float fRange = fMax - fMin;
+    float fIntMax = (float) (powf(2, YAPP_SAMPSIZE_8) - 1.0);
+
+    for (i = 0; i < iLen; ++i)
+    {
+        pcBuf[i] = (unsigned char) roundf(((pfBuf[i] - fMin) / fRange)
+                                          * fIntMax);
+    }
+
+    return;
+}
+
+
+void YAPP_Float2Short(float *pfBuf,
+                      int iLen,
+                      float fMin,
+                      float fMax,
+                      short int *piBuf)
+{
+    int i = 0;
+    float fRange = fMax - fMin;
+    float fIntMax = (float) (powf(2, YAPP_SAMPSIZE_16) - 1.0);
+
+    for (i = 0; i < iLen; ++i)
+    {
+        piBuf[i] = (short int) roundf(((pfBuf[i] - fMin) / fRange) * fIntMax);
+    }
+
+    return;
+}
+
 
 /*
  * Calculate the number of channels for a stacked filterbank file. Assumes
@@ -3293,12 +3369,14 @@ int YAPP_CalcStats(char *pcFileData, int iFormat, YUM_t *pstYUM)
     float fRMS = 0.0;
 
     /* only support .tim and .dat files for now */
-    assert((YAPP_FORMAT_DTS_TIM == iFormat)
-           || (YAPP_FORMAT_DTS_DAT == iFormat));
+    //assert((YAPP_FORMAT_DTS_TIM == iFormat)
+    //       || (YAPP_FORMAT_DTS_DAT == iFormat));
     /* make sure the metadata has been read, as we need to skip the header */
     if (YAPP_FORMAT_DTS_TIM == iFormat)
     {
         assert(pstYUM->iHeaderLen != 0);
+        // TODO: check if this affects anything
+        pstYUM->iNumChans = 1;
     }
 
     /* open the data file for reading */
@@ -3315,12 +3393,11 @@ int YAPP_CalcStats(char *pcFileData, int iFormat, YUM_t *pstYUM)
     iNumReads = (int) ceilf(((float) pstYUM->iTimeSamps) / iBlockSize);
 
     /* optimisation - store some commonly used values in variables */
-    /* NOTE: will be iBlockSize * iNumChans once filterbank is supported */
-    iTotSampsPerBlock = iBlockSize;
+    iTotSampsPerBlock = pstYUM->iNumChans * iBlockSize;
 
     /* allocate memory for the buffer, based on the number of channels and time
        samples */
-    g_pfBuf = (float *) YAPP_Malloc((size_t) iBlockSize,
+    g_pfBuf = (float *) YAPP_Malloc((size_t) pstYUM->iNumChans * iBlockSize,
                                     sizeof(float),
                                     YAPP_FALSE);
     if (NULL == g_pfBuf)
@@ -3364,7 +3441,7 @@ int YAPP_CalcStats(char *pcFileData, int iFormat, YUM_t *pstYUM)
 
         if (iReadItems < iTotSampsPerBlock)
         {
-            iDiff = iBlockSize - iReadItems;
+            iDiff = (pstYUM->iNumChans * iBlockSize) - iReadItems;
 
             /* reset remaining elements to '\0' */
             (void) memset((g_pfBuf + iReadItems),
@@ -3375,16 +3452,16 @@ int YAPP_CalcStats(char *pcFileData, int iFormat, YUM_t *pstYUM)
         /* calculate the number of time samples in the block - this may not
            be iBlockSize for the last block, and should be iBlockSize for
            all other blocks */
-        iNumSamps = iReadItems;
+        iNumSamps = iReadItems / pstYUM->iNumChans;
 
         /* calculate statistics */
-        fMean = YAPP_CalcMean(g_pfBuf, iNumSamps, 0, 1);
+        fMean = YAPP_CalcMean(g_pfBuf, iReadItems, 0, 1);
         pstYUM->fMean += fMean;
-        fRMS = YAPP_CalcRMS(g_pfBuf, iNumSamps, 0, 1, fMean);
+        fRMS = YAPP_CalcRMS(g_pfBuf, iReadItems, 0, 1, fMean);
         fRMS *= fRMS;
-        fRMS *= (iNumSamps - 1);
+        fRMS *= (iReadItems - 1);
         pstYUM->fRMS += fRMS;
-        for (i = 0; i < iNumSamps; ++i)
+        for (i = 0; i < iReadItems; ++i)
         {
             if (g_pfBuf[i] < pstYUM->fMin)
             {
@@ -3399,7 +3476,7 @@ int YAPP_CalcStats(char *pcFileData, int iFormat, YUM_t *pstYUM)
 
     /* print statistics */
     pstYUM->fMean /= iReadBlockCount;
-    pstYUM->fRMS /= (pstYUM->iTimeSamps - 1);
+    pstYUM->fRMS /= (pstYUM->iNumChans * pstYUM->iTimeSamps - 1);
     pstYUM->fRMS = sqrtf(pstYUM->fRMS);
 
     //TODO: check if this is needed
