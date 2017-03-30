@@ -340,22 +340,23 @@ int main(int argc, char *argv[])
     /* number of output time samples takes precedence over time width */
     if (iOutTimeSamps != 0)
     {
-        if (iOutTimeSamps <= stYUM.iTimeSamps)
+        if ((float) iOutTimeSamps > (float) stYUM.iTimeSamps / 2)
         {
-            iSampsPerWin = (int) roundf((float) stYUM.iTimeSamps
-                                        / iOutTimeSamps);
-        }
-        else
-        {
+            // TODO: check if outtimesamps = intimesamps, in which case,
+            // continue with bitlength-changing
             (void) fprintf(stderr,
-                           "ERROR: Requested output samples %d greater than "
-                           "data samples %d!\n",
+                           "WARNING: Requested output samples %d greater than "
+                           "half the data samples %d! Setting output samples "
+                           "to %d.\n",
                            iOutTimeSamps,
-                           stYUM.iTimeSamps);
-            YAPP_CleanUp();
-            return YAPP_RET_ERROR;
+                           stYUM.iTimeSamps,
+                           (int) floorf((float) stYUM.iTimeSamps / 2));
+            iOutTimeSamps = (int) floorf((float) stYUM.iTimeSamps / 2);
         }
 
+        /* NOTE: round down (use floorf()) to be safe */
+        iSampsPerWin = (int) floorf((float) stYUM.iTimeSamps
+                                    / iOutTimeSamps);
         fTimeWidth = (float) iSampsPerWin * stYUM.dTSamp;
 
         if ((int) floorf((float) stYUM.iTimeSamps / iSampsPerWin)
@@ -367,7 +368,7 @@ int main(int argc, char *argv[])
                            iOutTimeSamps,
                            (int) floorf((float) stYUM.iTimeSamps
                                         / iSampsPerWin));
-            /* not needed, but for consistency */
+            /* not needed any more, but for consistency */
             iOutTimeSamps = (int) floorf((float) stYUM.iTimeSamps
                                          / iSampsPerWin);
         }
@@ -378,18 +379,39 @@ int main(int argc, char *argv[])
         if (fTimeWidth < stYUM.dTSamp)
         {
             (void) fprintf(stderr,
-                           "WARNING: Requested time window width %g is less "
-                           "than sampling time %g; Adjusting window width to "
-                           "sampling time!\n",
+                           "WARNING: Requested time window width %.10g ms is "
+                           "less than sampling time %.10g ms; Adjusting "
+                           "window width to sampling time!\n",
                            fTimeWidth,
                            stYUM.dTSamp);
             fTimeWidth = (float) stYUM.dTSamp;
         }
+        else if (fTimeWidth >= (float) stYUM.iTimeSamps * stYUM.dTSamp / 2)
+        {
+            (void) fprintf(stderr,
+                           "WARNING: Requested time window width %.10g ms "
+                           "greater than half the data duration %.10g ms! "
+                           "Setting time width to %.10g ms.\n",
+                           fTimeWidth,
+                           stYUM.iTimeSamps * stYUM.dTSamp,
+                           (float) stYUM.iTimeSamps * stYUM.dTSamp / 2);
+            fTimeWidth = (float) stYUM.iTimeSamps * stYUM.dTSamp / 2;
+        }
 
         iSampsPerWin = (int) floorf(fTimeWidth / stYUM.dTSamp);
 
-        /* not needed, but for consistency */
-        iOutTimeSamps = (int) round((float) stYUM.iTimeSamps / iSampsPerWin);
+        /* not needed any more, but for consistency */
+        iOutTimeSamps = (int) floorf((float) stYUM.iTimeSamps / iSampsPerWin);
+
+        if ((float) iSampsPerWin * stYUM.dTSamp != fTimeWidth)
+        {
+            (void) fprintf(stderr,
+                           "WARNING: Requested time window width %.10g ms, "
+                           "getting %.10g ms!\n",
+                           fTimeWidth,
+                           (float) iSampsPerWin * stYUM.dTSamp);
+            fTimeWidth = (float) iSampsPerWin * stYUM.dTSamp;
+        }
     }
     else
     {
@@ -397,7 +419,8 @@ int main(int argc, char *argv[])
         assert(YAPP_TRUE);
     }
 
-    if (fTimeWidth > 1) /* 1 ms */
+    //TODO: check if this warning is needed
+    if (fTimeWidth > 1.0)   /* 1 ms */
     {
         fprintf(stderr,
                 "WARNING: The chosen boxcar width may suppress "
@@ -469,8 +492,36 @@ int main(int argc, char *argv[])
 
     if (YAPP_FORMAT_FIL == iFormat)
     {
+        if ((float) iOutNumChans > (float) stYUM.iNumChans / 2)
+        {
+            // TODO: check if outnumchans = numchans, in which case,
+            // continue with bitlength-changing
+            (void) fprintf(stderr,
+                           "WARNING: Requested output channels %d greater than "
+                           "half the channels %d! Setting output channels "
+                           "to %d.\n",
+                           iOutNumChans,
+                           stYUM.iNumChans,
+                           (int) floorf((float) stYUM.iNumChans / 2));
+            iOutNumChans = (int) floorf((float) stYUM.iNumChans / 2);
+        }
+
         /* calculate the number of channels in one boxcar window */
-        iChansPerWin = (int) roundf((float) stYUM.iNumChans / iOutNumChans);
+        /* NOTE: round down (use floorf()) to be safe */
+        iChansPerWin = (int) floorf((float) stYUM.iNumChans / iOutNumChans);
+
+        if ((int) floorf((float) stYUM.iNumChans / iChansPerWin)
+                != iOutNumChans)
+        {
+            (void) fprintf(stderr,
+                           "WARNING: Requested %d output channels, getting %d "
+                           "channels!\n",
+                           iOutNumChans,
+                           (int) floorf((float) stYUM.iNumChans
+                                        / iChansPerWin));
+            iOutNumChans = (int) floorf((float) stYUM.iNumChans
+                                         / iChansPerWin);
+        }
     }
     else
     {
@@ -545,10 +596,11 @@ int main(int argc, char *argv[])
     if (YAPP_FORMAT_FIL == iFormat)
     {
         (void) sprintf(acFileOut,
-                       "%s.%s%g%s",
+                       //"%s.%s%g%s",
+                       "%s.%s%s",
                        pcFileOut,
                        INFIX_SMOOTH,
-                       fTimeWidth,
+                       //fTimeWidth,
                        EXT_FIL);
     }
     else
@@ -568,6 +620,18 @@ int main(int argc, char *argv[])
         stYUMOut.iNumChans = iOutNumChans;
         stYUMOut.iNumGoodChans = iOutNumChans;
         stYUMOut.fChanBW = stYUM.fChanBW * iChansPerWin;
+        /* calculate the centre frequencies of the lowest and highest frequency
+           channels */
+        stYUMOut.fFMin = (stYUM.fFMin - stYUM.fChanBW / 2)
+                            + (stYUMOut.fChanBW / 2);
+        stYUMOut.fFMax = stYUMOut.fFMin
+                            + (stYUMOut.iNumChans - 1) * stYUMOut.fChanBW;
+        /* calculate bandwidth and centre frequency */
+        /* NOTE: max and min are the _centre_ frequencies of the bins, so the
+                 total bandwidth would be (max+chanbw/2)-(min-chanbw/2) */
+        stYUMOut.fBW = (stYUMOut.fFMax - stYUMOut.fFMin) + stYUMOut.fChanBW;
+        stYUMOut.fFCentre = (stYUMOut.fFMin - stYUM.fChanBW / 2)
+                                + (stYUMOut.fBW / 2);
     }
     stYUMOut.dTSamp = stYUM.dTSamp * iSampsPerWin;
     stYUMOut.iTimeSamps = stYUM.iTimeSamps / iSampsPerWin;
@@ -575,11 +639,10 @@ int main(int argc, char *argv[])
     if (iOutNumBits != 0)
     {
         stYUMOut.iNumBits = iOutNumBits;
+        stYUMOut.fSampSize = (float) iOutNumBits / YAPP_BYTE2BIT_FACTOR; 
     }
-    else
-    {
-        stYUMOut.iNumBits = stYUM.iNumBits;
-    }
+
+    //TODO: check if anything else needs to be copied from styum to styumout
     /* write metadata to the output file */
     iRet = YAPP_WriteMetadata(acFileOut, iFormat, stYUMOut);
     if (iRet != YAPP_RET_SUCCESS)
@@ -777,8 +840,6 @@ int main(int argc, char *argv[])
         {
             assert(iNumSamps == iBlockSize);
         }
-        printf("````````````````````````\n");
-        printf("%d, %d, %d, %d, %d, %d, %d\n", iNumReads, iReadBlockCount, iNumSamps, iBlockSize, stYUM.iNumChans, iOutBlockSize, iOutNumChans);
 
         /* decimate data */
         YAPP_Decimate(iFormat,
@@ -787,7 +848,8 @@ int main(int argc, char *argv[])
                       iSampsPerWin,
                       stYUM.iNumChans,
                       iChansPerWin,
-                      g_pfOutBuf);
+                      g_pfOutBuf,
+                      iOutNumChans);
 
         /* requantize float to original/specified number of bits */
         switch (stYUMOut.iNumBits)
@@ -844,14 +906,28 @@ int main(int argc, char *argv[])
                 assert(YAPP_TRUE);
         }
 
-        /* set the file position to rewind by (iSampsPerWin - 1) time samples,
-           and the appropriate number of channels */
-        (void) fseek(g_pFData,
-                     -((iSampsPerWin - 1)
-                         * stYUM.iNumChans 
-                         * stYUM.fSampSize
-                         * sizeof(char)),
-                     SEEK_CUR);
+        if (iNumReads != 1)
+        {
+            /* set the file position to rewind by (iSampsPerWin - 1) time samples,
+               and the appropriate number of channels */
+            (void) fseek(g_pFData,
+                         -((iSampsPerWin - 1)
+                             * stYUM.iNumChans 
+                             * stYUM.fSampSize
+                             * sizeof(char)),
+                         SEEK_CUR);
+        }
+        else
+        {
+            /* last-but-one block. need to rewind such that there is
+               iSampsPerWin samples in the block */
+            (void) fseek(g_pFData,
+                         -((iSampsPerWin - 1)
+                             * stYUM.iNumChans 
+                             * stYUM.fSampSize
+                             * sizeof(char)),
+                         SEEK_CUR);
+        }
 
         if (iFormat != YAPP_FORMAT_FIL)
         {

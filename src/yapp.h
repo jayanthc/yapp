@@ -651,6 +651,7 @@ int YAPP_CalcDelays(double dDM,
  * @param[in]   iNumChans       Number of input channels
  * @param[in]   iChansPerWin    Number of channels in window
  * @param[out]  pfOutBuf        Output buffer
+ * @param[in]   iOutNumChans    Number of output channels
  */
 void YAPP_Decimate(int iFormat,
                    float *pfInBuf,
@@ -658,7 +659,8 @@ void YAPP_Decimate(int iFormat,
                    int iSampsPerWin,
                    int iNumChans,
                    int iChansPerWin,
-                   float *pfOutBuf);
+                   float *pfOutBuf,
+                   int iOutNumChans);
 
 void YAPP_Float2Nibble(float *pfBuf,
                        int iLen,

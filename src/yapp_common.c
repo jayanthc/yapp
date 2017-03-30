@@ -1682,6 +1682,9 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
     /* NOTE: max and min are the _centre_ frequencies of the bins, so the
              total bandwidth would be (max+chanbw/2)-(min-chanbw/2) */
     pstYUM->fBW = (pstYUM->fFMax - pstYUM->fFMin) + pstYUM->fChanBW;
+    //TODO: why do we need this? shouldn't we just use:
+    //pstYUM->fFCentre = (pstYUM->fFMin - pstYUM->fChanBW / 2)
+    //                            + (pstYUM->fBW / 2);
     if (0 == (pstYUM->iNumChans % 2))   /* even number of channels */
     {
         pstYUM->fFCentre = (pstYUM->fFMin - (pstYUM->fChanBW / 2))
@@ -3149,7 +3152,8 @@ void YAPP_Decimate(int iFormat,
                    int iSampsPerWin,
                    int iNumChans,
                    int iChansPerWin,
-                   float *pfOutBuf)
+                   float *pfOutBuf,
+                   int iOutNumChans)
 {
     int i = 0;
     int j = 0;
@@ -3157,7 +3161,6 @@ void YAPP_Decimate(int iFormat,
     int l = 0;
     float *pfInSpectrum = NULL;
     float *pfOutSpectrum = NULL;
-    int iOutNumChans = (int) roundf((float) iNumChans / iChansPerWin);
 
     if (YAPP_FORMAT_FIL == iFormat)
     {
@@ -3165,7 +3168,7 @@ void YAPP_Decimate(int iFormat,
         for (i = 0; i < iBlockSize; ++i)
         {
             pfInSpectrum = pfInBuf + i * iNumChans;
-            for (j = 0; j < iNumChans - iChansPerWin; ++j)
+            for (j = 0; j < iNumChans - (iChansPerWin - 1); ++j)
             {
                 for (k = 1; k < iChansPerWin; ++k)
                 {
@@ -3175,9 +3178,11 @@ void YAPP_Decimate(int iFormat,
         }
 
         /* decimate in time */
+        /* NOTE: since we've already decimated in frequency, step by
+           iChansPerWin */
         for (i = 0; i < iNumChans; i+= iChansPerWin)
         {
-            for (j = 0; j < iBlockSize - iSampsPerWin; ++j)
+            for (j = 0; j < iBlockSize - (iSampsPerWin - 1); ++j)
             {
                 for (k = 1; k < iSampsPerWin; ++k)
                 {
@@ -3194,7 +3199,8 @@ void YAPP_Decimate(int iFormat,
             pfOutSpectrum = pfOutBuf + j * iOutNumChans;
             for (k = 0, l = 0; k < iNumChans; k += iChansPerWin, ++l)
             {
-                pfOutSpectrum[l] = pfInSpectrum[k] / (iChansPerWin * iSampsPerWin);
+                pfOutSpectrum[l] = pfInSpectrum[k]
+                                    / (iChansPerWin * iSampsPerWin);
             }
         }
     }
