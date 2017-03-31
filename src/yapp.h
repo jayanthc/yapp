@@ -135,6 +135,10 @@ enum tagFileFormats
 #define YAPP_BYTE2BIT_FACTOR        8
 
 #define INFIX_SMOOTH                "smooth"
+#define INFIX_DECIMATE              "dec"
+#define INFIX_DECIMATE_FREQ         "f"
+#define INFIX_DECIMATE_TIME         "t"
+#define INFIX_DECIMATE_BITS         "b"
 #define INFIX_SUB                   "sub"
 #define INFIX_MEDFILTER             "medfilt"
 #define INFIX_FILTER                "filt"
@@ -644,7 +648,6 @@ int YAPP_CalcDelays(double dDM,
 
 /**
  * Decimate data
- * @param[in]   iFormat         Data format
  * @param[in]   pfInBuf         Input buffer
  * @param[in]   iBlockSize      Number of samples in input buffer
  * @param[in]   iSampsPerWin    Number of time samples in window
@@ -653,8 +656,7 @@ int YAPP_CalcDelays(double dDM,
  * @param[out]  pfOutBuf        Output buffer
  * @param[in]   iOutNumChans    Number of output channels
  */
-void YAPP_Decimate(int iFormat,
-                   float *pfInBuf,
+void YAPP_Decimate(float *pfInBuf,
                    int iBlockSize,
                    int iSampsPerWin,
                    int iNumChans,

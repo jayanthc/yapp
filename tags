@@ -96,6 +96,10 @@ GetLatestTimestamp	src/yapp_makever.c	/^time_t GetLatestTimestamp()$/;"	f
 GetNameFromColourMap	src/colourmap.c	/^int GetNameFromColourMap(int iCMap, char *pcCMap)$/;"	f
 GetNextPowerOf2	src/yapp_split.c	/^unsigned int GetNextPowerOf2(unsigned int iVal)$/;"	f
 INFIX_ADD	src/yapp.h	/^#define INFIX_ADD /;"	d
+INFIX_DECIMATE	src/yapp.h	/^#define INFIX_DECIMATE /;"	d
+INFIX_DECIMATE_BITS	src/yapp.h	/^#define INFIX_DECIMATE_BITS /;"	d
+INFIX_DECIMATE_FREQ	src/yapp.h	/^#define INFIX_DECIMATE_FREQ /;"	d
+INFIX_DECIMATE_TIME	src/yapp.h	/^#define INFIX_DECIMATE_TIME /;"	d
 INFIX_DEDISPERSE	src/yapp.h	/^#define INFIX_DEDISPERSE /;"	d
 INFIX_FILTER	src/yapp.h	/^#define INFIX_FILTER /;"	d
 INFIX_FOLD	src/yapp.h	/^#define INFIX_FOLD /;"	d
@@ -241,7 +245,7 @@ YAPP_CopyData	utilities/yapp_tim2dat.c	/^int YAPP_CopyData(char *pcFileData, FIL
 YAPP_DEGPERHOUR	src/yapp.h	/^#define YAPP_DEGPERHOUR /;"	d
 YAPP_DecDouble2String	src/yapp_common.c	/^void YAPP_DecDouble2String(double dDec, char *pcDec)$/;"	f
 YAPP_DecString2Double	src/yapp_common.c	/^double YAPP_DecString2Double(char *pcDec)$/;"	f
-YAPP_Decimate	src/yapp_common.c	/^void YAPP_Decimate(int iFormat,$/;"	f
+YAPP_Decimate	src/yapp_common.c	/^void YAPP_Decimate(float *pfInBuf,$/;"	f
 YAPP_ERF_ENTRIES	src/yapp.h	/^#define YAPP_ERF_ENTRIES /;"	d
 YAPP_FALSE	src/yapp.h	/^#define YAPP_FALSE /;"	d
 YAPP_FILE_DELAYS_LIN	src/yapp.h	/^#define YAPP_FILE_DELAYS_LIN /;"	d
@@ -515,7 +519,7 @@ g_pcIsTimeGood	src/yapp_makerfimask.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	src/yapp_stat.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	src/yapp_viewdata.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcOutBuf	src/yapp_decimate.c	/^unsigned char *g_pcOutBuf = NULL;$/;"	v
-g_pcVersion	src/yapp_version.c	/^const char *g_pcVersion = "YAPP-DEV-3.7.0-beta-20170331-143404";$/;"	v
+g_pcVersion	src/yapp_version.c	/^const char *g_pcVersion = "YAPP-DEV-3.7.0-beta-20170331-155339";$/;"	v
 g_pdDM	src/yapp_dedisplaw.c	/^double *g_pdDM = NULL;$/;"	v
 g_pdDelayTab	src/yapp_dedisplaw.c	/^double *g_pdDelayTab = NULL;$/;"	v
 g_pdMaxDelayTab	src/yapp_dedisplaw.c	/^double *g_pdMaxDelayTab = NULL;$/;"	v

@@ -3144,10 +3144,9 @@ int YAPP_Smooth(float* pfInBuf,
 
 
 /*
- * Decimate the data in time and frequency
+ * Decimate data in frequency and time
  */
-void YAPP_Decimate(int iFormat,
-                   float *pfInBuf,
+void YAPP_Decimate(float *pfInBuf,
                    int iBlockSize,
                    int iSampsPerWin,
                    int iNumChans,
@@ -3162,63 +3161,43 @@ void YAPP_Decimate(int iFormat,
     float *pfInSpectrum = NULL;
     float *pfOutSpectrum = NULL;
 
-    if (YAPP_FORMAT_FIL == iFormat)
+    /* decimate in frequency */
+    for (i = 0; i < iBlockSize; ++i)
     {
-        /* decimate in frequency */
-        for (i = 0; i < iBlockSize; ++i)
+        pfInSpectrum = pfInBuf + i * iNumChans;
+        for (j = 0; j < iNumChans - (iChansPerWin - 1); ++j)
         {
-            pfInSpectrum = pfInBuf + i * iNumChans;
-            for (j = 0; j < iNumChans - (iChansPerWin - 1); ++j)
+            for (k = 1; k < iChansPerWin; ++k)
             {
-                for (k = 1; k < iChansPerWin; ++k)
-                {
-                    pfInSpectrum[j] += pfInSpectrum[j+k];
-                }
-            }
-        }
-
-        /* decimate in time */
-        /* NOTE: since we've already decimated in frequency, step by
-           iChansPerWin */
-        for (i = 0; i < iNumChans; i+= iChansPerWin)
-        {
-            for (j = 0; j < iBlockSize - (iSampsPerWin - 1); ++j)
-            {
-                for (k = 1; k < iSampsPerWin; ++k)
-                {
-                    *(pfInBuf + j * iNumChans + i)
-                        += *(pfInBuf + (j + k) * iNumChans + i);
-                }
-            }
-        }
-
-        /* scale and downsample */
-        for (i = 0, j = 0; i < iBlockSize; i += iSampsPerWin, ++j)
-        {
-            pfInSpectrum = pfInBuf + i * iNumChans;
-            pfOutSpectrum = pfOutBuf + j * iOutNumChans;
-            for (k = 0, l = 0; k < iNumChans; k += iChansPerWin, ++l)
-            {
-                pfOutSpectrum[l] = pfInSpectrum[k]
-                                    / (iChansPerWin * iSampsPerWin);
+                pfInSpectrum[j] += pfInSpectrum[j+k];
             }
         }
     }
-    else
+
+    /* decimate in time */
+    /* NOTE: since we've already decimated in frequency, step by
+       iChansPerWin */
+    for (i = 0; i < iNumChans; i+= iChansPerWin)
     {
-        /* decimate in time */
-        for (i = 0; i < iBlockSize - iSampsPerWin; ++i)
+        for (j = 0; j < iBlockSize - (iSampsPerWin - 1); ++j)
         {
-            for (j = 1; j < iSampsPerWin; ++j)
+            for (k = 1; k < iSampsPerWin; ++k)
             {
-                pfInBuf[i] += pfInBuf[j];
+                *(pfInBuf + j * iNumChans + i)
+                    += *(pfInBuf + (j + k) * iNumChans + i);
             }
         }
+    }
 
-        /* scale and downsample */
-        for (i = 0, j = 0; i < iBlockSize; i += iSampsPerWin, ++j)
+    /* scale and downsample */
+    for (i = 0, j = 0; i < iBlockSize; i += iSampsPerWin, ++j)
+    {
+        pfInSpectrum = pfInBuf + i * iNumChans;
+        pfOutSpectrum = pfOutBuf + j * iOutNumChans;
+        for (k = 0, l = 0; k < iNumChans; k += iChansPerWin, ++l)
         {
-            pfOutBuf[j] = pfInBuf[i] / iSampsPerWin;
+            pfOutSpectrum[l] = pfInSpectrum[k]
+                                / (iChansPerWin * iSampsPerWin);
         }
     }
 

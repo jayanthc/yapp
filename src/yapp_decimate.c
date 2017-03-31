@@ -238,6 +238,13 @@ int main(int argc, char *argv[])
         return YAPP_RET_ERROR;
     }
 
+    if ((YAPP_FORMAT_DTS_TIM == iFormat)
+        && (iOutNumChans != 0))
+    {
+        (void) fprintf(stderr,
+                       "WARNING: Ignoring frequency decimation option!\n");
+    }
+
     if ((iOutTimeSamps != 0) && (fTimeWidth != 0.0))
     {
         (void) fprintf(stderr,
@@ -294,11 +301,14 @@ int main(int argc, char *argv[])
     }
 
     /* ensure that the number of channels is 1 for time series data */
-    // TODO: think if this can be changed in yapp_common.c without breaking
-    // anything
     if (YAPP_FORMAT_DTS_TIM == iFormat)
     {
+        // TODO: think if this can be changed in yapp_common.c without breaking
+        // anything
         stYUM.iNumChans = 1;
+        /* set the output number of channels to 1 so that memory allocation,
+           etc. happen correctly */
+        iOutNumChans = 1;
     }
 
     /* convert sampling interval to seconds */
@@ -368,7 +378,6 @@ int main(int argc, char *argv[])
                            iOutTimeSamps,
                            (int) floorf((float) stYUM.iTimeSamps
                                         / iSampsPerWin));
-            /* not needed any more, but for consistency */
             iOutTimeSamps = (int) floorf((float) stYUM.iTimeSamps
                                          / iSampsPerWin);
         }
@@ -400,7 +409,6 @@ int main(int argc, char *argv[])
 
         iSampsPerWin = (int) floorf(fTimeWidth / stYUM.dTSamp);
 
-        /* not needed any more, but for consistency */
         iOutTimeSamps = (int) floorf((float) stYUM.iTimeSamps / iSampsPerWin);
 
         if ((float) iSampsPerWin * stYUM.dTSamp != fTimeWidth)
@@ -591,28 +599,6 @@ int main(int argc, char *argv[])
         cIsLastBlock = YAPP_TRUE;
     }
 
-    /* generate output file name */
-    pcFileOut = YAPP_GetFilenameFromPath(pcFileData);
-    if (YAPP_FORMAT_FIL == iFormat)
-    {
-        (void) sprintf(acFileOut,
-                       //"%s.%s%g%s",
-                       "%s.%s%s",
-                       pcFileOut,
-                       INFIX_SMOOTH,
-                       //fTimeWidth,
-                       EXT_FIL);
-    }
-    else
-    {
-        (void) sprintf(acFileOut,
-                       "%s.%s%g%s",
-                       pcFileOut,
-                       INFIX_SMOOTH,
-                       fTimeWidth,
-                       EXT_TIM);
-    }
-
     /* update output metadata */
     stYUMOut = stYUM;
     if (YAPP_FORMAT_FIL == iFormat)
@@ -627,19 +613,53 @@ int main(int argc, char *argv[])
         stYUMOut.fFMax = stYUMOut.fFMin
                             + (stYUMOut.iNumChans - 1) * stYUMOut.fChanBW;
         /* calculate bandwidth and centre frequency */
+        /* NOTE: these shouldn't differ from stYUM */
         /* NOTE: max and min are the _centre_ frequencies of the bins, so the
                  total bandwidth would be (max+chanbw/2)-(min-chanbw/2) */
         stYUMOut.fBW = (stYUMOut.fFMax - stYUMOut.fFMin) + stYUMOut.fChanBW;
         stYUMOut.fFCentre = (stYUMOut.fFMin - stYUM.fChanBW / 2)
                                 + (stYUMOut.fBW / 2);
     }
+    else
+    {
+        stYUMOut.fChanBW = stYUMOut.fBW;
+    }
     stYUMOut.dTSamp = stYUM.dTSamp * iSampsPerWin;
-    stYUMOut.iTimeSamps = stYUM.iTimeSamps / iSampsPerWin;
+    stYUMOut.iTimeSamps = iOutTimeSamps;
     /* set output bits */
     if (iOutNumBits != 0)
     {
         stYUMOut.iNumBits = iOutNumBits;
         stYUMOut.fSampSize = (float) iOutNumBits / YAPP_BYTE2BIT_FACTOR; 
+    }
+
+    /* generate output file name */
+    pcFileOut = YAPP_GetFilenameFromPath(pcFileData);
+    if (YAPP_FORMAT_FIL == iFormat)
+    {
+        (void) sprintf(acFileOut,
+                       "%s.%s%s%d%s%d%s%d%s",
+                       pcFileOut,
+                       INFIX_DECIMATE,
+                       INFIX_DECIMATE_FREQ,
+                       iOutNumChans,
+                       INFIX_DECIMATE_TIME,
+                       iOutTimeSamps,
+                       INFIX_DECIMATE_BITS,
+                       stYUMOut.iNumBits,
+                       EXT_FIL);
+    }
+    else
+    {
+        (void) sprintf(acFileOut,
+                       "%s.%s%s%d%s%d%s",
+                       pcFileOut,
+                       INFIX_DECIMATE,
+                       INFIX_DECIMATE_TIME,
+                       iOutTimeSamps,
+                       INFIX_DECIMATE_BITS,
+                       stYUMOut.iNumBits,
+                       EXT_TIM);
     }
 
     //TODO: check if anything else needs to be copied from styum to styumout
@@ -720,10 +740,10 @@ int main(int argc, char *argv[])
     }
 
     /* allocate memory for the output buffer */
+    /* NOTE: this output buffer has to be float */
     g_pfOutBuf = (float *) YAPP_Malloc((size_t) iOutNumChans
-                                                * iOutBlockSize
-                                                * stYUM.fSampSize, 
-                                       sizeof(char),
+                                                * iOutBlockSize,
+                                       sizeof(float),
                                        YAPP_FALSE);
     if (NULL == g_pfOutBuf)
     {
@@ -740,11 +760,12 @@ int main(int argc, char *argv[])
     {
         case YAPP_SAMPSIZE_4:
             /* allocate memory for the output buffer */
-            g_pcOutBuf = (unsigned char *) YAPP_Malloc((size_t) iOutNumChans
-                                                       * iOutBlockSize
-                                                       / 2,
-                                                       sizeof(unsigned char),
-                                                       YAPP_FALSE);
+            g_pcOutBuf
+                = (unsigned char *) YAPP_Malloc((size_t) iOutNumChans
+                                                * ceilf((float) iOutBlockSize
+                                                        / 2),
+                                                sizeof(unsigned char),
+                                                YAPP_FALSE);
             if (NULL == g_pcOutBuf)
             {
                 (void) fprintf(stderr,
@@ -793,9 +814,16 @@ int main(int argc, char *argv[])
             }
             break;
 
+        case YAPP_SAMPSIZE_32:
+            /* do nothing */
+            break;
+
         default:
             /* this should never happen because of input validation */
             assert(YAPP_TRUE);
+            (void) fclose(pFOut);
+            YAPP_CleanUp();
+            return YAPP_RET_ERROR;
     }
 
     while (iNumReads > 0)
@@ -842,8 +870,7 @@ int main(int argc, char *argv[])
         }
 
         /* decimate data */
-        YAPP_Decimate(iFormat,
-                      g_pfBuf,
+        YAPP_Decimate(g_pfBuf,
                       iNumSamps,
                       iSampsPerWin,
                       stYUM.iNumChans,
@@ -863,7 +890,8 @@ int main(int argc, char *argv[])
                 /* write decimated data to file */
                 (void) fwrite(g_pcOutBuf,
                               sizeof(unsigned char),
-                              (long) iOutBlockSize * iOutNumChans / 2,
+                              (long) iOutNumChans
+                                * ceilf((float) iOutBlockSize / 2),
                               pFOut);
                 break;
 
@@ -904,30 +932,19 @@ int main(int argc, char *argv[])
             default:
                 /* this should never happen because of input validation */
                 assert(YAPP_TRUE);
+                (void) fclose(pFOut);
+                YAPP_CleanUp();
+                return YAPP_RET_ERROR;
         }
 
-        if (iNumReads != 1)
-        {
-            /* set the file position to rewind by (iSampsPerWin - 1) time samples,
-               and the appropriate number of channels */
-            (void) fseek(g_pFData,
-                         -((iSampsPerWin - 1)
-                             * stYUM.iNumChans 
-                             * stYUM.fSampSize
-                             * sizeof(char)),
-                         SEEK_CUR);
-        }
-        else
-        {
-            /* last-but-one block. need to rewind such that there is
-               iSampsPerWin samples in the block */
-            (void) fseek(g_pFData,
-                         -((iSampsPerWin - 1)
-                             * stYUM.iNumChans 
-                             * stYUM.fSampSize
-                             * sizeof(char)),
-                         SEEK_CUR);
-        }
+        /* set the file position to rewind by (iSampsPerWin - 1) time samples,
+           and the appropriate number of channels */
+        (void) fseek(g_pFData,
+                     -((iSampsPerWin - 1)
+                         * stYUM.iNumChans
+                         * stYUM.fSampSize
+                         * sizeof(char)),
+                     SEEK_CUR);
 
         if (iFormat != YAPP_FORMAT_FIL)
         {
