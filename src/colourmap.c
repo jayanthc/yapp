@@ -1443,13 +1443,27 @@ void Plot2D(float* pfBuf, float fDataMin, float fDataMax,
 {
     float afTM[6] = {0.0};                      /* the transformation matrix */
 
-    /* x-width of the one pixel = (xmax - xmin + xstep) / xlen */
-    afTM[1] = (pfX[iLenX-1] - pfX[0] + fXStep) / iLenX;
+    /* x-width of one pixel */
+    if (pfX[0] < pfX[iLenX-1])
+    {
+        afTM[1] = fXStep;
+    }
+    else
+    {
+        afTM[1] = -fXStep;
+    }
     /* starting position (left) in world co-ordinates */
     afTM[0] = pfX[0] - afTM[1];
     afTM[2] = 0;
-    /* y-height of one pixel = (ymax - ymin + ystep) / ylen */
-    afTM[5] = (pfY[iLenY-1] - pfY[0] + fYStep) / iLenY;
+    /* y-height of one pixel */
+    if (pfY[0] < pfY[iLenY-1])
+    {
+        afTM[5] = fYStep;
+    }
+    else
+    {
+        afTM[5] = -fYStep;
+    }
     /* starting position (bottom) in world co-ordinates */
     afTM[3] = pfY[0] - afTM[5];
     afTM[4] = 0;
