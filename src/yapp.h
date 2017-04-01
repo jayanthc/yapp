@@ -130,6 +130,10 @@ enum tagFileFormats
 #define YAPP_BYTE2BIT_FACTOR        8
 
 #define INFIX_SMOOTH                "smooth"
+#define INFIX_DECIMATE              "dec"
+#define INFIX_DECIMATE_FREQ         "f"
+#define INFIX_DECIMATE_TIME         "t"
+#define INFIX_DECIMATE_BITS         "b"
 #define INFIX_SUB                   "sub"
 #define INFIX_FILTER                "filt"
 #define INFIX_DEDISPERSE            "dm"
@@ -625,6 +629,42 @@ int YAPP_CalcDelays(double dDM,
                     float fLaw,
                     int** ppiOffsetTab,
                     int* piMaxOffset);
+
+/**
+ * Decimate data
+ * @param[in]   pfInBuf         Input buffer
+ * @param[in]   iBlockSize      Number of samples in input buffer
+ * @param[in]   iSampsPerWin    Number of time samples in window
+ * @param[in]   iNumChans       Number of input channels
+ * @param[in]   iChansPerWin    Number of channels in window
+ * @param[out]  pfOutBuf        Output buffer
+ * @param[in]   iOutNumChans    Number of output channels
+ */
+void YAPP_Decimate(float *pfInBuf,
+                   int iBlockSize,
+                   int iSampsPerWin,
+                   int iNumChans,
+                   int iChansPerWin,
+                   float *pfOutBuf,
+                   int iOutNumChans);
+
+void YAPP_Float2Nibble(float *pfBuf,
+                       int iLen,
+                       float fMin,
+                       float fMax,
+                       unsigned char *pcBuf);
+
+void YAPP_Float2Byte(float *pfBuf,
+                     int iLen,
+                     float fMin,
+                     float fMax,
+                     unsigned char *pcBuf);
+
+void YAPP_Float2Short(float *pfBuf,
+                      int iLen,
+                      float fMin,
+                      float fMax,
+                      short int *piBuf);
 
 /**
  * Smooth data

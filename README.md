@@ -18,6 +18,7 @@ The YAPP tools available with this release are:
 * `yapp_stacktim` : Stacks time series data to form filterbank data.
 * `yapp_split` : Splits time series data into time sections.
 * `yapp_showinfo` : Displays supported file types and colourmaps.
+* `yapp_decimate` : Decimate filterbank and time series data.
 
 YAPP also comes with the following utilities:
 
