@@ -71,6 +71,7 @@ int main(int argc, char *argv[])
     int iOutBlockSize = 0;
     int iNumReads = 0;
     int iReadBlockCount = 0;
+    int iNumChansBk = 0;
     int iOutNumChans = 0;
     int iOutTimeSamps = 0;
     float fTimeWidth = 0.0;     /* in ms */
@@ -303,8 +304,7 @@ int main(int argc, char *argv[])
     /* ensure that the number of channels is 1 for time series data */
     if (YAPP_FORMAT_DTS_TIM == iFormat)
     {
-        // TODO: think if this can be changed in yapp_common.c without breaking
-        // anything
+        iNumChansBk = stYUM.iNumChans;
         stYUM.iNumChans = 1;
         /* set the output number of channels to 1 so that memory allocation,
            etc. happen correctly */
@@ -600,7 +600,7 @@ int main(int argc, char *argv[])
     }
 
     /* update output metadata */
-    stYUMOut = stYUM;
+    (void) memcpy(&stYUMOut, &stYUM, sizeof(YUM_t));
     if (YAPP_FORMAT_FIL == iFormat)
     {
         stYUMOut.iNumChans = iOutNumChans;
@@ -622,7 +622,8 @@ int main(int argc, char *argv[])
     }
     else
     {
-        stYUMOut.fChanBW = stYUMOut.fBW;
+        stYUMOut.iNumChans = iNumChansBk;
+        stYUMOut.iNumGoodChans = iNumChansBk;
     }
     stYUMOut.dTSamp = stYUM.dTSamp * iSampsPerWin;
     stYUMOut.iTimeSamps = iOutTimeSamps;

@@ -3352,15 +3352,17 @@ int YAPP_CalcStats(char *pcFileData, int iFormat, YUM_t *pstYUM)
     int i = 0;
     float fMean = 0.0;
     float fRMS = 0.0;
+    int iNumChansBk = 0;
 
-    /* only support .tim and .dat files for now */
-    //assert((YAPP_FORMAT_DTS_TIM == iFormat)
-    //       || (YAPP_FORMAT_DTS_DAT == iFormat));
+    /* only support .tim, .dat, and .fil files for now */
+    assert((YAPP_FORMAT_DTS_TIM == iFormat)
+           || (YAPP_FORMAT_DTS_DAT == iFormat)
+           || (YAPP_FORMAT_FIL == iFormat));
     /* make sure the metadata has been read, as we need to skip the header */
     if (YAPP_FORMAT_DTS_TIM == iFormat)
     {
         assert(pstYUM->iHeaderLen != 0);
-        // TODO: check if this affects anything
+        iNumChansBk = pstYUM->iNumChans;
         pstYUM->iNumChans = 1;
     }
 
@@ -3475,6 +3477,12 @@ int YAPP_CalcStats(char *pcFileData, int iFormat, YUM_t *pstYUM)
     /* set the stream pointer to NULL so that YAPP_CleanUp does not try to
        close it */
     g_pFData = NULL;
+
+    /* reset the number of channels */
+    if (YAPP_FORMAT_DTS_TIM == iFormat)
+    {
+        pstYUM->iNumChans = iNumChansBk;
+    }
 
     return YAPP_RET_SUCCESS;
 }
