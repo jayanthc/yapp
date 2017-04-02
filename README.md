@@ -51,10 +51,15 @@ Linux/OS X, a C compiler, PGPLOT with C binding, FFTW3, CFITSIO, and optionally,
 
 #### Standard
 
-Firstly, clone this repository. On a typical Ubuntu-based machine in which PGPLOT, FFTW3, and CFITSIO were installed via APT, and the optional HDF5 was installed in its default location, running `make` (or `make HDF5=yes`), optionally followed by `sudo make install`, should work, with the binaries being copied to `/usr/local/bin`. For different operating systems and/or different PGPLOT/FFTW3/CFITSIO/HDF5 installation directories and/or a different choice of YAPP installation directory, the makefile may need to be modified by hand. YAPP scripts require YAPP binaries to be in the search path.
+Firstly, clone this repository.
 
 ```
 git clone https://github.com/jayanthc/yapp.git
+```
+
+On a typical Ubuntu-based machine in which PGPLOT, FFTW3, and CFITSIO were installed via APT, and the optional HDF5 was installed in its default location, running `make` (or `make HDF5=yes`), optionally followed by `sudo make install`, should work, with the binaries being copied to `/usr/local/bin`. For different operating systems and/or different PGPLOT/FFTW3/CFITSIO/HDF5 installation directories and/or a different choice of YAPP installation directory, the makefile may need to be modified by hand. YAPP scripts require YAPP binaries to be in the search path.
+
+```
 cd yapp
 make # 'make HDF5=yes' if you would like HDF5 support
 sudo make install
@@ -62,13 +67,24 @@ sudo make install
 
 #### Using Docker
 
-YAPP can be installed using Docker, as shown below.
+YAPP can be installed and run using Docker, as shown below.
 
 ```
 docker build -t yapp https://raw.githubusercontent.com/jayanthc/yapp/release/Dockerfile
 ```
 
-To run a plotting program, the X server on the host needs to be made available to the container, as shown in `rundocker.sh`.
+To run YAPP with graphics, the X server on the host needs to be made available to the container. The easiest way to use YAPP with graphics is to run the script `runYAPPOnDocker.sh`, which will run the container, mounting a data directory of your choice, and provide a terminal to work on that data.
+
+```
+./runYAPPOnDocker.sh
+root@sdfasdf:/#
+
+... run YAPP commands ...
+
+root@asdafsad:/#exit # exit when done
+```
+
+You will need to modify `runYAPPOnDocker.sh` to specify your data directory, and if your Ethernet interface is not `en0`. Note that if your host operating system is Linux, replace `en0` with `eth0` (or whatever interface is appropriate). `runYAPPOnDocker.sh` has not been tested on Linux hosts.
 
 Created by Jayanth Chennamangalam  
 [http://jayanthc.github.io/yapp/](http://jayanthc.github.io/yapp/)
