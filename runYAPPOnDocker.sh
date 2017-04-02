@@ -1,11 +1,4 @@
 #!/bin/bash
-#
-# Example:
-# ./rundocker.sh "yapp_viewdata /data/test.fil"
-#
-
-# build docker image, if needed
-docker build -t yapp - < Dockerfile
 
 # replace this with the location of your data files
 datadir=~/Astronomy/data
