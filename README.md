@@ -67,13 +67,13 @@ sudo make install
 
 #### Using Docker
 
-YAPP can be installed and run using Docker, as shown below.
+YAPP can be installed and run using Docker, as shown below. To install:
 
 ```
 docker build -t yapp https://raw.githubusercontent.com/jayanthc/yapp/release/Dockerfile
 ```
 
-To run YAPP with graphics, the X server on the host needs to be made available to the container. The easiest way to use YAPP with graphics is to run the script `runYAPPOnDocker.sh`, which will run the container, mounting a data directory of your choice, and provide a terminal to work on that data.
+To run YAPP with graphics, the X server on the host needs to be made available to the container. The easiest way to use YAPP with graphics is to run the script `runYAPPOnDocker.sh`, which will run the container, mounting a data volume of your choice, and provide a terminal to work on that data.
 
 ```
 ./runYAPPOnDocker.sh

@@ -31,7 +31,7 @@ RUN wget https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.10/hdf5-1.10.0-pa
     make && \
     make install && \
     cd .. && \
-    rm -f hdf5-1.10.0-patch1.tar.gz && \
+    rm -f hdf5-1.10.0-patch1.tar.gz
 ENV LD_LIBRARY_PATH=/usr/local/hdf5/lib
 
 # fetch and install YAPP
