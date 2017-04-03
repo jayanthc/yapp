@@ -2,7 +2,7 @@
 FROM ubuntu:latest
 
 # set up shell stuff
-ENV PS1="YAPP:\w\$ "
+RUN echo "PS1='YAPP:\w\$ '" >> /root/.bashrc
 RUN echo "alias rm='rm -i'\nalias cp='cp -i'\nalias mv='mv -i'" >> /root/.bashrc
 
 # update APT sources list to use multiverse (needed for pgplot5)

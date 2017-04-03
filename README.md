@@ -73,15 +73,17 @@ YAPP can be installed and run using Docker, as shown below. To install:
 docker build -t yapp https://raw.githubusercontent.com/jayanthc/yapp/release/Dockerfile
 ```
 
-To run YAPP with graphics, the X server on the host needs to be made available to the container. The easiest way to use YAPP with graphics is to run the script `runYAPPOnDocker.sh`, which will run the container, mounting a data volume of your choice, and provide a terminal to work on that data.
+To run YAPP with graphics, the X server on the host needs to be made available to the container. The easiest way to use YAPP with graphics is to run the script `runYAPPOnDocker.sh`, which will run the container, mounting a data volume of your choice to `/data`, and provide a terminal to work on that data. An example is given below.
 
 ```
 ./runYAPPOnDocker.sh
-root@sdfasdf:/#
-
-... run YAPP commands ...
-
-root@asdafsad:/#exit # exit when done
+YAPP:/$ yapp_viewdata /data/test.fil
+...
+YAPP:/$ yapp_dedisperse -d 100 /data/test.fil
+...
+YAPP:/$ yapp_decimate -t 1024 /data/test.dm100.fil
+...
+YAPP:/$ exit # exit when done
 ```
 
 You will need to modify `runYAPPOnDocker.sh` to specify your data directory, and if your Ethernet interface is not `en0`. Note that if your host operating system is Linux, replace `en0` with `eth0` (or whatever interface is appropriate). `runYAPPOnDocker.sh` has not been tested on Linux hosts.
