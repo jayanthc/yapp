@@ -495,6 +495,7 @@ int YAPP_ReadMetadata(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
                                "Reading SIGPROC header failed!\n");
                 return YAPP_RET_ERROR;
             }
+#if 0
             iRet = YAPP_CalcStats(pcFileSpec, iFormat, pstYUM);
             if (iRet != YAPP_RET_SUCCESS)
             {
@@ -502,6 +503,7 @@ int YAPP_ReadMetadata(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
                                "ERROR: Calculating statistics failed!\n");
                 return YAPP_RET_ERROR;
             }
+#endif
             break;
 
         case YAPP_FORMAT_DTS_DAT:
@@ -512,6 +514,7 @@ int YAPP_ReadMetadata(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
                                "ERROR: Reading PRESTO metadata failed!\n");
                 return YAPP_RET_ERROR;
             }
+#if 0
             iRet = YAPP_CalcStats(pcFileSpec, iFormat, pstYUM);
             if (iRet != YAPP_RET_SUCCESS)
             {
@@ -519,6 +522,7 @@ int YAPP_ReadMetadata(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
                                "ERROR: Calculating statistics failed!\n");
                 return YAPP_RET_ERROR;
             }
+#endif
             break;
 
 #ifdef HDF5

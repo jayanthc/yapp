@@ -827,6 +827,22 @@ int main(int argc, char *argv[])
             return YAPP_RET_ERROR;
     }
 
+    /* compute statistics for requantization */
+    if ((YAPP_SAMPSIZE_4 == stYUMOut.iNumBits)
+        || (YAPP_SAMPSIZE_8 == stYUMOut.iNumBits)
+        || (YAPP_SAMPSIZE_16 == stYUMOut.iNumBits))
+    {
+        iRet = YAPP_CalcStats(pcFileData, iFormat, &stYUM);
+        if (iRet != YAPP_RET_SUCCESS)
+        {
+            (void) fprintf(stderr,
+                           "ERROR: Calculating statistics failed!\n");
+            (void) fclose(pFOut);
+            YAPP_CleanUp();
+            return YAPP_RET_ERROR;
+        }
+    }
+
     while (iNumReads > 0)
     {
         /* read data */

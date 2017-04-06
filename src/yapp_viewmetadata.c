@@ -218,6 +218,7 @@ int main(int argc, char *argv[])
                       stYUM.iTimeSamps);
         (void) printf("    Time                          : %g s\n",
                       (stYUM.iTimeSamps * (stYUM.dTSamp / 1e3)));
+#if 0
         /* print statistics */
         if ((YAPP_FORMAT_FIL == iFormat)
             || (YAPP_FORMAT_DTS_TIM == iFormat)
@@ -232,6 +233,7 @@ int main(int argc, char *argv[])
             (void) printf("RMS                               : %g\n",
                           stYUM.fRMS);
         }
+#endif
         if (!((YAPP_FORMAT_PSRFITS == iFormat)
               || (YAPP_FORMAT_SPEC == iFormat)
               || (YAPP_FORMAT_DTS_DAT == iFormat)
