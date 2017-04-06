@@ -218,8 +218,8 @@ int main(int argc, char *argv[])
                        "ERROR: File type determination failed!\n");
         return YAPP_RET_ERROR;
     }
-    if (!((YAPP_FORMAT_FIL == iFormat)
-          || (YAPP_FORMAT_DTS_TIM == iFormat)))
+    if (!((YAPP_FORMAT_DTS_TIM == iFormat)
+          || (YAPP_FORMAT_FIL == iFormat)))
     {
         (void) fprintf(stderr,
                        "ERROR: Invalid file type!\n");
@@ -819,6 +819,22 @@ int main(int argc, char *argv[])
             (void) fclose(pFOut);
             YAPP_CleanUp();
             return YAPP_RET_ERROR;
+    }
+
+    /* compute statistics for requantization */
+    if ((YAPP_SAMPSIZE_4 == stYUMOut.iNumBits)
+        || (YAPP_SAMPSIZE_8 == stYUMOut.iNumBits)
+        || (YAPP_SAMPSIZE_16 == stYUMOut.iNumBits))
+    {
+        iRet = YAPP_CalcStats(pcFileData, iFormat, &stYUM);
+        if (iRet != YAPP_RET_SUCCESS)
+        {
+            (void) fprintf(stderr,
+                           "ERROR: Calculating statistics failed!\n");
+            (void) fclose(pFOut);
+            YAPP_CleanUp();
+            return YAPP_RET_ERROR;
+        }
     }
 
     while (iNumReads > 0)

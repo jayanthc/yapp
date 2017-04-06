@@ -469,13 +469,6 @@ int YAPP_ReadMetadata(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
                                "Reading SIGPROC header failed!\n");
                 return YAPP_RET_ERROR;
             }
-            iRet = YAPP_CalcStats(pcFileSpec, iFormat, pstYUM);
-            if (iRet != YAPP_RET_SUCCESS)
-            {
-                (void) fprintf(stderr,
-                               "ERROR: Calculating statistics failed!\n");
-                return YAPP_RET_ERROR;
-            }
             break;
 
         case YAPP_FORMAT_DTS_DAT:
@@ -484,13 +477,6 @@ int YAPP_ReadMetadata(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
             {
                 (void) fprintf(stderr,
                                "ERROR: Reading PRESTO metadata failed!\n");
-                return YAPP_RET_ERROR;
-            }
-            iRet = YAPP_CalcStats(pcFileSpec, iFormat, pstYUM);
-            if (iRet != YAPP_RET_SUCCESS)
-            {
-                (void) fprintf(stderr,
-                               "ERROR: Calculating statistics failed!\n");
                 return YAPP_RET_ERROR;
             }
             break;

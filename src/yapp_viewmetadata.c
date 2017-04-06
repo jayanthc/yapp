@@ -218,20 +218,6 @@ int main(int argc, char *argv[])
                       stYUM.iTimeSamps);
         (void) printf("    Time                          : %g s\n",
                       (stYUM.iTimeSamps * (stYUM.dTSamp / 1e3)));
-        /* print statistics */
-        if ((YAPP_FORMAT_FIL == iFormat)
-            || (YAPP_FORMAT_DTS_TIM == iFormat)
-            || (YAPP_FORMAT_DTS_DAT == iFormat))
-        {
-            (void) printf("Minimum value                     : %g\n",
-                          stYUM.fMin);
-            (void) printf("Maximum value                     : %g\n",
-                          stYUM.fMax);
-            (void) printf("Mean                              : %g\n",
-                          stYUM.fMean);
-            (void) printf("RMS                               : %g\n",
-                          stYUM.fRMS);
-        }
         if (!((YAPP_FORMAT_PSRFITS == iFormat)
               || (YAPP_FORMAT_SPEC == iFormat)
               || (YAPP_FORMAT_DTS_DAT == iFormat)
