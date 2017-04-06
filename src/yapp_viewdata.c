@@ -135,6 +135,7 @@ int main(int argc, char *argv[])
     char acLabel[LEN_GENSTRING] = {0};
     char acPlotFilePrefix[LEN_GENSTRING] = {0};
     char acPlotDevice[LEN_GENSTRING] = {0};
+    int iDigits = 0;
     int iColourMap = DEF_CMAP;
     int iInvCols = YAPP_FALSE;
     char cIsNonInteractive = YAPP_FALSE;
@@ -1022,9 +1023,13 @@ int main(int argc, char *argv[])
         if (acPlotFilePrefix[0] != '\0')
         {
             /* open the PGPLOT graphics device */
+            /* get the number of digits in iTotNumReads (>= 1) */
+            iDigits = (int) floor(log10(iTotNumReads)) + 1;
+            /* use the number of digits as the field length */
             (void) sprintf(acPlotDevice,
-                           "%s-%d-%d%s%s",
+                           "%s-%0*d-%d%s%s",
                            acPlotFilePrefix,
+                           iDigits,
                            iReadBlockCount,
                            iTotNumReads,
                            EXT_PNG,
