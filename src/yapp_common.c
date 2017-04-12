@@ -582,7 +582,7 @@ int YAPP_ReadPSRFITSHeader(char *pcFileSpec, YUM_t *pstYUM)
                          &dTemp,
                          NULL,
                          &iStatus);
-    pstYUM->dTStart += dTemp;
+    pstYUM->dTStart += (dTemp / 86400);
     (void) fits_read_key(pstFileData,
                          TSTRING,
                          YAPP_PF_LABEL_SRCRA,
