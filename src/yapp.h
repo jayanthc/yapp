@@ -356,7 +356,8 @@ typedef struct YUM_s
     double dAzStart;
     double dZAStart;
     double dDM;
-    int iFlagBary;
+    int iFlagBaryCen;
+    int iFlagPsrCen;
     int iNumBands;
     float *pfFreq;      /* in MHz */
     float fFMin;        /* in MHz */
@@ -430,7 +431,7 @@ typedef struct YUM_s
     double dAzStart;
     double dZAStart;
     double dDM;
-    int iFlagBary;
+    int iFlagBaryCen;
     /* SIGPROC derived */
     float fFCh1;        /* in MHz */
     float fChanBW;      /* in MHz */

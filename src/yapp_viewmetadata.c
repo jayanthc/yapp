@@ -201,7 +201,9 @@ int main(int argc, char *argv[])
                           stYUM.dDM);
         }
         (void) printf("Barycentric                       : %s\n",
-                      stYUM.iFlagBary ? "Yes" : "No");
+                      stYUM.iFlagBaryCen ? "Yes" : "No");
+        (void) printf("Pulsarcentric                     : %s\n",
+                      stYUM.iFlagPsrCen ? "Yes" : "No");
         (void) printf("Duration of data in\n");
         if (!((YAPP_FORMAT_DTS_TIM == iFormat)
               || (YAPP_FORMAT_DTS_DAT == iFormat)))
