@@ -18,7 +18,7 @@
 #define YAPP_PR_LABEL_SRCRA         " J2000 Right Ascension (hh:mm:ss.ssss)  "
 #define YAPP_PR_LABEL_SRCDEC        " J2000 Declination     (dd:mm:ss.ssss)  "
 #define YAPP_PR_LABEL_TSTART        " Epoch of observation (MJD)             "
-#define YAPP_PR_LABEL_BARY          " Barycentered?           (1=yes, 0=no)  "
+#define YAPP_PR_LABEL_BARYCEN       " Barycentered?           (1=yes, 0=no)  "
 #define YAPP_PR_LABEL_NSAMPS        " Number of bins in the time series      "
 #define YAPP_PR_LABEL_TSAMP         " Width of each time series bin (sec)    "
 #define YAPP_PR_LABEL_DM            " Dispersion measure (cm-3 pc)           "

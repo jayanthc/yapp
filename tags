@@ -347,7 +347,7 @@ YAPP_PF_LABEL_TSTART	src/yapp_psrfits.h	/^#define YAPP_PF_LABEL_TSTART /;"	d
 YAPP_PF_LABEL_TSTARTOFF	src/yapp_psrfits.h	/^#define YAPP_PF_LABEL_TSTARTOFF /;"	d
 YAPP_PF_LABEL_TSTARTSEC	src/yapp_psrfits.h	/^#define YAPP_PF_LABEL_TSTARTSEC /;"	d
 YAPP_PR_LABEL_BACKEND	src/yapp_presto.h	/^#define YAPP_PR_LABEL_BACKEND /;"	d
-YAPP_PR_LABEL_BARY	src/yapp_presto.h	/^#define YAPP_PR_LABEL_BARY /;"	d
+YAPP_PR_LABEL_BARYCEN	src/yapp_presto.h	/^#define YAPP_PR_LABEL_BARYCEN /;"	d
 YAPP_PR_LABEL_BW	src/yapp_presto.h	/^#define YAPP_PR_LABEL_BW /;"	d
 YAPP_PR_LABEL_CHANBW	src/yapp_presto.h	/^#define YAPP_PR_LABEL_CHANBW /;"	d
 YAPP_PR_LABEL_DM	src/yapp_presto.h	/^#define YAPP_PR_LABEL_DM /;"	d
@@ -393,7 +393,8 @@ YAPP_SP_LABEL_CHANBW	src/yapp_sigproc.h	/^#define YAPP_SP_LABEL_CHANBW /;"	d
 YAPP_SP_LABEL_DATATYPE	src/yapp_sigproc.h	/^#define YAPP_SP_LABEL_DATATYPE /;"	d
 YAPP_SP_LABEL_DM	src/yapp_sigproc.h	/^#define YAPP_SP_LABEL_DM /;"	d
 YAPP_SP_LABEL_FCHAN1	src/yapp_sigproc.h	/^#define YAPP_SP_LABEL_FCHAN1 /;"	d
-YAPP_SP_LABEL_FLAGBARY	src/yapp_sigproc.h	/^#define YAPP_SP_LABEL_FLAGBARY /;"	d
+YAPP_SP_LABEL_FLAGBARYCEN	src/yapp_sigproc.h	/^#define YAPP_SP_LABEL_FLAGBARYCEN /;"	d
+YAPP_SP_LABEL_FLAGPSRCEN	src/yapp_sigproc.h	/^#define YAPP_SP_LABEL_FLAGPSRCEN /;"	d
 YAPP_SP_LABEL_FREQCHAN	src/yapp_sigproc.h	/^#define YAPP_SP_LABEL_FREQCHAN /;"	d
 YAPP_SP_LABEL_FREQEND	src/yapp_sigproc.h	/^#define YAPP_SP_LABEL_FREQEND /;"	d
 YAPP_SP_LABEL_FREQSTART	src/yapp_sigproc.h	/^#define YAPP_SP_LABEL_FREQSTART /;"	d
@@ -519,7 +520,7 @@ g_pcIsTimeGood	src/yapp_makerfimask.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	src/yapp_stat.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcIsTimeGood	src/yapp_viewdata.c	/^char *g_pcIsTimeGood = NULL;$/;"	v
 g_pcOutBuf	src/yapp_decimate.c	/^unsigned char *g_pcOutBuf = NULL;$/;"	v
-g_pcVersion	src/yapp_version.c	/^const char *g_pcVersion = "YAPP-DEV-3.7.2-beta-20170406-130941";$/;"	v
+g_pcVersion	src/yapp_version.c	/^const char *g_pcVersion = "YAPP-DEV-3.7.2-beta-20180922-094006";$/;"	v
 g_pdDM	src/yapp_dedisplaw.c	/^double *g_pdDM = NULL;$/;"	v
 g_pdDelayTab	src/yapp_dedisplaw.c	/^double *g_pdDelayTab = NULL;$/;"	v
 g_pdMaxDelayTab	src/yapp_dedisplaw.c	/^double *g_pdMaxDelayTab = NULL;$/;"	v
@@ -638,8 +639,9 @@ iBackendID	src/yapp_sigproc.h	/^    int iBackendID;$/;"	m	struct:tagSIGPROCHeade
 iBeamID	src/yapp.h	/^    int iBeamID;$/;"	m	struct:YUM_s
 iBeamID	src/yapp_sigproc.h	/^    int iBeamID;$/;"	m	struct:tagSIGPROCHeader
 iDataTypeID	src/yapp_sigproc.h	/^    int iDataTypeID;$/;"	m	struct:tagSIGPROCHeader
-iFlagBary	src/yapp.h	/^    int iFlagBary;$/;"	m	struct:YUM_s
 iFlagBary	src/yapp_sigproc.h	/^    int iFlagBary;$/;"	m	struct:tagSIGPROCHeader
+iFlagBaryCen	src/yapp.h	/^    int iFlagBaryCen;$/;"	m	struct:YUM_s
+iFlagPsrCen	src/yapp.h	/^    int iFlagPsrCen;$/;"	m	struct:YUM_s
 iFlagSplicedData	src/yapp.h	/^    int iFlagSplicedData;$/;"	m	struct:YUM_s
 iHeaderLen	src/yapp.h	/^    int iHeaderLen;$/;"	m	struct:YUM_s
 iNextIdx	src/yapp_ft.h	/^    int iNextIdx;               \/* index of next element in PFB ring buffer *\/$/;"	m	struct:tagPFBData

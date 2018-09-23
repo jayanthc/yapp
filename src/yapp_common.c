@@ -1514,14 +1514,23 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
             iRet = fread(&pstYUM->dDM, sizeof(pstYUM->dDM), 1, g_pFData);
             pstYUM->iHeaderLen += sizeof(pstYUM->dDM);
         }
-        else if (0 == strcmp(acLabel, YAPP_SP_LABEL_FLAGBARY))
+        else if (0 == strcmp(acLabel, YAPP_SP_LABEL_FLAGBARYCEN))
         {
             /* read barycentric flag */
-            iRet = fread(&pstYUM->iFlagBary,
-                         sizeof(pstYUM->iFlagBary),
+            iRet = fread(&pstYUM->iFlagBaryCen,
+                         sizeof(pstYUM->iFlagBaryCen),
                          1,
                          g_pFData);
-            pstYUM->iHeaderLen += sizeof(pstYUM->iFlagBary);
+            pstYUM->iHeaderLen += sizeof(pstYUM->iFlagBaryCen);
+        }
+        else if (0 == strcmp(acLabel, YAPP_SP_LABEL_FLAGPSRCEN))
+        {
+            /* read pulsarcentric flag */
+            iRet = fread(&pstYUM->iFlagPsrCen,
+                         sizeof(pstYUM->iFlagPsrCen),
+                         1,
+                         g_pFData);
+            pstYUM->iHeaderLen += sizeof(pstYUM->iFlagPsrCen);
         }
         else if (0 == strcmp(acLabel, YAPP_SP_LABEL_RAWFILENAME))
         {
@@ -1604,8 +1613,11 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
                     /* print a warning about encountering unknown field label */
                     if (strcmp(acLabel, YAPP_SP_LABEL_FREQEND) != 0)
                     {
+                        /* NOTE: this is an error instead of a warning because
+                           if an unknown field label is encountered, we do not
+                           know the size of the following value */
                         (void) fprintf(stderr,
-                                       "WARNING: Unknown field label %s "
+                                       "ERROR: Unknown field label %s "
                                        "encountered!\n", acLabel);
                         return YAPP_RET_ERROR;
                     }
@@ -1618,9 +1630,13 @@ int YAPP_ReadSIGPROCHeader(char *pcFileSpec, int iFormat, YUM_t *pstYUM)
             /* print a warning about encountering unknown field label */
             if (strcmp(acLabel, YAPP_SP_LABEL_HDREND) != 0)
             {
+                /* NOTE: this is an error instead of a warning because if an
+                   unknown field label is encountered, we do not know the size
+                   of the following value */
                 (void) fprintf(stderr,
-                               "WARNING: Unknown field label %s "
+                               "ERROR: Unknown field label %s "
                                "encountered!\n", acLabel);
+                return YAPP_RET_ERROR;
             }
         }
     }
@@ -2078,9 +2094,11 @@ int YAPP_ReadPRESTOHeaderFile(char *pcFileData, YUM_t *pstYUM)
         {
             (void) sscanf(pcVal, "=  %lf", &pstYUM->dTStart);
         }
-        else if (0 == strncmp(pcLine, YAPP_PR_LABEL_BARY, YAPP_PR_LEN_LABEL))
+        else if (0 == strncmp(pcLine,
+                              YAPP_PR_LABEL_BARYCEN,
+                              YAPP_PR_LEN_LABEL))
         {
-            (void) sscanf(pcVal, "=  %d", &pstYUM->iFlagBary);
+            (void) sscanf(pcVal, "=  %d", &pstYUM->iFlagBaryCen);
         }
         else if (0 == strncmp(pcLine, YAPP_PR_LABEL_NSAMPS, YAPP_PR_LEN_LABEL))
         {
@@ -2651,14 +2669,18 @@ int YAPP_WriteMetadata(char *pcFileData, int iFormat, YUM_t stYUM)
         }
 
         /* write barycentric flag */
-        iLen = strlen(YAPP_SP_LABEL_FLAGBARY);
+        iLen = strlen(YAPP_SP_LABEL_FLAGBARYCEN);
         (void) fwrite(&iLen, sizeof(iLen), 1, pFData);
-        (void) strcpy(acLabel, YAPP_SP_LABEL_FLAGBARY);
+        (void) strcpy(acLabel, YAPP_SP_LABEL_FLAGBARYCEN);
         (void) fwrite(acLabel, sizeof(char), iLen, pFData);
-        (void) fwrite(&stYUM.iFlagBary,
-                      sizeof(stYUM.iFlagBary),
+        (void) fwrite(&stYUM.iFlagBaryCen,
+                      sizeof(stYUM.iFlagBaryCen),
                       1,
                       pFData);
+
+        /* NOTE: writing pulsar-centric flag is not currently supported for
+           SIGPROC file formats, as it is unclear how much support this flag
+           has in other software */
 
         /* write header end tag */
         iLen = strlen(YAPP_SP_LABEL_HDREND);
@@ -2716,7 +2738,10 @@ int YAPP_WriteMetadata(char *pcFileData, int iFormat, YUM_t stYUM)
                        stYUM.dTStart);
         (void) fprintf(pFInf,
                        " Barycentered?           (1=yes, 0=no)  =  %d\n",
-                       stYUM.iFlagBary);
+                       stYUM.iFlagBaryCen);
+        (void) fprintf(pFInf,
+                       " Pulsar-centered?        (1=yes, 0=no)  =  %d\n",
+                       stYUM.iFlagPsrCen);
         (void) fprintf(pFInf,
                        " Number of bins in the time series      =  %d\n",
                        stYUM.iTimeSamps);
