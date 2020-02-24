@@ -322,6 +322,7 @@ install:
 	cp $(SCRIPTDIR)/* $(BININSTALLDIR)
 	@echo DONE
 	@echo Copying man pages...
+	mkdir -p $(MANINSTALLDIR)
 	cp $(MANDIR)/*.1 $(MANINSTALLDIR)
 	@echo DONE
 
